@@ -21,8 +21,8 @@ typedef struct {
 /* Globals
  *****************************************************************************/
 File Curr_File = { .name = NULL, .first = NULL, .last = NULL };
-int Max_Row = 0;
-int Max_Col = 0;
+int Max_Row = 0, Max_Col = 0;
+int Cursor_X = 0, Cursor_Y = 0;
 
 /* Declarations
  *****************************************************************************/
@@ -81,16 +81,31 @@ static void edit(void)
     do {
         /* Handle input */
         switch (ch) {
-            case 'k':
-            case KEY_UP:
-                if(start->prev) start = start->prev;
+            case KEY_LEFT:
+            case 'h':
+                Cursor_X = (Cursor_X-1 < 0) ? 0 : Cursor_X-1;
                 break;
-            case 'j':
             case KEY_DOWN:
-                if(start->next) start = start->next;
+            case 'j':
+                Cursor_Y++;
+                if (Cursor_Y > Max_Row) {
+                    Cursor_Y = Max_Row;
+                    if(start->next) start = start->next;
+                }
+                break;
+            case KEY_UP:
+            case 'k':
+                Cursor_Y--;
+                if (Cursor_Y < 0) {
+                    Cursor_Y = 0;
+                    if(start->prev) start = start->prev;
+                }
+                break;
+            case KEY_RIGHT:
+            case 'l':
+                Cursor_X = (Cursor_X+1 > Max_Col) ? Max_Col : Cursor_X+1;
                 break;
         }
-
         /* Refresh the screen */
         clear();
         Line* line = start;
@@ -98,6 +113,7 @@ static void edit(void)
             mvprintw(i, 0, "%s", line->text);
         }
         refresh();
+        move(Cursor_Y, Cursor_X);
     } while((ch = getch()) != 'q');
 }
 
