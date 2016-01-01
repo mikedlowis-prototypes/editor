@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <errno.h>
 
-/* Usefule Standard Functions */
+/* Useful Standard Functions */
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,13 +17,16 @@
 /* Generic Death Function */
 static void die(const char* msgfmt, ...)
 {
-   va_list args;
-   va_start(args, msgfmt);
-   fprintf(stderr, "Error: ");
-   vfprintf(stderr, msgfmt, args);
-   fprintf(stderr, "\n");
-   va_end(args);
-   exit(EXIT_FAILURE);
+    va_list args;
+    va_start(args, msgfmt);
+    #ifdef CLEANUP_HOOK
+    CLEANUP_HOOK();
+    #endif
+    fprintf(stderr, "Error: ");
+    vfprintf(stderr, msgfmt, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+    exit(EXIT_FAILURE);
 }
 
 /* Signal Handling */
@@ -88,7 +91,7 @@ static char* efreadline(FILE* input)
         free(str);
         return NULL;
     }
-    while(true) {
+    while (true) {
         char ch = fgetc(input);
         if (ch == EOF) break;
         str[index++] = ch;

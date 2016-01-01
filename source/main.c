@@ -1,5 +1,7 @@
 /* Includes
  *****************************************************************************/
+static void cleanup(void);
+#define CLEANUP_HOOK cleanup
 #include <util.h>
 #include <ncurses.h>
 
@@ -27,7 +29,6 @@ int Cursor_X = 0, Cursor_Y = 0;
 /* Declarations
  *****************************************************************************/
 static void setup(void);
-static void cleanup(void);
 static void load(char* fname);
 static void edit(void);
 
@@ -121,6 +122,7 @@ static void edit(void)
  *****************************************************************************/
 int main(int argc, char** argv)
 {
+    atexit(cleanup);
     setup();
     if (argc > 1) {
         load(argv[1]);
@@ -128,6 +130,5 @@ int main(int argc, char** argv)
     } else {
         die("no filename provided");
     }
-    cleanup();
     return EXIT_SUCCESS;
 }
