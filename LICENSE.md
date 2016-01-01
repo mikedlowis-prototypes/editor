@@ -1,4 +1,4 @@
-Copyright (c) 2016, mikedlowis-prototypes
+Copyright (c) 2016, Michael D. Lowis
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
