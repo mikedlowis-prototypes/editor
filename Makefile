@@ -13,7 +13,7 @@ LD = ${CC}
 INCS     = -Isource/
 CPPFLAGS = -D_XOPEN_SOURCE=700
 CFLAGS   = ${INCS} ${CPPFLAGS}
-LDFLAGS  = ${LIBS}
+LDFLAGS  = ${LIBS} -lncurses
 
 # commands
 COMPILE = @echo CC $@; ${CC} ${CFLAGS} -c -o $@ $<
