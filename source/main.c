@@ -20,11 +20,16 @@ typedef struct {
     Line* last;
 } File;
 
+typedef struct {
+    int x;
+    int y;
+} Pos;
+
 /* Globals
  *****************************************************************************/
 File Curr_File = { .name = NULL, .first = NULL, .last = NULL };
-int Max_Row = 0, Max_Col = 0;
-int Cursor_X = 0, Cursor_Y = 0;
+Pos Curr = { .x = 0, .y = 0 };
+Pos Max = { .x = 0, .y = 0 };
 
 /* Declarations
  *****************************************************************************/
@@ -37,7 +42,7 @@ static void edit(void);
 static void setup(void)
 {
     initscr();
-    getmaxyx(stdscr, Max_Row, Max_Col);
+    getmaxyx(stdscr, Max.y, Max.x);
     raw();
     keypad(stdscr, true);
     noecho();
@@ -84,37 +89,37 @@ static void edit(void)
         switch (ch) {
             case KEY_LEFT:
             case 'h':
-                Cursor_X = (Cursor_X-1 < 0) ? 0 : Cursor_X-1;
+                Curr.x = (Curr.x-1 < 0) ? 0 : Curr.x-1;
                 break;
             case KEY_DOWN:
             case 'j':
-                Cursor_Y++;
-                if (Cursor_Y > Max_Row) {
-                    Cursor_Y = Max_Row;
+                Curr.y++;
+                if (Curr.y > Max.y) {
+                    Curr.y = Max.y;
                     if(start->next) start = start->next;
                 }
                 break;
             case KEY_UP:
             case 'k':
-                Cursor_Y--;
-                if (Cursor_Y < 0) {
-                    Cursor_Y = 0;
+                Curr.y--;
+                if (Curr.y < 0) {
+                    Curr.y = 0;
                     if(start->prev) start = start->prev;
                 }
                 break;
             case KEY_RIGHT:
             case 'l':
-                Cursor_X = (Cursor_X+1 > Max_Col) ? Max_Col : Cursor_X+1;
+                Curr.x = (Curr.x+1 > Max.x) ? Max.x : Curr.x+1;
                 break;
         }
         /* Refresh the screen */
         clear();
         Line* line = start;
-        for (int i = 0; (i < Max_Row) && line; i++, line = line->next) {
+        for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
             mvprintw(i, 0, "%s", line->text);
         }
+        move(Curr.y, Curr.x);
         refresh();
-        move(Cursor_Y, Cursor_X);
     } while((ch = getch()) != 'q');
 }
 
