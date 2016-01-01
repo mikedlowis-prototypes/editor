@@ -36,6 +36,13 @@ static void setup(void)
 
 static void cleanup(void)
 {
+    Line* line = Curr_File.first;
+    while (line) {
+        Line* deadite = line;
+        line = line->next;
+        free(deadite->text);
+        free(deadite);
+    }
 }
 
 static void load(char* fname)
@@ -53,6 +60,7 @@ static void load(char* fname)
             Curr_File.last = line;
         }
     }
+    fclose(file);
 }
 
 static void edit(void)

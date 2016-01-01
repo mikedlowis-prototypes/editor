@@ -102,4 +102,12 @@ static char* efreadline(FILE* input)
     return str;
 }
 
+/* String Handling */
+char* estrdup(const char *s)
+{
+    char* ns = (char*)emalloc(strlen(s) + 1);
+    strcpy(ns,s);
+    return ns;
+}
+
 #endif
