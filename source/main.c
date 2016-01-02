@@ -16,6 +16,7 @@ typedef struct Line {
 
 typedef struct {
     char* name;
+    Line* start;
     Line* first;
     Line* last;
 } File;
@@ -27,15 +28,32 @@ typedef struct {
 
 /* Globals
  *****************************************************************************/
-File Curr_File = { .name = NULL, .first = NULL, .last = NULL };
-Pos Curr = { .x = 0, .y = 0 };
-Pos Max = { .x = 0, .y = 0 };
+static bool ScreenDirty = true;
+static File Curr_File = { .name = NULL, .first = NULL, .last = NULL };
+static Pos Curr = { .x = 0, .y = 0 };
+static Pos Max  = { .x = 0, .y = 0 };
 
 /* Declarations
  *****************************************************************************/
 static void setup(void);
 static void load(char* fname);
+static void input(int ch);
 static void edit(void);
+
+/* Main Routine
+ *****************************************************************************/
+int main(int argc, char** argv)
+{
+    atexit(cleanup);
+    setup();
+    if (argc > 1) {
+        load(argv[1]);
+        edit();
+    } else {
+        die("no filename provided");
+    }
+    return EXIT_SUCCESS;
+}
 
 /* Definitions
  *****************************************************************************/
@@ -53,6 +71,7 @@ static void cleanup(void)
     /* shutdown ncurses */
     endwin();
     /* free up malloced data */
+    free(Curr_File.name);
     Line* line = Curr_File.first;
     while (line) {
         Line* deadite = line;
@@ -65,10 +84,12 @@ static void cleanup(void)
 static void load(char* fname)
 {
     FILE* file = efopen(fname, "r");
+    Curr_File.name = estrdup(fname);
     while (!feof(file)) {
         Line* line = (Line*)ecalloc(1,sizeof(Line));
         line->text = efreadline(file);
         if (Curr_File.first == NULL) {
+            Curr_File.start = line;
             Curr_File.first = line;
             Curr_File.last  = line;
         } else {
@@ -80,60 +101,63 @@ static void load(char* fname)
     fclose(file);
 }
 
+static void input(int ch)
+{
+    switch (ch) {
+        case KEY_LEFT:
+        case 'h':
+            Curr.x = (Curr.x-1 < 0) ? 0 : Curr.x-1;
+            break;
+
+        case KEY_DOWN:
+        case 'j':
+            Curr.y++;
+            if (Curr.y > Max.y) {
+                Curr.y = Max.y;
+                if (Curr_File.start->next) {
+                    Curr_File.start = Curr_File.start->next;
+                    ScreenDirty = true;
+                }
+            }
+            break;
+
+        case KEY_UP:
+        case 'k':
+            Curr.y--;
+            if (Curr.y < 0) {
+                Curr.y = 0;
+                if (Curr_File.start->prev) {
+                    Curr_File.start = Curr_File.start->prev;
+                    ScreenDirty = true;
+                }
+            }
+            break;
+
+        case KEY_RIGHT:
+        case 'l':
+            Curr.x = (Curr.x+1 > Max.x) ? Max.x : Curr.x+1;
+            break;
+    }
+}
+
 static void edit(void)
 {
-    Line* start = Curr_File.first;
     int ch = 0;
     do {
         /* Handle input */
-        switch (ch) {
-            case KEY_LEFT:
-            case 'h':
-                Curr.x = (Curr.x-1 < 0) ? 0 : Curr.x-1;
-                break;
-            case KEY_DOWN:
-            case 'j':
-                Curr.y++;
-                if (Curr.y > Max.y) {
-                    Curr.y = Max.y;
-                    if(start->next) start = start->next;
-                }
-                break;
-            case KEY_UP:
-            case 'k':
-                Curr.y--;
-                if (Curr.y < 0) {
-                    Curr.y = 0;
-                    if(start->prev) start = start->prev;
-                }
-                break;
-            case KEY_RIGHT:
-            case 'l':
-                Curr.x = (Curr.x+1 > Max.x) ? Max.x : Curr.x+1;
-                break;
-        }
+        input(ch);
         /* Refresh the screen */
-        clear();
-        Line* line = start;
-        for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
-            mvprintw(i, 0, "%s", line->text);
+        if (ScreenDirty) {
+            clear();
+            Line* line = Curr_File.start;
+            for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
+                mvprintw(i, 0, "%s", line->text);
+            }
+            refresh();
+            ScreenDirty = false;
         }
+        /* Place the cursor */
         move(Curr.y, Curr.x);
-        refresh();
     } while((ch = getch()) != 'q');
 }
 
-/* Main Routine
- *****************************************************************************/
-int main(int argc, char** argv)
-{
-    atexit(cleanup);
-    setup();
-    if (argc > 1) {
-        load(argv[1]);
-        edit();
-    } else {
-        die("no filename provided");
-    }
-    return EXIT_SUCCESS;
-}
