@@ -161,6 +161,14 @@ static void cursorRight()
     }
 }
 
+static void cursorLineStart()
+{
+    if(Curr.x != 0){
+        Curr.x = 0;
+        ScreenDirty = true;
+    }
+}
+
 static void input(int ch)
 {
     switch (ch) {
@@ -182,6 +190,9 @@ static void input(int ch)
         case KEY_RIGHT:
         case 'l':
             cursorRight();
+            break;
+        case '0':
+            cursorLineStart();
             break;
     }
     /* Cap the column selection at the end of text on the current line */
