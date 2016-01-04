@@ -134,6 +134,8 @@ static void input(int ch)
                     ScreenDirty = true;
                 }
             }
+            if (Loc.line->next)
+                Loc.line = Loc.line->next;
             break;
 
         case KEY_UP:
@@ -146,6 +148,8 @@ static void input(int ch)
                     ScreenDirty = true;
                 }
             }
+            if (Loc.line->prev)
+                Loc.line = Loc.line->prev;
             break;
 
         case KEY_RIGHT:
@@ -160,6 +164,9 @@ static void input(int ch)
             }
             break;
     }
+    /* Cap the column selection at the end of text on the current line */
+    if (Curr.x >= (Loc.line->length-1 - Loc.offset))
+        Curr.x = (Loc.line->length-2 - Loc.offset);
 }
 
 static void edit(void)
