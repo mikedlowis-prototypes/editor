@@ -50,6 +50,7 @@ static void cursorDown(void);
 static void cursorUp(void);
 static void cursorRight(void);
 static void cursorHome(void);
+static void cursorEnd(void);
 
 /* Main Routine
  *****************************************************************************/
@@ -164,6 +165,11 @@ static void input(int ch)
         case '0':
             cursorHome();
             break;
+
+        case KEY_END:
+        case '$':
+            cursorEnd();
+            break;
     }
     /* Cap the column selection at the end of text on the current line */
     if (Loc.line->length <= 1)
@@ -230,5 +236,14 @@ static void cursorHome()
         Curr.x = 0;
         ScreenDirty = true;
     }
+}
+
+static void cursorEnd()
+{
+    if (Loc.line->length <= 1)
+        Curr.x = 0;
+    else
+        Curr.x = (Loc.line->length-2 - Loc.offset);
+    ScreenDirty = true;
 }
 
