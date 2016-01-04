@@ -185,7 +185,9 @@ static void input(int ch)
             break;
     }
     /* Cap the column selection at the end of text on the current line */
-    if (Curr.x >= (Loc.line->length-1 - Loc.offset))
+    if (Loc.line->length <= 1)
+        Curr.x = 0;
+    else if (Curr.x >= (Loc.line->length-1 - Loc.offset))
         Curr.x = (Loc.line->length-2 - Loc.offset);
 }
 
