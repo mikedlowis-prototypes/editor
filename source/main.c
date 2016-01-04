@@ -134,7 +134,13 @@ static void edit(void)
             ScreenDirty = false;
         }
         /* Place the cursor */
-        move(Curr.y, Curr.x);
+        /* Cap the column selection at the end of text on the current line */
+        int x = Curr.x;
+        if (Loc.line->length <= 1)
+            x = 0;
+        else if (x >= (Loc.line->length-1 - Loc.offset))
+            x = (Loc.line->length-2 - Loc.offset);
+        move(Curr.y, x);
     } while((ch = getch()) != 'q');
 }
 
@@ -171,11 +177,6 @@ static void input(int ch)
             cursorEnd();
             break;
     }
-    /* Cap the column selection at the end of text on the current line */
-    if (Loc.line->length <= 1)
-        Curr.x = 0;
-    else if (Curr.x >= (Loc.line->length-1 - Loc.offset))
-        Curr.x = (Loc.line->length-2 - Loc.offset);
 }
 
 static void cursorLeft()
