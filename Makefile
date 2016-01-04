@@ -2,7 +2,7 @@
 # Build Configuration
 #------------------------------------------------------------------------------
 # name and version
-PROJNAME = albert
+PROJNAME = edit
 VERSION  = 0.0.1
 
 # tools
