@@ -43,8 +43,13 @@ static FilePos Loc = { .line = NULL, .offset = 0 };
  *****************************************************************************/
 static void setup(void);
 static void load(char* fname);
-static void input(int ch);
 static void edit(void);
+static void input(int ch);
+static void cursorLeft(void);
+static void cursorDown(void);
+static void cursorUp(void);
+static void cursorRight(void);
+static void cursorHome(void);
 
 /* Main Routine
  *****************************************************************************/
@@ -109,6 +114,64 @@ static void load(char* fname)
     fclose(file);
 }
 
+static void edit(void)
+{
+    int ch = 0;
+    do {
+        /* Handle input */
+        input(ch);
+        /* Refresh the screen */
+        if (ScreenDirty) {
+            clear();
+            Line* line = Curr_File.start;
+            for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
+                if (line->length > Loc.offset) {
+                    mvprintw(i, 0, "%s", &(line->text[Loc.offset]));
+                }
+            }
+            refresh();
+            ScreenDirty = false;
+        }
+        /* Place the cursor */
+        move(Curr.y, Curr.x);
+    } while((ch = getch()) != 'q');
+}
+
+static void input(int ch)
+{
+    switch (ch) {
+        case KEY_LEFT:
+        case 'h':
+            cursorLeft();
+            break;
+
+        case KEY_DOWN:
+        case 'j':
+            cursorDown();
+            break;
+
+        case KEY_UP:
+        case 'k':
+            cursorUp();
+            break;
+
+        case KEY_RIGHT:
+        case 'l':
+            cursorRight();
+            break;
+
+        case KEY_HOME:
+        case '0':
+            cursorHome();
+            break;
+    }
+    /* Cap the column selection at the end of text on the current line */
+    if (Loc.line->length <= 1)
+        Curr.x = 0;
+    else if (Curr.x >= (Loc.line->length-1 - Loc.offset))
+        Curr.x = (Loc.line->length-2 - Loc.offset);
+}
+
 static void cursorLeft()
 {
     Curr.x--;
@@ -161,67 +224,11 @@ static void cursorRight()
     }
 }
 
-static void cursorLineStart()
+static void cursorHome()
 {
     if(Curr.x != 0){
         Curr.x = 0;
         ScreenDirty = true;
     }
-}
-
-static void input(int ch)
-{
-    switch (ch) {
-        case KEY_LEFT:
-        case 'h':
-            cursorLeft();
-            break;
-
-        case KEY_DOWN:
-        case 'j':
-            cursorDown();
-            break;
-
-        case KEY_UP:
-        case 'k':
-            cursorUp();
-            break;
-
-        case KEY_RIGHT:
-        case 'l':
-            cursorRight();
-            break;
-        case '0':
-            cursorLineStart();
-            break;
-    }
-    /* Cap the column selection at the end of text on the current line */
-    if (Loc.line->length <= 1)
-        Curr.x = 0;
-    else if (Curr.x >= (Loc.line->length-1 - Loc.offset))
-        Curr.x = (Loc.line->length-2 - Loc.offset);
-}
-
-static void edit(void)
-{
-    int ch = 0;
-    do {
-        /* Handle input */
-        input(ch);
-        /* Refresh the screen */
-        if (ScreenDirty) {
-            clear();
-            Line* line = Curr_File.start;
-            for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
-                if (line->length > Loc.offset) {
-                    mvprintw(i, 0, "%s", &(line->text[Loc.offset]));
-                }
-            }
-            refresh();
-            ScreenDirty = false;
-        }
-        /* Place the cursor */
-        move(Curr.y, Curr.x);
-    } while((ch = getch()) != 'q');
 }
 
