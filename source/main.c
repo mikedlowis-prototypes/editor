@@ -43,8 +43,14 @@ static FilePos Loc = { .line = NULL, .offset = 0 };
  *****************************************************************************/
 static void setup(void);
 static void load(char* fname);
-static void input(int ch);
 static void edit(void);
+static void input(int ch);
+static void cursorLeft(void);
+static void cursorDown(void);
+static void cursorUp(void);
+static void cursorRight(void);
+static void cursorHome(void);
+static void cursorEnd(void);
 
 /* Main Routine
  *****************************************************************************/
@@ -109,68 +115,6 @@ static void load(char* fname)
     fclose(file);
 }
 
-static void input(int ch)
-{
-    switch (ch) {
-        case KEY_LEFT:
-        case 'h':
-            Curr.x--;
-            if (Curr.x < 0) {
-                Curr.x = 0;
-                Loc.offset--;
-                if (Loc.offset < 0)
-                    Loc.offset = 0;
-                ScreenDirty = true;
-            }
-            break;
-
-        case KEY_DOWN:
-        case 'j':
-            Curr.y++;
-            if (Curr.y >= Max.y) {
-                Curr.y = Max.y-1;
-                if (Curr_File.start->next) {
-                    Curr_File.start = Curr_File.start->next;
-                    ScreenDirty = true;
-                }
-            }
-            if (Loc.line->next)
-                Loc.line = Loc.line->next;
-            break;
-
-        case KEY_UP:
-        case 'k':
-            Curr.y--;
-            if (Curr.y < 0) {
-                Curr.y = 0;
-                if (Curr_File.start->prev) {
-                    Curr_File.start = Curr_File.start->prev;
-                    ScreenDirty = true;
-                }
-            }
-            if (Loc.line->prev)
-                Loc.line = Loc.line->prev;
-            break;
-
-        case KEY_RIGHT:
-        case 'l':
-            Curr.x++;
-            if (Curr.x >= Max.x) {
-                Curr.x = Max.x-1;
-                Loc.offset++;
-                if (Loc.offset >= Loc.line->length-1)
-                    Loc.offset = Loc.line->length-2;
-                ScreenDirty = true;
-            }
-            break;
-    }
-    /* Cap the column selection at the end of text on the current line */
-    if (Loc.line->length <= 1)
-        Curr.x = 0;
-    else if (Curr.x >= (Loc.line->length-1 - Loc.offset))
-        Curr.x = (Loc.line->length-2 - Loc.offset);
-}
-
 static void edit(void)
 {
     int ch = 0;
@@ -190,7 +134,117 @@ static void edit(void)
             ScreenDirty = false;
         }
         /* Place the cursor */
-        move(Curr.y, Curr.x);
+        /* Cap the column selection at the end of text on the current line */
+        int x = Curr.x;
+        if (Loc.line->length <= 1)
+            x = 0;
+        else if (x >= (Loc.line->length-1 - Loc.offset))
+            x = (Loc.line->length-2 - Loc.offset);
+        move(Curr.y, x);
     } while((ch = getch()) != 'q');
+}
+
+static void input(int ch)
+{
+    switch (ch) {
+        case KEY_LEFT:
+        case 'h':
+            cursorLeft();
+            break;
+
+        case KEY_DOWN:
+        case 'j':
+            cursorDown();
+            break;
+
+        case KEY_UP:
+        case 'k':
+            cursorUp();
+            break;
+
+        case KEY_RIGHT:
+        case 'l':
+            cursorRight();
+            break;
+
+        case KEY_HOME:
+        case '0':
+            cursorHome();
+            break;
+
+        case KEY_END:
+        case '$':
+            cursorEnd();
+            break;
+    }
+}
+
+static void cursorLeft()
+{
+    Curr.x--;
+    if (Curr.x < 0) {
+        Curr.x = 0;
+        Loc.offset--;
+        if (Loc.offset < 0)
+            Loc.offset = 0;
+        ScreenDirty = true;
+    }
+}
+
+static void cursorDown()
+{
+    Curr.y++;
+    if (Curr.y >= Max.y) {
+        Curr.y = Max.y-1;
+        if (Curr_File.start->next) {
+            Curr_File.start = Curr_File.start->next;
+            ScreenDirty = true;
+        }
+    }
+    if (Loc.line->next)
+        Loc.line = Loc.line->next;
+}
+
+static void cursorUp()
+{
+    Curr.y--;
+    if (Curr.y < 0) {
+        Curr.y = 0;
+        if (Curr_File.start->prev) {
+            Curr_File.start = Curr_File.start->prev;
+            ScreenDirty = true;
+        }
+    }
+    if (Loc.line->prev)
+        Loc.line = Loc.line->prev;
+}
+
+static void cursorRight()
+{
+    Curr.x++;
+    if (Curr.x >= Max.x) {
+        Curr.x = Max.x-1;
+        Loc.offset++;
+        if (Loc.offset >= Loc.line->length-1)
+            Loc.offset = Loc.line->length-2;
+        ScreenDirty = true;
+    }
+}
+
+static void cursorHome()
+{
+    if(Curr.x != 0){
+        Curr.x = 0;
+        ScreenDirty = true;
+    }
+}
+
+static void cursorEnd()
+{
+    if (Loc.line->length <= 1)
+        Curr.x = 0;
+    else
+        Curr.x = (Loc.line->length-2 - Loc.offset);
+    ScreenDirty = true;
 }
 
