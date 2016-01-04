@@ -26,12 +26,18 @@ typedef struct {
     int y;
 } Pos;
 
+typedef struct {
+    Line* line;
+    int offset;
+} FilePos;
+
 /* Globals
  *****************************************************************************/
 static bool ScreenDirty = true;
-static File Curr_File = { .name = NULL, .first = NULL, .last = NULL };
+static File Curr_File = { .name = NULL, .start = NULL, .first = NULL, .last = NULL };
 static Pos Curr = { .x = 0, .y = 0 };
 static Pos Max  = { .x = 0, .y = 0 };
+static FilePos Loc = { .line = NULL, .offset = 0 };
 
 /* Declarations
  *****************************************************************************/
@@ -88,10 +94,12 @@ static void load(char* fname)
     while (!feof(file)) {
         Line* line = (Line*)ecalloc(1,sizeof(Line));
         line->text = efreadline(file);
+        line->length = strlen(line->text);
         if (Curr_File.first == NULL) {
             Curr_File.start = line;
             Curr_File.first = line;
             Curr_File.last  = line;
+            Loc.line = line;
         } else {
             Curr_File.last->next = line;
             line->prev = Curr_File.last;
@@ -106,19 +114,28 @@ static void input(int ch)
     switch (ch) {
         case KEY_LEFT:
         case 'h':
-            Curr.x = (Curr.x-1 < 0) ? 0 : Curr.x-1;
+            Curr.x--;
+            if (Curr.x < 0) {
+                Curr.x = 0;
+                Loc.offset--;
+                if (Loc.offset < 0)
+                    Loc.offset = 0;
+                ScreenDirty = true;
+            }
             break;
 
         case KEY_DOWN:
         case 'j':
             Curr.y++;
-            if (Curr.y > Max.y) {
-                Curr.y = Max.y;
+            if (Curr.y >= Max.y) {
+                Curr.y = Max.y-1;
                 if (Curr_File.start->next) {
                     Curr_File.start = Curr_File.start->next;
                     ScreenDirty = true;
                 }
             }
+            if (Loc.line->next)
+                Loc.line = Loc.line->next;
             break;
 
         case KEY_UP:
@@ -131,13 +148,25 @@ static void input(int ch)
                     ScreenDirty = true;
                 }
             }
+            if (Loc.line->prev)
+                Loc.line = Loc.line->prev;
             break;
 
         case KEY_RIGHT:
         case 'l':
-            Curr.x = (Curr.x+1 > Max.x) ? Max.x : Curr.x+1;
+            Curr.x++;
+            if (Curr.x >= Max.x) {
+                Curr.x = Max.x-1;
+                Loc.offset++;
+                if (Loc.offset >= Loc.line->length-1)
+                    Loc.offset = Loc.line->length-2;
+                ScreenDirty = true;
+            }
             break;
     }
+    /* Cap the column selection at the end of text on the current line */
+    if (Curr.x >= (Loc.line->length-1 - Loc.offset))
+        Curr.x = (Loc.line->length-2 - Loc.offset);
 }
 
 static void edit(void)
@@ -151,7 +180,9 @@ static void edit(void)
             clear();
             Line* line = Curr_File.start;
             for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
-                mvprintw(i, 0, "%s", line->text);
+                if (line->length > Loc.offset) {
+                    mvprintw(i, 0, "%s", &(line->text[Loc.offset]));
+                }
             }
             refresh();
             ScreenDirty = false;
