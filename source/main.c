@@ -109,59 +109,79 @@ static void load(char* fname)
     fclose(file);
 }
 
+static void cursorLeft()
+{
+    Curr.x--;
+    if (Curr.x < 0) {
+        Curr.x = 0;
+        Loc.offset--;
+        if (Loc.offset < 0)
+            Loc.offset = 0;
+        ScreenDirty = true;
+    }
+}
+
+static void cursorDown()
+{
+    Curr.y++;
+    if (Curr.y >= Max.y) {
+        Curr.y = Max.y-1;
+        if (Curr_File.start->next) {
+            Curr_File.start = Curr_File.start->next;
+            ScreenDirty = true;
+        }
+    }
+    if (Loc.line->next)
+        Loc.line = Loc.line->next;
+}
+
+static void cursorUp()
+{
+    Curr.y--;
+    if (Curr.y < 0) {
+        Curr.y = 0;
+        if (Curr_File.start->prev) {
+            Curr_File.start = Curr_File.start->prev;
+            ScreenDirty = true;
+        }
+    }
+    if (Loc.line->prev)
+        Loc.line = Loc.line->prev;
+}
+
+static void cursorRight()
+{
+    Curr.x++;
+    if (Curr.x >= Max.x) {
+        Curr.x = Max.x-1;
+        Loc.offset++;
+        if (Loc.offset >= Loc.line->length-1)
+            Loc.offset = Loc.line->length-2;
+        ScreenDirty = true;
+    }
+}
+
 static void input(int ch)
 {
     switch (ch) {
         case KEY_LEFT:
         case 'h':
-            Curr.x--;
-            if (Curr.x < 0) {
-                Curr.x = 0;
-                Loc.offset--;
-                if (Loc.offset < 0)
-                    Loc.offset = 0;
-                ScreenDirty = true;
-            }
+            cursorLeft();
             break;
 
         case KEY_DOWN:
         case 'j':
-            Curr.y++;
-            if (Curr.y >= Max.y) {
-                Curr.y = Max.y-1;
-                if (Curr_File.start->next) {
-                    Curr_File.start = Curr_File.start->next;
-                    ScreenDirty = true;
-                }
-            }
-            if (Loc.line->next)
-                Loc.line = Loc.line->next;
+            cursorDown();
             break;
 
         case KEY_UP:
         case 'k':
-            Curr.y--;
-            if (Curr.y < 0) {
-                Curr.y = 0;
-                if (Curr_File.start->prev) {
-                    Curr_File.start = Curr_File.start->prev;
-                    ScreenDirty = true;
-                }
-            }
-            if (Loc.line->prev)
-                Loc.line = Loc.line->prev;
+            cursorUp();
             break;
 
         case KEY_RIGHT:
         case 'l':
-            Curr.x++;
-            if (Curr.x >= Max.x) {
-                Curr.x = Max.x-1;
-                Loc.offset++;
-                if (Loc.offset >= Loc.line->length-1)
-                    Loc.offset = Loc.line->length-2;
-                ScreenDirty = true;
-            }
+            cursorRight();
             break;
     }
     /* Cap the column selection at the end of text on the current line */
