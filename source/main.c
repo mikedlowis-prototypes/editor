@@ -215,16 +215,17 @@ static void cursor_down(void)
 
 static void cursor_up(void)
 {
-    Curr.y--;
-    if (Curr.y < 0) {
-        Curr.y = 0;
-        if (CurrFile.start->prev) {
-            CurrFile.start = CurrFile.start->prev;
-            ScreenDirty = true;
+    if (Loc.line->prev) {
+        Curr.y--;
+        if (Curr.y < 0) {
+            Curr.y = 0;
+            if (CurrFile.start->prev) {
+                CurrFile.start = CurrFile.start->prev;
+                ScreenDirty = true;
+            }
         }
-    }
-    if (Loc.line->prev)
         Loc.line = Loc.line->prev;
+    }
 }
 
 static void cursor_right(void)
@@ -245,11 +246,13 @@ static void cursor_right(void)
 static void cursor_home(void)
 {
     Curr.x = 0;
+    Loc.offset = 0;
     ScreenDirty = true;
 }
 
 static void cursor_end(void)
 {
     Curr.x = ((line_length() <= 1) ? 0 : visible_length());
+    Loc.offset = (line_length() > Max.x) ? line_length()-1 - Max.x : Loc.offset;
     ScreenDirty = true;
 }
