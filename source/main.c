@@ -126,7 +126,7 @@ static void edit(void)
         input(ch);
         /* if the line is shorter than the desired cursor position, place the cursor at the end of the line */
         /* using 2 because line length includes newline character at the end */
-        int x = (Curr.x+2) > (Loc.line->length) ? Loc.line->length - 2 : Curr.x;
+        int x = (Curr.x+2) > line_length() ? line_length() - 2 : Curr.x;
         /* don't allow the x position to be negative for blank lines */
         if(x < 0) x = 0;
         int r_margin = 5; /* number of characters to keep between cursor and right edge of screen */
@@ -226,7 +226,7 @@ static void cursor_up(void)
 
 static void cursor_right(void)
 {
-    if(Loc.line->length > 2 && Loc.line->length - 2 > Curr.x)
+    if(line_length() > Curr.x + 2)
         Curr.x++;
     //if(Curr.x > Max.x)
     ScreenDirty = true;
@@ -240,7 +240,7 @@ static void cursor_home(void)
 
 static void cursor_end(void)
 {
-    Curr.x = Loc.line->length - 2;
+    Curr.x = line_length() - 2;
     if(Curr.x < 0) Curr.x = 0;
     ScreenDirty = true;
 }
