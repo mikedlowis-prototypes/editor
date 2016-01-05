@@ -41,6 +41,12 @@ static FilePos Loc = { .line = NULL };
 /* Macros
  *****************************************************************************/
 #define line_length()    (Loc.line->length)
+/* determine the cursor's index within a line:
+    if line is long enough, use desired cursor position
+    if line is empty (1 character: just a newline character), cursor set to index 0
+    if line is not empty but shorter than cursor position, set cursor one character before the trailing newline
+*/
+#define curr_line_idx()  (line_length() < 2 ? 0 : ((line_length()-2 < Curr.x) ? line_length()-2 : Curr.x))
 
 /* Declarations
  *****************************************************************************/
@@ -124,11 +130,7 @@ static void edit(void)
     do {
         /* Handle input */
         input(ch);
-        /* if the line is shorter than the desired cursor position, place the cursor at the end of the line */
-        /* using 2 because line length includes newline character at the end */
-        int x = (Curr.x+2) > line_length() ? line_length() - 2 : Curr.x;
-        /* don't allow the x position to be negative for blank lines */
-        if(x < 0) x = 0;
+        int x = curr_line_idx();
         int r_margin = 5; /* number of characters to keep between cursor and right edge of screen */
         /* note: Max.x stores the size of the window: max allowed index = Max.x-1-r_margin */
         int maxx = Max.x - 1 - r_margin;
@@ -191,8 +193,10 @@ static void cursor_left(void)
 {
     //if(Curr.x > Max.x)
         ScreenDirty = true;
-    Curr.x = ((line_length() < Curr.x + 2) ? line_length()-2 : Curr.x) - 1;
-    if(Curr.x < 0) Curr.x = 0;
+    /* decrease Curr.x then fix if < 0
+    don't test if 0 before setting so behavior on blank lines feels more natural */
+    Curr.x = curr_line_idx() - 1;
+    if (Curr.x < 0) Curr.x = 0;
 }
 
 static void cursor_down(void)
