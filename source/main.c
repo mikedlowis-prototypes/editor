@@ -126,25 +126,30 @@ static void edit(void)
     do {
         /* Handle input */
         input(ch);
+        /* if the line is shorter than the desired cursor position, place the cursor at the end of the line */
+        /* using 2 because line length includes newline character at the end */
+        int x = (Curr.x+2) > (Loc.line->length) ? Loc.line->length - 2 : Curr.x;
+        /* don't allow the x position to be negative for blank lines */
+        if(x < 0) x = 0;
+        int r_margin = 5; /* number of characters to keep between cursor and right edge of screen */
+        /* note: Max.x stores the size of the window: max allowed index = Max.x-1-r_margin */
+        int maxx = Max.x - 1 - r_margin;
+        int h_offset = (x > maxx) ? x - maxx : 0;
+        if (x > maxx) x = maxx;
         /* Refresh the screen */
         if (ScreenDirty) {
             clear();
             Line* line = CurrFile.start;
-            for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
-                if (line->length > Loc.offset) {
-                    mvprintw(i, 0, "%s", &(line->text[Loc.offset]));
-                }
+            int i = 0;
+            while(line && i < Max.y){
+                mvprintw(i, 0, "%.*s", Max.x, (line->length-1 > h_offset) ? &(line->text[h_offset]) : "");
+                i++;
+                line = line->next;
             }
             refresh();
-            ScreenDirty = false;
+            //ScreenDirty = false; /* always consider screen dirty; TODO: only redraw when necessary */
         }
         /* Place the cursor */
-        if (line_length() <= 1)
-            x = 0;
-        else if (Curr.x > visible_length())
-            x = visible_length();
-        else
-            x = Curr.x;
         move(Curr.y, x);
     } while((ch = getch()) != 'q');
 }
@@ -186,16 +191,9 @@ static void input(int ch)
 
 static void cursor_left(void)
 {
-    Curr.x--;
-    if (Curr.x < 0) {
-        Curr.x = 0;
-        Loc.offset--;
-        if (Loc.offset < 0)
-            Loc.offset = 0;
+    //if(Curr.x > Max.x)
         ScreenDirty = true;
-    } else if (Curr.x > visible_length()) {
-        Curr.x = visible_length()-1;
-    }
+    if(Curr.x > 0) Curr.x--;
 }
 
 static void cursor_down(void)
@@ -230,29 +228,22 @@ static void cursor_up(void)
 
 static void cursor_right(void)
 {
-    if ((line_length() > 1) && (Curr.x < visible_length()))
-    {
+    if(Loc.line->length > 2 && Loc.line->length - 2 > Curr.x)
         Curr.x++;
-        if (Curr.x >= Max.x) {
-            Curr.x = Max.x-1;
-            Loc.offset++;
-            if (Loc.offset > visible_length())
-                Loc.offset = visible_length();
-            ScreenDirty = true;
-        }
-    }
+    //if(Curr.x > Max.x)
+    ScreenDirty = true;
 }
 
 static void cursor_home(void)
 {
     Curr.x = 0;
-    Loc.offset = 0;
     ScreenDirty = true;
 }
 
 static void cursor_end(void)
 {
-    Curr.x = ((line_length() <= 1) ? 0 : visible_length());
-    Loc.offset = (line_length() > Max.x) ? line_length()-1 - Max.x : Loc.offset;
+    Curr.x = Loc.line->length - 2;
+    if(Curr.x < 0) Curr.x = 0;
     ScreenDirty = true;
 }
+
