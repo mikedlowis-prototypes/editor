@@ -39,6 +39,11 @@ static Pos Curr = { .x = 0, .y = 0 };
 static Pos Max  = { .x = 0, .y = 0 };
 static FilePos Loc = { .line = NULL, .offset = 0 };
 
+/* Macros
+ *****************************************************************************/
+#define line_length()    (Loc.line->length)
+#define visible_length() (Loc.line->length-2 - Loc.offset)
+
 /* Declarations
  *****************************************************************************/
 static void setup(void);
@@ -117,7 +122,7 @@ static void load(char* fname)
 
 static void edit(void)
 {
-    int ch = 0;
+    int ch = 0, x = 0;
     do {
         /* Handle input */
         input(ch);
@@ -134,12 +139,12 @@ static void edit(void)
             ScreenDirty = false;
         }
         /* Place the cursor */
-        /* Cap the column selection at the end of text on the current line */
-        int x = Curr.x;
-        if (Loc.line->length <= 1)
+        if (line_length() <= 1)
             x = 0;
-        else if (x >= (Loc.line->length-1 - Loc.offset))
-            x = (Loc.line->length-2 - Loc.offset);
+        else if (Curr.x > visible_length())
+            x = visible_length();
+        else
+            x = Curr.x;
         move(Curr.y, x);
     } while((ch = getch()) != 'q');
 }
@@ -188,6 +193,8 @@ static void cursor_left(void)
         if (Loc.offset < 0)
             Loc.offset = 0;
         ScreenDirty = true;
+    } else if (Curr.x > visible_length()) {
+        Curr.x = visible_length()-1;
     }
 }
 
@@ -222,30 +229,27 @@ static void cursor_up(void)
 
 static void cursor_right(void)
 {
-    Curr.x++;
-    if (Curr.x >= Max.x) {
-        Curr.x = Max.x-1;
-        Loc.offset++;
-        if (Loc.offset >= Loc.line->length-1)
-            Loc.offset = Loc.line->length-2;
-        ScreenDirty = true;
+    if ((line_length() > 1) && (Curr.x < visible_length()))
+    {
+        Curr.x++;
+        if (Curr.x >= Max.x) {
+            Curr.x = Max.x-1;
+            Loc.offset++;
+            if (Loc.offset > visible_length())
+                Loc.offset = visible_length();
+            ScreenDirty = true;
+        }
     }
 }
 
 static void cursor_home(void)
 {
-    if(Curr.x != 0){
-        Curr.x = 0;
-        ScreenDirty = true;
-    }
+    Curr.x = 0;
+    ScreenDirty = true;
 }
 
 static void cursor_end(void)
 {
-    if (Loc.line->length <= 1)
-        Curr.x = 0;
-    else
-        Curr.x = (Loc.line->length-2 - Loc.offset);
+    Curr.x = ((line_length() <= 1) ? 0 : visible_length());
     ScreenDirty = true;
 }
-
