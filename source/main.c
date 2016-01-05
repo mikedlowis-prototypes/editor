@@ -28,7 +28,6 @@ typedef struct {
 
 typedef struct {
     Line* line;
-    int offset;
 } FilePos;
 
 /* Globals
@@ -37,12 +36,11 @@ static bool ScreenDirty = true;
 static File CurrFile = { .name = NULL, .start = NULL, .first = NULL, .last = NULL };
 static Pos Curr = { .x = 0, .y = 0 };
 static Pos Max  = { .x = 0, .y = 0 };
-static FilePos Loc = { .line = NULL, .offset = 0 };
+static FilePos Loc = { .line = NULL };
 
 /* Macros
  *****************************************************************************/
 #define line_length()    (Loc.line->length)
-#define visible_length() (Loc.line->length-2 - Loc.offset)
 
 /* Declarations
  *****************************************************************************/
