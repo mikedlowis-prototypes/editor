@@ -193,16 +193,17 @@ static void cursorLeft()
 
 static void cursorDown()
 {
-    Curr.y++;
-    if (Curr.y >= Max.y) {
-        Curr.y = Max.y-1;
-        if (Curr_File.start->next) {
-            Curr_File.start = Curr_File.start->next;
-            ScreenDirty = true;
+    if (Loc.line->next) {
+        Curr.y++;
+        if (Curr.y >= Max.y) {
+            Curr.y = Max.y-1;
+            if (Curr_File.start->next) {
+                Curr_File.start = Curr_File.start->next;
+                ScreenDirty = true;
+            }
         }
-    }
-    if (Loc.line->next)
         Loc.line = Loc.line->next;
+    }
 }
 
 static void cursorUp()
