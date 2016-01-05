@@ -140,11 +140,8 @@ static void edit(void)
         if (ScreenDirty) {
             clear();
             Line* line = CurrFile.start;
-            int i = 0;
-            while(line && i < Max.y){
+            for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
                 mvprintw(i, 0, "%.*s", Max.x, (line->length-1 > h_offset) ? &(line->text[h_offset]) : "");
-                i++;
-                line = line->next;
             }
             refresh();
             //ScreenDirty = false; /* always consider screen dirty; TODO: only redraw when necessary */
