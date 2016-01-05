@@ -34,7 +34,7 @@ typedef struct {
 /* Globals
  *****************************************************************************/
 static bool ScreenDirty = true;
-static File Curr_File = { .name = NULL, .start = NULL, .first = NULL, .last = NULL };
+static File CurrFile = { .name = NULL, .start = NULL, .first = NULL, .last = NULL };
 static Pos Curr = { .x = 0, .y = 0 };
 static Pos Max  = { .x = 0, .y = 0 };
 static FilePos Loc = { .line = NULL, .offset = 0 };
@@ -88,8 +88,8 @@ static void cleanup(void)
     /* shutdown ncurses */
     endwin();
     /* free up malloced data */
-    free(Curr_File.name);
-    Line* line = Curr_File.first;
+    free(CurrFile.name);
+    Line* line = CurrFile.first;
     while (line) {
         Line* deadite = line;
         line = line->next;
@@ -101,20 +101,20 @@ static void cleanup(void)
 static void load(char* fname)
 {
     FILE* file = efopen(fname, "r");
-    Curr_File.name = estrdup(fname);
+    CurrFile.name = estrdup(fname);
     while (!feof(file)) {
         Line* line = (Line*)ecalloc(1,sizeof(Line));
         line->text = efreadline(file);
         line->length = strlen(line->text);
-        if (Curr_File.first == NULL) {
-            Curr_File.start = line;
-            Curr_File.first = line;
-            Curr_File.last  = line;
+        if (CurrFile.first == NULL) {
+            CurrFile.start = line;
+            CurrFile.first = line;
+            CurrFile.last  = line;
             Loc.line = line;
         } else {
-            Curr_File.last->next = line;
-            line->prev = Curr_File.last;
-            Curr_File.last = line;
+            CurrFile.last->next = line;
+            line->prev = CurrFile.last;
+            CurrFile.last = line;
         }
     }
     fclose(file);
@@ -129,7 +129,7 @@ static void edit(void)
         /* Refresh the screen */
         if (ScreenDirty) {
             clear();
-            Line* line = Curr_File.start;
+            Line* line = CurrFile.start;
             for (int i = 0; (i < Max.y) && line; i++, line = line->next) {
                 if (line->length > Loc.offset) {
                     mvprintw(i, 0, "%s", &(line->text[Loc.offset]));
@@ -204,8 +204,8 @@ static void cursor_down(void)
         Curr.y++;
         if (Curr.y >= Max.y) {
             Curr.y = Max.y-1;
-            if (Curr_File.start->next) {
-                Curr_File.start = Curr_File.start->next;
+            if (CurrFile.start->next) {
+                CurrFile.start = CurrFile.start->next;
                 ScreenDirty = true;
             }
         }
@@ -218,8 +218,8 @@ static void cursor_up(void)
     Curr.y--;
     if (Curr.y < 0) {
         Curr.y = 0;
-        if (Curr_File.start->prev) {
-            Curr_File.start = Curr_File.start->prev;
+        if (CurrFile.start->prev) {
+            CurrFile.start = CurrFile.start->prev;
             ScreenDirty = true;
         }
     }
