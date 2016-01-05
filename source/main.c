@@ -26,21 +26,17 @@ typedef struct {
     int y;
 } Pos;
 
-typedef struct {
-    Line* line;
-} FilePos;
-
 /* Globals
  *****************************************************************************/
 static bool ScreenDirty = true;
 static File CurrFile = { .name = NULL, .start = NULL, .first = NULL, .last = NULL };
 static Pos Curr = { .x = 0, .y = 0 };
 static Pos Max  = { .x = 0, .y = 0 };
-static FilePos Loc = { .line = NULL };
+static Line* Loc;
 
 /* Macros
  *****************************************************************************/
-#define line_length()    (Loc.line->length)
+#define line_length()    (Loc->length)
 /* determine the cursor's index within a line:
     if line is long enough, use desired cursor position
     if line is empty (1 character: just a newline character), cursor set to index 0
@@ -114,7 +110,7 @@ static void load(char* fname)
             CurrFile.start = line;
             CurrFile.first = line;
             CurrFile.last  = line;
-            Loc.line = line;
+            Loc = line;
         } else {
             CurrFile.last->next = line;
             line->prev = CurrFile.last;
@@ -198,7 +194,7 @@ static void cursor_left(void)
 
 static void cursor_down(void)
 {
-    if (Loc.line->next) {
+    if (Loc->next) {
         Curr.y++;
         if (Curr.y >= Max.y) {
             Curr.y = Max.y-1;
@@ -207,13 +203,13 @@ static void cursor_down(void)
                 ScreenDirty = true;
             }
         }
-        Loc.line = Loc.line->next;
+        Loc = Loc->next;
     }
 }
 
 static void cursor_up(void)
 {
-    if (Loc.line->prev) {
+    if (Loc->prev) {
         Curr.y--;
         if (Curr.y < 0) {
             Curr.y = 0;
@@ -222,7 +218,7 @@ static void cursor_up(void)
                 ScreenDirty = true;
             }
         }
-        Loc.line = Loc.line->prev;
+        Loc = Loc->prev;
     }
 }
 
