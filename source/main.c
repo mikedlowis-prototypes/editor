@@ -191,7 +191,8 @@ static void cursor_left(void)
 {
     //if(Curr.x > Max.x)
         ScreenDirty = true;
-    if(Curr.x > 0) Curr.x--;
+    Curr.x = ((line_length() < Curr.x + 2) ? line_length()-2 : Curr.x) - 1;
+    if(Curr.x < 0) Curr.x = 0;
 }
 
 static void cursor_down(void)
