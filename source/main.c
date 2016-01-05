@@ -45,12 +45,12 @@ static void setup(void);
 static void load(char* fname);
 static void edit(void);
 static void input(int ch);
-static void cursorLeft(void);
-static void cursorDown(void);
-static void cursorUp(void);
-static void cursorRight(void);
-static void cursorHome(void);
-static void cursorEnd(void);
+static void cursor_left(void);
+static void cursor_down(void);
+static void cursor_up(void);
+static void cursor_right(void);
+static void cursor_home(void);
+static void cursor_end(void);
 
 /* Main Routine
  *****************************************************************************/
@@ -149,37 +149,37 @@ static void input(int ch)
     switch (ch) {
         case KEY_LEFT:
         case 'h':
-            cursorLeft();
+            cursor_left();
             break;
 
         case KEY_DOWN:
         case 'j':
-            cursorDown();
+            cursor_down();
             break;
 
         case KEY_UP:
         case 'k':
-            cursorUp();
+            cursor_up();
             break;
 
         case KEY_RIGHT:
         case 'l':
-            cursorRight();
+            cursor_right();
             break;
 
         case KEY_HOME:
         case '0':
-            cursorHome();
+            cursor_home();
             break;
 
         case KEY_END:
         case '$':
-            cursorEnd();
+            cursor_end();
             break;
     }
 }
 
-static void cursorLeft()
+static void cursor_left(void)
 {
     Curr.x--;
     if (Curr.x < 0) {
@@ -191,7 +191,7 @@ static void cursorLeft()
     }
 }
 
-static void cursorDown()
+static void cursor_down(void)
 {
     if (Loc.line->next) {
         Curr.y++;
@@ -206,7 +206,7 @@ static void cursorDown()
     }
 }
 
-static void cursorUp()
+static void cursor_up(void)
 {
     Curr.y--;
     if (Curr.y < 0) {
@@ -220,7 +220,7 @@ static void cursorUp()
         Loc.line = Loc.line->prev;
 }
 
-static void cursorRight()
+static void cursor_right(void)
 {
     Curr.x++;
     if (Curr.x >= Max.x) {
@@ -232,7 +232,7 @@ static void cursorRight()
     }
 }
 
-static void cursorHome()
+static void cursor_home(void)
 {
     if(Curr.x != 0){
         Curr.x = 0;
@@ -240,7 +240,7 @@ static void cursorHome()
     }
 }
 
-static void cursorEnd()
+static void cursor_end(void)
 {
     if (Loc.line->length <= 1)
         Curr.x = 0;
