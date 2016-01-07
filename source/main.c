@@ -252,7 +252,8 @@ static void cursor_home(void)
 
 static void cursor_end(void)
 {
-    Curr.x = ((line_length() <= 1) ? 0 : visible_length());
-    Loc.offset = (line_length() > Max.x) ? line_length()-1 - Max.x : Loc.offset;
+    Curr.x = INT_MAX;
+    if (line_length() > Max.x)
+        Loc.offset = line_length() - (Max.x/2);
     ScreenDirty = true;
 }
