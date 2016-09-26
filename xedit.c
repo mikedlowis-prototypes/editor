@@ -9,8 +9,6 @@
 
 #include "edit.h"
 
-/*****************************************************************************/
-
 struct {
     Display* display;
     Visual* visual;
@@ -28,7 +26,9 @@ struct {
     XIM xim;
 } X;
 Buf Buffer;
+bool InsertMode = false;
 unsigned StartRow = 0;
+unsigned EndRow = 0;
 unsigned CursorPos = 0;
 unsigned LastDrawnPos = 0;
 
@@ -108,6 +108,9 @@ static void handle_key(XEvent* e) {
         len = XLookupString(&e->xkey, buf, sizeof(buf), &key, 0);
     /* Handle the key */
     switch (key) {
+        case XK_F1:
+            InsertMode = !InsertMode;
+            break;
         case XK_F6:
             ColorBase = !ColorBase;
             break;
@@ -127,6 +130,14 @@ static void handle_key(XEvent* e) {
         case XK_Up:
             CursorPos = buf_byline(&Buffer, CursorPos, -1);
             break;
+
+        //default:
+        //    if (len == 0)
+        //        continue;
+        //    if (buf[0] == '\r')
+        //        buf[0] = '\n';
+        //    utf8_decode_rune(&gev->key, (unsigned char *)buf, 8);
+        //    break;
     }
 }
 
@@ -181,13 +192,13 @@ static void handle_event(XEvent* e) {
     }
 }
 
-static XftColor xftcolor(enum ColorId cid, uint16_t alpha) {
+static XftColor xftcolor(enum ColorId cid) {
     Color c = Palette[cid][ColorBase];
     XftColor xc;
     xc.color.red   = ((c & 0x00FF0000) >> 8);
     xc.color.green = ((c & 0x0000FF00));
     xc.color.blue  = ((c & 0x000000FF) << 8);
-    xc.color.alpha = alpha;
+    xc.color.alpha = UINT16_MAX;
     XftColorAllocValue(X.display, X.visual, X.colormap, &xc.color, &xc);
     return xc;
 }
@@ -196,22 +207,19 @@ static void redraw(void) {
     int fheight = X.font->height;
     int fwidth  = X.font->max_advance_width;
     /* Allocate the colors */
-    XftColor bkgclr = xftcolor(CLR_BASE03, UINT16_MAX);
-    XftColor gtrclr = xftcolor(CLR_BASE02, UINT16_MAX);
-    XftColor csrclr = xftcolor(CLR_BASE3,  UINT16_MAX);
-    XftColor txtclr = xftcolor(CLR_BASE0,  UINT16_MAX);
-
+    XftColor bkgclr = xftcolor(CLR_BASE03);
+    XftColor gtrclr = xftcolor(CLR_BASE02);
+    XftColor csrclr = xftcolor(CLR_BASE3);
+    XftColor txtclr = xftcolor(CLR_BASE0);
     /* draw the background color */
     XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
     /* draw the status background */
     XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
-
     /* Scroll the view until the cursor is visible */
-    if (CursorPos > LastDrawnPos)
-        StartRow = buf_byline(&Buffer, StartRow, 1);
+    if (buf_bol(&Buffer, CursorPos) > EndRow)
+        EndRow++, StartRow = buf_byline(&Buffer, StartRow, 1);
     else if (CursorPos < StartRow)
-        StartRow = buf_byline(&Buffer, StartRow, -1);
-
+        EndRow--, StartRow = buf_byline(&Buffer, StartRow, -1);
     /* Draw document text */
     int x = 0, y = 2;
     for (LastDrawnPos = StartRow; LastDrawnPos < buf_end(&Buffer); LastDrawnPos++) {
@@ -220,17 +228,22 @@ static void redraw(void) {
         if (y * fheight >= X.height)
             break;
         FcChar32 ch = (FcChar32)buf_get(&Buffer, LastDrawnPos);
+        XftColor *bgclr = &bkgclr, *fgclr = &txtclr;
+        /* Draw the cursor background */
+        if (LastDrawnPos == CursorPos) {
+            bgclr = &csrclr, fgclr = &bkgclr;
+            if (InsertMode)
+                fgclr = &txtclr, XftDrawRect(X.xft, bgclr, x * fwidth, ((y-1) * fheight) + 4, 1, fheight);
+            else
+                XftDrawRect(X.xft, bgclr, x * fwidth, ((y-1) * fheight) + 4, fwidth, fheight);
+        }
+        /* Draw the actual character */
         if (ch == '\n') { y++, x = 0;    continue; }
         if (ch == '\t') { x += TabWidth; continue; }
-        if (LastDrawnPos == CursorPos) {
-            XftDrawRect(X.xft, &csrclr, x * fwidth, ((y-1) * fheight) + 2, fwidth, fheight);
-            XftDrawString32(X.xft, &bkgclr, X.font, x * fwidth, y * fheight, (FcChar32 *)&ch, 1);
-        } else {
-            XftDrawString32(X.xft, &txtclr, X.font, x * fwidth, y * fheight, (FcChar32 *)&ch, 1);
-        }
+        XftDrawString32(X.xft, fgclr, X.font, x * fwidth, y * fheight, (FcChar32 *)&ch, 1);
         x++;
     }
-
+    EndRow = buf_bol(&Buffer, LastDrawnPos-2);
     /* flush the pixels to the screen */
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
     XFlush(X.display);
