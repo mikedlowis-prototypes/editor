@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
 /* Definitons
  *****************************************************************************/
 enum ColorId {
@@ -60,7 +66,7 @@ enum {
 
 static enum { DARK = 0, LIGHT = 1 } ColorBase = DARK;
 
-static Color Palette[][2] = {
+static const Color Palette[][2] = {
 /*   Color Name   =   Dark      Light    */
     [CLR_BASE03]  = { 0x002b36, 0xfdf6e3 },
     [CLR_BASE02]  = { 0x073642, 0xeee8d5 },
@@ -80,5 +86,8 @@ static Color Palette[][2] = {
     [CLR_GREEN]   = { 0x859900, 0x859900 },
 };
 
+#ifdef __MACH__
 #define FONTNAME "Monaco:pixelsize=15:antialias=true:autohint=true"
-
+#else
+#define FONTNAME "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
+#endif

@@ -1,7 +1,6 @@
+#define _GNU_SOURCE
+#include <time.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdbool.h>
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xft/Xft.h>
@@ -35,6 +34,12 @@ unsigned LastDrawnPos = 0;
 void die(char* m) {
     fprintf(stderr, "dying, %s\n", m);
     exit(1);
+}
+
+static uint64_t time_ms(void) {
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    return (ts.tv_sec * 1000000000L + ts.tv_nsec) / 1000000L;
 }
 
 static int init(void) {
@@ -125,10 +130,14 @@ static void handle_key(XEvent* e) {
 
         case XK_Down:
             CursorPos = buf_byline(&Buffer, CursorPos, 1);
+            if (buf_bol(&Buffer, CursorPos) > EndRow)
+                EndRow++, StartRow = buf_byline(&Buffer, StartRow, 1);
             break;
 
         case XK_Up:
             CursorPos = buf_byline(&Buffer, CursorPos, -1);
+            if (CursorPos < StartRow)
+                EndRow--, StartRow = buf_byline(&Buffer, StartRow, -1);
             break;
 
         //default:
@@ -204,6 +213,14 @@ static XftColor xftcolor(enum ColorId cid) {
 }
 
 static void redraw(void) {
+    static uint64_t last_draw = 0;
+    uint64_t current = time_ms();
+    //if (current - last_draw < 200)
+    //    return;
+    last_draw = current;
+
+    puts("redraw");
+    uint64_t t1start = time_ms(), t1end;
     int fheight = X.font->height;
     int fwidth  = X.font->max_advance_width;
     /* Allocate the colors */
@@ -215,12 +232,8 @@ static void redraw(void) {
     XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
     /* draw the status background */
     XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
-    /* Scroll the view until the cursor is visible */
-    if (buf_bol(&Buffer, CursorPos) > EndRow)
-        EndRow++, StartRow = buf_byline(&Buffer, StartRow, 1);
-    else if (CursorPos < StartRow)
-        EndRow--, StartRow = buf_byline(&Buffer, StartRow, -1);
     /* Draw document text */
+    uint64_t t2start = time_ms(), t2end;
     int x = 0, y = 2;
     for (LastDrawnPos = StartRow; LastDrawnPos < buf_end(&Buffer); LastDrawnPos++) {
         if (x * fwidth >= X.width)
@@ -244,9 +257,13 @@ static void redraw(void) {
         x++;
     }
     EndRow = buf_bol(&Buffer, LastDrawnPos-2);
+    t2end = time_ms();
+    printf("text time: %lu\n", t2end - t2start);
     /* flush the pixels to the screen */
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
     XFlush(X.display);
+    t1end = time_ms();
+    printf("redraw time: %lu\n", t1end - t1start);
 }
 
 int main(int argc, char** argv) {
@@ -255,15 +272,22 @@ int main(int argc, char** argv) {
     if (argc > 1)
         buf_load(&Buffer, argv[1]);
     XEvent e;
-    while (true) {
-        XPeekEvent(X.display,&e);
-        while (XPending(X.display)) {
-            XNextEvent(X.display, &e);
-            if (!XFilterEvent(&e, None))
-                handle_event(&e);
+
+        while(XNextEvent(X.display, &e) >= 0) {
+            handle_event(&e);
+            if (!XPending(X.display)) {
+                redraw();
+            }
         }
-        redraw();
-    }
+    //while (true) {
+        //XPeekEvent(X.display,&e);
+        //while (XPending(X.display)) {
+        //    XNextEvent(X.display, &e);
+        //    if (!XFilterEvent(&e, None))
+        //        handle_event(&e);
+        //}
+        //redraw();
+    //}
     deinit();
     return 0;
 }

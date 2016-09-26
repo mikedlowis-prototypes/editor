@@ -1,8 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "edit.h"
 
 void buf_load(Buf* buf, char* path)

@@ -19,4 +19,6 @@ unittests: $(TESTOBJS)
 clean:
 	$(RM) edit unittests $(OBJS) $(TESTOBJS)
 
+$(OBJS): edit.h
+
 .PHONY: all test
