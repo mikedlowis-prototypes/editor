@@ -1,4 +1,4 @@
-LDFLAGS  = -L/opt/X11/lib -lXft -lX11
+LDFLAGS  = -L/opt/X11/lib -lX11 -lXft
 CFLAGS   = --std=c99 -Wall -Wextra -I. -I/opt/X11/include -I/opt/local/include/freetype2 -I/usr/include/freetype2
 SRCS     = xedit.c buf.c
 OBJS     = $(SRCS:.c=.o)

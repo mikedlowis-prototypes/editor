@@ -42,6 +42,17 @@ static uint64_t time_ms(void) {
     return (ts.tv_sec * 1000000000L + ts.tv_nsec) / 1000000L;
 }
 
+static XftColor xftcolor(enum ColorId cid) {
+    Color c = Palette[cid][ColorBase];
+    XftColor xc;
+    xc.color.red   = ((c & 0x00FF0000) >> 8);
+    xc.color.green = ((c & 0x0000FF00));
+    xc.color.blue  = ((c & 0x000000FF) << 8);
+    xc.color.alpha = UINT16_MAX;
+    XftColorAllocValue(X.display, X.visual, X.colormap, &xc.color, &xc);
+    return xc;
+}
+
 static int init(void) {
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
     /* open the X display and get basic attributes */
@@ -201,26 +212,10 @@ static void handle_event(XEvent* e) {
     }
 }
 
-static XftColor xftcolor(enum ColorId cid) {
-    Color c = Palette[cid][ColorBase];
-    XftColor xc;
-    xc.color.red   = ((c & 0x00FF0000) >> 8);
-    xc.color.green = ((c & 0x0000FF00));
-    xc.color.blue  = ((c & 0x000000FF) << 8);
-    xc.color.alpha = UINT16_MAX;
-    XftColorAllocValue(X.display, X.visual, X.colormap, &xc.color, &xc);
-    return xc;
-}
-
 static void redraw(void) {
-    static uint64_t last_draw = 0;
-    uint64_t current = time_ms();
-    //if (current - last_draw < 200)
-    //    return;
-    last_draw = current;
+    uint64_t tstart;
 
-    puts("redraw");
-    uint64_t t1start = time_ms(), t1end;
+    tstart = time_ms();
     int fheight = X.font->height;
     int fwidth  = X.font->max_advance_width;
     /* Allocate the colors */
@@ -232,8 +227,10 @@ static void redraw(void) {
     XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
     /* draw the status background */
     XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
+    printf("\nT1: %lu\n", time_ms() - tstart);
+
     /* Draw document text */
-    uint64_t t2start = time_ms(), t2end;
+    tstart = time_ms();
     int x = 0, y = 2;
     for (LastDrawnPos = StartRow; LastDrawnPos < buf_end(&Buffer); LastDrawnPos++) {
         if (x * fwidth >= X.width)
@@ -257,37 +254,36 @@ static void redraw(void) {
         x++;
     }
     EndRow = buf_bol(&Buffer, LastDrawnPos-2);
-    t2end = time_ms();
-    printf("text time: %lu\n", t2end - t2start);
+    printf("T2: %lu\n", time_ms() - tstart);
+
+
+    tstart = time_ms();
     /* flush the pixels to the screen */
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+    printf("T3: %lu\n", time_ms() - tstart);
+
+    tstart = time_ms();
     XFlush(X.display);
-    t1end = time_ms();
-    printf("redraw time: %lu\n", t1end - t1start);
+    printf("T4: %lu\n", time_ms() - tstart);
 }
 
 int main(int argc, char** argv) {
-    init();
+    /* load the buffer */
     buf_init(&Buffer);
     if (argc > 1)
         buf_load(&Buffer, argv[1]);
+    /* main x11 event loop */
+    init();
     XEvent e;
-
-        while(XNextEvent(X.display, &e) >= 0) {
-            handle_event(&e);
-            if (!XPending(X.display)) {
-                redraw();
-            }
-        }
-    //while (true) {
-        //XPeekEvent(X.display,&e);
-        //while (XPending(X.display)) {
-        //    XNextEvent(X.display, &e);
-        //    if (!XFilterEvent(&e, None))
-        //        handle_event(&e);
-        //}
-        //redraw();
-    //}
+    while (true) {
+      XPeekEvent(X.display,&e);
+      while (XPending(X.display)) {
+          XNextEvent(X.display, &e);
+          if (!XFilterEvent(&e, None))
+              handle_event(&e);
+      }
+      redraw();
+    }
     deinit();
     return 0;
 }
