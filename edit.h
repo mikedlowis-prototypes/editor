@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <X11/Xft/Xft.h>
+
 /* Definitons
  *****************************************************************************/
 enum ColorId {
@@ -50,6 +52,22 @@ unsigned buf_eol(Buf* buf, unsigned pos);
 unsigned buf_end(Buf* buf);
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
+
+/* Screen management functions
+ *****************************************************************************/
+
+typedef struct {
+    unsigned off;
+    unsigned len;
+    Rune cols[100];
+} Row;
+
+typedef struct {
+    unsigned off;
+    unsigned nrows;
+    unsigned ncols;
+    Row rows[73];
+} ScreenBuf;
 
 /* Miscellaneous Functions
  *****************************************************************************/

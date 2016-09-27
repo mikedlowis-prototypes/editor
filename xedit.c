@@ -2,9 +2,6 @@
 #include <time.h>
 #include <signal.h>
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xft/Xft.h>
-#include <X11/cursorfont.h>
 
 #include "edit.h"
 
@@ -21,11 +18,15 @@ struct {
     XftDraw* xft;
     int width;
     int height;
+    int rows;
+    int cols;
     XIC xic;
     XIM xim;
 } X;
 Buf Buffer;
 bool InsertMode = false;
+ScreenBuf ScreenBuffer;
+
 unsigned StartRow = 0;
 unsigned EndRow = 0;
 unsigned CursorPos = 0;
@@ -83,13 +84,13 @@ static int init(void) {
     XSendEvent(X.display, X.window, False, StructureNotifyMask, (XEvent *)&ce);
     XMapWindow(X.display, X.window);
 
-    /* set input methods */
-    if((X.xim = XOpenIM(X.display, 0, 0, 0)))
-        X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.window, XNFocusWindow, X.window, NULL);
-
     /* allocate font */
     if(!(X.font = XftFontOpenName(X.display, X.screen, FONTNAME)))
         die("cannot open default font");
+
+    /* set input methods */
+    if((X.xim = XOpenIM(X.display, 0, 0, 0)))
+        X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.window, XNFocusWindow, X.window, NULL);
 
     /* initialize the graphics context */
     XGCValues gcv;
@@ -111,6 +112,8 @@ static void deinit(void) {
     }
     XCloseDisplay(X.display);
 }
+
+#define StartRow (ScreenBuffer.off)
 
 static void handle_key(XEvent* e) {
     int len;
@@ -140,15 +143,17 @@ static void handle_key(XEvent* e) {
             break;
 
         case XK_Down:
-            CursorPos = buf_byline(&Buffer, CursorPos, 1);
-            if (buf_bol(&Buffer, CursorPos) > EndRow)
-                EndRow++, StartRow = buf_byline(&Buffer, StartRow, 1);
+            StartRow = buf_byline(&Buffer, StartRow, 1);
+            //CursorPos = buf_byline(&Buffer, CursorPos, 1);
+            //if (buf_bol(&Buffer, CursorPos) > EndRow)
+            //    EndRow++, StartRow = buf_byline(&Buffer, StartRow, 1);
             break;
 
         case XK_Up:
-            CursorPos = buf_byline(&Buffer, CursorPos, -1);
-            if (CursorPos < StartRow)
-                EndRow--, StartRow = buf_byline(&Buffer, StartRow, -1);
+            StartRow = buf_byline(&Buffer, StartRow, -1);
+            //CursorPos = buf_byline(&Buffer, CursorPos, -1);
+            //if (CursorPos < StartRow)
+            //    EndRow--, StartRow = buf_byline(&Buffer, StartRow, -1);
             break;
 
         //default:
@@ -197,6 +202,8 @@ static void handle_event(XEvent* e) {
             if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
                 X.width  = e->xconfigure.width;
                 X.height = e->xconfigure.height;
+                X.rows = X.height / X.font->height;
+                X.cols = X.width  / X.font->max_advance_width;
                 X.pixmap = XCreatePixmap(X.display, X.window, X.width, X.height, X.depth);
                 X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
             }
@@ -214,57 +221,109 @@ static void handle_event(XEvent* e) {
 
 static void redraw(void) {
     uint64_t tstart;
-
-    tstart = time_ms();
     int fheight = X.font->height;
     int fwidth  = X.font->max_advance_width;
+
     /* Allocate the colors */
     XftColor bkgclr = xftcolor(CLR_BASE03);
     XftColor gtrclr = xftcolor(CLR_BASE02);
     XftColor csrclr = xftcolor(CLR_BASE3);
     XftColor txtclr = xftcolor(CLR_BASE0);
-    /* draw the background color */
-    XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
-    /* draw the status background */
-    XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
+
+    /* Update the screen buffer */
+    tstart = time_ms();
+    LastDrawnPos = StartRow;
+    int csrx = 0, csry = 0;
+    for (int y = 0; y < 73; y++) {
+        ScreenBuffer.rows[y].off = LastDrawnPos;
+        ScreenBuffer.rows[y].len = 0;
+        for (int x = 0; x < 100; x++) {
+            if (CursorPos == LastDrawnPos)
+                csrx = x, csry = y;
+            Rune r = buf_get(&Buffer, LastDrawnPos++);
+            if (r == '\n') { break; }
+            if (r == '\t') { x += 4; break; }
+            ScreenBuffer.rows[y].cols[x] = r;
+            ScreenBuffer.rows[y].len++;
+        }
+    }
     printf("\nT1: %lu\n", time_ms() - tstart);
 
-    /* Draw document text */
+    /* draw the background colors */
+    XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
+    XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
+    XftDrawRect(X.xft, &gtrclr, 80 * fwidth, 0, fwidth, X.height);
+
+    /* flush the screen buffer */
     tstart = time_ms();
-    int x = 0, y = 2;
-    for (LastDrawnPos = StartRow; LastDrawnPos < buf_end(&Buffer); LastDrawnPos++) {
-        if (x * fwidth >= X.width)
-            y++, x = 0;
-        if (y * fheight >= X.height)
-            break;
-        FcChar32 ch = (FcChar32)buf_get(&Buffer, LastDrawnPos);
-        XftColor *bgclr = &bkgclr, *fgclr = &txtclr;
-        /* Draw the cursor background */
-        if (LastDrawnPos == CursorPos) {
-            bgclr = &csrclr, fgclr = &bkgclr;
-            if (InsertMode)
-                fgclr = &txtclr, XftDrawRect(X.xft, bgclr, x * fwidth, ((y-1) * fheight) + 4, 1, fheight);
-            else
-                XftDrawRect(X.xft, bgclr, x * fwidth, ((y-1) * fheight) + 4, fwidth, fheight);
-        }
-        /* Draw the actual character */
-        if (ch == '\n') { y++, x = 0;    continue; }
-        if (ch == '\t') { x += TabWidth; continue; }
-        XftDrawString32(X.xft, fgclr, X.font, x * fwidth, y * fheight, (FcChar32 *)&ch, 1);
-        x++;
-    }
-    EndRow = buf_bol(&Buffer, LastDrawnPos-2);
+    for (int y = 0; y < 73; y++)
+        if (ScreenBuffer.rows[y].len > 0)
+            XftDrawString32(X.xft, &txtclr, X.font, 0, (y+2) * fheight, (FcChar32*)(ScreenBuffer.rows[y].cols), (ScreenBuffer.rows[y].len));
     printf("T2: %lu\n", time_ms() - tstart);
 
+    /* Place cursor on screen */
+    XftDrawRect(X.xft, &txtclr, csrx * fwidth, (csry+1) * fheight + 3, fwidth, fheight);
+    XftDrawString32(X.xft, &bkgclr, X.font, csrx * fwidth, (csry+2) * fheight, (FcChar32*)&(ScreenBuffer.rows[csry].cols[csrx]), 1);
 
+    /* flush pixels to the screen */
     tstart = time_ms();
-    /* flush the pixels to the screen */
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+    XFlush(X.display);
     printf("T3: %lu\n", time_ms() - tstart);
 
-    tstart = time_ms();
-    XFlush(X.display);
-    printf("T4: %lu\n", time_ms() - tstart);
+    //uint64_t tstart;
+    //printf("rows: %d, cols: %d\n", X.rows, X.cols);
+
+    //tstart = time_ms();
+    //int fheight = X.font->height;
+    //int fwidth  = X.font->max_advance_width;
+    ///* Allocate the colors */
+    //XftColor bkgclr = xftcolor(CLR_BASE03);
+    //XftColor gtrclr = xftcolor(CLR_BASE02);
+    //XftColor csrclr = xftcolor(CLR_BASE3);
+    //XftColor txtclr = xftcolor(CLR_BASE0);
+    ///* draw the background color */
+    //XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
+    ///* draw the status background */
+    //XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
+    //printf("\nT1: %lu\n", time_ms() - tstart);
+
+    ///* Draw document text */
+    //tstart = time_ms();
+    //int x = 0, y = 2;
+    //for (LastDrawnPos = StartRow; LastDrawnPos < buf_end(&Buffer); LastDrawnPos++) {
+    //    if (x * fwidth >= X.width)
+    //        y++, x = 0;
+    //    if (y * fheight >= X.height)
+    //        break;
+    //    FcChar32 ch = (FcChar32)buf_get(&Buffer, LastDrawnPos);
+    //    XftColor *bgclr = &bkgclr, *fgclr = &txtclr;
+    //    /* Draw the cursor background */
+    //    if (LastDrawnPos == CursorPos) {
+    //        bgclr = &csrclr, fgclr = &bkgclr;
+    //        if (InsertMode)
+    //            fgclr = &txtclr, XftDrawRect(X.xft, bgclr, x * fwidth, ((y-1) * fheight) + 4, 1, fheight);
+    //        else
+    //            XftDrawRect(X.xft, bgclr, x * fwidth, ((y-1) * fheight) + 4, fwidth, fheight);
+    //    }
+    //    /* Draw the actual character */
+    //    if (ch == '\n') { y++, x = 0;    continue; }
+    //    if (ch == '\t') { x += TabWidth; continue; }
+    //    XftDrawString32(X.xft, fgclr, X.font, x * fwidth, y * fheight, (FcChar32 *)&ch, 1);
+    //    x++;
+    //}
+    //EndRow = buf_bol(&Buffer, LastDrawnPos-2);
+    //printf("T2: %lu\n", time_ms() - tstart);
+
+
+    //tstart = time_ms();
+    ///* flush the pixels to the screen */
+    //XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+    //printf("T3: %lu\n", time_ms() - tstart);
+
+    //tstart = time_ms();
+    //XFlush(X.display);
+    //printf("T4: %lu\n", time_ms() - tstart);
 }
 
 int main(int argc, char** argv) {
