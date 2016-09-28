@@ -55,19 +55,18 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count);
 
 /* Screen management functions
  *****************************************************************************/
-
 typedef struct {
-    unsigned off;
     unsigned len;
-    Rune cols[100];
+    Rune cols[];
 } Row;
 
-typedef struct {
-    unsigned off;
-    unsigned nrows;
-    unsigned ncols;
-    Row rows[73];
-} ScreenBuf;
+void screen_setsize(unsigned nrows, unsigned ncols);
+void screen_getsize(unsigned* nrows, unsigned* ncols);
+void screen_clear(void);
+Row* screen_getrow(unsigned row);
+void screen_clearrow(unsigned row);
+void screen_setcell(unsigned row, unsigned col, Rune r);
+Rune screen_getcell(unsigned row, unsigned col);
 
 /* Miscellaneous Functions
  *****************************************************************************/
