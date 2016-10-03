@@ -105,37 +105,17 @@ unsigned buf_end(Buf* buf)
     return (bufsz - gapsz);
 }
 
-static unsigned move_back(Buf* buf, unsigned pos) {
-    if (pos == 0) return 0;
-    if (buf_get(buf, pos)   == '\n' &&
-        buf_get(buf, pos-1) == '\n' &&
-        buf_get(buf, pos-2) != '\n')
-        pos = pos - 2;
-    else if (buf_get(buf, pos)   != '\n' &&
-             buf_get(buf, pos-1) == '\n' &&
-             buf_get(buf, pos-2) != '\n')
-        pos = pos - 2;
-    else
-        pos = pos - 1;
-    return pos;
-}
-
-static unsigned move_forward(Buf* buf, unsigned pos) {
-    if (pos+2 >= buf_end(buf)) return buf_end(buf)-2;
-    if (buf_get(buf, pos)   != '\n' &&
-        buf_get(buf, pos+1) == '\n')
-        pos = pos + 2;
-    else
-        pos = pos + 1;
-    return pos;
-}
-
 unsigned buf_byrune(Buf* buf, unsigned pos, int count)
 {
+    (void)buf;
     int move = (count < 0 ? -1 : 1);
     count *= move;
     for (; count > 0; count--)
-        pos = (move > 0 ? &move_forward : &move_back)(buf, pos);
+        if (move < 0) {
+            if (pos > 0) pos--;
+        } else {
+            if (pos < buf_end(buf)-1) pos++;
+        }
     return pos;
 }
 
@@ -169,8 +149,14 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count)
     int move = (count < 0 ? -1 : 1);
     count *= move; // remove the sign if there is one
     unsigned col = get_column(buf, pos);
-    for (; count > 0; count--)
-        pos = (move < 0 ? move_back(buf, buf_bol(buf, pos))
-                        : move_forward(buf, buf_eol(buf, pos)));
+    for (; count > 0; count--) {
+        if (move < 0) {
+            if (pos > buf_eol(buf, 0))
+                pos = buf_bol(buf, pos)-2;
+        } else {
+            if (pos < buf_end(buf)-2)
+                pos = buf_eol(buf, pos)+2;
+        }
+    }
     return set_column(buf, pos, col);
 }

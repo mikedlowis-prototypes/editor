@@ -104,7 +104,7 @@ static const Color Palette[][2] = {
 };
 
 #ifdef __MACH__
-#define FONTNAME "Monaco:pixelsize=15:antialias=true:autohint=true"
+#define FONTNAME "Inconsolata:pixelsize=14:antialias=true:autohint=true"
 #else
 #define FONTNAME "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
 #endif

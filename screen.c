@@ -1,6 +1,5 @@
 #include "edit.h"
 
-static unsigned FileOffset = 0;
 static unsigned NumRows = 0;
 static unsigned NumCols = 0;
 static Row** Rows;
