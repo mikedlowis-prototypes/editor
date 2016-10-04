@@ -247,19 +247,14 @@ static void redraw(void) {
     screen_clearrow(0);
     for (unsigned y = 1; y < nrows; y++) {
         screen_clearrow(y);
-        for (unsigned x = 0; x < ncols; x++) {
+        screen_setrowoff(y, pos);
+        for (unsigned x = 0; x < ncols;) {
             if (CursorPos == pos)
                 csrx = x, csry = y;
             Rune r = buf_get(&Buffer, pos++);
-            if (r == '\n') {
-                screen_setcell(y,x,' ');
-                break;
-            } else if (r == '\t') {
-                screen_setcell(y,x,' ');
-                x += TabWidth - (x % TabWidth) - 1;
-            } else {
-                screen_setcell(y,x,r);
-            }
+            unsigned cols = screen_setcell(y,x,r);
+            x += cols;
+            if (r == '\n') break;
         }
     }
     EndPos = pos-1;
@@ -272,8 +267,7 @@ static void redraw(void) {
     /* flush the screen buffer */
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
-        if (row->len > 0)
-            XftDrawString32(X.xft, &txtclr, X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));
+        XftDrawString32(X.xft, &txtclr, X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));
     }
 
     /* Place cursor on screen */
@@ -281,9 +275,7 @@ static void redraw(void) {
     if (InsertMode) {
         XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, 2, fheight);
     } else {
-        unsigned width = 1;
-        if ('\t' == buf_get(&Buffer, CursorPos))
-            width = TabWidth - (csrx % TabWidth);
+        unsigned width = ('\t' == buf_get(&Buffer, CursorPos) ? (TabWidth - (csrx % TabWidth)) : 1);
         XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, width * fwidth, fheight);
         XftDrawString32(X.xft, &bkgclr, X.font, csrx * fwidth, (csry+1) * fheight, (FcChar32*)&csrrune, 1);
     }

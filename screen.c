@@ -36,16 +36,32 @@ void screen_clearrow(unsigned row)
     if (!scrrow) return;
     for (unsigned i = 0; i < NumCols; i++)
         scrrow->cols[i] = (Rune)' ';
-    scrrow->len = 0;
+    scrrow->rlen = 0;
+    scrrow->len  = 0;
 }
 
-void screen_setcell(unsigned row, unsigned col, Rune r)
+void screen_setrowoff(unsigned row, unsigned off)
 {
-    if (row >= NumRows || col >= NumCols) return;
+    screen_getrow(row)->off = off;
+}
+
+unsigned screen_setcell(unsigned row, unsigned col, Rune r)
+{
+    if (row >= NumRows || col >= NumCols) return 0;
     Row* scrrow = screen_getrow(row);
-    scrrow->cols[col] = r;
-    if (col+1 >= scrrow->len)
-        scrrow->len = col+1;
+    /* write the rune to the screen buf */
+    unsigned ncols = 1;
+    if (r == '\t') {
+        scrrow->cols[col] = ' ';
+        ncols = (TabWidth - (col % TabWidth));
+    } else if (r != '\n') {
+        scrrow->cols[col] = r;
+    }
+    /* Update lengths */
+    scrrow->rlen += 1;
+    if ((col + ncols) > scrrow->len)
+        scrrow->len = col + ncols;
+    return ncols;
 }
 
 Rune screen_getcell(unsigned row, unsigned col)
