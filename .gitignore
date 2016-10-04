@@ -32,3 +32,4 @@
 *.dSYM/
 *.d
 edit
+unittests

@@ -148,6 +148,11 @@ static void handle_key(XEvent* e) {
                 buf_del(&Buffer, --CursorPos);
             break;
 
+        case XK_Delete:
+            if (InsertMode)
+                buf_del(&Buffer, CursorPos);
+            break;
+
         default:
             if (len > 0) {
                 Rune r;
@@ -155,7 +160,6 @@ static void handle_key(XEvent* e) {
                 if (buf[0] == '\r')
                     buf[0] = '\n';
                 for(int i = 0; i < 8 && !utf8decode(&r, &len, buf[i]); i++);
-                printf("Rune: '%c'\n", (char)r);
                 if (InsertMode)
                     buf_ins(&Buffer, CursorPos++, r);
             }
