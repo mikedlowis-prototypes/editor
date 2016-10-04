@@ -138,6 +138,28 @@ static void handle_key(XEvent* e) {
         case XK_Up:
             CursorPos = buf_byline(&Buffer, CursorPos, -1);
             break;
+
+        case XK_Escape:
+            InsertMode = false;
+            break;
+
+        case XK_BackSpace:
+            if (InsertMode)
+                buf_del(&Buffer, --CursorPos);
+            break;
+
+        default:
+            if (len > 0) {
+                Rune r;
+                size_t len = 0;
+                if (buf[0] == '\r')
+                    buf[0] = '\n';
+                for(int i = 0; i < 8 && !utf8decode(&r, &len, buf[i]); i++);
+                printf("Rune: '%c'\n", (char)r);
+                if (InsertMode)
+                    buf_ins(&Buffer, CursorPos++, r);
+            }
+            break;
     }
 }
 
@@ -150,8 +172,10 @@ static void handle_mousebtn(XEvent* e) {
         case Button3: /* Right Button */
             break;
         case Button4: /* Wheel Up */
+            CursorPos = buf_byline(&Buffer, CursorPos, -ScrollLines);
             break;
         case Button5: /* Wheel Down */
+            CursorPos = buf_byline(&Buffer, CursorPos, ScrollLines);
             break;
     }
 }
@@ -222,9 +246,15 @@ static void redraw(void) {
             if (CursorPos == pos)
                 csrx = x, csry = y;
             Rune r = buf_get(&Buffer, pos++);
-            if (r == '\n') { break; }
-            if (r == '\t') { x += 4; break; }
-            screen_setcell(y,x,r);
+            if (r == '\n') {
+                screen_setcell(y,x,' ');
+                break;
+            } else if (r == '\t') {
+                screen_setcell(y,x,' ');
+                x += TabWidth - (x % TabWidth) - 1;
+            } else {
+                screen_setcell(y,x,r);
+            }
         }
     }
     EndPos = pos-1;

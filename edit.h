@@ -72,13 +72,25 @@ Rune screen_getcell(unsigned row, unsigned col);
  *****************************************************************************/
 void die(char* msg);
 
+/* UTF-8 Handling
+ *****************************************************************************/
+#define UTF_MAX   6u
+#define RUNE_SELF ((Rune)0x80)
+#define RUNE_ERR  ((Rune)0xFFFD)
+#define RUNE_MAX  ((Rune)0x10FFFF)
+#define RUNE_EOF  ((Rune)EOF)
+
+size_t utf8encode(char str[UTF_MAX], Rune rune);
+bool utf8decode(Rune* rune, size_t* length, int byte);
+
 /* Configuration
  *****************************************************************************/
 enum {
-    Width     = 640,
-    Height    = 480,
-    TabWidth  = 4,
-    BufSize   = 8192,
+    Width       = 640,
+    Height      = 480,
+    TabWidth    = 4,
+    ScrollLines = 1,
+    BufSize     = 8192,
 };
 
 static enum { DARK = 0, LIGHT = 1 } ColorBase = DARK;
