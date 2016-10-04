@@ -119,6 +119,7 @@ static void handle_key(XEvent* e) {
         case XK_F1:
             InsertMode = !InsertMode;
             break;
+
         case XK_F6:
             ColorBase = !ColorBase;
             break;
@@ -217,7 +218,7 @@ static void scroll_dn(void) {
             for (unsigned x = 0; x < ncols; x++) {
                 Rune r = buf_get(&Buffer, pos++);
                 if (r == '\n') { break; }
-                if (r == '\t') { x += 4; break; }
+                if (r == '\t') { x += 4; }
             }
         }
         EndPos = pos-1;
@@ -280,7 +281,10 @@ static void redraw(void) {
     if (InsertMode) {
         XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, 2, fheight);
     } else {
-        XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, fwidth, fheight);
+        unsigned width = 1;
+        if ('\t' == buf_get(&Buffer, CursorPos))
+            width = TabWidth - (csrx % TabWidth);
+        XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, width * fwidth, fheight);
         XftDrawString32(X.xft, &bkgclr, X.font, csrx * fwidth, (csry+1) * fheight, (FcChar32*)&csrrune, 1);
     }
 
