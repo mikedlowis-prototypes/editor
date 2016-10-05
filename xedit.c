@@ -156,8 +156,7 @@ static void handle_key(XEvent* e) {
             if (len > 0) {
                 Rune r;
                 size_t len = 0;
-                if (buf[0] == '\r')
-                    buf[0] = '\n';
+                if (buf[0] == '\r') buf[0] = '\n';
                 for(int i = 0; i < 8 && !utf8decode(&r, &len, buf[i]); i++);
                 if (Buffer.insert_mode)
                     buf_ins(&Buffer, CursorPos++, r);
@@ -169,6 +168,9 @@ static void handle_key(XEvent* e) {
 static void handle_mousebtn(XEvent* e) {
     switch (e->xbutton.button) {
         case Button1: /* Left Button */
+            CursorPos = screen_getoff(&Buffer, CursorPos,
+                                      e->xbutton.y / (X.font->ascent + X.font->descent),
+                                      e->xbutton.x / X.font->max_advance_width);
             break;
         case Button2: /* Middle Button */
             break;

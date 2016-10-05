@@ -64,6 +64,7 @@ typedef struct {
 
 void screen_reflow(Buf* buf);
 void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
+unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
 void screen_clear(void);

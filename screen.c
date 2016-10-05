@@ -38,6 +38,28 @@ void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
     screen_reflow(buf);
 }
 
+unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col) {
+    Row* scrrow = screen_getrow(row);
+    if (!scrrow) return pos;
+    pos = scrrow->off;
+    if (col > scrrow->len) {
+        pos = (scrrow->off + scrrow->rlen - 1);
+    } else {
+        for (unsigned x = 0; x < col;) {
+            Rune r = buf_get(buf,pos++);
+            if (r == '\n')
+                break;
+            else if (r == '\t')
+                x += (TabWidth - (x % TabWidth));
+            else
+                x += 1;
+        }
+    }
+    if (pos >= buf_end(buf)-1)
+        return buf_end(buf)-2;
+    return pos;
+}
+
 void screen_getsize(unsigned* nrows, unsigned* ncols) {
     *nrows = NumRows, *ncols = NumCols;
 }
