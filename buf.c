@@ -13,6 +13,7 @@ void buf_load(Buf* buf, char* path)
 
 void buf_initsz(Buf* buf, size_t sz)
 {
+    buf->insert_mode = false;
     buf->bufsize  = sz;
     buf->bufstart = (Rune*)malloc(buf->bufsize * sizeof(Rune));
     buf->bufend   = buf->bufstart + buf->bufsize;

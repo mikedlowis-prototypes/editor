@@ -151,6 +151,8 @@ void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
                 }
                 if (buf_get(buf,pos++) == '\t')
                     x += (TabWidth - (x % TabWidth));
+                else
+                    x += 1;
             }
             break;
         }
