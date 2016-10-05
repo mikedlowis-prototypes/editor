@@ -4,13 +4,36 @@ static unsigned NumRows = 0;
 static unsigned NumCols = 0;
 static Row** Rows;
 
-void screen_setsize(unsigned nrows, unsigned ncols) {
-    if (Rows) free(Rows);
+void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
+    unsigned pos = 0;
+    /* free the old row data */
+    if (Rows) {
+        pos = Rows[1]->off;
+        for (unsigned i = 0; i < NumRows; i++)
+            free(Rows[i]);
+        free(Rows);
+    }
+    /* create the new row data */
     Rows = calloc(nrows, sizeof(Row*));
     for (unsigned i = 0; i < nrows; i++)
         Rows[i] = calloc(1, sizeof(Row) + (ncols * sizeof(Rune)));
+    /* update dimensions */
     NumRows = nrows;
     NumCols = ncols;
+    /* populate the screen buffer */
+    screen_clearrow(0);
+    for (unsigned y = 1; y < NumRows; y++) {
+        screen_clearrow(y);
+        screen_setrowoff(y, pos);
+        for (unsigned x = 0; x < NumCols;) {
+            //if (csr == pos)
+            //    *csrx = x, *csry = y;
+            Rune r = buf_get(buf, pos++);
+            x += screen_setcell(y,x,r);
+            if (r == '\n') break;
+        }
+    }
+
 }
 
 void screen_getsize(unsigned* nrows, unsigned* ncols) {
@@ -63,13 +86,8 @@ Rune screen_getcell(unsigned row, unsigned col) {
     return scrrow->cols[col];
 }
 
-static unsigned linelen(Buf* buf, unsigned csr) {
-    unsigned eol = buf_eol(buf, csr);
-    unsigned bol = buf_bol(buf, csr);
-    return (eol - bol);
-}
-
 static void fill_row(Buf* buf, unsigned row, unsigned pos) {
+    screen_clearrow(row);
     for (unsigned x = 0; x < NumCols;) {
         Rune r = buf_get(buf, pos++);
         x += screen_setcell(row, x, r);
@@ -116,16 +134,13 @@ static void sync_view(Buf* buf, unsigned csr) {
 void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
     sync_view(buf, csr);
     screen_clearrow(0);
-    unsigned pos = Rows[1]->off;
     for (unsigned y = 1; y < NumRows; y++) {
-        screen_clearrow(y);
-        screen_setrowoff(y, pos);
-        for (unsigned x = 0; x < NumCols;) {
-            if (csr == pos)
-                *csrx = x, *csry = y;
-            Rune r = buf_get(buf, pos++);
-            x += screen_setcell(y,x,r);
-            if (r == '\n') break;
+        unsigned start = Rows[y]->off;
+        unsigned end   = Rows[y]->off + Rows[y]->rlen - 1;
+        if (start <= csr && csr <= end) {
+            *csry = y;
+            *csrx = csr - start;
+            break;
         }
     }
 }

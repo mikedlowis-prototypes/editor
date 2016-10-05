@@ -61,7 +61,7 @@ typedef struct {
     Rune cols[];
 } Row;
 
-void screen_setsize(unsigned nrows, unsigned ncols);
+void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
 void screen_clear(void);
 Row* screen_getrow(unsigned row);

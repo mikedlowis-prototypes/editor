@@ -196,7 +196,10 @@ static void handle_event(XEvent* e) {
                 X.height = e->xconfigure.height;
                 X.pixmap = XCreatePixmap(X.display, X.window, X.width, X.height, X.depth);
                 X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
-                screen_setsize(X.height / X.font->height, X.width / X.font->max_advance_width);
+                screen_setsize(
+                    &Buffer,
+                    X.height / X.font->height,
+                    X.width / X.font->max_advance_width);
             }
             break;
     }
