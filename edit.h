@@ -32,6 +32,7 @@ typedef uint32_t Rune;
 /* Buffer management functions
  *****************************************************************************/
 typedef struct buf {
+    bool insert_mode;
     size_t bufsize;
     Rune* bufstart;
     Rune* bufend;
@@ -61,6 +62,8 @@ typedef struct {
     Rune cols[];
 } Row;
 
+void screen_reflow(Buf* buf);
+void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
 void screen_clear(void);
@@ -69,7 +72,6 @@ void screen_clearrow(unsigned row);
 void screen_setrowoff(unsigned row, unsigned off);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
 Rune screen_getcell(unsigned row, unsigned col);
-void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 
 /* Miscellaneous Functions
  *****************************************************************************/

@@ -4,6 +4,20 @@ static unsigned NumRows = 0;
 static unsigned NumCols = 0;
 static Row** Rows;
 
+void screen_reflow(Buf* buf) {
+    unsigned pos = Rows[1]->off;
+    screen_clearrow(0);
+    for (unsigned y = 1; y < NumRows; y++) {
+        screen_clearrow(y);
+        screen_setrowoff(y, pos);
+        for (unsigned x = 0; x < NumCols;) {
+            Rune r = buf_get(buf, pos++);
+            x += screen_setcell(y,x,r);
+            if (r == '\n') break;
+        }
+    }
+}
+
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
     unsigned pos = 0;
     /* free the old row data */
@@ -21,19 +35,7 @@ void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
     NumRows = nrows;
     NumCols = ncols;
     /* populate the screen buffer */
-    screen_clearrow(0);
-    for (unsigned y = 1; y < NumRows; y++) {
-        screen_clearrow(y);
-        screen_setrowoff(y, pos);
-        for (unsigned x = 0; x < NumCols;) {
-            //if (csr == pos)
-            //    *csrx = x, *csry = y;
-            Rune r = buf_get(buf, pos++);
-            x += screen_setcell(y,x,r);
-            if (r == '\n') break;
-        }
-    }
-
+    screen_reflow(buf);
 }
 
 void screen_getsize(unsigned* nrows, unsigned* ncols) {
@@ -133,7 +135,9 @@ static void sync_view(Buf* buf, unsigned csr) {
 
 void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
     sync_view(buf, csr);
-    screen_clearrow(0);
+    if (buf->insert_mode)
+        screen_reflow(buf);
+    /* find the cursor on the new screen */
     for (unsigned y = 1; y < NumRows; y++) {
         unsigned start = Rows[y]->off;
         unsigned end   = Rows[y]->off + Rows[y]->rlen - 1;

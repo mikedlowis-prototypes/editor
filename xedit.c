@@ -25,7 +25,6 @@ struct {
     XIM xim;
 } X;
 Buf Buffer;
-bool InsertMode = false;
 unsigned CursorPos = 0;
 
 void die(char* m) {
@@ -116,7 +115,7 @@ static void handle_key(XEvent* e) {
     /* Handle the key */
     switch (key) {
         case XK_F1:
-            InsertMode = !InsertMode;
+            Buffer.insert_mode = !Buffer.insert_mode;
             break;
 
         case XK_F6:
@@ -140,16 +139,16 @@ static void handle_key(XEvent* e) {
             break;
 
         case XK_Escape:
-            InsertMode = false;
+            Buffer.insert_mode = false;
             break;
 
         case XK_BackSpace:
-            if (InsertMode)
+            if (Buffer.insert_mode)
                 buf_del(&Buffer, --CursorPos);
             break;
 
         case XK_Delete:
-            if (InsertMode)
+            if (Buffer.insert_mode)
                 buf_del(&Buffer, CursorPos);
             break;
 
@@ -160,7 +159,7 @@ static void handle_key(XEvent* e) {
                 if (buf[0] == '\r')
                     buf[0] = '\n';
                 for(int i = 0; i < 8 && !utf8decode(&r, &len, buf[i]); i++);
-                if (InsertMode)
+                if (Buffer.insert_mode)
                     buf_ins(&Buffer, CursorPos++, r);
             }
             break;
@@ -233,7 +232,7 @@ static void redraw(void) {
 
     /* Place cursor on screen */
     Rune csrrune = screen_getcell(csry,csrx);
-    if (InsertMode) {
+    if (Buffer.insert_mode) {
         XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, 2, fheight);
     } else {
         unsigned width = ('\t' == buf_get(&Buffer, CursorPos) ? (TabWidth - (csrx % TabWidth)) : 1);
