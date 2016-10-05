@@ -1,13 +1,22 @@
 #include <assert.h>
 #include "edit.h"
 
+int fpeekc(FILE* fin) {
+    int c = fgetc(fin);
+    ungetc(c, fin);
+    return c;
+}
+
 void buf_load(Buf* buf, char* path)
 {
     unsigned i = 0;
     FILE* in = fopen(path, "rb");
-    int c;
-    while (EOF != (c = fgetc(in)))
-        buf_ins(buf, i++, (Rune)c);
+    while (EOF != fpeekc(in)) {
+        size_t len = 0;
+        Rune r = 0;
+        while (!utf8decode(&r, &len, fgetc(in)));
+        buf_ins(buf, i++, r);
+    }
     fclose(in);
 }
 
@@ -23,7 +32,6 @@ void buf_initsz(Buf* buf, size_t sz)
 
 static void syncgap(Buf* buf, unsigned off)
 {
-    //printf("assert: %u <= %u\n", off, buf_end(buf));
     assert(off <= buf_end(buf));
     /* If the buffer is full, resize it before syncing */
     if (0 == (buf->gapend - buf->gapstart)) {
