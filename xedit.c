@@ -2,6 +2,7 @@
 #include <time.h>
 #include <signal.h>
 #include <X11/Xlib.h>
+#include <X11/Xft/Xft.h>
 
 #include "edit.h"
 
@@ -25,9 +26,7 @@ struct {
 } X;
 Buf Buffer;
 bool InsertMode = false;
-unsigned StartRow = 0;
 unsigned CursorPos = 0;
-unsigned EndPos = 0;
 
 void die(char* m) {
     fprintf(stderr, "dying, %s\n", m);
@@ -203,28 +202,6 @@ static void handle_event(XEvent* e) {
     }
 }
 
-static void scroll_up(void) {
-    while (CursorPos < StartRow)
-        StartRow = buf_byline(&Buffer, StartRow, -1);
-}
-
-static void scroll_dn(void) {
-    unsigned nrows, ncols;
-    screen_getsize(&nrows, &ncols);
-    while (CursorPos > EndPos) {
-        StartRow = buf_byline(&Buffer, StartRow, 1);
-        unsigned pos = StartRow;
-        for (unsigned y = 1; y < nrows; y++) {
-            for (unsigned x = 0; x < ncols; x++) {
-                Rune r = buf_get(&Buffer, pos++);
-                if (r == '\n') { break; }
-                if (r == '\t') { x += 4; }
-            }
-        }
-        EndPos = pos-1;
-    }
-}
-
 static void redraw(void) {
     int fheight = X.font->height;
     int fwidth  = X.font->max_advance_width;
@@ -234,37 +211,18 @@ static void redraw(void) {
     XftColor csrclr = xftcolor(CLR_BASE3);
     XftColor txtclr = xftcolor(CLR_BASE0);
 
-    /* Scroll up or down if needed */
-    if (CursorPos < StartRow)
-        scroll_up();
-    else if (CursorPos > EndPos)
-        scroll_dn();
-
-    /* Update the screen buffer */
-    unsigned nrows, ncols, pos = StartRow;
-    unsigned csrx = 0, csry = 1;
-    screen_getsize(&nrows,&ncols);
-    screen_clearrow(0);
-    for (unsigned y = 1; y < nrows; y++) {
-        screen_clearrow(y);
-        screen_setrowoff(y, pos);
-        for (unsigned x = 0; x < ncols;) {
-            if (CursorPos == pos)
-                csrx = x, csry = y;
-            Rune r = buf_get(&Buffer, pos++);
-            unsigned cols = screen_setcell(y,x,r);
-            x += cols;
-            if (r == '\n') break;
-        }
-    }
-    EndPos = pos-1;
-
     /* draw the background colors */
     XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
     XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
     XftDrawRect(X.xft, &gtrclr, 79 * fwidth, 0, fwidth, X.height);
 
+    /* update the screen buffer and retrieve cursor coordinates */
+    unsigned csrx, csry;
+    screen_update(&Buffer, CursorPos, &csrx, &csry);
+
     /* flush the screen buffer */
+    unsigned nrows, ncols;
+    screen_getsize(&nrows, &ncols);
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
         XftDrawString32(X.xft, &txtclr, X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));

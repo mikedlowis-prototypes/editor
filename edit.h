@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <X11/Xft/Xft.h>
 
 /* Definitons
  *****************************************************************************/
@@ -70,6 +69,7 @@ void screen_clearrow(unsigned row);
 void screen_setrowoff(unsigned row, unsigned off);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
 Rune screen_getcell(unsigned row, unsigned col);
+void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 
 /* Miscellaneous Functions
  *****************************************************************************/

@@ -33,3 +33,5 @@
 *.d
 edit
 unittests
+project.vim
+tags
