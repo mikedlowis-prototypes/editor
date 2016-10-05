@@ -21,11 +21,15 @@
 
 * Left click to move cursor
 * Left click and drag to select text
-* Right click to plumb word or search
 * Double left click to select word
-* Double left click on newline to select line
-* Triple left click to select line
+* Double left click on newline or empty space to select line
+* Triple left click to select "big" word (contiguous block of non-ws chars)
+* Right click to plumb word or search
 
 # Keyboard User Interface
 
 * Implement VI-like keybindings
+
+# Command Language
+
+* Implement a Sam/Acme-like command language
