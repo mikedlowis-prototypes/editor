@@ -134,6 +134,7 @@ static void sync_view(Buf* buf, unsigned csr) {
 }
 
 void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
+    /* scroll the view and reflow the screen lines */
     sync_view(buf, csr);
     if (buf->insert_mode)
         screen_reflow(buf);
@@ -142,8 +143,15 @@ void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
         unsigned start = Rows[y]->off;
         unsigned end   = Rows[y]->off + Rows[y]->rlen - 1;
         if (start <= csr && csr <= end) {
-            *csry = y;
-            *csrx = csr - start;
+            unsigned pos = start;
+            for (unsigned x = 0; x < NumCols;) {
+                if (pos == csr) {
+                    *csry = y, *csrx = x;
+                    break;
+                }
+                if (buf_get(buf,pos++) == '\t')
+                    x += (TabWidth - (x % TabWidth));
+            }
             break;
         }
     }
