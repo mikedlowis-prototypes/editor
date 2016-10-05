@@ -10,7 +10,7 @@ int fpeekc(FILE* fin) {
 void buf_load(Buf* buf, char* path)
 {
     unsigned i = 0;
-    FILE* in = fopen(path, "rb");
+    FILE* in = (!strcmp(path,"-") ? stdin : fopen(path, "rb"));
     while (EOF != fpeekc(in)) {
         size_t len = 0;
         Rune r = 0;
