@@ -108,6 +108,7 @@ static void scroll_up(Buf* buf, unsigned csr, unsigned first) {
         fill_row(buf, 1, Rows[1]->off);
         first = Rows[1]->off;
     }
+    screen_reflow(buf);
 }
 
 static void scroll_dn(Buf* buf, unsigned csr, unsigned last) {
