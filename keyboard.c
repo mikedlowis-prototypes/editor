@@ -17,6 +17,8 @@ void handle_key(Rune key) {
         control_keys(key);
     else if (Buffer.insert_mode)
         buf_ins(&Buffer, CursorPos++, key);
+    else
+        (void)0;
 
 }
 
@@ -28,6 +30,8 @@ static void special_keys(Rune key) {
         case KEY_RIGHT: CursorPos = buf_byrune(&Buffer, CursorPos, 1);  break;
         case KEY_DOWN:  CursorPos = buf_byline(&Buffer, CursorPos, 1);  break;
         case KEY_UP:    CursorPos = buf_byline(&Buffer, CursorPos, -1); break;
+        case KEY_HOME:  CursorPos = buf_bol(&Buffer, CursorPos);        break;
+        case KEY_END:   CursorPos = buf_eol(&Buffer, CursorPos);        break;
         case KEY_DELETE:
             if (Buffer.insert_mode)
                 buf_del(&Buffer, CursorPos);

@@ -53,8 +53,8 @@ unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col) {
                 x += 1;
         }
     }
-    if (pos >= buf_end(buf)-1)
-        return buf_end(buf)-2;
+    if (pos >= buf_end(buf))
+        return buf_end(buf)-1;
     return pos;
 }
 

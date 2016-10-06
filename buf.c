@@ -1,14 +1,7 @@
 #include <assert.h>
 #include "edit.h"
 
-int fpeekc(FILE* fin) {
-    int c = fgetc(fin);
-    ungetc(c, fin);
-    return c;
-}
-
-void buf_load(Buf* buf, char* path)
-{
+void buf_load(Buf* buf, char* path) {
     buf->insert_mode = true;
     unsigned i = 0;
     Rune r;
@@ -19,8 +12,7 @@ void buf_load(Buf* buf, char* path)
     buf->insert_mode = false;
 }
 
-void buf_initsz(Buf* buf, size_t sz)
-{
+void buf_initsz(Buf* buf, size_t sz) {
     buf->insert_mode = false;
     buf->bufsize  = sz;
     buf->bufstart = (Rune*)malloc(buf->bufsize * sizeof(Rune));
@@ -29,8 +21,7 @@ void buf_initsz(Buf* buf, size_t sz)
     buf->gapend   = buf->bufend;
 }
 
-static void syncgap(Buf* buf, unsigned off)
-{
+static void syncgap(Buf* buf, unsigned off) {
     assert(off <= buf_end(buf));
     /* If the buffer is full, resize it before syncing */
     if (0 == (buf->gapend - buf->gapstart)) {
@@ -57,33 +48,28 @@ static void syncgap(Buf* buf, unsigned off)
     }
 }
 
-void buf_init(Buf* buf)
-{
+void buf_init(Buf* buf) {
     buf_initsz(buf, BufSize);
 }
 
-void buf_clr(Buf* buf)
-{
+void buf_clr(Buf* buf) {
     free(buf->bufstart);
     buf_init(buf);
 }
 
-void buf_del(Buf* buf, unsigned off)
-{
+void buf_del(Buf* buf, unsigned off) {
     if (!buf->insert_mode) return;
     syncgap(buf, off);
     buf->gapend++;
 }
 
-void buf_ins(Buf* buf, unsigned off, Rune rune)
-{
+void buf_ins(Buf* buf, unsigned off, Rune rune) {
     if (!buf->insert_mode) return;
     syncgap(buf, off);
     *(buf->gapstart++) = rune;
 }
 
-Rune buf_get(Buf* buf, unsigned off)
-{
+Rune buf_get(Buf* buf, unsigned off) {
     if (off >= buf_end(buf)) return (Rune)'\n';
     size_t bsz = (buf->gapstart - buf->bufstart);
     if (off < bsz)
@@ -92,31 +78,23 @@ Rune buf_get(Buf* buf, unsigned off)
         return *(buf->gapend + (off - bsz));
 }
 
-unsigned buf_bol(Buf* buf, unsigned off)
-{
-    if (off == 0) return 0;
-    if (buf_get(buf, off) == '\n' && buf_get(buf, off-1) == '\n') return off;
-    for (Rune r; (r = buf_get(buf, off)) != '\n'; off--);
-    return off+1;
+unsigned buf_bol(Buf* buf, unsigned off) {
+    for (Rune r; (r = buf_get(buf, off-1)) != '\n'; off--);
+    return off;
 }
 
-unsigned buf_eol(Buf* buf, unsigned off)
-{
-    if (off >= buf_end(buf)) return off;
-    if (buf_get(buf, off) == '\n') return off;
+unsigned buf_eol(Buf* buf, unsigned off) {
     for (Rune r; (r = buf_get(buf, off)) != '\n'; off++);
-    return off-1;
+    return off;
 }
 
-unsigned buf_end(Buf* buf)
-{
+unsigned buf_end(Buf* buf) {
     size_t bufsz = buf->bufend - buf->bufstart;
     size_t gapsz = buf->gapend - buf->gapstart;
     return (bufsz - gapsz);
 }
 
-unsigned buf_byrune(Buf* buf, unsigned pos, int count)
-{
+unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
     (void)buf;
     int move = (count < 0 ? -1 : 1);
     count *= move;
@@ -129,44 +107,18 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count)
     return pos;
 }
 
-unsigned get_column(Buf* buf, unsigned pos)
-{
-    Rune r;
-    unsigned cols = 0;
-    if (buf_get(buf, pos) == '\n') return 0;
-    while ((r = buf_get(buf, pos)) != '\n')
-        pos--, cols += (r == '\t' ? TabWidth : 1);
-    return cols-1;
-}
-
-unsigned set_column(Buf* buf, unsigned pos, unsigned col)
-{
-    Rune r;
-    pos = buf_bol(buf, pos);
-    while ((r = buf_get(buf, pos)) != '\n' && col) {
-        unsigned inc = (r == '\t' ? TabWidth : 1);
-        pos++, col -= (inc > col ? col : inc);
-    }
-
-    if (buf_get(buf, pos)   == '\n' &&
-        buf_get(buf, pos-1) != '\n')
-        pos--;
-    return pos;
-}
-
-unsigned buf_byline(Buf* buf, unsigned pos, int count)
-{
+unsigned buf_byline(Buf* buf, unsigned pos, int count) {
     int move = (count < 0 ? -1 : 1);
     count *= move; // remove the sign if there is one
-    unsigned col = get_column(buf, pos);
     for (; count > 0; count--) {
         if (move < 0) {
             if (pos > buf_eol(buf, 0))
-                pos = buf_bol(buf, pos)-2;
+                pos = buf_bol(buf, pos)-1;
         } else {
-            if (pos < buf_end(buf)-2)
-                pos = buf_eol(buf, pos)+2;
+            unsigned next = buf_eol(buf, pos)+1;
+            if (next < buf_end(buf))
+                pos = next;
         }
     }
-    return set_column(buf, pos, col);
+    return pos;
 }
