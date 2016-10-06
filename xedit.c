@@ -148,32 +148,36 @@ static Rune getkey(XEvent* e) {
     }
 }
 
-static void handle_mousebtn(XEvent* e) {
-    switch (e->xbutton.button) {
-        case Button1: /* Left Button */
-            CursorPos = screen_getoff(&Buffer, CursorPos,
-                                      e->xbutton.y / (X.font->ascent + X.font->descent),
-                                      e->xbutton.x / X.font->max_advance_width);
-            break;
-        case Button2: /* Middle Button */
-            break;
-        case Button3: /* Right Button */
-            break;
-        case Button4: /* Wheel Up */
-            CursorPos = buf_byline(&Buffer, CursorPos, -ScrollLines);
-            break;
-        case Button5: /* Wheel Down */
-            CursorPos = buf_byline(&Buffer, CursorPos, ScrollLines);
-            break;
+static MouseEvent* getmouse(XEvent* e) {
+    static MouseEvent event;
+    if (e->type == MotionNotify) {
+        event.type   = MouseMove;
+        event.button = MOUSE_NONE;
+        event.x      = e->xmotion.x / X.font->max_advance_width;
+        event.y      = e->xmotion.y / (X.font->ascent + X.font->descent);
+    } else {
+        event.type = (e->type = ButtonPress ? MouseDown : MouseUp);
+        /* set the button id */
+        switch (e->xbutton.button) {
+            case Button1: event.button = MOUSE_LEFT;      break;
+            case Button2: event.button = MOUSE_MIDDLE;    break;
+            case Button3: event.button = MOUSE_RIGHT;     break;
+            case Button4: event.button = MOUSE_WHEELUP;   break;
+            case Button5: event.button = MOUSE_WHEELDOWN; break;
+            default:      event.button = MOUSE_NONE;      break;
+        }
+        event.x = e->xbutton.x / X.font->max_advance_width;
+        event.y = e->xbutton.y / (X.font->ascent + X.font->descent);
     }
+    return &event;
 }
 
 static void handle_event(XEvent* e) {
     switch (e->type) {
         case FocusIn:     if (X.xic) XSetICFocus(X.xic);   break;
         case FocusOut:    if (X.xic) XUnsetICFocus(X.xic); break;
-        case ButtonPress: handle_mousebtn(e);              break;
         case KeyPress:    handle_key(getkey(e));           break;
+        case ButtonPress: handle_mouse(getmouse(e));       break;
         case ConfigureNotify: // Resize the window
             if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
                 X.width  = e->xconfigure.width;

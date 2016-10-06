@@ -95,15 +95,26 @@ enum Keys {
 };
 
 /* Define the mouse buttons used for input */
-enum MouseBtn {
-    MOUSE_LEFT = 0,
-    MOUSE_MIDDLE,
-    MOUSE_RIGHT,
-    MOUSE_WHEELUP,
-    MOUSE_WHEELDOWN
-};
+typedef struct {
+    enum {
+        MouseUp,
+        MouseDown,
+        MouseMove
+    } type;
+    enum {
+        MOUSE_LEFT = 0,
+        MOUSE_MIDDLE,
+        MOUSE_RIGHT,
+        MOUSE_WHEELUP,
+        MOUSE_WHEELDOWN,
+        MOUSE_NONE
+    } button;
+    int x;
+    int y;
+} MouseEvent;
 
 void handle_key(Rune key);
+void handle_mouse(MouseEvent* mevnt);
 
 /* Buffer management functions
  *****************************************************************************/

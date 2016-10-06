@@ -8,17 +8,16 @@ static void set_buffer_text(char* str) {
     buf_clr(&TestBuf);
     for (Rune* curr = TestBuf.bufstart; curr < TestBuf.bufend; curr++)
         *curr = '-';
+    TestBuf.insert_mode = true;
     while (*str)
         buf_ins(&TestBuf, i++, (Rune)*str++);
 }
 
 static bool buf_text_eq(char* str) {
     for (unsigned i = 0; i < buf_end(&TestBuf); i++) {
-//        printf("%c", (char)buf_get(&TestBuf, i));
         if ((Rune)*(str++) != buf_get(&TestBuf, i))
             return false;
     }
-//    puts("");
     return true;
 }
 
