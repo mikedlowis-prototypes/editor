@@ -9,14 +9,14 @@ const uint8_t UTF8_SeqBits[] = { 0x00u, 0x80u, 0xC0u, 0xE0u, 0xF0u, 0xF8u, 0xFCu
 const uint8_t UTF8_SeqMask[] = { 0x00u, 0xFFu, 0x1Fu, 0x0Fu, 0x07u, 0x03u, 0x01u, 0x00u };
 const uint8_t UTF8_SeqLens[] = { 0x01u, 0x00u, 0x02u, 0x03u, 0x04u, 0x05u, 0x06u, 0x00u };
 
-bool runevalid(Rune val) {
+static bool runevalid(Rune val) {
     return (val <= RUNE_MAX)
         && ((val & 0xFFFEu) != 0xFFFEu)
         && ((val < 0xD800u) || (val > 0xDFFFu))
         && ((val < 0xFDD0u) || (val > 0xFDEFu));
 }
 
-size_t runelen(Rune rune) {
+static size_t runelen(Rune rune) {
     if(!runevalid(rune))
         return 0;
     else if(rune <= 0x7F)
@@ -29,7 +29,7 @@ size_t runelen(Rune rune) {
         return 4;
 }
 
-uint8_t utfseq(uint8_t byte) {
+static uint8_t utfseq(uint8_t byte) {
     for (int i = 1; i < 8; i++)
         if ((byte & UTF8_SeqBits[i]) == UTF8_SeqBits[i-1])
             return UTF8_SeqLens[i-1];
@@ -72,14 +72,6 @@ bool utf8decode(Rune* rune, size_t* length, int byte) {
     }
     /* Tell the caller whether we finished or not */
     return ((*length == 0) || (*rune == RUNE_ERR));
-}
-
-size_t utflen(const char* s) {
-    size_t len = 0;
-    Rune rune = 0;
-    while (*s && !utf8decode(&rune, &len, *(s++)))
-        len++;
-    return len;
 }
 
 Rune fgetrune(FILE* f) {

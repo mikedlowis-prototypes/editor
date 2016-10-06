@@ -11,13 +11,10 @@ void buf_load(Buf* buf, char* path)
 {
     buf->insert_mode = true;
     unsigned i = 0;
+    Rune r;
     FILE* in = (!strcmp(path,"-") ? stdin : fopen(path, "rb"));
-    while (EOF != fpeekc(in)) {
-        size_t len = 0;
-        Rune r = 0;
-        while (!utf8decode(&r, &len, fgetc(in)));
+    while (RUNE_EOF != (r = fgetrune(in)))
         buf_ins(buf, i++, r);
-    }
     fclose(in);
     buf->insert_mode = false;
 }
