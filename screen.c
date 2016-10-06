@@ -19,10 +19,8 @@ void screen_reflow(Buf* buf) {
 }
 
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
-    unsigned pos = 0;
     /* free the old row data */
     if (Rows) {
-        pos = Rows[1]->off;
         for (unsigned i = 0; i < NumRows; i++)
             free(Rows[i]);
         free(Rows);

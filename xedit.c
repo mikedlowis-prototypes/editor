@@ -26,6 +26,7 @@ struct {
 } X;
 Buf Buffer;
 unsigned CursorPos = 0;
+enum ColorScheme ColorBase = DEFAULT_COLORSCHEME;
 
 void die(char* m) {
     fprintf(stderr, "dying, %s\n", m);
@@ -119,7 +120,7 @@ static Rune getkey(XEvent* e) {
         if (buf[0] == '\r') buf[0] = '\n';
         for(int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
     }
-    printf("key: 0x%#x\n", rune);
+    printf("key: %#x\n", rune);
     /* translate the key code into a unicode codepoint */
     switch (key) {
         case XK_F1:        return KEY_F1;

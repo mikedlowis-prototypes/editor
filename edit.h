@@ -4,28 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-/* Definitons
+/* Input Handling
  *****************************************************************************/
-/* color indexes for the colorscheme */
-enum ColorId {
-    CLR_BASE03 = 0,
-    CLR_BASE02,
-    CLR_BASE01,
-    CLR_BASE00,
-    CLR_BASE0,
-    CLR_BASE1,
-    CLR_BASE2,
-    CLR_BASE3,
-    CLR_YELLOW,
-    CLR_ORANGE,
-    CLR_RED,
-    CLR_MAGENTA,
-    CLR_VIOLET,
-    CLR_BLUE,
-    CLR_CYAN,
-    CLR_GREEN,
-};
-
 /* key definitions */
 enum Keys {
     /* Define some runes in the private use area of unicode to represent
@@ -107,11 +87,21 @@ enum MouseBtn {
     MOUSE_WHEELDOWN
 };
 
-/* Represents an ARGB color value */
-typedef uint32_t Color;
+/* UTF-8 Handling
+ *****************************************************************************/
+enum {
+    UTF_MAX   = 6u,       /* maximum number of bytes that make up a rune */
+    RUNE_SELF = 0x80,     /* byte values larger than this are *not* ascii */
+    RUNE_ERR  = 0xFFFD,   /* rune value representing an error */
+    RUNE_MAX  = 0x10FFFF, /* Maximum decodable rune value */
+    RUNE_EOF  = EOF       /* ruen value representing end of file */
+};
 
 /* Represents a unicode code point */
 typedef uint32_t Rune;
+
+size_t utf8encode(char str[UTF_MAX], Rune rune);
+bool utf8decode(Rune* rune, size_t* length, int byte);
 
 /* Buffer management functions
  *****************************************************************************/
@@ -162,18 +152,40 @@ Rune screen_getcell(unsigned row, unsigned col);
  *****************************************************************************/
 void die(char* msg);
 
-/* UTF-8 Handling
+/* Color Scheme Handling
  *****************************************************************************/
-enum {
-    UTF_MAX   = 6u,       /* maximum number of bytes that make up a rune */
-    RUNE_SELF = 0x80,     /* byte values larger than this are *not* ascii */
-    RUNE_ERR  = 0xFFFD,   /* rune value representing an error */
-    RUNE_MAX  = 0x10FFFF, /* Maximum decodable rune value */
-    RUNE_EOF  = EOF       /* ruen value representing end of file */
+
+/* color indexes for the colorscheme */
+enum ColorId {
+    CLR_BASE03 = 0,
+    CLR_BASE02,
+    CLR_BASE01,
+    CLR_BASE00,
+    CLR_BASE0,
+    CLR_BASE1,
+    CLR_BASE2,
+    CLR_BASE3,
+    CLR_YELLOW,
+    CLR_ORANGE,
+    CLR_RED,
+    CLR_MAGENTA,
+    CLR_VIOLET,
+    CLR_BLUE,
+    CLR_CYAN,
+    CLR_GREEN,
 };
 
-size_t utf8encode(char str[UTF_MAX], Rune rune);
-bool utf8decode(Rune* rune, size_t* length, int byte);
+/* Represents an ARGB color value */
+typedef uint32_t Color;
+
+/* two colorscheme variants are supported, a light version and a dark version */
+enum ColorScheme {
+    DARK = 0,
+    LIGHT = 1
+};
+
+/* variable for holding the currently selected color scheme */
+enum ColorScheme ColorBase;
 
 /* Configuration
  *****************************************************************************/
@@ -184,8 +196,6 @@ enum {
     ScrollLines = 1,    /* number of lines to scroll by for mouse wheel scrolling */
     BufSize     = 8192, /* default buffer size */
 };
-
-static enum { DARK = 0, LIGHT = 1 } ColorBase = DARK;
 
 static const Color Palette[][2] = {
 /*   Color Name   =   Dark      Light    */
@@ -207,8 +217,11 @@ static const Color Palette[][2] = {
     [CLR_GREEN]   = { 0x859900, 0x859900 },
 };
 
+/* choose the font to  use for xft */
 #ifdef __MACH__
 #define FONTNAME "Inconsolata:pixelsize=14:antialias=true:autohint=true"
 #else
 #define FONTNAME "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
 #endif
+
+#define DEFAULT_COLORSCHEME DARK
