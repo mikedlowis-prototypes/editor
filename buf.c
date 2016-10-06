@@ -9,6 +9,7 @@ int fpeekc(FILE* fin) {
 
 void buf_load(Buf* buf, char* path)
 {
+    buf->insert_mode = true;
     unsigned i = 0;
     FILE* in = (!strcmp(path,"-") ? stdin : fopen(path, "rb"));
     while (EOF != fpeekc(in)) {
@@ -18,6 +19,7 @@ void buf_load(Buf* buf, char* path)
         buf_ins(buf, i++, r);
     }
     fclose(in);
+    buf->insert_mode = false;
 }
 
 void buf_initsz(Buf* buf, size_t sz)
@@ -71,12 +73,14 @@ void buf_clr(Buf* buf)
 
 void buf_del(Buf* buf, unsigned off)
 {
+    if (!buf->insert_mode) return;
     syncgap(buf, off);
     buf->gapend++;
 }
 
 void buf_ins(Buf* buf, unsigned off, Rune rune)
 {
+    if (!buf->insert_mode) return;
     syncgap(buf, off);
     *(buf->gapstart++) = rune;
 }

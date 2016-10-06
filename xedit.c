@@ -6,6 +6,9 @@
 
 #include "edit.h"
 
+Buf Buffer;
+unsigned CursorPos = 0;
+enum ColorScheme ColorBase = DEFAULT_COLORSCHEME;
 struct {
     Display* display;
     Visual* visual;
@@ -24,9 +27,6 @@ struct {
     XIC xic;
     XIM xim;
 } X;
-Buf Buffer;
-unsigned CursorPos = 0;
-enum ColorScheme ColorBase = DEFAULT_COLORSCHEME;
 
 void die(char* m) {
     fprintf(stderr, "dying, %s\n", m);
@@ -120,7 +120,6 @@ static Rune getkey(XEvent* e) {
         if (buf[0] == '\r') buf[0] = '\n';
         for(int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
     }
-    printf("key: %#x\n", rune);
     /* translate the key code into a unicode codepoint */
     switch (key) {
         case XK_F1:        return KEY_F1;
@@ -149,56 +148,6 @@ static Rune getkey(XEvent* e) {
     }
 }
 
-static void handle_key(XEvent* e) {
-    Rune key = getkey(e);
-    /* Handle the key */
-    switch (key) {
-        case RUNE_ERR: break;
-        case KEY_F1:
-            Buffer.insert_mode = !Buffer.insert_mode;
-            break;
-
-        case KEY_F6:
-            ColorBase = !ColorBase;
-            break;
-
-        case KEY_LEFT:
-            CursorPos = buf_byrune(&Buffer, CursorPos, -1);
-            break;
-
-        case KEY_RIGHT:
-            CursorPos = buf_byrune(&Buffer, CursorPos, 1);
-            break;
-
-        case KEY_DOWN:
-            CursorPos = buf_byline(&Buffer, CursorPos, 1);
-            break;
-
-        case KEY_UP:
-            CursorPos = buf_byline(&Buffer, CursorPos, -1);
-            break;
-
-        case KEY_ESCAPE:
-            Buffer.insert_mode = false;
-            break;
-
-        case KEY_BACKSPACE:
-            if (Buffer.insert_mode)
-                buf_del(&Buffer, --CursorPos);
-            break;
-
-        case KEY_DELETE:
-            if (Buffer.insert_mode)
-                buf_del(&Buffer, CursorPos);
-            break;
-
-        default:
-            if (Buffer.insert_mode)
-                buf_ins(&Buffer, CursorPos++, key);
-            break;
-    }
-}
-
 static void handle_mousebtn(XEvent* e) {
     switch (e->xbutton.button) {
         case Button1: /* Left Button */
@@ -224,7 +173,7 @@ static void handle_event(XEvent* e) {
         case FocusIn:     if (X.xic) XSetICFocus(X.xic);   break;
         case FocusOut:    if (X.xic) XUnsetICFocus(X.xic); break;
         case ButtonPress: handle_mousebtn(e);              break;
-        case KeyPress:    handle_key(e);                   break;
+        case KeyPress:    handle_key(getkey(e));           break;
         case ConfigureNotify: // Resize the window
             if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
                 X.width  = e->xconfigure.width;
