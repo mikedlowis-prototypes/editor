@@ -102,8 +102,9 @@ static void deinit(void) {
     XCloseDisplay(X.display);
 }
 
-static void handle_key(XEvent* e) {
-    int len;
+static Rune getkey(XEvent* e) {
+    Rune rune = RUNE_ERR;
+    size_t len = 0;
     char buf[8];
     KeySym key;
     Status status;
@@ -112,55 +113,87 @@ static void handle_key(XEvent* e) {
         len = Xutf8LookupString(X.xic, &e->xkey, buf, sizeof(buf), &key, &status);
     else
         len = XLookupString(&e->xkey, buf, sizeof(buf), &key, 0);
+    /* decode it */
+    if (len > 0) {
+        len = 0;
+        if (buf[0] == '\r') buf[0] = '\n';
+        for(int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
+    }
+    printf("key: 0x%#x\n", rune);
+    /* translate the key code into a unicode codepoint */
+    switch (key) {
+        case XK_F1:        return KEY_F1;
+        case XK_F2:        return KEY_F2;
+        case XK_F3:        return KEY_F3;
+        case XK_F4:        return KEY_F4;
+        case XK_F5:        return KEY_F5;
+        case XK_F6:        return KEY_F6;
+        case XK_F7:        return KEY_F7;
+        case XK_F8:        return KEY_F8;
+        case XK_F9:        return KEY_F9;
+        case XK_F10:       return KEY_F10;
+        case XK_F11:       return KEY_F11;
+        case XK_F12:       return KEY_F12;
+        case XK_Insert:    return KEY_INSERT;
+        case XK_Delete:    return KEY_DELETE;
+        case XK_Home:      return KEY_HOME;
+        case XK_End:       return KEY_END;
+        case XK_Page_Up:   return KEY_PGUP;
+        case XK_Page_Down: return KEY_PGDN;
+        case XK_Up:        return KEY_UP;
+        case XK_Down:      return KEY_DOWN;
+        case XK_Left:      return KEY_LEFT;
+        case XK_Right:     return KEY_RIGHT;
+        default:           return rune;
+    }
+}
+
+static void handle_key(XEvent* e) {
+    Rune key = getkey(e);
     /* Handle the key */
     switch (key) {
-        case XK_F1:
+        case RUNE_ERR: break;
+        case KEY_F1:
             Buffer.insert_mode = !Buffer.insert_mode;
             break;
 
-        case XK_F6:
+        case KEY_F6:
             ColorBase = !ColorBase;
             break;
 
-        case XK_Left:
+        case KEY_LEFT:
             CursorPos = buf_byrune(&Buffer, CursorPos, -1);
             break;
 
-        case XK_Right:
+        case KEY_RIGHT:
             CursorPos = buf_byrune(&Buffer, CursorPos, 1);
             break;
 
-        case XK_Down:
+        case KEY_DOWN:
             CursorPos = buf_byline(&Buffer, CursorPos, 1);
             break;
 
-        case XK_Up:
+        case KEY_UP:
             CursorPos = buf_byline(&Buffer, CursorPos, -1);
             break;
 
-        case XK_Escape:
+        case KEY_ESCAPE:
             Buffer.insert_mode = false;
             break;
 
-        case XK_BackSpace:
+        case KEY_BACKSPACE:
             if (Buffer.insert_mode)
                 buf_del(&Buffer, --CursorPos);
             break;
 
-        case XK_Delete:
+        case KEY_DELETE:
             if (Buffer.insert_mode)
                 buf_del(&Buffer, CursorPos);
             break;
 
         default:
-            if (len > 0) {
-                Rune r;
-                size_t len = 0;
-                if (buf[0] == '\r') buf[0] = '\n';
-                for(int i = 0; i < 8 && !utf8decode(&r, &len, buf[i]); i++);
-                if (Buffer.insert_mode)
-                    buf_ins(&Buffer, CursorPos++, r);
-            }
+            if (Buffer.insert_mode)
+                buf_ins(&Buffer, CursorPos++, key);
             break;
     }
 }

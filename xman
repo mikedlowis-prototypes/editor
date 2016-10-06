@@ -1,2 +1,2 @@
 #!/bin/sh
-man -P cat "$@" | fmt | ./edit -
+man -P cat "$@" | fmt | edit -

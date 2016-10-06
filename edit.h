@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-
 /* Definitons
  *****************************************************************************/
+/* color indexes for the colorscheme */
 enum ColorId {
     CLR_BASE03 = 0,
     CLR_BASE02,
@@ -26,18 +26,102 @@ enum ColorId {
     CLR_GREEN,
 };
 
+/* key definitions */
+enum Keys {
+    /* Define some runes in the private use area of unicode to represent
+     * special keys */
+    KEY_F1     = (0xE000+0),
+    KEY_F2     = (0xE000+1),
+    KEY_F3     = (0xE000+2),
+    KEY_F4     = (0xE000+3),
+    KEY_F5     = (0xE000+4),
+    KEY_F6     = (0xE000+5),
+    KEY_F7     = (0xE000+6),
+    KEY_F8     = (0xE000+7),
+    KEY_F9     = (0xE000+8),
+    KEY_F10    = (0xE000+9),
+    KEY_F11    = (0xE000+10),
+    KEY_F12    = (0xE000+11),
+    KEY_INSERT = (0xE000+12),
+    KEY_DELETE = (0xE000+13),
+    KEY_HOME   = (0xE000+14),
+    KEY_END    = (0xE000+15),
+    KEY_PGUP   = (0xE000+16),
+    KEY_PGDN   = (0xE000+17),
+    KEY_UP     = (0xE000+18),
+    KEY_DOWN   = (0xE000+19),
+    KEY_RIGHT  = (0xE000+20),
+    KEY_LEFT   = (0xE000+21),
+
+    /* ASCII Control Characters */
+    KEY_CTRL_TILDE       = 0x00,
+    KEY_CTRL_2           = 0x00,
+    KEY_CTRL_A           = 0x01,
+    KEY_CTRL_B           = 0x02,
+    KEY_CTRL_C           = 0x03,
+    KEY_CTRL_D           = 0x04,
+    KEY_CTRL_E           = 0x05,
+    KEY_CTRL_F           = 0x06,
+    KEY_CTRL_G           = 0x07,
+    KEY_BACKSPACE        = 0x08,
+    KEY_CTRL_H           = 0x08,
+    KEY_TAB              = 0x09,
+    KEY_CTRL_I           = 0x09,
+    KEY_CTRL_J           = 0x0A,
+    KEY_CTRL_K           = 0x0B,
+    KEY_CTRL_L           = 0x0C,
+    KEY_ENTER            = 0x0D,
+    KEY_CTRL_M           = 0x0D,
+    KEY_CTRL_N           = 0x0E,
+    KEY_CTRL_O           = 0x0F,
+    KEY_CTRL_P           = 0x10,
+    KEY_CTRL_Q           = 0x11,
+    KEY_CTRL_R           = 0x12,
+    KEY_CTRL_S           = 0x13,
+    KEY_CTRL_T           = 0x14,
+    KEY_CTRL_U           = 0x15,
+    KEY_CTRL_V           = 0x16,
+    KEY_CTRL_W           = 0x17,
+    KEY_CTRL_X           = 0x18,
+    KEY_CTRL_Y           = 0x19,
+    KEY_CTRL_Z           = 0x1A,
+    KEY_ESCAPE           = 0x1B,
+    KEY_CTRL_LSQ_BRACKET = 0x1B,
+    KEY_CTRL_3           = 0x1B,
+    KEY_CTRL_4           = 0x1C,
+    KEY_CTRL_BACKSLASH   = 0x1C,
+    KEY_CTRL_5           = 0x1D,
+    KEY_CTRL_RSQ_BRACKET = 0x1D,
+    KEY_CTRL_6           = 0x1E,
+    KEY_CTRL_7           = 0x1F,
+    KEY_CTRL_SLASH       = 0x1F,
+    KEY_CTRL_UNDERSCORE  = 0x1F,
+};
+
+/* Define the mouse buttons used for input */
+enum MouseBtn {
+    MOUSE_LEFT = 0,
+    MOUSE_MIDDLE,
+    MOUSE_RIGHT,
+    MOUSE_WHEELUP,
+    MOUSE_WHEELDOWN
+};
+
+/* Represents an ARGB color value */
 typedef uint32_t Color;
+
+/* Represents a unicode code point */
 typedef uint32_t Rune;
 
 /* Buffer management functions
  *****************************************************************************/
 typedef struct buf {
-    bool insert_mode;
-    size_t bufsize;
-    Rune* bufstart;
-    Rune* bufend;
-    Rune* gapstart;
-    Rune* gapend;
+    bool insert_mode; /* tracks current mode */
+    size_t bufsize;   /* size of the buffer in runes */
+    Rune* bufstart;   /* start of the data buffer */
+    Rune* bufend;     /* end of the data buffer */
+    Rune* gapstart;   /* start of the gap */
+    Rune* gapend;     /* end of the gap */
 } Buf;
 
 void buf_load(Buf* buf, char* path);
@@ -56,10 +140,10 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count);
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
-    unsigned off;
-    unsigned rlen;
-    unsigned len;
-    Rune cols[];
+    unsigned off;  /* offset of the first rune in the row */
+    unsigned rlen; /* number of runes displayed in the row */
+    unsigned len;  /* number of screen columns taken up by row */
+    Rune cols[];   /* row data */
 } Row;
 
 void screen_reflow(Buf* buf);
@@ -80,11 +164,13 @@ void die(char* msg);
 
 /* UTF-8 Handling
  *****************************************************************************/
-#define UTF_MAX   6u
-#define RUNE_SELF ((Rune)0x80)
-#define RUNE_ERR  ((Rune)0xFFFD)
-#define RUNE_MAX  ((Rune)0x10FFFF)
-#define RUNE_EOF  ((Rune)EOF)
+enum {
+    UTF_MAX   = 6u,       /* maximum number of bytes that make up a rune */
+    RUNE_SELF = 0x80,     /* byte values larger than this are *not* ascii */
+    RUNE_ERR  = 0xFFFD,   /* rune value representing an error */
+    RUNE_MAX  = 0x10FFFF, /* Maximum decodable rune value */
+    RUNE_EOF  = EOF       /* ruen value representing end of file */
+};
 
 size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);
@@ -92,11 +178,11 @@ bool utf8decode(Rune* rune, size_t* length, int byte);
 /* Configuration
  *****************************************************************************/
 enum {
-    Width       = 640,
-    Height      = 480,
-    TabWidth    = 4,
-    ScrollLines = 1,
-    BufSize     = 8192,
+    Width       = 640,  /* default window width */
+    Height      = 480,  /* default window height */
+    TabWidth    = 4,    /* maximum number of spaces used to represent a tab */
+    ScrollLines = 1,    /* number of lines to scroll by for mouse wheel scrolling */
+    BufSize     = 8192, /* default buffer size */
 };
 
 static enum { DARK = 0, LIGHT = 1 } ColorBase = DARK;
