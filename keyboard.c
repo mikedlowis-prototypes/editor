@@ -5,6 +5,7 @@ extern unsigned CursorPos;
 
 static void special_keys(Rune key);
 static void control_keys(Rune key);
+static void vi_keys(Rune key);
 
 void handle_key(Rune key) {
     /* ignore invalid keys */
@@ -18,8 +19,7 @@ void handle_key(Rune key) {
     else if (Buffer.insert_mode)
         buf_ins(&Buffer, CursorPos++, key);
     else
-        (void)0;
-
+        vi_keys(key);
 }
 
 static void special_keys(Rune key) {
@@ -44,6 +44,12 @@ static void control_keys(Rune key) {
     switch (key) {
         case KEY_ESCAPE:    Buffer.insert_mode = false;         break;
         case KEY_BACKSPACE: buf_del(&Buffer, --CursorPos);      break;
+        case KEY_CTRL_W:    buf_save(&Buffer);                  break;
+        case KEY_CTRL_Q:    exit(0);                            break;
         default:            buf_ins(&Buffer, CursorPos++, key); break;
     }
+}
+
+static void vi_keys(Rune key) {
+    (void)key;
 }

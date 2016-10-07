@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <string.h>
 #include <assert.h>
 #include "edit.h"
 
@@ -6,10 +8,26 @@ void buf_load(Buf* buf, char* path) {
     unsigned i = 0;
     Rune r;
     FILE* in = (!strcmp(path,"-") ? stdin : fopen(path, "rb"));
-    while (RUNE_EOF != (r = fgetrune(in)))
-        buf_ins(buf, i++, r);
-    fclose(in);
+    buf->path = (in == stdin ? NULL : strdup(path));
+    if (in != NULL) {
+        while (RUNE_EOF != (r = fgetrune(in)))
+            buf_ins(buf, i++, r);
+        fclose(in);
+    }
+    /* Make sure it ends with a newline */
+    if (r != '\n')
+        buf_ins(buf, i, (Rune)'\n');
     buf->insert_mode = false;
+}
+
+void buf_save(Buf* buf) {
+    if (!buf->path) return;
+    unsigned end = buf_end(buf);
+    FILE* out = fopen(buf->path, "wb");
+    if (!out) return;
+    for (unsigned i = 0; i < end; i++)
+        fputrune(buf_get(buf, i), out);
+    fclose(out);
 }
 
 void buf_resize(Buf* buf, size_t sz) {
