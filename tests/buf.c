@@ -104,16 +104,16 @@ TEST_SUITE(BufferTests) {
         CHECK(0 == buf_byrune(&TestBuf, 0, -2));
     }
 
-    TEST(buf_byrune should do nothing for +1 at end of file)
+    TEST(buf_byrune should move to just after last rune for +1 at end of file)
     {
         set_buffer_text("abc\n");
-        CHECK(3 == buf_byrune(&TestBuf, 3, 1));
+        CHECK(4 == buf_byrune(&TestBuf, 3, 1));
     }
 
-    TEST(buf_byrune should do nothing for +2 at end of file)
+    TEST(buf_byrune should move to just after last rune for +2 at end of file)
     {
         set_buffer_text("abc\n");
-        CHECK(3 == buf_byrune(&TestBuf, 3, 2));
+        CHECK(4 == buf_byrune(&TestBuf, 3, 2));
     }
 
     //TEST(buf_byrune should skip newlines for -1)
