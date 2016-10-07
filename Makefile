@@ -1,19 +1,17 @@
 LDFLAGS  = -L/opt/X11/lib -lX11 -lXft
 CFLAGS   = --std=c99 -Wall -Wextra -I. -I/opt/X11/include -I/opt/local/include/freetype2 -I/usr/include/freetype2
-SRCS     = xedit.c buf.c screen.c utf8.c keyboard.c mouse.c
-OBJS     = $(SRCS:.c=.o)
-TESTSRCS = tests/tests.c tests/buf.c tests/utf8.c
-TESTOBJS = $(TESTSRCS:.c=.o)
+OBJS     = buf.o screen.o utf8.o keyboard.o mouse.o
+TESTOBJS = tests/tests.o tests/buf.o tests/utf8.o
 
 all: edit test
 
 test: unittests
 	./unittests
 
-edit: $(OBJS)
+edit: xedit.o $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-unittests: $(TESTOBJS)
+unittests: $(TESTOBJS) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:

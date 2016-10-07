@@ -1,5 +1,9 @@
 #define INCLUDE_DEFS
 #include "atf.h"
+#include "edit.h"
+
+Buf Buffer;
+unsigned CursorPos;
 
 int main(int argc, char** argv) {
     atf_init(argc,argv);

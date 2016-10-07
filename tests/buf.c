@@ -1,5 +1,5 @@
 #include "atf.h"
-#include "../buf.c"
+#include "edit.h"
 
 static Buf TestBuf;
 
