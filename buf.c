@@ -13,10 +13,9 @@ void buf_load(Buf* buf, char* path) {
         while (RUNE_EOF != (r = fgetrune(in)))
             buf_ins(buf, i++, r);
         fclose(in);
-    }
-    /* Make sure it ends with a newline */
-    if (r != '\n')
+    } else {
         buf_ins(buf, i, (Rune)'\n');
+    }
     buf->insert_mode = false;
 }
 
@@ -122,7 +121,7 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
         if (move < 0) {
             if (pos > 0) pos--;
         } else {
-            if (pos < buf_end(buf)-1) pos++;
+            if (pos < buf_end(buf)) pos++;
         }
     return pos;
 }
