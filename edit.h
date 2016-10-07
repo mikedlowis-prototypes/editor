@@ -130,7 +130,6 @@ typedef struct buf {
 } Buf;
 
 void buf_load(Buf* buf, char* path);
-void buf_initsz(Buf* buf, size_t sz);
 void buf_init(Buf* buf);
 void buf_clr(Buf* buf);
 void buf_del(Buf* buf, unsigned pos);

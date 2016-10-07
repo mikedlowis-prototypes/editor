@@ -12,31 +12,29 @@ void buf_load(Buf* buf, char* path) {
     buf->insert_mode = false;
 }
 
-void buf_initsz(Buf* buf, size_t sz) {
-    buf->insert_mode = false;
-    buf->bufsize  = sz;
-    buf->bufstart = (Rune*)malloc(buf->bufsize * sizeof(Rune));
-    buf->bufend   = buf->bufstart + buf->bufsize;
-    buf->gapstart = buf->bufstart;
-    buf->gapend   = buf->bufend;
+void buf_resize(Buf* buf, size_t sz) {
+    /* allocate the new buffer and gap */
+    Buf copy = *buf;
+    copy.bufsize  = sz;
+    copy.bufstart = (Rune*)malloc(copy.bufsize * sizeof(Rune));
+    copy.bufend   = copy.bufstart + copy.bufsize;
+    copy.gapstart = copy.bufstart;
+    copy.gapend   = copy.bufend;
+    /* copy the data from the old buffer to the new one */
+    for (Rune* curr = buf->bufstart; curr < buf->gapstart; curr++)
+        *(copy.gapstart++) = *(curr);
+    for (Rune* curr = buf->gapend; curr < buf->bufend; curr++)
+        *(copy.gapstart++) = *(curr);
+    /* free the buffer and commit the changes */
+    free(buf->bufstart);
+    *buf = copy;
 }
 
 static void syncgap(Buf* buf, unsigned off) {
     assert(off <= buf_end(buf));
     /* If the buffer is full, resize it before syncing */
-    if (0 == (buf->gapend - buf->gapstart)) {
-        Buf newbuf;
-        buf_initsz(&newbuf, buf->bufsize << 1);
-
-        for (Rune* curr = buf->bufstart; curr < buf->gapstart; curr++)
-            *(newbuf.gapstart++) = *(curr);
-        for (Rune* curr = buf->gapend; curr < buf->bufend; curr++)
-            *(newbuf.gapstart++) = *(curr);
-
-        free(buf->bufstart);
-        *buf = newbuf;
-    }
-
+    if (0 == (buf->gapend - buf->gapstart))
+        buf_resize(buf, buf->bufsize << 1);
     /* Move the gap to the desired offset */
     Rune* newpos = (buf->bufstart + off);
     if (newpos < buf->gapstart) {
@@ -49,7 +47,12 @@ static void syncgap(Buf* buf, unsigned off) {
 }
 
 void buf_init(Buf* buf) {
-    buf_initsz(buf, BufSize);
+    buf->insert_mode = false;
+    buf->bufsize  = BufSize;
+    buf->bufstart = (Rune*)malloc(buf->bufsize * sizeof(Rune));
+    buf->bufend   = buf->bufstart + buf->bufsize;
+    buf->gapstart = buf->bufstart;
+    buf->gapend   = buf->bufend;
 }
 
 void buf_clr(Buf* buf) {
@@ -58,13 +61,13 @@ void buf_clr(Buf* buf) {
 }
 
 void buf_del(Buf* buf, unsigned off) {
-    if (!buf->insert_mode) return;
+    if (!buf->insert_mode) { return; }
     syncgap(buf, off);
     buf->gapend++;
 }
 
 void buf_ins(Buf* buf, unsigned off, Rune rune) {
-    if (!buf->insert_mode) return;
+    if (!buf->insert_mode) { return; }
     syncgap(buf, off);
     *(buf->gapstart++) = rune;
 }
@@ -95,9 +98,8 @@ unsigned buf_end(Buf* buf) {
 }
 
 unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
-    (void)buf;
     int move = (count < 0 ? -1 : 1);
-    count *= move;
+    count *= move; // remove the sign if there is one
     for (; count > 0; count--)
         if (move < 0) {
             if (pos > 0) pos--;
@@ -113,7 +115,7 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count) {
     for (; count > 0; count--) {
         if (move < 0) {
             if (pos > buf_eol(buf, 0))
-                pos = buf_bol(buf, pos)-1;
+                pos = buf_bol(buf, buf_bol(buf, pos)-1);
         } else {
             unsigned next = buf_eol(buf, pos)+1;
             if (next < buf_end(buf))

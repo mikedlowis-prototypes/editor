@@ -117,18 +117,35 @@ static void fill_row(Buf* buf, unsigned row, unsigned pos) {
     }
 }
 
+static unsigned prev_screen_line(Buf* buf, unsigned bol, unsigned off) {
+    unsigned pos = bol;
+    while (true) {
+        //printf("bol: %u, pos: %u, off: %u\n", bol, pos, off);
+        unsigned x = 0;
+        for (; x < NumCols && (pos + x) < off; x++) {
+            Rune r = buf_get(buf, pos+x);
+            x += (r == '\t' ? (TabWidth - (x % TabWidth)) : 1);
+        }
+        if ((pos + x) >= off) break;
+        pos += x;
+    }
+    return pos;
+}
+
 static void scroll_up(Buf* buf, unsigned csr, unsigned first) {
     while (csr < first) {
+        unsigned bol    = buf_bol(buf, first);
+        unsigned prevln = (first == bol ? buf_byline(buf, bol, -1) : bol);
+        prevln = prev_screen_line(buf, prevln, first);
         /* delete the last row and shift the others */
         free(Rows[NumRows - 1]);
         memmove(&Rows[2], &Rows[1], sizeof(Row*) * (NumRows-2));
         Rows[1] = calloc(1, sizeof(Row) + (NumCols * sizeof(Rune)));
-        Rows[1]->off = buf_byline(buf, Rows[2]->off, -1);
+        Rows[1]->off = prevln;
         /* fill in row content */
         fill_row(buf, 1, Rows[1]->off);
         first = Rows[1]->off;
     }
-    screen_reflow(buf);
 }
 
 static void scroll_dn(Buf* buf, unsigned csr, unsigned last) {

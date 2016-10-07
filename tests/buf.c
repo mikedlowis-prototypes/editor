@@ -22,37 +22,6 @@ static bool buf_text_eq(char* str) {
 }
 
 TEST_SUITE(BufferTests) {
-    /* Init and Clear
-     *************************************************************************/
-    TEST(buf_initsz should init the buffer to the given size) {
-        buf_initsz(&TestBuf, 1024);
-        CHECK(TestBuf.bufsize == 1024);
-        CHECK(TestBuf.bufstart == TestBuf.gapstart);
-        CHECK(TestBuf.bufend == TestBuf.gapend);
-        CHECK(TestBuf.bufend - TestBuf.bufstart == 1024);
-        CHECK(TestBuf.gapend - TestBuf.gapstart == 1024);
-        free(TestBuf.bufstart);
-    }
-
-    TEST(buf_init should init the buffer to the default size) {
-        buf_init(&TestBuf);
-        CHECK(TestBuf.bufsize == BufSize);
-        CHECK(TestBuf.bufstart == TestBuf.gapstart);
-        CHECK(TestBuf.bufend == TestBuf.gapend);
-        CHECK(TestBuf.bufend - TestBuf.bufstart == BufSize);
-        CHECK(TestBuf.gapend - TestBuf.gapstart == BufSize);
-    }
-
-    TEST(buf_clr should clear the buffer) {
-        buf_initsz(&TestBuf, 1024);
-        buf_clr(&TestBuf);
-        CHECK(TestBuf.bufsize == BufSize);
-        CHECK(TestBuf.bufstart == TestBuf.gapstart);
-        CHECK(TestBuf.bufend == TestBuf.gapend);
-        CHECK(TestBuf.bufend - TestBuf.bufstart == BufSize);
-        CHECK(TestBuf.gapend - TestBuf.gapstart == BufSize);
-    }
-
     /* Insertions
      *************************************************************************/
     TEST(buf_ins should insert at 0 in empty buf) {
@@ -111,9 +80,9 @@ TEST_SUITE(BufferTests) {
         CHECK(1 == buf_bol(&TestBuf, 1));
     }
 
-    TEST(buf_eol should move to last non newline character of line) {
+    TEST(buf_eol should move to last character of line) {
         set_buffer_text("\nabc\n");
-        CHECK(3 == buf_eol(&TestBuf, 1));
+        CHECK(4 == buf_eol(&TestBuf, 1));
     }
 
     TEST(buf_eol should do nothing for blank line) {
