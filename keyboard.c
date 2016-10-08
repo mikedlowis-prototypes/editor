@@ -24,19 +24,16 @@ void handle_key(Rune key) {
 
 static void special_keys(Rune key) {
     switch (key) {
-        case KEY_F1:    Buffer.insert_mode = !Buffer.insert_mode;       break;
-        case KEY_F6:    ColorBase = !ColorBase;                         break;
-        case KEY_LEFT:  CursorPos = buf_byrune(&Buffer, CursorPos, -1); break;
-        case KEY_RIGHT: CursorPos = buf_byrune(&Buffer, CursorPos, 1);  break;
-        case KEY_DOWN:  CursorPos = buf_byline(&Buffer, CursorPos, 1);  break;
-        case KEY_UP:    CursorPos = buf_byline(&Buffer, CursorPos, -1); break;
-        case KEY_HOME:  CursorPos = buf_bol(&Buffer, CursorPos);        break;
-        case KEY_END:   CursorPos = buf_eol(&Buffer, CursorPos);        break;
-        case KEY_DELETE:
-            if (Buffer.insert_mode)
-                buf_del(&Buffer, CursorPos);
-            break;
-
+        case KEY_F6:     ColorBase = !ColorBase;                         break;
+        case KEY_UP:     CursorPos = buf_byline(&Buffer, CursorPos, -1); break;
+        case KEY_DOWN:   CursorPos = buf_byline(&Buffer, CursorPos, 1);  break;
+        case KEY_LEFT:   CursorPos = buf_byrune(&Buffer, CursorPos, -1); break;
+        case KEY_RIGHT:  CursorPos = buf_byrune(&Buffer, CursorPos, 1);  break;
+        case KEY_INSERT: Buffer.insert_mode = !Buffer.insert_mode;       break;
+        case KEY_F1:     Buffer.insert_mode = !Buffer.insert_mode;       break;
+        case KEY_DELETE: buf_del(&Buffer, CursorPos);                    break;
+        case KEY_HOME:   CursorPos = buf_bol(&Buffer, CursorPos);        break;
+        case KEY_END:    CursorPos = buf_eol(&Buffer, CursorPos);        break;
     }
 }
 

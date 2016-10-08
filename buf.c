@@ -1,20 +1,58 @@
 #define _GNU_SOURCE
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "edit.h"
+
+typedef struct {
+    char* buf;
+    size_t len;
+} FMap;
+
+FMap fmap(char* path) {
+    int fd;
+    FMap file;
+    struct stat sb;
+    if ((fd = open(path, O_RDONLY, 0)) < 0)
+        die("could not open file");
+    if (fstat(fd, &sb) < 0)
+        die("file size could not be determined");
+    file.buf = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    file.len = sb.st_size;
+    if (file.buf == MAP_FAILED)
+        die("memory mapping of file failed");
+    return file;
+}
+
+void funmap(FMap file) {
+    munmap(file.buf, file.len);
+}
 
 void buf_load(Buf* buf, char* path) {
     buf->insert_mode = true;
-    unsigned i = 0;
-    Rune r;
-    FILE* in = (!strcmp(path,"-") ? stdin : fopen(path, "rb"));
-    buf->path = (in == stdin ? NULL : strdup(path));
-    if (in != NULL) {
-        while (RUNE_EOF != (r = fgetrune(in)))
-            buf_ins(buf, i++, r);
-        fclose(in);
+    if (!strcmp(path,"-")) {
+        buf_ins(buf, 0, (Rune)'\n');
     } else {
-        buf_ins(buf, i, (Rune)'\n');
+        FMap file = fmap(path);
+        int chset = charset(file.buf, file.len);
+        if (chset > UTF_8) {
+            die("Unsupported character set");
+        } else if (chset == BINARY) {
+            for (size_t i = 0; i < file.len; i++)
+                buf_ins(buf, buf_end(buf), file.buf[i]);
+        } else { // UTF-8
+            for (size_t i = 0; i < file.len;) {
+                Rune r = 0;
+                size_t len = 0;
+                while (!utf8decode(&r, &len, file.buf[i++]));
+                buf_ins(buf, buf_end(buf), r);
+            }
+        }
+        funmap(file);
     }
     buf->insert_mode = false;
 }

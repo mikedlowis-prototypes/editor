@@ -5,6 +5,11 @@
 Buf Buffer;
 unsigned CursorPos;
 
+void die(char* m) {
+    (void)m;
+}
+
+
 int main(int argc, char** argv) {
     atf_init(argc,argv);
     RUN_EXTERN_TEST_SUITE(BufferTests);
