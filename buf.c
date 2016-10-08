@@ -13,14 +13,14 @@ typedef struct {
     size_t len;
 } FMap;
 
-FMap fmap(char* path) {
+static FMap fmap(char* path) {
     int fd;
-    FMap file;
+    FMap file = { .buf = NULL, .len = 0 };
     struct stat sb;
-    if ((fd = open(path, O_RDONLY, 0)) < 0)
-        die("could not open file");
-    if (fstat(fd, &sb) < 0)
-        die("file size could not be determined");
+    if (((fd = open(path, O_RDONLY, 0)) < 0) ||
+        (fstat(fd, &sb) < 0) ||
+        (sb.st_size == 0))
+        return file;
     file.buf = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
     file.len = sb.st_size;
     if (file.buf == MAP_FAILED)
@@ -28,8 +28,35 @@ FMap fmap(char* path) {
     return file;
 }
 
-void funmap(FMap file) {
-    munmap(file.buf, file.len);
+static void funmap(FMap file) {
+    if (file.buf)
+        munmap(file.buf, file.len);
+}
+
+static void utf8load(Buf* buf, FMap file) {
+    for (size_t i = 0; i < file.len;) {
+        Rune r = 0;
+        size_t len = 0;
+        while (!utf8decode(&r, &len, file.buf[i++]));
+        buf_ins(buf, buf_end(buf), r);
+    }
+}
+
+static void utf8save(Buf* buf, FILE* file) {
+    unsigned end = buf_end(buf);
+    for (unsigned i = 0; i < end; i++)
+        fputrune(buf_get(buf, i), file);
+}
+
+static void binload(Buf* buf, FMap file) {
+    for (size_t i = 0; i < file.len; i++)
+        buf_ins(buf, buf_end(buf), file.buf[i]);
+}
+
+static void binsave(Buf* buf, FILE* file) {
+    unsigned end = buf_end(buf);
+    for (unsigned i = 0; i < end; i++)
+        fputc((int)buf_get(buf, i), file);
 }
 
 void buf_load(Buf* buf, char* path) {
@@ -38,20 +65,19 @@ void buf_load(Buf* buf, char* path) {
         buf_ins(buf, 0, (Rune)'\n');
     } else {
         FMap file = fmap(path);
-        int chset = charset(file.buf, file.len);
-        if (chset > UTF_8) {
+        buf->path = strdup(path);
+        buf->charset = (file.buf ? charset(file.buf, file.len) : UTF_8);
+        /* load the file contents if it has any */
+        if (buf->charset > UTF_8) {
             die("Unsupported character set");
-        } else if (chset == BINARY) {
-            for (size_t i = 0; i < file.len; i++)
-                buf_ins(buf, buf_end(buf), file.buf[i]);
-        } else { // UTF-8
-            for (size_t i = 0; i < file.len;) {
-                Rune r = 0;
-                size_t len = 0;
-                while (!utf8decode(&r, &len, file.buf[i++]));
-                buf_ins(buf, buf_end(buf), r);
-            }
+        } else if (buf->charset == BINARY) {
+            binload(buf, file);
+        } else {
+            utf8load(buf, file);
         }
+        /* new files should have a newline in the buffer */
+        if (!file.buf)
+            buf_ins(buf, 0, (Rune)'\n');
         funmap(file);
     }
     buf->insert_mode = false;
@@ -59,12 +85,13 @@ void buf_load(Buf* buf, char* path) {
 
 void buf_save(Buf* buf) {
     if (!buf->path) return;
-    unsigned end = buf_end(buf);
-    FILE* out = fopen(buf->path, "wb");
-    if (!out) return;
-    for (unsigned i = 0; i < end; i++)
-        fputrune(buf_get(buf, i), out);
-    fclose(out);
+    FILE* file = fopen(buf->path, "wb");
+    if (!file) return;
+    if (buf->charset == BINARY)
+        binsave(buf, file);
+    else
+        utf8save(buf, file);
+    fclose(file);
 }
 
 void buf_resize(Buf* buf, size_t sz) {

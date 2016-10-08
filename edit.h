@@ -132,7 +132,8 @@ void handle_mouse(MouseEvent* mevnt);
 /* Buffer management functions
  *****************************************************************************/
 typedef struct buf {
-    char* path;
+    char* path;       /* the path to the open file */
+    int charset;      /* the character set of the buffer */
     bool insert_mode; /* tracks current mode */
     size_t bufsize;   /* size of the buffer in runes */
     Rune* bufstart;   /* start of the data buffer */
