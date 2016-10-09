@@ -216,8 +216,13 @@ enum ColorScheme {
     LIGHT = 1
 };
 
+/* Global State
+ *****************************************************************************/
 /* variable for holding the currently selected color scheme */
-enum ColorScheme ColorBase;
+extern enum ColorScheme ColorBase;
+extern Buf Buffer;
+extern unsigned CursorPos;
+extern unsigned TargetCol;
 
 /* Configuration
  *****************************************************************************/

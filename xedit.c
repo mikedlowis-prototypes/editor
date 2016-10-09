@@ -45,7 +45,16 @@ static XftColor xftcolor(enum ColorId cid) {
     return xc;
 }
 
+static void deinit(void) {
+    if (X.pixmap != None) {
+        XftDrawDestroy(X.xft);
+        XFreePixmap(X.display, X.pixmap);
+    }
+    XCloseDisplay(X.display);
+}
+
 static int init(void) {
+    atexit(deinit);
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
     /* open the X display and get basic attributes */
     if (!(X.display = XOpenDisplay(0)))
@@ -94,14 +103,6 @@ static int init(void) {
     X.xft = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
 
     return XConnectionNumber(X.display);
-}
-
-static void deinit(void) {
-    if (X.pixmap != None) {
-        XftDrawDestroy(X.xft);
-        XFreePixmap(X.display, X.pixmap);
-    }
-    XCloseDisplay(X.display);
 }
 
 static Rune getkey(XEvent* e) {

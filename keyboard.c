@@ -1,9 +1,5 @@
 #include "edit.h"
 
-extern Buf Buffer;
-extern unsigned CursorPos;
-extern unsigned TargetCol;
-
 static void special_keys(Rune key);
 static void control_keys(Rune key);
 static void vi_keys(Rune key);

@@ -5,11 +5,11 @@
 Buf Buffer;
 unsigned CursorPos;
 unsigned TargetCol;
+enum ColorScheme ColorBase;
 
 void die(char* m) {
     (void)m;
 }
-
 
 int main(int argc, char** argv) {
     atf_init(argc,argv);

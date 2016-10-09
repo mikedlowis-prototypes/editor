@@ -1,14 +1,5 @@
 #include "edit.h"
 
-struct {
-    uint32_t time;
-    uint32_t count;
-} Buttons[5] = { {0,0}, {0,0}, {0,0} };
-
-extern Buf Buffer;
-extern unsigned CursorPos;
-extern unsigned TargetCol;
-
 #ifndef __MACH__
 #include <time.h>
 #else
@@ -33,12 +24,6 @@ uint32_t getmillis(void) {
 }
 
 /*****************************************************************************/
-
-enum {
-    SINGLE_CLICK = 0,
-    DOUBLE_CLICK,
-    TRIPLE_CLICK
-};
 
 void unused(MouseEvent* mevnt) {
     (void)mevnt;
@@ -66,6 +51,19 @@ void scrolldn(MouseEvent* mevnt) {
     (void)mevnt;
     CursorPos = buf_byline(&Buffer, CursorPos, ScrollLines);
 }
+
+/*****************************************************************************/
+
+enum {
+    SINGLE_CLICK = 0,
+    DOUBLE_CLICK,
+    TRIPLE_CLICK
+};
+
+struct {
+    uint32_t time;
+    uint32_t count;
+} Buttons[5] = { {0,0}, {0,0}, {0,0} };
 
 void (*Actions[5][3])(MouseEvent* mevnt) = {
     [MOUSE_LEFT] = {
@@ -95,7 +93,7 @@ void (*Actions[5][3])(MouseEvent* mevnt) = {
     },
 };
 
-void handle_mouse(MouseEvent* mevnt) {
+static void handle_click(MouseEvent* mevnt) {
     if (mevnt->button >= 5) return;
     /* update the number of clicks */
     uint32_t now = getmillis();
@@ -109,4 +107,16 @@ void handle_mouse(MouseEvent* mevnt) {
     uint32_t nclicks = Buttons[mevnt->button].count;
     nclicks = (nclicks > 3 ? 1 : nclicks);
     Actions[mevnt->button][nclicks-1](mevnt);
+}
+
+static void handle_drag(MouseEvent* mevnt) {
+    (void)mevnt;
+}
+
+void handle_mouse(MouseEvent* mevnt) {
+    if (mevnt->type == MouseDown) {
+        handle_click(mevnt);
+    } else if (mevnt->type == MouseMove) {
+        handle_drag(mevnt);
+    }
 }
