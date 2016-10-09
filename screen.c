@@ -6,7 +6,6 @@ static Row** Rows;
 
 void screen_reflow(Buf* buf) {
     unsigned pos = Rows[1]->off;
-    screen_clearrow(0);
     for (unsigned y = 1; y < NumRows; y++) {
         screen_clearrow(y);
         screen_setrowoff(y, pos);
@@ -120,7 +119,6 @@ static void fill_row(Buf* buf, unsigned row, unsigned pos) {
 static unsigned prev_screen_line(Buf* buf, unsigned bol, unsigned off) {
     unsigned pos = bol;
     while (true) {
-        //printf("bol: %u, pos: %u, off: %u\n", bol, pos, off);
         unsigned x = 0;
         for (; x < NumCols && (pos + x) < off; x++) {
             Rune r = buf_get(buf, pos+x);
@@ -195,4 +193,18 @@ void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
             break;
         }
     }
+}
+
+void screen_status(char* fmt, ...) {
+    char buffer[NumCols+1];
+    memset(buffer, 0, NumCols+1);
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, NumCols, fmt, args);
+    va_end(args);
+    screen_clearrow(0);
+    Rows[0]->len  = NumCols;
+    Rows[0]->rlen = NumCols;
+    for (unsigned i = 0; buffer[i] && i < NumCols; i++)
+        Rows[0]->cols[i] = (Rune)buffer[i];
 }

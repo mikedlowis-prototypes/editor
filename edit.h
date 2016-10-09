@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 
 /* Charset Handling
@@ -31,7 +32,6 @@ size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);
 Rune fgetrune(FILE* f);
 void fputrune(Rune rune, FILE* f);
-
 
 /* Input Handling
  *****************************************************************************/
@@ -135,6 +135,7 @@ typedef struct buf {
     char* path;       /* the path to the open file */
     int charset;      /* the character set of the buffer */
     bool insert_mode; /* tracks current mode */
+    bool modified;    /* tracks whether the buffer has been modified */
     size_t bufsize;   /* size of the buffer in runes */
     Rune* bufstart;   /* start of the data buffer */
     Rune* bufend;     /* end of the data buffer */
@@ -175,6 +176,7 @@ void screen_clearrow(unsigned row);
 void screen_setrowoff(unsigned row, unsigned off);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
 Rune screen_getcell(unsigned row, unsigned col);
+void screen_status(char* fmt, ...);
 
 /* Miscellaneous Functions
  *****************************************************************************/
@@ -182,7 +184,6 @@ void die(char* msg);
 
 /* Color Scheme Handling
  *****************************************************************************/
-
 /* color indexes for the colorscheme */
 enum ColorId {
     CLR_BASE03 = 0,

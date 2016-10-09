@@ -81,6 +81,7 @@ void buf_load(Buf* buf, char* path) {
         funmap(file);
     }
     buf->insert_mode = false;
+    buf->modified    = false;
 }
 
 void buf_save(Buf* buf) {
@@ -92,6 +93,7 @@ void buf_save(Buf* buf) {
     else
         utf8save(buf, file);
     fclose(file);
+    buf->modified = false;
 }
 
 void buf_resize(Buf* buf, size_t sz) {
@@ -130,11 +132,12 @@ static void syncgap(Buf* buf, unsigned off) {
 
 void buf_init(Buf* buf) {
     buf->insert_mode = false;
-    buf->bufsize  = BufSize;
-    buf->bufstart = (Rune*)malloc(buf->bufsize * sizeof(Rune));
-    buf->bufend   = buf->bufstart + buf->bufsize;
-    buf->gapstart = buf->bufstart;
-    buf->gapend   = buf->bufend;
+    buf->modified    = false;
+    buf->bufsize     = BufSize;
+    buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
+    buf->bufend      = buf->bufstart + buf->bufsize;
+    buf->gapstart    = buf->bufstart;
+    buf->gapend      = buf->bufend;
 }
 
 void buf_clr(Buf* buf) {
@@ -144,12 +147,14 @@ void buf_clr(Buf* buf) {
 
 void buf_del(Buf* buf, unsigned off) {
     if (!buf->insert_mode) { return; }
+    buf->modified = true;
     syncgap(buf, off);
     buf->gapend++;
 }
 
 void buf_ins(Buf* buf, unsigned off, Rune rune) {
     if (!buf->insert_mode) { return; }
+    buf->modified = true;
     syncgap(buf, off);
     *(buf->gapstart++) = rune;
 }

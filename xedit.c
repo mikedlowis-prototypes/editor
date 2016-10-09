@@ -200,11 +200,12 @@ static void redraw(void) {
     XftColor bkgclr = xftcolor(CLR_BASE03);
     XftColor gtrclr = xftcolor(CLR_BASE02);
     XftColor csrclr = xftcolor(CLR_BASE3);
+    XftColor staclr = xftcolor(CLR_BASE2);
     XftColor txtclr = xftcolor(CLR_BASE0);
 
     /* draw the background colors */
     XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
-    XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight);
+    XftDrawRect(X.xft, &gtrclr, 0, 0, X.width, fheight + X.font->descent);
     XftDrawRect(X.xft, &gtrclr, 79 * fwidth, 0, fwidth, X.height);
 
     /* update the screen buffer and retrieve cursor coordinates */
@@ -214,9 +215,13 @@ static void redraw(void) {
     /* flush the screen buffer */
     unsigned nrows, ncols;
     screen_getsize(&nrows, &ncols);
+    screen_status("[%s]%s%s",
+        (Buffer.charset == BINARY ? "BIN" : "UTF-8"),
+        (Buffer.modified ? " * " : " "),
+        Buffer.path);
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
-        XftDrawString32(X.xft, &txtclr, X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));
+        XftDrawString32(X.xft, (y==0 ? &staclr : &txtclr), X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));
     }
 
     /* Place cursor on screen */
