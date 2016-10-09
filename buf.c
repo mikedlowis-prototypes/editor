@@ -211,3 +211,14 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count) {
     }
     return pos;
 }
+
+unsigned buf_getcol(Buf* buf, unsigned pos) {
+    return (pos - buf_bol(buf, pos));
+}
+
+unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
+    unsigned bol = buf_bol(buf, pos);
+    unsigned len = buf_eol(buf, pos) - bol;
+    return buf_byrune(buf, bol, (len > col ? col : len));
+}
+

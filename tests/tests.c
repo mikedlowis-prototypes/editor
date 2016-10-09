@@ -4,6 +4,7 @@
 
 Buf Buffer;
 unsigned CursorPos;
+unsigned TargetCol;
 
 void die(char* m) {
     (void)m;

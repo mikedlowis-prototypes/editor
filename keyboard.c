@@ -2,10 +2,31 @@
 
 extern Buf Buffer;
 extern unsigned CursorPos;
+extern unsigned TargetCol;
 
 static void special_keys(Rune key);
 static void control_keys(Rune key);
 static void vi_keys(Rune key);
+
+static void cursor_up(void) {
+    CursorPos = buf_byline(&Buffer, CursorPos, -1);
+    CursorPos = buf_setcol(&Buffer, CursorPos, TargetCol);
+}
+
+static void cursor_dn(void) {
+    CursorPos = buf_byline(&Buffer, CursorPos, 1);
+    CursorPos = buf_setcol(&Buffer, CursorPos, TargetCol);
+}
+
+static void cursor_left(void) {
+    CursorPos = buf_byrune(&Buffer, CursorPos, -1);
+    TargetCol = buf_getcol(&Buffer, CursorPos);
+}
+
+static void cursor_right(void) {
+    CursorPos = buf_byrune(&Buffer, CursorPos, 1);
+    TargetCol = buf_getcol(&Buffer, CursorPos);
+}
 
 void handle_key(Rune key) {
     /* ignore invalid keys */
@@ -24,16 +45,16 @@ void handle_key(Rune key) {
 
 static void special_keys(Rune key) {
     switch (key) {
-        case KEY_F6:     ColorBase = !ColorBase;                         break;
-        case KEY_UP:     CursorPos = buf_byline(&Buffer, CursorPos, -1); break;
-        case KEY_DOWN:   CursorPos = buf_byline(&Buffer, CursorPos, 1);  break;
-        case KEY_LEFT:   CursorPos = buf_byrune(&Buffer, CursorPos, -1); break;
-        case KEY_RIGHT:  CursorPos = buf_byrune(&Buffer, CursorPos, 1);  break;
-        case KEY_INSERT: Buffer.insert_mode = !Buffer.insert_mode;       break;
-        case KEY_F1:     Buffer.insert_mode = !Buffer.insert_mode;       break;
-        case KEY_DELETE: buf_del(&Buffer, CursorPos);                    break;
-        case KEY_HOME:   CursorPos = buf_bol(&Buffer, CursorPos);        break;
-        case KEY_END:    CursorPos = buf_eol(&Buffer, CursorPos);        break;
+        case KEY_F6:     ColorBase = !ColorBase;                   break;
+        case KEY_UP:     cursor_up();                              break;
+        case KEY_DOWN:   cursor_dn();                              break;
+        case KEY_LEFT:   cursor_left();                            break;
+        case KEY_RIGHT:  cursor_right();                           break;
+        case KEY_INSERT: Buffer.insert_mode = !Buffer.insert_mode; break;
+        case KEY_F1:     Buffer.insert_mode = !Buffer.insert_mode; break;
+        case KEY_DELETE: buf_del(&Buffer, CursorPos);              break;
+        case KEY_HOME:   CursorPos = buf_bol(&Buffer, CursorPos);  break;
+        case KEY_END:    CursorPos = buf_eol(&Buffer, CursorPos);  break;
     }
 }
 
@@ -50,3 +71,5 @@ static void control_keys(Rune key) {
 static void vi_keys(Rune key) {
     (void)key;
 }
+
+/*****************************************************************************/

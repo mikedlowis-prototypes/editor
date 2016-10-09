@@ -7,6 +7,7 @@ struct {
 
 extern Buf Buffer;
 extern unsigned CursorPos;
+extern unsigned TargetCol;
 
 #ifndef __MACH__
 #include <time.h>
@@ -45,6 +46,7 @@ void unused(MouseEvent* mevnt) {
 
 void move_cursor(MouseEvent* mevnt) {
     CursorPos = screen_getoff(&Buffer, CursorPos, mevnt->y, mevnt->x);
+    TargetCol = buf_getcol(&Buffer, CursorPos);
 }
 
 void select_word(MouseEvent* mevnt) {

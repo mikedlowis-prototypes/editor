@@ -155,6 +155,9 @@ unsigned buf_eol(Buf* buf, unsigned pos);
 unsigned buf_end(Buf* buf);
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
+unsigned buf_getcol(Buf* buf, unsigned pos);
+unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
+
 
 /* Screen management functions
  *****************************************************************************/
