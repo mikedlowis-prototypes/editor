@@ -216,10 +216,11 @@ static void redraw(void) {
     /* flush the screen buffer */
     unsigned nrows, ncols;
     screen_getsize(&nrows, &ncols);
-    screen_status(" %s %s%s",
+    screen_status(" %s %c %s",
         (Buffer.charset == BINARY ? "BIN" : "UTF-8"),
-        (Buffer.modified ? " * " : " "),
-        Buffer.path);
+        (Buffer.modified ? '*' : ' '),
+        Buffer.path
+    );
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
         XftDrawString32(X.xft, (y==0 ? &bkgclr : &txtclr), X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));
@@ -257,6 +258,5 @@ int main(int argc, char** argv) {
       }
       redraw();
     }
-    deinit();
     return 0;
 }

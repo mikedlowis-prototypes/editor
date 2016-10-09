@@ -1,6 +1,5 @@
 # Internals and Miscellaneous
 
-* Re-work column tracking to keep the cursor reasonably close to where expected
 * Calculate line numbers and keep up to date while editing
 * Support multiple buffers
 * Implement undo/redo log
@@ -13,7 +12,6 @@
 # Unicode
 
 * Fix display of asian scripts and combining characters
-* Read the file in bytewise and detect the encoding and line endings. Use that info to perform cursor movements and redisplay.
 
 # Graphical User Interface
 

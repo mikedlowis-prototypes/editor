@@ -24,6 +24,16 @@ static void cursor_right(void) {
     TargetCol = buf_getcol(&Buffer, CursorPos);
 }
 
+static void cursor_home(void) {
+    CursorPos = buf_bol(&Buffer, CursorPos);
+    TargetCol = 0;
+}
+
+static void cursor_end(void) {
+    CursorPos = buf_eol(&Buffer, CursorPos);
+    TargetCol = (unsigned)-1;
+}
+
 void handle_key(Rune key) {
     /* ignore invalid keys */
     if (key == RUNE_ERR) return;
@@ -49,8 +59,8 @@ static void special_keys(Rune key) {
         case KEY_INSERT: Buffer.insert_mode = !Buffer.insert_mode; break;
         case KEY_F1:     Buffer.insert_mode = !Buffer.insert_mode; break;
         case KEY_DELETE: buf_del(&Buffer, CursorPos);              break;
-        case KEY_HOME:   CursorPos = buf_bol(&Buffer, CursorPos);  break;
-        case KEY_END:    CursorPos = buf_eol(&Buffer, CursorPos);  break;
+        case KEY_HOME:   cursor_home();                            break;
+        case KEY_END:    cursor_end();                             break;
     }
 }
 
