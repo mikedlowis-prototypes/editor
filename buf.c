@@ -62,7 +62,10 @@ static void binsave(Buf* buf, FILE* file) {
 void buf_load(Buf* buf, char* path) {
     buf->insert_mode = true;
     if (!strcmp(path,"-")) {
-        buf_ins(buf, 0, (Rune)'\n');
+        buf->charset = UTF_8;
+        Rune r;
+        while (RUNE_EOF != (r = fgetrune(stdin)))
+            buf_ins(buf, buf_end(&Buffer), r);
     } else {
         FMap file = fmap(path);
         buf->path = strdup(path);
