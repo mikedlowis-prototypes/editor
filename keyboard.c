@@ -34,19 +34,26 @@ static void cursor_end(void) {
     TargetCol = (unsigned)-1;
 }
 
+static void backspace(void) {
+    if (CursorPos == 0) return;
+    buf_del(&Buffer, --CursorPos);
+    TargetCol = buf_getcol(&Buffer, CursorPos);
+}
+
 void handle_key(Rune key) {
     /* ignore invalid keys */
     if (key == RUNE_ERR) return;
     /* handle the special keys */
-    if (0xE000 <= key && key <= 0xF8FF)
+    if (0xE000 <= key && key <= 0xF8FF) {
         special_keys(key);
-    /* Handle regular key */
-    else if (key < 0x20)
+    } else if (key < 0x20) {
         control_keys(key);
-    else if (Buffer.insert_mode)
+    } else if (Buffer.insert_mode) {
         buf_ins(&Buffer, CursorPos++, key);
-    else
+        TargetCol = buf_getcol(&Buffer, CursorPos);
+    } else {
         vi_keys(key);
+    }
 }
 
 static void special_keys(Rune key) {
@@ -67,7 +74,7 @@ static void special_keys(Rune key) {
 static void control_keys(Rune key) {
     switch (key) {
         case KEY_ESCAPE:    Buffer.insert_mode = false;         break;
-        case KEY_BACKSPACE: buf_del(&Buffer, --CursorPos);      break;
+        case KEY_BACKSPACE: backspace();                        break;
         case KEY_CTRL_W:    buf_save(&Buffer);                  break;
         case KEY_CTRL_Q:    exit(0);                            break;
         default:            buf_ins(&Buffer, CursorPos++, key); break;
@@ -75,7 +82,7 @@ static void control_keys(Rune key) {
 }
 
 static void vi_keys(Rune key) {
+    static unsigned count = 0;
     (void)key;
 }
 
-/*****************************************************************************/

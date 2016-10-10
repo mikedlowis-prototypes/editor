@@ -250,13 +250,13 @@ int main(int argc, char** argv) {
     init();
     XEvent e;
     while (true) {
-      XPeekEvent(X.display,&e);
-      while (XPending(X.display)) {
-          XNextEvent(X.display, &e);
-          if (!XFilterEvent(&e, None))
-              handle_event(&e);
-      }
-      redraw();
+        XPeekEvent(X.display,&e);
+        while (XPending(X.display)) {
+            XNextEvent(X.display, &e);
+            if (!XFilterEvent(&e, None))
+                handle_event(&e);
+        }
+        redraw();
     }
     return 0;
 }
