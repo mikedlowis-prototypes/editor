@@ -1,9 +1,10 @@
 #include "edit.h"
 
-#ifndef __MACH__
+#define _GNU_SOURCE
 #include <time.h>
-#else
 #include <sys/time.h>
+
+#ifdef __MACH__
 #define CLOCK_MONOTONIC 0
 // clock_gettime is not implemented on OSX
 int clock_gettime(int id, struct timespec* t) {
