@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <time.h>
 #include <signal.h>
+#include <locale.h>
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
 
@@ -17,10 +18,14 @@ struct {
     unsigned depth;
     int screen;
     GC gc;
-    XftFont* font;
     Window window;
     Pixmap pixmap;
     XftDraw* xft;
+    XftFont* font;
+    unsigned fheight;
+    unsigned fwidth;
+    unsigned fascent;
+    unsigned fdescent;
     int width;
     int height;
     int rows;
@@ -28,6 +33,97 @@ struct {
     XIC xic;
     XIM xim;
 } X;
+
+/*****************************************************************************/
+
+struct XFont {
+    struct XFont* next;
+    XftFont* font;
+    FcPattern* pattern;
+}* FontList = NULL;
+
+struct XFont* fontbyname(char* fontname) {
+    struct XFont* xfont = (struct XFont*)calloc(1, sizeof(struct XFont));
+    if (!(xfont->font = XftFontOpenName(X.display, X.screen, fontname)))
+        die("cannot open default font");
+    if (!(xfont->pattern = FcNameParse((FcChar8 *)FONTNAME)))
+        die("cannot convert fontname to font pattern");
+    return xfont;
+}
+
+struct XFont* fontbypatt(FcPattern* pattern) {
+    struct XFont* xfont = (struct XFont*)calloc(1, sizeof(struct XFont));
+    if (!(xfont->font = XftFontOpenPattern(X.display, pattern)))
+        die("cannot get font by pattern");
+    return xfont;
+}
+
+struct XFont* getfont(Rune r) {
+    /* check to see if the font is already loaded */
+    struct XFont* xfont = FontList;
+    while (xfont) {
+        printf("does font have rune? %d\n", XftCharExists(X.display, xfont->font, r));
+        if (XftCharExists(X.display, xfont->font, r)) {
+            //puts("found font in font list");
+            return xfont;
+        }
+        xfont = xfont->next;
+    }
+    /* search for a new font that has the rune */
+    XftResult result;
+    FcCharSet* fccharset = FcCharSetCreate();
+    FcCharSetAddChar(fccharset, r);
+    FcPattern* fcpattern = FcPatternDuplicate(FontList->pattern);
+    FcPatternAddCharSet(fcpattern, FC_CHARSET, fccharset);
+    FcPatternAddBool(fcpattern, FC_SCALABLE, FcTrue);
+    FcConfigSubstitute(NULL, fcpattern, FcMatchPattern);
+    FcDefaultSubstitute(fcpattern);
+    FcPattern* match = XftFontMatch(X.display, X.screen, fcpattern, &result);
+    FcCharSetDestroy(fccharset);
+    FcPatternDestroy(fcpattern);
+    if (match) {
+        //puts("found new font, adding it to the list");
+        struct XFont* newfont  = fontbypatt(match);
+        struct XFont* lastfont = FontList;
+        printf("newfont: %p, %d\n", newfont->font, XftCharExists(X.display, newfont->font, r));
+        if (XftCharExists(X.display, newfont->font, r)) {
+            for (; lastfont->next; lastfont = lastfont->next)
+                ; /* NOP */
+            lastfont->next = newfont;
+            return newfont;
+        } else {
+            XftFontClose(X.display, newfont->font);
+            free(newfont);
+        }
+    }
+    puts("failed to find a font with the given rune");
+    return FontList;
+}
+
+void fontinit(char* fontstr)
+{
+    double fontval;
+    float ceilf(float);
+    /* initialize fontconfig */
+    if (!FcInit())
+        die("Could not init fontconfig");
+    /* get pattern from font name */
+    FcPattern *pattern;
+    if (fontstr[0] == '-') {
+        pattern = XftXlfdParse(fontstr, False, False);
+    } else {
+        pattern = FcNameParse((FcChar8 *)fontstr);
+    }
+    if (!pattern)
+        die("failed to open default font");
+    /* load the font by pattern */
+    if (!(FontList = fontbypatt(pattern)))
+        die("failed to load the font");
+    FcPatternDestroy(pattern);
+}
+
+
+/*****************************************************************************/
 
 void die(char* m) {
     fprintf(stderr, "dying, %s\n", m);
@@ -85,11 +181,15 @@ static int init(void) {
     XMapWindow(X.display, X.window);
 
     /* allocate font */
-    if(!(X.font = XftFontOpenName(X.display, X.screen, FONTNAME)))
-        die("cannot open default font");
+    //fontinit(FONTNAME);
+    FontList   = fontbyname(FONTNAME);
+    X.fheight  = FontList->font->height;
+    X.fwidth   = FontList->font->max_advance_width;
+    X.fascent  = FontList->font->ascent;
+    X.fdescent = FontList->font->descent;
 
     /* set input methods */
-    if((X.xim = XOpenIM(X.display, 0, 0, 0)))
+    if ((X.xim = XOpenIM(X.display, 0, 0, 0)))
         X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.window, XNFocusWindow, X.window, NULL);
 
     /* initialize the graphics context */
@@ -155,8 +255,8 @@ static MouseEvent* getmouse(XEvent* e) {
     if (e->type == MotionNotify) {
         event.type   = MouseMove;
         event.button = MOUSE_NONE;
-        event.x      = e->xmotion.x / X.font->max_advance_width;
-        event.y      = e->xmotion.y / (X.font->ascent + X.font->descent);
+        event.x      = e->xmotion.x / X.fwidth;
+        event.y      = e->xmotion.y / (X.fascent + X.fdescent);
     } else {
         event.type = (e->type = ButtonPress ? MouseDown : MouseUp);
         /* set the button id */
@@ -168,8 +268,8 @@ static MouseEvent* getmouse(XEvent* e) {
             case Button5: event.button = MOUSE_WHEELDOWN; break;
             default:      event.button = MOUSE_NONE;      break;
         }
-        event.x = e->xbutton.x / X.font->max_advance_width;
-        event.y = e->xbutton.y / (X.font->ascent + X.font->descent);
+        event.x = e->xbutton.x / X.fwidth;
+        event.y = e->xbutton.y / (X.fascent + X.fdescent);
     }
     return &event;
 }
@@ -188,16 +288,45 @@ static void handle_event(XEvent* e) {
                 X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
                 screen_setsize(
                     &Buffer,
-                    X.height / X.font->height,
-                    X.width / X.font->max_advance_width);
+                    X.height / X.fheight,
+                    X.width  / X.fwidth);
             }
             break;
     }
 }
 
+#include <assert.h>
+
+static void draw_string(XftDraw* xft, XftColor* clr, unsigned x, unsigned y, Rune* r, unsigned len) {
+    struct XFont* curfont = NULL;
+    for (unsigned i = 0, n = 0; i < len; i += n, n = 0) {
+        //printf("i: %d, n: %d\n", i, n);
+        Rune* str = r+i;
+        struct XFont* newfont = NULL;
+        curfont = getfont(str[n]);
+        while (curfont == (newfont = getfont(str[n]))) {
+            n++;
+        }
+        if (n) {
+            //printf("printing: %p %u\n", curfont, n);
+            //if (!curfont) curfont = FontList;
+            XftDrawString32(xft, clr, (curfont ? curfont->font : FontList->font), x, y, str, n);
+        }
+    }
+    //for (unsigned i = 0; i < len;) {
+    //    struct XFont* newfont = NULL;
+    //    Rune* curr = r+i;
+    //    unsigned n = 0;
+    //    while (curfont == (newfont = getfont(curr[n])))
+    //        n++;
+    //    if (!curfont) curfont = FontList;
+    //    XftDrawString32(xft, clr, curfont->font, x, y, curr, n);
+    //    curfont = newfont;
+    //    i += n;
+    //}
+}
+
 static void redraw(void) {
-    int fheight = X.font->height;
-    int fwidth  = X.font->max_advance_width;
     /* Allocate the colors */
     XftColor bkgclr = xftcolor(CLR_BASE03);
     XftColor gtrclr = xftcolor(CLR_BASE02);
@@ -206,8 +335,8 @@ static void redraw(void) {
 
     /* draw the background colors */
     XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
-    XftDrawRect(X.xft, &gtrclr, 79 * fwidth, 0, fwidth, X.height);
-    XftDrawRect(X.xft, &txtclr, 0, 0, X.width, fheight + X.font->descent);
+    XftDrawRect(X.xft, &gtrclr, 79 * X.fwidth, 0, X.fwidth, X.height);
+    XftDrawRect(X.xft, &txtclr, 0, 0, X.width, X.fheight + X.fdescent);
 
     /* update the screen buffer and retrieve cursor coordinates */
     unsigned csrx, csry;
@@ -223,17 +352,17 @@ static void redraw(void) {
     );
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
-        XftDrawString32(X.xft, (y==0 ? &bkgclr : &txtclr), X.font, 0, (y+1) * fheight, (FcChar32*)(row->cols), (row->len));
+        draw_string(X.xft, (y == 0 ? &bkgclr : &txtclr), 0, (y+1) * X.fheight, row->cols, row->len);
     }
 
     /* Place cursor on screen */
     Rune csrrune = screen_getcell(csry,csrx);
     if (Buffer.insert_mode) {
-        XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, 2, fheight);
+        XftDrawRect(X.xft, &csrclr, csrx * X.fwidth, csry * X.fheight + X.fdescent, 2, X.fheight);
     } else {
         unsigned width = ('\t' == buf_get(&Buffer, CursorPos) ? (TabWidth - (csrx % TabWidth)) : 1);
-        XftDrawRect(X.xft, &csrclr, csrx * fwidth, csry * fheight + X.font->descent, width * fwidth, fheight);
-        XftDrawString32(X.xft, &bkgclr, X.font, csrx * fwidth, (csry+1) * fheight, (FcChar32*)&csrrune, 1);
+        XftDrawRect(X.xft, &csrclr, csrx * X.fwidth, csry * X.fheight + X.fdescent, width * X.fwidth, X.fheight);
+        draw_string(X.xft, &bkgclr, csrx * X.fwidth, (csry+1) * X.fheight, (FcChar32*)&csrrune, 1);
     }
 
     /* flush pixels to the screen */
@@ -247,6 +376,8 @@ int main(int argc, char** argv) {
     if (argc > 1)
         buf_load(&Buffer, argv[1]);
     /* main x11 event loop */
+    setlocale(LC_CTYPE, "");
+    XSetLocaleModifiers("");
     init();
     XEvent e;
     while (true) {
