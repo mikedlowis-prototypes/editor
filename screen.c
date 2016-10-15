@@ -27,7 +27,7 @@ void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
     /* create the new row data */
     Rows = calloc(nrows, sizeof(Row*));
     for (unsigned i = 0; i < nrows; i++)
-        Rows[i] = calloc(1, sizeof(Row) + (ncols * sizeof(Rune)));
+        Rows[i] = calloc(1, sizeof(Row) + (ncols * sizeof(UGlyph)));
     /* update dimensions */
     NumRows = nrows;
     NumCols = ncols;
@@ -74,7 +74,7 @@ void screen_clearrow(unsigned row) {
     Row* scrrow = screen_getrow(row);
     if (!scrrow) return;
     for (unsigned i = 0; i < NumCols; i++)
-        scrrow->cols[i] = (Rune)' ';
+        scrrow->cols[i].rune = (Rune)' ';
     scrrow->rlen = 0;
     scrrow->len  = 0;
 }
@@ -89,10 +89,10 @@ unsigned screen_setcell(unsigned row, unsigned col, Rune r) {
     /* write the rune to the screen buf */
     unsigned ncols = 1;
     if (r == '\t') {
-        scrrow->cols[col] = ' ';
+        scrrow->cols[col].rune = ' ';
         ncols = (TabWidth - (col % TabWidth));
     } else if (r != '\n') {
-        scrrow->cols[col] = r;
+        scrrow->cols[col].rune = r;
     }
     /* Update lengths */
     scrrow->rlen += 1;
@@ -101,10 +101,10 @@ unsigned screen_setcell(unsigned row, unsigned col, Rune r) {
     return ncols;
 }
 
-Rune screen_getcell(unsigned row, unsigned col) {
+UGlyph* screen_getcell(unsigned row, unsigned col) {
     if (row >= NumRows || col >= NumCols) return 0;
     Row* scrrow = screen_getrow(row);
-    return scrrow->cols[col];
+    return &(scrrow->cols[col]);
 }
 
 static void fill_row(Buf* buf, unsigned row, unsigned pos) {
@@ -138,7 +138,7 @@ static void scroll_up(Buf* buf, unsigned csr, unsigned first) {
         /* delete the last row and shift the others */
         free(Rows[NumRows - 1]);
         memmove(&Rows[2], &Rows[1], sizeof(Row*) * (NumRows-2));
-        Rows[1] = calloc(1, sizeof(Row) + (NumCols * sizeof(Rune)));
+        Rows[1] = calloc(1, sizeof(Row) + (NumCols * sizeof(UGlyph)));
         Rows[1]->off = prevln;
         /* fill in row content */
         fill_row(buf, 1, Rows[1]->off);
@@ -151,7 +151,7 @@ static void scroll_dn(Buf* buf, unsigned csr, unsigned last) {
         /* delete the first row and shift the others */
         free(Rows[1]);
         memmove(&Rows[1], &Rows[2], sizeof(Row*) * (NumRows-2));
-        Rows[NumRows-1] = calloc(1, sizeof(Row) + (NumCols * sizeof(Rune)));
+        Rows[NumRows-1] = calloc(1, sizeof(Row) + (NumCols * sizeof(UGlyph)));
         Rows[NumRows-1]->off = (Rows[NumRows-2]->off + Rows[NumRows-2]->rlen);
         /* fill in row content */
         fill_row(buf, NumRows-1, Rows[NumRows-1]->off);
@@ -206,5 +206,5 @@ void screen_status(char* fmt, ...) {
     Rows[0]->len  = NumCols;
     Rows[0]->rlen = NumCols;
     for (unsigned i = 0; buffer[i] && i < NumCols; i++)
-        Rows[0]->cols[i] = (Rune)buffer[i];
+        Rows[0]->cols[i].rune = (Rune)buffer[i];
 }

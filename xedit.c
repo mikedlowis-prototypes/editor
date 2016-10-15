@@ -124,13 +124,13 @@ void font_find(XftGlyphFontSpec* spec, Rune rune) {
     FcCharSetDestroy(fccharset);
 }
 
-int font_makespecs(XftGlyphFontSpec* specs, const Rune* runes, int len, int x, int y) {
+int font_makespecs(XftGlyphFontSpec* specs, const UGlyph* glyphs, int len, int x, int y) {
     int winx = x * Fonts.base.width, winy = y * Fonts.base.height;
     int numspecs = 0;
     for (int i = 0, xp = winx, yp = winy + Fonts.base.ascent; i < len; ++i) {
-        if (!runes[i]) continue;
-        font_find(&(specs[numspecs]), runes[i]);
-        int runewidth = wcwidth(runes[i]) * Fonts.base.width;
+        if (!glyphs[i].rune) continue;
+        font_find(&(specs[numspecs]), glyphs[i].rune);
+        int runewidth = wcwidth(glyphs[i].rune) * Fonts.base.width;
         specs[numspecs].x = xp;
         specs[numspecs].y = yp;
         xp += runewidth;
@@ -301,10 +301,10 @@ static void handle_event(XEvent* e) {
     }
 }
 
-void draw_runes(unsigned x, unsigned y, XftColor* fg, XftColor* bg, Rune* runes, size_t rlen) {
+void draw_runes(unsigned x, unsigned y, XftColor* fg, XftColor* bg, UGlyph* glyphs, size_t rlen) {
     (void)bg;
     XftGlyphFontSpec specs[rlen];
-    size_t nspecs = font_makespecs(specs, runes, rlen, x, y);
+    size_t nspecs = font_makespecs(specs, glyphs, rlen, x, y);
     XftDrawGlyphFontSpec(X.xft, fg, specs, nspecs);
 }
 
@@ -338,13 +338,13 @@ static void redraw(void) {
     }
 
     /* Place cursor on screen */
-    Rune csrrune = screen_getcell(csry,csrx);
+    UGlyph* csrrune = screen_getcell(csry,csrx);
     if (Buffer.insert_mode) {
         XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, 2, Fonts.base.height);
     } else {
         unsigned width = ('\t' == buf_get(&Buffer, CursorPos) ? (TabWidth - (csrx % TabWidth)) : 1);
         XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, width * Fonts.base.width, Fonts.base.height);
-        draw_runes(csrx, csry, &bkgclr, NULL, (FcChar32*)&csrrune, 1);
+        draw_runes(csrx, csry, &bkgclr, NULL, csrrune, 1);
     }
 
     /* flush pixels to the screen */

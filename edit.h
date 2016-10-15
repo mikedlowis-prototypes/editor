@@ -180,10 +180,16 @@ void handle_mouse(MouseEvent* mevnt);
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
+    Rune rune;
+    uint8_t fg;
+    uint8_t bg;
+} UGlyph;
+
+typedef struct {
     unsigned off;  /* offset of the first rune in the row */
     unsigned rlen; /* number of runes displayed in the row */
     unsigned len;  /* number of screen columns taken up by row */
-    Rune cols[];   /* row data */
+    UGlyph cols[]; /* row data */
 } Row;
 
 void screen_reflow(Buf* buf);
@@ -196,7 +202,7 @@ Row* screen_getrow(unsigned row);
 void screen_clearrow(unsigned row);
 void screen_setrowoff(unsigned row, unsigned off);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
-Rune screen_getcell(unsigned row, unsigned col);
+UGlyph* screen_getcell(unsigned row, unsigned col);
 void screen_status(char* fmt, ...);
 
 /* Color Scheme Handling
