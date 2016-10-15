@@ -5,7 +5,19 @@
 #include <stdarg.h>
 #include <string.h>
 
-/* Charset Handling
+/* Utility Functions
+ *****************************************************************************/
+typedef struct {
+    uint8_t* buf; /* memory mapped byte buffer */
+    size_t len;   /* length of the buffer */
+} FMap;
+
+FMap fmap(char* path);
+void funmap(FMap file);
+void die(const char* fmt, ...);
+uint32_t getmillis(void);
+
+/* Unicode Handling
  *****************************************************************************/
 enum {
     UTF_MAX   = 6u,        /* maximum number of bytes that make up a rune */
@@ -18,20 +30,56 @@ enum {
 /* Represents a unicode code point */
 typedef uint32_t Rune;
 
-enum {
-    BINARY = 0,
-    UTF_8,
-    UTF_16BE,
-    UTF_16LE,
-    UTF_32BE,
-    UTF_32LE,
-};
-
-int charset(const uint8_t* buf, size_t len);
 size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);
 Rune fgetrune(FILE* f);
 void fputrune(Rune rune, FILE* f);
+
+/* Buffer management functions
+ *****************************************************************************/
+typedef struct buf {
+    char* path;       /* the path to the open file */
+    int charset;      /* the character set of the buffer */
+    bool insert_mode; /* tracks current mode */
+    bool modified;    /* tracks whether the buffer has been modified */
+    size_t bufsize;   /* size of the buffer in runes */
+    Rune* bufstart;   /* start of the data buffer */
+    Rune* bufend;     /* end of the data buffer */
+    Rune* gapstart;   /* start of the gap */
+    Rune* gapend;     /* end of the gap */
+} Buf;
+
+void buf_load(Buf* buf, char* path);
+void buf_save(Buf* buf);
+void buf_init(Buf* buf);
+void buf_clr(Buf* buf);
+void buf_del(Buf* buf, unsigned pos);
+void buf_ins(Buf* buf, unsigned pos, Rune);
+Rune buf_get(Buf* buf, unsigned pos);
+unsigned buf_bol(Buf* buf, unsigned pos);
+unsigned buf_eol(Buf* buf, unsigned pos);
+unsigned buf_end(Buf* buf);
+unsigned buf_byrune(Buf* buf, unsigned pos, int count);
+unsigned buf_byline(Buf* buf, unsigned pos, int count);
+unsigned buf_getcol(Buf* buf, unsigned pos);
+unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
+
+/* Charset Handling
+ *****************************************************************************/
+enum {
+    BINARY = 0, /* binary encoded file */
+    UTF_8,      /* UTF-8 encoded file */
+    UTF_16BE,   /* UTF-16 encoding, big-endian */
+    UTF_16LE,   /* UTF-16 encoding, little-endian */
+    UTF_32BE,   /* UTF-32 encoding, big-endian */
+    UTF_32LE,   /* UTF-32 encoding, little-endian */
+};
+
+int charset(const uint8_t* buf, size_t len);
+void utf8load(Buf* buf, FMap file);
+void utf8save(Buf* buf, FILE* file);
+void binload(Buf* buf, FMap file);
+void binsave(Buf* buf, FILE* file);
 
 /* Input Handling
  *****************************************************************************/
@@ -129,36 +177,6 @@ typedef struct {
 void handle_key(Rune key);
 void handle_mouse(MouseEvent* mevnt);
 
-/* Buffer management functions
- *****************************************************************************/
-typedef struct buf {
-    char* path;       /* the path to the open file */
-    int charset;      /* the character set of the buffer */
-    bool insert_mode; /* tracks current mode */
-    bool modified;    /* tracks whether the buffer has been modified */
-    size_t bufsize;   /* size of the buffer in runes */
-    Rune* bufstart;   /* start of the data buffer */
-    Rune* bufend;     /* end of the data buffer */
-    Rune* gapstart;   /* start of the gap */
-    Rune* gapend;     /* end of the gap */
-} Buf;
-
-void buf_load(Buf* buf, char* path);
-void buf_save(Buf* buf);
-void buf_init(Buf* buf);
-void buf_clr(Buf* buf);
-void buf_del(Buf* buf, unsigned pos);
-void buf_ins(Buf* buf, unsigned pos, Rune);
-Rune buf_get(Buf* buf, unsigned pos);
-unsigned buf_bol(Buf* buf, unsigned pos);
-unsigned buf_eol(Buf* buf, unsigned pos);
-unsigned buf_end(Buf* buf);
-unsigned buf_byrune(Buf* buf, unsigned pos, int count);
-unsigned buf_byline(Buf* buf, unsigned pos, int count);
-unsigned buf_getcol(Buf* buf, unsigned pos);
-unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
-
-
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
@@ -180,10 +198,6 @@ void screen_setrowoff(unsigned row, unsigned off);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
 Rune screen_getcell(unsigned row, unsigned col);
 void screen_status(char* fmt, ...);
-
-/* Miscellaneous Functions
- *****************************************************************************/
-void die(const char* fmt, ...);
 
 /* Color Scheme Handling
  *****************************************************************************/

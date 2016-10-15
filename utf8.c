@@ -83,6 +83,22 @@ Rune fgetrune(FILE* f) {
 
 void fputrune(Rune rune, FILE* f) {
     char utf[UTF_MAX] = {0};
-    utf8encode(utf, rune);
-    fprintf(f, "%s", utf);
+    size_t n = utf8encode(utf, rune);
+    fwrite(utf, 1, n, f);
 }
+
+void utf8load(Buf* buf, FMap file) {
+    for (size_t i = 0; i < file.len;) {
+        Rune r = 0;
+        size_t len = 0;
+        while (!utf8decode(&r, &len, file.buf[i++]));
+        buf_ins(buf, buf_end(buf), r);
+    }
+}
+
+void utf8save(Buf* buf, FILE* file) {
+    unsigned end = buf_end(buf);
+    for (unsigned i = 0; i < end; i++)
+        fputrune(buf_get(buf, i), file);
+}
+

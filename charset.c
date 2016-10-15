@@ -35,3 +35,14 @@ int charset(const uint8_t* buf, size_t len) {
         type = Utf8Valid[(int)buf[i]];
     return type;
 }
+
+void binload(Buf* buf, FMap file) {
+    for (size_t i = 0; i < file.len; i++)
+        buf_ins(buf, buf_end(buf), file.buf[i]);
+}
+
+void binsave(Buf* buf, FILE* file) {
+    unsigned end = buf_end(buf);
+    for (unsigned i = 0; i < end; i++)
+        fputc((int)buf_get(buf, i), file);
+}

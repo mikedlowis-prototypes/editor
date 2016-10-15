@@ -30,7 +30,6 @@ struct {
     XIC xic;
     XIM xim;
 } X;
-
 struct {
     struct {
         int height;
@@ -141,16 +140,6 @@ int font_makespecs(XftGlyphFontSpec* specs, const Rune* runes, int len, int x, i
 }
 
 /*****************************************************************************/
-
-void die(const char* msgfmt, ...) {
-    va_list args;
-    va_start(args, msgfmt);
-    fprintf(stderr, "Error: ");
-    vfprintf(stderr, msgfmt, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-    exit(EXIT_FAILURE);
-}
 
 static XftColor xftcolor(enum ColorId cid) {
     Color c = Palette[cid][ColorBase];

@@ -1,63 +1,8 @@
 #define _GNU_SOURCE
 #include <string.h>
 #include <assert.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "edit.h"
-
-typedef struct {
-    uint8_t* buf;
-    size_t len;
-} FMap;
-
-static FMap fmap(char* path) {
-    int fd;
-    FMap file = { .buf = NULL, .len = 0 };
-    struct stat sb;
-    if (((fd = open(path, O_RDONLY, 0)) < 0) ||
-        (fstat(fd, &sb) < 0) ||
-        (sb.st_size == 0))
-        return file;
-    file.buf = (uint8_t*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    file.len = sb.st_size;
-    if (file.buf == MAP_FAILED)
-        die("memory mapping of file failed");
-    return file;
-}
-
-static void funmap(FMap file) {
-    if (file.buf)
-        munmap(file.buf, file.len);
-}
-
-static void utf8load(Buf* buf, FMap file) {
-    for (size_t i = 0; i < file.len;) {
-        Rune r = 0;
-        size_t len = 0;
-        while (!utf8decode(&r, &len, file.buf[i++]));
-        buf_ins(buf, buf_end(buf), r);
-    }
-}
-
-static void utf8save(Buf* buf, FILE* file) {
-    unsigned end = buf_end(buf);
-    for (unsigned i = 0; i < end; i++)
-        fputrune(buf_get(buf, i), file);
-}
-
-static void binload(Buf* buf, FMap file) {
-    for (size_t i = 0; i < file.len; i++)
-        buf_ins(buf, buf_end(buf), file.buf[i]);
-}
-
-static void binsave(Buf* buf, FILE* file) {
-    unsigned end = buf_end(buf);
-    for (unsigned i = 0; i < end; i++)
-        fputc((int)buf_get(buf, i), file);
-}
 
 void buf_load(Buf* buf, char* path) {
     buf->insert_mode = true;

@@ -7,10 +7,6 @@ unsigned CursorPos;
 unsigned TargetCol;
 enum ColorScheme ColorBase;
 
-void die(const char* m, ...) {
-    (void)m;
-}
-
 int main(int argc, char** argv) {
     atf_init(argc,argv);
     RUN_EXTERN_TEST_SUITE(BufferTests);

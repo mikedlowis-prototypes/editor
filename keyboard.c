@@ -82,7 +82,5 @@ static void control_keys(Rune key) {
 }
 
 static void vi_keys(Rune key) {
-    static unsigned count = 0;
     (void)key;
 }
-
