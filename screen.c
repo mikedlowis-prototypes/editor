@@ -1,14 +1,15 @@
 #include "edit.h"
+#include <wchar.h>
 
 static unsigned NumRows = 0;
 static unsigned NumCols = 0;
 static Row** Rows;
 
-void screen_reflow(Buf* buf) {
+static void screen_reflow(Buf* buf) {
     unsigned pos = Rows[1]->off;
     for (unsigned y = 1; y < NumRows; y++) {
         screen_clearrow(y);
-        screen_setrowoff(y, pos);
+        screen_getrow(y)->off = pos;
         for (unsigned x = 0; x < NumCols;) {
             Rune r = buf_get(buf, pos++);
             x += screen_setcell(y,x,r);
@@ -42,15 +43,13 @@ unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col) {
     if (col > scrrow->len) {
         pos = (scrrow->off + scrrow->rlen - 1);
     } else {
-        for (unsigned x = 0; x < col;) {
-            Rune r = buf_get(buf,pos++);
-            if (r == '\n')
-                break;
-            else if (r == '\t')
-                x += (TabWidth - (x % TabWidth));
-            else
-                x += 1;
-        }
+        /* multi column runes are followed by \0 slots so if we clicked on a \0
+           slot, slide backwards to the real rune. */
+        for (; !scrrow->cols[col].rune && col > 0; col--);
+        /* now lets count the number of runes up to the one we clicked on */
+        for (unsigned i = 0; i < col; i++)
+            if (scrrow->cols[i].rune)
+                pos++;
     }
     if (pos >= buf_end(buf))
         return buf_end(buf)-1;
@@ -59,11 +58,6 @@ unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col) {
 
 void screen_getsize(unsigned* nrows, unsigned* ncols) {
     *nrows = NumRows, *ncols = NumCols;
-}
-
-void screen_clear(void) {
-    for (unsigned i = 0; i < NumRows; i++)
-        screen_clearrow(i);
 }
 
 Row* screen_getrow(unsigned row) {
@@ -79,32 +73,39 @@ void screen_clearrow(unsigned row) {
     scrrow->len  = 0;
 }
 
-void screen_setrowoff(unsigned row, unsigned off) {
-    screen_getrow(row)->off = off;
+static int runewidth(unsigned col, Rune r) {
+    if (r == '\t') return (TabWidth - (col % TabWidth));
+    int width = wcwidth(r);
+    if (width < 0) width = 1;
+    return width;
 }
 
 unsigned screen_setcell(unsigned row, unsigned col, Rune r) {
     if (row >= NumRows || col >= NumCols) return 0;
     Row* scrrow = screen_getrow(row);
+    int ncols = runewidth(col, r);
     /* write the rune to the screen buf */
-    unsigned ncols = 1;
-    if (r == '\t') {
+    if (r == '\t' || r == '\n' || r == '\r')
         scrrow->cols[col].rune = ' ';
-        ncols = (TabWidth - (col % TabWidth));
-    } else if (r != '\n') {
+    else
         scrrow->cols[col].rune = r;
-    }
     /* Update lengths */
     scrrow->rlen += 1;
+    for (int i = 1; i < ncols; i++)
+        scrrow->cols[col+i].rune = '\0';
     if ((col + ncols) > scrrow->len)
         scrrow->len = col + ncols;
     return ncols;
 }
 
-UGlyph* screen_getcell(unsigned row, unsigned col) {
+UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth) {
     if (row >= NumRows || col >= NumCols) return 0;
     Row* scrrow = screen_getrow(row);
-    return &(scrrow->cols[col]);
+    UGlyph* glyph = &(scrrow->cols[col]);
+    *scrwidth = 1;
+    for (col++; !scrrow->cols[col].rune; col++)
+        *scrwidth += 1;
+    return glyph;
 }
 
 static void fill_row(Buf* buf, unsigned row, unsigned pos) {
@@ -119,11 +120,9 @@ static void fill_row(Buf* buf, unsigned row, unsigned pos) {
 static unsigned prev_screen_line(Buf* buf, unsigned bol, unsigned off) {
     unsigned pos = bol;
     while (true) {
-        unsigned x = 0;
-        for (; x < NumCols && (pos + x) < off; x++) {
-            Rune r = buf_get(buf, pos+x);
-            x += (r == '\t' ? (TabWidth - (x % TabWidth)) : 1);
-        }
+        unsigned x;
+        for (x = 0; x < NumCols && (pos + x) < off; x++)
+            x += runewidth(x, buf_get(buf, pos+x));
         if ((pos + x) >= off) break;
         pos += x;
     }
@@ -185,10 +184,7 @@ void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
                     *csry = y, *csrx = x;
                     break;
                 }
-                if (buf_get(buf,pos++) == '\t')
-                    x += (TabWidth - (x % TabWidth));
-                else
-                    x += 1;
+                x += runewidth(x, buf_get(buf,pos++));
             }
             break;
         }

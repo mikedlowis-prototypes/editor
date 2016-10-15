@@ -192,18 +192,15 @@ typedef struct {
     UGlyph cols[]; /* row data */
 } Row;
 
-void screen_reflow(Buf* buf);
 void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
-void screen_clear(void);
 Row* screen_getrow(unsigned row);
 void screen_clearrow(unsigned row);
-void screen_setrowoff(unsigned row, unsigned off);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
-UGlyph* screen_getcell(unsigned row, unsigned col);
 void screen_status(char* fmt, ...);
+UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth);
 
 /* Color Scheme Handling
  *****************************************************************************/

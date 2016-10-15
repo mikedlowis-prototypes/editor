@@ -127,14 +127,16 @@ void font_find(XftGlyphFontSpec* spec, Rune rune) {
 int font_makespecs(XftGlyphFontSpec* specs, const UGlyph* glyphs, int len, int x, int y) {
     int winx = x * Fonts.base.width, winy = y * Fonts.base.height;
     int numspecs = 0;
-    for (int i = 0, xp = winx, yp = winy + Fonts.base.ascent; i < len; ++i) {
-        if (!glyphs[i].rune) continue;
+    for (int i = 0, xp = winx, yp = winy + Fonts.base.ascent; i < len;) {
         font_find(&(specs[numspecs]), glyphs[i].rune);
-        int runewidth = wcwidth(glyphs[i].rune) * Fonts.base.width;
         specs[numspecs].x = xp;
         specs[numspecs].y = yp;
-        xp += runewidth;
+        xp += Fonts.base.width;
         numspecs++;
+        i++;
+        /* skip over null chars which mark multi column runes */
+        for (; i < len && !glyphs[i].rune; i++)
+            xp += Fonts.base.width;
     }
     return numspecs;
 }
@@ -144,9 +146,9 @@ int font_makespecs(XftGlyphFontSpec* specs, const UGlyph* glyphs, int len, int x
 static XftColor xftcolor(enum ColorId cid) {
     Color c = Palette[cid][ColorBase];
     XftColor xc;
-    xc.color.red   = ((c & 0x00FF0000) >> 8);
-    xc.color.green = ((c & 0x0000FF00));
-    xc.color.blue  = ((c & 0x000000FF) << 8);
+    xc.color.red   = 0xFF | ((c & 0x00FF0000) >> 8);
+    xc.color.green = 0xFF | ((c & 0x0000FF00));
+    xc.color.blue  = 0xFF | ((c & 0x000000FF) << 8);
     xc.color.alpha = UINT16_MAX;
     XftColorAllocValue(X.display, X.visual, X.colormap, &xc.color, &xc);
     return xc;
@@ -338,12 +340,12 @@ static void redraw(void) {
     }
 
     /* Place cursor on screen */
-    UGlyph* csrrune = screen_getcell(csry,csrx);
+    unsigned rwidth;
+    UGlyph* csrrune = screen_getglyph(csry, csrx, &rwidth);
     if (Buffer.insert_mode) {
         XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, 2, Fonts.base.height);
     } else {
-        unsigned width = ('\t' == buf_get(&Buffer, CursorPos) ? (TabWidth - (csrx % TabWidth)) : 1);
-        XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, width * Fonts.base.width, Fonts.base.height);
+        XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
         draw_runes(csrx, csry, &bkgclr, NULL, csrrune, 1);
     }
 
