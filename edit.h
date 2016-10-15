@@ -27,7 +27,7 @@ enum {
     UTF_32LE,
 };
 
-int charset(const char* buf, size_t len);
+int charset(const uint8_t* buf, size_t len);
 size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);
 Rune fgetrune(FILE* f);
@@ -183,7 +183,7 @@ void screen_status(char* fmt, ...);
 
 /* Miscellaneous Functions
  *****************************************************************************/
-void die(char* msg);
+void die(const char* fmt, ...);
 
 /* Color Scheme Handling
  *****************************************************************************/
@@ -232,6 +232,7 @@ enum {
     TabWidth    = 4,    /* maximum number of spaces used to represent a tab */
     ScrollLines = 1,    /* number of lines to scroll by for mouse wheel scrolling */
     BufSize     = 8192, /* default buffer size */
+    MaxFonts    = 16    /* maximum number of fonts to cache */
 };
 
 static const Color Palette[][2] = {
@@ -256,9 +257,9 @@ static const Color Palette[][2] = {
 
 /* choose the font to  use for xft */
 #ifdef __MACH__
-#define FONTNAME "Inconsolata:pixelsize=14:antialias=true:autohint=true"
+#define FONTNAME "Monaco:size=10:antialias=true:autohint=true"
 #else
-#define FONTNAME "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
+#define FONTNAME "Monaco:size=10.5:antialias=true:autohint=true"
 #endif
 
 #define DEFAULT_COLORSCHEME DARK

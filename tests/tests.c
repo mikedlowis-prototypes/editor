@@ -7,7 +7,7 @@ unsigned CursorPos;
 unsigned TargetCol;
 enum ColorScheme ColorBase;
 
-void die(char* m) {
+void die(const char* m, ...) {
     (void)m;
 }
 

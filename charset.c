@@ -23,14 +23,15 @@ static const char Utf8Valid[256] = {
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-int charset(const char* buf, size_t len) {
+int charset(const uint8_t* buf, size_t len) {
     /* look for a BOM and parse it */
     for (size_t i = 0; i < (sizeof(BOMS)/sizeof(BOMS[0])); i++)
-        if (!strncmp(buf, BOMS[i].seq, BOMS[i].len))
+        if (!strncmp((char*)buf, BOMS[i].seq, BOMS[i].len))
             return BOMS[i].type;
     /* look for bytes that are invalid in utf-8 */
     int type = UTF_8;
-    for (size_t i = 0; type && (i < len); i++)
+    size_t i = 0;
+    for (i = 0; type && (i < len); i++)
         type = Utf8Valid[(int)buf[i]];
     return type;
 }

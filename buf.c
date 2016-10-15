@@ -9,7 +9,7 @@
 #include "edit.h"
 
 typedef struct {
-    char* buf;
+    uint8_t* buf;
     size_t len;
 } FMap;
 
@@ -21,7 +21,7 @@ static FMap fmap(char* path) {
         (fstat(fd, &sb) < 0) ||
         (sb.st_size == 0))
         return file;
-    file.buf = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    file.buf = (uint8_t*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
     file.len = sb.st_size;
     if (file.buf == MAP_FAILED)
         die("memory mapping of file failed");
@@ -224,4 +224,3 @@ unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
     unsigned len = buf_eol(buf, pos) - bol;
     return buf_byrune(buf, bol, (len > col ? col : len));
 }
-
