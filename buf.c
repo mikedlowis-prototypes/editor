@@ -14,7 +14,7 @@ void buf_load(Buf* buf, char* path) {
     } else {
         FMap file = fmap(path);
         buf->path = strdup(path);
-        buf->charset = (file.buf ? charset(file.buf, file.len) : UTF_8);
+        buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
         /* load the file contents if it has any */
         if (buf->charset > UTF_8) {
             die("Unsupported character set");

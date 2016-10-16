@@ -40,6 +40,12 @@ static void backspace(void) {
     TargetCol = buf_getcol(&Buffer, CursorPos);
 }
 
+static void insert(Rune r) {
+    if (r == '\n' && Buffer.crlf)
+        buf_ins(&Buffer, CursorPos++, '\r');
+    buf_ins(&Buffer, CursorPos++, r);
+}
+
 void handle_key(Rune key) {
     /* ignore invalid keys */
     if (key == RUNE_ERR) return;
@@ -73,11 +79,11 @@ static void special_keys(Rune key) {
 
 static void control_keys(Rune key) {
     switch (key) {
-        case KEY_ESCAPE:    Buffer.insert_mode = false;         break;
-        case KEY_BACKSPACE: backspace();                        break;
-        case KEY_CTRL_W:    buf_save(&Buffer);                  break;
-        case KEY_CTRL_Q:    exit(0);                            break;
-        default:            buf_ins(&Buffer, CursorPos++, key); break;
+        case KEY_ESCAPE:    Buffer.insert_mode = false; break;
+        case KEY_BACKSPACE: backspace();                break;
+        case KEY_CTRL_W:    buf_save(&Buffer);          break;
+        case KEY_CTRL_Q:    exit(0);                    break;
+        default:            insert(key);                break;
     }
 }
 

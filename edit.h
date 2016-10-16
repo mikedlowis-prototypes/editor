@@ -40,6 +40,7 @@ void fputrune(Rune rune, FILE* f);
 typedef struct buf {
     char* path;       /* the path to the open file */
     int charset;      /* the character set of the buffer */
+    int crlf;         /* tracks whether the file uses dos style line endings */
     bool insert_mode; /* tracks current mode */
     bool modified;    /* tracks whether the buffer has been modified */
     size_t bufsize;   /* size of the buffer in runes */
@@ -75,7 +76,7 @@ enum {
     UTF_32LE,   /* UTF-32 encoding, little-endian */
 };
 
-int charset(const uint8_t* buf, size_t len);
+int charset(const uint8_t* buf, size_t len, int* crlf);
 void utf8load(Buf* buf, FMap file);
 void utf8save(Buf* buf, FILE* file);
 void binload(Buf* buf, FMap file);
@@ -276,7 +277,7 @@ static const Color Palette[][2] = {
 #ifdef __MACH__
 #define FONTNAME "Monaco:size=10:antialias=true:autohint=true"
 #else
-#define FONTNAME "Monaco:size=10.5:antialias=true:autohint=true"
+#define FONTNAME "Liberation Mono:size=10.5:antialias=true:autohint=true"
 #endif
 
 #define DEFAULT_COLORSCHEME DARK

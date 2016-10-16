@@ -23,7 +23,9 @@ static const char Utf8Valid[256] = {
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-int charset(const uint8_t* buf, size_t len) {
+int charset(const uint8_t* buf, size_t len, int* crlf) {
+    size_t crs = 0;
+    size_t lfs = 0;
     /* look for a BOM and parse it */
     for (size_t i = 0; i < (sizeof(BOMS)/sizeof(BOMS[0])); i++)
         if (!strncmp((char*)buf, BOMS[i].seq, BOMS[i].len))
@@ -31,8 +33,15 @@ int charset(const uint8_t* buf, size_t len) {
     /* look for bytes that are invalid in utf-8 */
     int type = UTF_8;
     size_t i = 0;
-    for (i = 0; type && (i < len); i++)
-        type = Utf8Valid[(int)buf[i]];
+    for (i = 0; i < len; i++) {
+        type &= Utf8Valid[(int)buf[i]];
+        switch(buf[i]) {
+            case '\r': crs++; break;
+            case '\n': lfs++; break;
+        }
+    }
+    /* report back the linefeed mode */
+    *crlf = (crs > (lfs / 2));
     return type;
 }
 
