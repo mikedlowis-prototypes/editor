@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <string.h>
 #include <assert.h>
+#include <wchar.h>
 
 #include "edit.h"
 
@@ -161,11 +162,29 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count) {
 }
 
 unsigned buf_getcol(Buf* buf, unsigned pos) {
-    return (pos - buf_bol(buf, pos));
+    unsigned curr = buf_bol(buf, pos);
+    unsigned col = 0;
+    for (; curr < pos; curr = buf_byrune(buf, curr, 1))
+        col += runewidth(col, buf_get(buf, curr));
+    return col;
 }
 
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
-    unsigned bol = buf_bol(buf, pos);
-    unsigned len = buf_eol(buf, pos) - bol;
-    return buf_byrune(buf, bol, (len > col ? col : len));
+    unsigned bol  = buf_bol(buf, pos);
+    unsigned curr = bol;
+    unsigned len  = 0;
+    unsigned i    = 0;
+    /* determine the length of the line in columns */
+    for (; buf_get(buf, curr) != '\n'; curr = buf_byrune(buf, curr, 1))
+        len += runewidth(len, buf_get(buf, curr));
+    /* iterate over the runes until we reach the target column */
+    curr = bol, i = 0;
+    while (i < col && i < len) {
+        int width = runewidth(i, buf_get(buf, curr));
+        curr = buf_byrune(buf, curr, 1);
+        if (col >= i && col < (i+width))
+            break;
+        i += width;
+    }
+    return curr;
 }

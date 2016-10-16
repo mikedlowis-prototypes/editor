@@ -2,7 +2,6 @@
 #include <time.h>
 #include <signal.h>
 #include <locale.h>
-#include <wchar.h>
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
 

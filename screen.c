@@ -1,5 +1,4 @@
 #include "edit.h"
-#include <wchar.h>
 
 static unsigned NumRows = 0;
 static unsigned NumCols = 0;
@@ -71,13 +70,6 @@ void screen_clearrow(unsigned row) {
         scrrow->cols[i].rune = (Rune)' ';
     scrrow->rlen = 0;
     scrrow->len  = 0;
-}
-
-static int runewidth(unsigned col, Rune r) {
-    if (r == '\t') return (TabWidth - (col % TabWidth));
-    int width = wcwidth(r);
-    if (width < 0) width = 1;
-    return width;
 }
 
 unsigned screen_setcell(unsigned row, unsigned col, Rune r) {

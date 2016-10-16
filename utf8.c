@@ -102,3 +102,10 @@ void utf8save(Buf* buf, FILE* file) {
         fputrune(buf_get(buf, i), file);
 }
 
+int runewidth(unsigned col, Rune r) {
+    if (r == '\t') return (TabWidth - (col % TabWidth));
+    int width = wcwidth(r);
+    if (width < 0) width = 1;
+    return width;
+}
+

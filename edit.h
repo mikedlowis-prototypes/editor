@@ -34,6 +34,7 @@ size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);
 Rune fgetrune(FILE* f);
 void fputrune(Rune rune, FILE* f);
+int runewidth(unsigned col, Rune r);
 
 /* Buffer management functions
  *****************************************************************************/
