@@ -88,5 +88,14 @@ static void control_keys(Rune key) {
 }
 
 static void vi_keys(Rune key) {
-    (void)key;
+    switch (key) {
+        case 'a': CursorPos++;
+        case 'i': Buffer.insert_mode = true; break;
+        case 'k': cursor_up();               break;
+        case 'j': cursor_dn();               break;
+        case 'h': cursor_left();             break;
+        case 'l': cursor_right();            break;
+        case '^': cursor_home();             break;
+        case '$': cursor_end();              break;
+    }
 }

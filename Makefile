@@ -18,5 +18,6 @@ clean:
 	$(RM) edit unittests xedit.o $(OBJS) $(TESTOBJS)
 
 $(OBJS): edit.h Makefile
+xedit.o: edit.h Makefile
 
 .PHONY: all test
