@@ -52,6 +52,13 @@ void binload(Buf* buf, FMap file) {
 
 void binsave(Buf* buf, FILE* file) {
     unsigned end = buf_end(buf);
-    for (unsigned i = 0; i < end; i++)
-        fputc((int)buf_get(buf, i), file);
+    for (unsigned i = 0; i < end; i++) {
+        Rune r = buf_get(buf, i);
+        if (r == RUNE_CRLF) {
+            fputc('\r', file);
+            fputc('\n', file);
+        } else {
+            fputc((int)r, file);
+        }
+    }
 }

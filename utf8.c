@@ -4,6 +4,7 @@
   @license BSD 2-clause License
 */
 #include "edit.h"
+#include <wchar.h>
 
 const uint8_t UTF8_SeqBits[] = { 0x00u, 0x80u, 0xC0u, 0xE0u, 0xF0u, 0xF8u, 0xFCu, 0xFEu };
 const uint8_t UTF8_SeqMask[] = { 0x00u, 0xFFu, 0x1Fu, 0x0Fu, 0x07u, 0x03u, 0x01u, 0x00u };
@@ -98,8 +99,15 @@ void utf8load(Buf* buf, FMap file) {
 
 void utf8save(Buf* buf, FILE* file) {
     unsigned end = buf_end(buf);
-    for (unsigned i = 0; i < end; i++)
-        fputrune(buf_get(buf, i), file);
+    for (unsigned i = 0; i < end; i++) {
+        Rune r = buf_get(buf, i);
+        if (r == RUNE_CRLF) {
+            fputrune('\r', file);
+            fputrune('\n', file);
+        } else {
+            fputrune(r, file);
+        }
+    }
 }
 
 int runewidth(unsigned col, Rune r) {

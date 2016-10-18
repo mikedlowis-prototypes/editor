@@ -20,11 +20,12 @@ uint32_t getmillis(void);
 /* Unicode Handling
  *****************************************************************************/
 enum {
-    UTF_MAX   = 6u,        /* maximum number of bytes that make up a rune */
-    RUNE_SELF = 0x80,      /* byte values larger than this are *not* ascii */
-    RUNE_ERR  = 0xFFFD,    /* rune value representing an error */
-    RUNE_MAX  = 0x10FFFF,  /* Maximum decodable rune value */
-    RUNE_EOF  = UINT32_MAX /* rune value representing end of file */
+    UTF_MAX   = 6u,          /* maximum number of bytes that make up a rune */
+    RUNE_SELF = 0x80,        /* byte values larger than this are *not* ascii */
+    RUNE_ERR  = 0xFFFD,      /* rune value representing an error */
+    RUNE_MAX  = 0x10FFFF,    /* Maximum decodable rune value */
+    RUNE_EOF  = UINT32_MAX,  /* rune value representing end of file */
+    RUNE_CRLF = UINT32_MAX-1 /* rune value representing a \r\n sequence */
 };
 
 /* Represents a unicode code point */
@@ -58,6 +59,7 @@ void buf_clr(Buf* buf);
 void buf_del(Buf* buf, unsigned pos);
 void buf_ins(Buf* buf, unsigned pos, Rune);
 Rune buf_get(Buf* buf, unsigned pos);
+bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);
 unsigned buf_end(Buf* buf);

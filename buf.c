@@ -105,7 +105,10 @@ void buf_ins(Buf* buf, unsigned off, Rune rune) {
     if (!buf->insert_mode) { return; }
     buf->modified = true;
     syncgap(buf, off);
-    *(buf->gapstart++) = rune;
+    if (rune == '\n' && buf_get(buf, off-1) == '\r')
+        *(buf->gapstart-1) = RUNE_CRLF;
+    else
+        *(buf->gapstart++) = rune;
 }
 
 Rune buf_get(Buf* buf, unsigned off) {
@@ -117,13 +120,18 @@ Rune buf_get(Buf* buf, unsigned off) {
         return *(buf->gapend + (off - bsz));
 }
 
+bool buf_iseol(Buf* buf, unsigned off) {
+    Rune r = buf_get(buf, off);
+    return (r == '\n' || r == RUNE_CRLF);
+}
+
 unsigned buf_bol(Buf* buf, unsigned off) {
-    for (Rune r; (r = buf_get(buf, off-1)) != '\n'; off--);
+    for (; !buf_iseol(buf, off-1); off--);
     return off;
 }
 
 unsigned buf_eol(Buf* buf, unsigned off) {
-    for (Rune r; (r = buf_get(buf, off)) != '\n'; off++);
+    for (; !buf_iseol(buf, off); off++);
     return off;
 }
 
@@ -175,7 +183,7 @@ unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
     unsigned len  = 0;
     unsigned i    = 0;
     /* determine the length of the line in columns */
-    for (; buf_get(buf, curr) != '\n'; curr = buf_byrune(buf, curr, 1))
+    for (; !buf_iseol(buf, curr); curr++)
         len += runewidth(len, buf_get(buf, curr));
     /* iterate over the runes until we reach the target column */
     curr = bol, i = 0;

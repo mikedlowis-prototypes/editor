@@ -12,7 +12,7 @@ static void screen_reflow(Buf* buf) {
         for (unsigned x = 0; x < NumCols;) {
             Rune r = buf_get(buf, pos++);
             x += screen_setcell(y,x,r);
-            if (r == '\n') break;
+            if (buf_iseol(buf, pos-1)) break;
         }
     }
 }
@@ -77,7 +77,7 @@ unsigned screen_setcell(unsigned row, unsigned col, Rune r) {
     Row* scrrow = screen_getrow(row);
     int ncols = runewidth(col, r);
     /* write the rune to the screen buf */
-    if (r == '\t' || r == '\n' || r == '\r')
+    if (r == '\t' || r == '\n' || r == RUNE_CRLF)
         scrrow->cols[col].rune = ' ';
     else
         scrrow->cols[col].rune = r;
@@ -105,7 +105,7 @@ static void fill_row(Buf* buf, unsigned row, unsigned pos) {
     for (unsigned x = 0; x < NumCols;) {
         Rune r = buf_get(buf, pos++);
         x += screen_setcell(row, x, r);
-        if (r == '\n') break;
+        if (buf_iseol(buf, pos-1)) break;
     }
 }
 
