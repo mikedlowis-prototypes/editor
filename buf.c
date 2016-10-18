@@ -82,6 +82,8 @@ static void syncgap(Buf* buf, unsigned off) {
 void buf_init(Buf* buf) {
     buf->insert_mode = false;
     buf->modified    = false;
+    buf->charset     = DEFAULT_CHARSET;
+    buf->crlf        = DEFAULT_CRLF;
     buf->bufsize     = BufSize;
     buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
     buf->bufend      = buf->bufstart + buf->bufsize;
@@ -105,7 +107,7 @@ void buf_ins(Buf* buf, unsigned off, Rune rune) {
     if (!buf->insert_mode) { return; }
     buf->modified = true;
     syncgap(buf, off);
-    if (rune == '\n' && buf_get(buf, off-1) == '\r')
+    if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r')
         *(buf->gapstart-1) = RUNE_CRLF;
     else
         *(buf->gapstart++) = rune;

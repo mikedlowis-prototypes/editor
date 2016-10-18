@@ -66,6 +66,9 @@ static void insert_after(void) {
 }
 
 void handle_key(Rune key) {
+    /* handle the proper line endings */
+    if (key == '\r') key = '\n';
+    if (key == '\n' && Buffer.crlf) key = RUNE_CRLF;
     /* ignore invalid keys */
     if (key == RUNE_ERR) return;
     /* handle the special keys */

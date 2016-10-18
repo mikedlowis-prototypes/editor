@@ -41,7 +41,7 @@ int charset(const uint8_t* buf, size_t len, int* crlf) {
         }
     }
     /* report back the linefeed mode */
-    *crlf = (crs > (lfs / 2));
+    *crlf = (crs == lfs);
     return type;
 }
 

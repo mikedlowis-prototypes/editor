@@ -226,7 +226,6 @@ static Rune getkey(XEvent* e) {
     /* decode it */
     if (len > 0) {
         len = 0;
-        if (buf[0] == '\r') buf[0] = '\n';
         for(int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
     }
     /* translate the key code into a unicode codepoint */

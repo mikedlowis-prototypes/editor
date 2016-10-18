@@ -284,3 +284,6 @@ static const Color Palette[][2] = {
 #endif
 
 #define DEFAULT_COLORSCHEME DARK
+#define DEFAULT_CRLF 1
+#define DEFAULT_CHARSET UTF_8
+
