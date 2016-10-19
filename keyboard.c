@@ -44,10 +44,6 @@ static void backspace(void) {
     TargetCol = buf_getcol(&Buffer, CursorPos);
 }
 
-static void insert(Rune r) {
-    buf_ins(&Buffer, CursorPos++, r);
-}
-
 static void delete(void) {
     buf_del(&Buffer, CursorPos);
 }
@@ -73,6 +69,11 @@ static void quit(void) {
     exit(0);
 }
 
+static void insert(Rune r) {
+    buf_ins(&Buffer, CursorPos++, r);
+    TargetCol = buf_getcol(&Buffer, CursorPos);
+}
+
 /*****************************************************************************/
 
 typedef struct {
@@ -80,7 +81,7 @@ typedef struct {
     void (*action)(void);
 } KeyBinding_T;
 
-KeyBinding_T Specials[] = {
+static KeyBinding_T Specials[] = {
     { KEY_F6,     toggle_colors },
     { KEY_UP,     cursor_up     },
     { KEY_DOWN,   cursor_dn     },
@@ -94,7 +95,7 @@ KeyBinding_T Specials[] = {
     { 0,          NULL          }
 };
 
-KeyBinding_T Controls[] = {
+static KeyBinding_T Controls[] = {
     { KEY_ESCAPE,    exit_insert },
     { KEY_BACKSPACE, backspace   },
     { KEY_CTRL_W,    write       },
@@ -102,7 +103,9 @@ KeyBinding_T Controls[] = {
     { 0,             NULL        }
 };
 
-KeyBinding_T ViKeys[] = {
+static KeyBinding_T ViKeys[] = {
+    { 'q', quit          },
+    { 's', write         },
     { 'a', insert_after  },
     { 'i', insert_before },
     { 'k', cursor_up     },
