@@ -1,9 +1,5 @@
 #include "edit.h"
 
-static void special_keys(Rune key);
-static void control_keys(Rune key);
-static void vi_keys(Rune key);
-
 static void toggle_mode(void) {
     Buffer.insert_mode = !Buffer.insert_mode;
 }
@@ -65,59 +61,85 @@ static void insert_after(void) {
     Buffer.insert_mode = true;
 }
 
+static void exit_insert(void) {
+    Buffer.insert_mode = false;
+}
+
+static void write(void) {
+    buf_save(&Buffer);
+}
+
+static void quit(void) {
+    exit(0);
+}
+
+/*****************************************************************************/
+
+typedef struct {
+    Rune key;
+    void (*action)(void);
+} KeyBinding_T;
+
+KeyBinding_T Specials[] = {
+    { KEY_F6,     toggle_colors },
+    { KEY_UP,     cursor_up     },
+    { KEY_DOWN,   cursor_dn     },
+    { KEY_LEFT,   cursor_left   },
+    { KEY_RIGHT,  cursor_right  },
+    { KEY_INSERT, toggle_mode   },
+    { KEY_F1,     toggle_mode   },
+    { KEY_DELETE, delete        },
+    { KEY_HOME,   cursor_bol    },
+    { KEY_END,    cursor_eol    },
+    { 0,          NULL          }
+};
+
+KeyBinding_T Controls[] = {
+    { KEY_ESCAPE,    exit_insert },
+    { KEY_BACKSPACE, backspace   },
+    { KEY_CTRL_W,    write       },
+    { KEY_CTRL_Q,    quit        },
+    { 0,             NULL        }
+};
+
+KeyBinding_T ViKeys[] = {
+    { 'a', insert_after  },
+    { 'i', insert_before },
+    { 'k', cursor_up     },
+    { 'j', cursor_dn     },
+    { 'h', cursor_left   },
+    { 'l', cursor_right  },
+    { '0', cursor_bol    },
+    { '$', cursor_eol    },
+    { 0,   NULL          }
+};
+
+static void process_table(KeyBinding_T* bindings, Rune key) {
+    while (bindings->key) {
+        if (key == bindings->key) {
+            bindings->action();
+            return;
+        }
+        bindings++;
+    }
+    insert(key);
+}
+
 void handle_key(Rune key) {
+    /* ignore invalid keys */
+    if (key == RUNE_ERR) return;
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
     if (key == '\n' && Buffer.crlf) key = RUNE_CRLF;
-    /* ignore invalid keys */
-    if (key == RUNE_ERR) return;
     /* handle the special keys */
     if (0xE000 <= key && key <= 0xF8FF) {
-        special_keys(key);
+        process_table(Specials, key);
     } else if (key < 0x20) {
-        control_keys(key);
+        process_table(Controls, key);
     } else if (Buffer.insert_mode) {
         buf_ins(&Buffer, CursorPos++, key);
         TargetCol = buf_getcol(&Buffer, CursorPos);
     } else {
-        vi_keys(key);
-    }
-}
-
-static void special_keys(Rune key) {
-    switch (key) {
-        case KEY_F6:     toggle_colors(); break;
-        case KEY_UP:     cursor_up();     break;
-        case KEY_DOWN:   cursor_dn();     break;
-        case KEY_LEFT:   cursor_left();   break;
-        case KEY_RIGHT:  cursor_right();  break;
-        case KEY_INSERT: toggle_mode();   break;
-        case KEY_F1:     toggle_mode();   break;
-        case KEY_DELETE: delete();        break;
-        case KEY_HOME:   cursor_bol();    break;
-        case KEY_END:    cursor_eol();    break;
-    }
-}
-
-static void control_keys(Rune key) {
-    switch (key) {
-        case KEY_ESCAPE:    Buffer.insert_mode = false; break;
-        case KEY_BACKSPACE: backspace();                break;
-        case KEY_CTRL_W:    buf_save(&Buffer);          break;
-        case KEY_CTRL_Q:    exit(0);                    break;
-        default:            insert(key);                break;
-    }
-}
-
-static void vi_keys(Rune key) {
-    switch (key) {
-        case 'a': insert_after();  break;
-        case 'i': insert_before(); break;
-        case 'k': cursor_up();     break;
-        case 'j': cursor_dn();     break;
-        case 'h': cursor_left();   break;
-        case 'l': cursor_right();  break;
-        case '0': cursor_bol();    break;
-        case '$': cursor_eol();    break;
+        process_table(ViKeys, key);
     }
 }
