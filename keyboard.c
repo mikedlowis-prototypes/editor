@@ -1,9 +1,5 @@
 #include "edit.h"
 
-static void toggle_mode(void) {
-    Buffer.insert_mode = !Buffer.insert_mode;
-}
-
 static void toggle_colors(void) {
     ColorBase = !ColorBase;
 }
@@ -66,10 +62,17 @@ static void write(void) {
 }
 
 static void quit(void) {
-    exit(0);
+    static uint32_t num_clicks = 0;
+    static uint32_t prevtime = 0;
+    uint32_t now = getmillis();
+    num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
+    prevtime = now;
+    if (!Buffer.modified || num_clicks >= 2)
+        exit(0);
 }
 
 static void insert(Rune r) {
+    if (!Buffer.insert_mode) return;
     buf_ins(&Buffer, CursorPos++, r);
     TargetCol = buf_getcol(&Buffer, CursorPos);
 }
@@ -81,40 +84,39 @@ typedef struct {
     void (*action)(void);
 } KeyBinding_T;
 
-static KeyBinding_T Specials[] = {
-    { KEY_F6,     toggle_colors },
-    { KEY_UP,     cursor_up     },
-    { KEY_DOWN,   cursor_dn     },
-    { KEY_LEFT,   cursor_left   },
-    { KEY_RIGHT,  cursor_right  },
-    { KEY_INSERT, toggle_mode   },
-    { KEY_F1,     toggle_mode   },
-    { KEY_DELETE, delete        },
-    { KEY_HOME,   cursor_bol    },
-    { KEY_END,    cursor_eol    },
-    { 0,          NULL          }
+static KeyBinding_T Normal[] = {
+    { KEY_F6,    toggle_colors },
+    { KEY_UP,    cursor_up     },
+    { KEY_DOWN,  cursor_dn     },
+    { KEY_LEFT,  cursor_left   },
+    { KEY_RIGHT, cursor_right  },
+    { KEY_HOME,  cursor_bol    },
+    { KEY_END,   cursor_eol    },
+    { 'q',       quit          },
+    { 's',       write         },
+    { 'a',       insert_after  },
+    { 'i',       insert_before },
+    { 'k',       cursor_up     },
+    { 'j',       cursor_dn     },
+    { 'h',       cursor_left   },
+    { 'l',       cursor_right  },
+    { '0',       cursor_bol    },
+    { '$',       cursor_eol    },
+    { 0,         NULL          }
 };
 
-static KeyBinding_T Controls[] = {
-    { KEY_ESCAPE,    exit_insert },
-    { KEY_BACKSPACE, backspace   },
-    { KEY_CTRL_W,    write       },
-    { KEY_CTRL_Q,    quit        },
-    { 0,             NULL        }
-};
-
-static KeyBinding_T ViKeys[] = {
-    { 'q', quit          },
-    { 's', write         },
-    { 'a', insert_after  },
-    { 'i', insert_before },
-    { 'k', cursor_up     },
-    { 'j', cursor_dn     },
-    { 'h', cursor_left   },
-    { 'l', cursor_right  },
-    { '0', cursor_bol    },
-    { '$', cursor_eol    },
-    { 0,   NULL          }
+static KeyBinding_T Insert[] = {
+    { KEY_F6,        toggle_colors },
+    { KEY_UP,        cursor_up     },
+    { KEY_DOWN,      cursor_dn     },
+    { KEY_LEFT,      cursor_left   },
+    { KEY_RIGHT,     cursor_right  },
+    { KEY_HOME,      cursor_bol    },
+    { KEY_END,       cursor_eol    },
+    { KEY_ESCAPE,    exit_insert   },
+    { KEY_DELETE,    delete        },
+    { KEY_BACKSPACE, backspace     },
+    { 0,             NULL          }
 };
 
 static void process_table(KeyBinding_T* bindings, Rune key) {
@@ -134,15 +136,9 @@ void handle_key(Rune key) {
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
     if (key == '\n' && Buffer.crlf) key = RUNE_CRLF;
-    /* handle the special keys */
-    if (0xE000 <= key && key <= 0xF8FF) {
-        process_table(Specials, key);
-    } else if (key < 0x20) {
-        process_table(Controls, key);
-    } else if (Buffer.insert_mode) {
-        buf_ins(&Buffer, CursorPos++, key);
-        TargetCol = buf_getcol(&Buffer, CursorPos);
-    } else {
-        process_table(ViKeys, key);
-    }
+    /* handle the key */
+    if (Buffer.insert_mode)
+        process_table(Insert, key);
+    else
+        process_table(Normal, key);
 }
