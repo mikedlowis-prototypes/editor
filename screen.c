@@ -5,8 +5,8 @@ static unsigned NumCols = 0;
 static Row** Rows;
 
 static void screen_reflow(Buf* buf) {
-    unsigned pos = Rows[1]->off;
-    for (unsigned y = 1; y < NumRows; y++) {
+    unsigned pos = Rows[0]->off;
+    for (unsigned y = 0; y < NumRows; y++) {
         screen_clearrow(y);
         screen_getrow(y)->off = pos;
         for (unsigned x = 0; x < NumCols;) {
@@ -128,20 +128,20 @@ static void scroll_up(Buf* buf, unsigned csr, unsigned first) {
         prevln = prev_screen_line(buf, prevln, first);
         /* delete the last row and shift the others */
         free(Rows[NumRows - 1]);
-        memmove(&Rows[2], &Rows[1], sizeof(Row*) * (NumRows-2));
-        Rows[1] = calloc(1, sizeof(Row) + (NumCols * sizeof(UGlyph)));
-        Rows[1]->off = prevln;
+        memmove(&Rows[1], &Rows[0], sizeof(Row*) * (NumRows-1));
+        Rows[0] = calloc(1, sizeof(Row) + (NumCols * sizeof(UGlyph)));
+        Rows[0]->off = prevln;
         /* fill in row content */
-        fill_row(buf, 1, Rows[1]->off);
-        first = Rows[1]->off;
+        fill_row(buf, 0, Rows[0]->off);
+        first = Rows[0]->off;
     }
 }
 
 static void scroll_dn(Buf* buf, unsigned csr, unsigned last) {
     while (csr > last) {
         /* delete the first row and shift the others */
-        free(Rows[1]);
-        memmove(&Rows[1], &Rows[2], sizeof(Row*) * (NumRows-2));
+        free(Rows[0]);
+        memmove(&Rows[0], &Rows[1], sizeof(Row*) * (NumRows-1));
         Rows[NumRows-1] = calloc(1, sizeof(Row) + (NumCols * sizeof(UGlyph)));
         Rows[NumRows-1]->off = (Rows[NumRows-2]->off + Rows[NumRows-2]->rlen);
         /* fill in row content */
@@ -151,7 +151,7 @@ static void scroll_dn(Buf* buf, unsigned csr, unsigned last) {
 }
 
 static void sync_view(Buf* buf, unsigned csr) {
-    unsigned first = Rows[1]->off;
+    unsigned first = Rows[0]->off;
     unsigned last  = Rows[NumRows-1]->off + Rows[NumRows-1]->rlen - 1;
     if (csr < first) {
         scroll_up(buf, csr, first);
@@ -166,7 +166,7 @@ void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
     if (buf->insert_mode)
         screen_reflow(buf);
     /* find the cursor on the new screen */
-    for (unsigned y = 1; y < NumRows; y++) {
+    for (unsigned y = 0; y < NumRows; y++) {
         unsigned start = Rows[y]->off;
         unsigned end   = Rows[y]->off + Rows[y]->rlen - 1;
         if (start <= csr && csr <= end) {
@@ -181,18 +181,4 @@ void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
             break;
         }
     }
-}
-
-void screen_status(char* fmt, ...) {
-    char buffer[NumCols+1];
-    memset(buffer, 0, NumCols+1);
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(buffer, NumCols, fmt, args);
-    va_end(args);
-    screen_clearrow(0);
-    Rows[0]->len  = NumCols;
-    Rows[0]->rlen = NumCols;
-    for (unsigned i = 0; buffer[i] && i < NumCols; i++)
-        Rows[0]->cols[i].rune = (Rune)buffer[i];
 }

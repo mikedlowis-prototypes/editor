@@ -203,29 +203,29 @@ void screen_getsize(unsigned* nrows, unsigned* ncols);
 Row* screen_getrow(unsigned row);
 void screen_clearrow(unsigned row);
 unsigned screen_setcell(unsigned row, unsigned col, Rune r);
-void screen_status(char* fmt, ...);
 UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth);
 
 /* Color Scheme Handling
  *****************************************************************************/
 /* color indexes for the colorscheme */
 enum ColorId {
-    CLR_BASE03 = 0,
-    CLR_BASE02,
-    CLR_BASE01,
-    CLR_BASE00,
-    CLR_BASE0,
-    CLR_BASE1,
-    CLR_BASE2,
-    CLR_BASE3,
-    CLR_YELLOW,
-    CLR_ORANGE,
-    CLR_RED,
-    CLR_MAGENTA,
-    CLR_VIOLET,
-    CLR_BLUE,
-    CLR_CYAN,
-    CLR_GREEN,
+    CLR_BASE03  = 0,
+    CLR_BASE02  = 1,
+    CLR_BASE01  = 2,
+    CLR_BASE00  = 3,
+    CLR_BASE0   = 4,
+    CLR_BASE1   = 5,
+    CLR_BASE2   = 6,
+    CLR_BASE3   = 7,
+    CLR_YELLOW  = 8,
+    CLR_ORANGE  = 9,
+    CLR_RED     = 10,
+    CLR_MAGENTA = 11,
+    CLR_VIOLET  = 12,
+    CLR_BLUE    = 13,
+    CLR_CYAN    = 14,
+    CLR_GREEN   = 15,
+    CLR_COUNT   = 16
 };
 
 /* Represents an ARGB color value */
@@ -244,6 +244,8 @@ extern enum ColorScheme ColorBase;
 extern Buf Buffer;
 extern unsigned CursorPos;
 extern unsigned TargetCol;
+extern unsigned DotBeg;
+extern unsigned DotEnd;
 
 /* Configuration
  *****************************************************************************/
@@ -256,7 +258,7 @@ enum {
     MaxFonts    = 16    /* maximum number of fonts to cache */
 };
 
-static const Color Palette[][2] = {
+static const Color ColorScheme[CLR_COUNT][2] = {
 /*   Color Name   =   Dark      Light    */
     [CLR_BASE03]  = { 0x002b36, 0xfdf6e3 },
     [CLR_BASE02]  = { 0x073642, 0xeee8d5 },

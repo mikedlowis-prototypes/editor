@@ -7,10 +7,18 @@
 
 #include "edit.h"
 
+#define BKGCLR (clr(CLR_BASE03))
+#define GTRCLR (clr(CLR_BASE02))
+#define CSRCLR (clr(CLR_BASE3))
+#define TXTCLR (clr(CLR_BASE0))
+
 Buf Buffer;
 unsigned CursorPos = 0;
 unsigned TargetCol = 0;
+unsigned DotBeg = 0;
+unsigned DotEnd = 0;
 enum ColorScheme ColorBase = DEFAULT_COLORSCHEME;
+XftColor Palette[CLR_COUNT][2];
 struct {
     Display* display;
     Visual* visual;
@@ -142,15 +150,16 @@ int font_makespecs(XftGlyphFontSpec* specs, const UGlyph* glyphs, int len, int x
 
 /*****************************************************************************/
 
-static XftColor xftcolor(enum ColorId cid) {
-    Color c = Palette[cid][ColorBase];
-    XftColor xc;
-    xc.color.red   = 0xFF | ((c & 0x00FF0000) >> 8);
-    xc.color.green = 0xFF | ((c & 0x0000FF00));
-    xc.color.blue  = 0xFF | ((c & 0x000000FF) << 8);
-    xc.color.alpha = UINT16_MAX;
-    XftColorAllocValue(X.display, X.visual, X.colormap, &xc.color, &xc);
-    return xc;
+static void xftcolor(XftColor* xc, Color c) {
+    xc->color.red   = 0xFF | ((c & 0x00FF0000) >> 8);
+    xc->color.green = 0xFF | ((c & 0x0000FF00));
+    xc->color.blue  = 0xFF | ((c & 0x000000FF) << 8);
+    xc->color.alpha = UINT16_MAX;
+    XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
+}
+
+XftColor* clr(int id) {
+    return &(Palette[id][ColorBase]);
 }
 
 static void deinit(void) {
@@ -208,6 +217,12 @@ static int init(void) {
     /* initialize pixmap and drawing context */
     X.pixmap = XCreatePixmap(X.display, X.window, Width, Height, X.depth);
     X.xft = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
+
+    /* initialize the color pallette */
+    for (int i = 0; i < CLR_COUNT; i++) {
+        xftcolor(&Palette[i][LIGHT], ColorScheme[i][LIGHT]);
+        xftcolor(&Palette[i][DARK],  ColorScheme[i][DARK]);
+    }
 
     return XConnectionNumber(X.display);
 }
@@ -294,7 +309,7 @@ static void handle_event(XEvent* e) {
                 X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
                 screen_setsize(
                     &Buffer,
-                    X.height / Fonts.base.height,
+                    X.height / Fonts.base.height - 1,
                     X.width  / Fonts.base.width);
             }
             break;
@@ -308,17 +323,24 @@ void draw_runes(unsigned x, unsigned y, XftColor* fg, XftColor* bg, UGlyph* glyp
     XftDrawGlyphFontSpec(X.xft, fg, specs, nspecs);
 }
 
-static void redraw(void) {
-    /* Allocate the colors */
-    XftColor bkgclr = xftcolor(CLR_BASE03);
-    XftColor gtrclr = xftcolor(CLR_BASE02);
-    XftColor csrclr = xftcolor(CLR_BASE3);
-    XftColor txtclr = xftcolor(CLR_BASE0);
+static void draw_status(XftColor* fg, unsigned ncols) {
+    UGlyph glyphs[ncols];
+    UGlyph* status = glyphs;
+    (status++)->rune = (Buffer.charset == BINARY ? 'B' : 'U');
+    (status++)->rune = (Buffer.crlf ? 'C' : 'N');
+    (status++)->rune = (Buffer.modified ? '*' : ' ');
+    (status++)->rune = ' ';
+    char* path = Buffer.path;
+    while(*path)
+        (status++)->rune = *path++;
+    draw_runes(0, 0, fg, NULL, glyphs, status - glyphs);
+}
 
+static void redraw(void) {
     /* draw the background colors */
-    XftDrawRect(X.xft, &bkgclr, 0, 0, X.width, X.height);
-    XftDrawRect(X.xft, &gtrclr, 79 * Fonts.base.width, 0, Fonts.base.width, X.height);
-    XftDrawRect(X.xft, &txtclr, 0, 0, X.width, Fonts.base.height);
+    XftDrawRect(X.xft, BKGCLR, 0, 0, X.width, X.height);
+    XftDrawRect(X.xft, GTRCLR, 79 * Fonts.base.width, 0, Fonts.base.width, X.height);
+    XftDrawRect(X.xft, TXTCLR, 0, 0, X.width, Fonts.base.height);
 
     /* update the screen buffer and retrieve cursor coordinates */
     unsigned csrx, csry;
@@ -327,24 +349,20 @@ static void redraw(void) {
     /* flush the screen buffer */
     unsigned nrows, ncols;
     screen_getsize(&nrows, &ncols);
-    screen_status(" %s %c %s",
-        (Buffer.charset == BINARY ? "BIN" : "UTF-8"),
-        (Buffer.modified ? '*' : ' '),
-        Buffer.path
-    );
+    draw_status(BKGCLR, ncols);
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
-        draw_runes(0, y, (y == 0 ? &bkgclr : &txtclr), NULL, row->cols, row->len);
+        draw_runes(0, y+1, TXTCLR, NULL, row->cols, row->len);
     }
 
     /* Place cursor on screen */
     unsigned rwidth;
     UGlyph* csrrune = screen_getglyph(csry, csrx, &rwidth);
     if (Buffer.insert_mode) {
-        XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, 2, Fonts.base.height);
+        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
     } else {
-        XftDrawRect(X.xft, &csrclr, csrx * Fonts.base.width, csry * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
-        draw_runes(csrx, csry, &bkgclr, NULL, csrrune, 1);
+        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
+        draw_runes(csrx, csry+1, BKGCLR, NULL, csrrune, 1);
     }
 
     /* flush pixels to the screen */
