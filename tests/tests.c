@@ -5,6 +5,8 @@
 Buf Buffer;
 unsigned CursorPos;
 unsigned TargetCol;
+unsigned DotBeg;
+unsigned DotEnd;
 enum ColorScheme ColorBase;
 
 int main(int argc, char** argv) {

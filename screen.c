@@ -4,17 +4,25 @@ static unsigned NumRows = 0;
 static unsigned NumCols = 0;
 static Row** Rows;
 
+#define ATTR_NORMAL   (CLR_BASE03 << 8 | CLR_BASE0)
+#define ATTR_SELECTED (CLR_BASE0  << 8 | CLR_BASE03)
+
+static unsigned fill_row(Buf* buf, unsigned row, unsigned pos) {
+    screen_getrow(row)->off = pos;
+    screen_clearrow(row);
+    for (unsigned x = 0; x < NumCols;) {
+        uint32_t attr = (DotBeg <= pos && pos < DotEnd ? ATTR_SELECTED : ATTR_NORMAL);
+        Rune r = buf_get(buf, pos++);
+        x += screen_setcell(row, x, attr, r);
+        if (buf_iseol(buf, pos-1)) break;
+    }
+    return pos;
+}
+
 static void screen_reflow(Buf* buf) {
     unsigned pos = Rows[0]->off;
-    for (unsigned y = 0; y < NumRows; y++) {
-        screen_clearrow(y);
-        screen_getrow(y)->off = pos;
-        for (unsigned x = 0; x < NumCols;) {
-            Rune r = buf_get(buf, pos++);
-            x += screen_setcell(y,x,r);
-            if (buf_iseol(buf, pos-1)) break;
-        }
-    }
+    for (unsigned y = 0; y < NumRows; y++)
+        pos = fill_row(buf, y, pos);
 }
 
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
@@ -72,19 +80,22 @@ void screen_clearrow(unsigned row) {
     scrrow->len  = 0;
 }
 
-unsigned screen_setcell(unsigned row, unsigned col, Rune r) {
+unsigned screen_setcell(unsigned row, unsigned col, uint32_t attr, Rune r) {
     if (row >= NumRows || col >= NumCols) return 0;
     Row* scrrow = screen_getrow(row);
     int ncols = runewidth(col, r);
     /* write the rune to the screen buf */
+    scrrow->cols[col].attr = attr;
     if (r == '\t' || r == '\n' || r == RUNE_CRLF)
         scrrow->cols[col].rune = ' ';
     else
         scrrow->cols[col].rune = r;
     /* Update lengths */
     scrrow->rlen += 1;
-    for (int i = 1; i < ncols; i++)
+    for (int i = 1; i < ncols; i++) {
+        scrrow->cols[col].attr = attr;
         scrrow->cols[col+i].rune = '\0';
+    }
     if ((col + ncols) > scrrow->len)
         scrrow->len = col + ncols;
     return ncols;
@@ -98,15 +109,6 @@ UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth) {
     for (col++; !scrrow->cols[col].rune; col++)
         *scrwidth += 1;
     return glyph;
-}
-
-static void fill_row(Buf* buf, unsigned row, unsigned pos) {
-    screen_clearrow(row);
-    for (unsigned x = 0; x < NumCols;) {
-        Rune r = buf_get(buf, pos++);
-        x += screen_setcell(row, x, r);
-        if (buf_iseol(buf, pos-1)) break;
-    }
 }
 
 static unsigned prev_screen_line(Buf* buf, unsigned bol, unsigned off) {
@@ -163,8 +165,7 @@ static void sync_view(Buf* buf, unsigned csr) {
 void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
     /* scroll the view and reflow the screen lines */
     sync_view(buf, csr);
-    if (buf->insert_mode)
-        screen_reflow(buf);
+    screen_reflow(buf);
     /* find the cursor on the new screen */
     for (unsigned y = 0; y < NumRows; y++) {
         unsigned start = Rows[y]->off;

@@ -184,9 +184,8 @@ void handle_mouse(MouseEvent* mevnt);
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
-    Rune rune;
-    uint8_t fg;
-    uint8_t bg;
+    uint32_t attr; /* attributes  applied to this cell */
+    Rune rune;     /* rune value for the cell */
 } UGlyph;
 
 typedef struct {
@@ -202,7 +201,7 @@ void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
 Row* screen_getrow(unsigned row);
 void screen_clearrow(unsigned row);
-unsigned screen_setcell(unsigned row, unsigned col, Rune r);
+unsigned screen_setcell(unsigned row, unsigned col, uint32_t attr, Rune r);
 UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth);
 
 /* Color Scheme Handling

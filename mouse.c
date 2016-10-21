@@ -5,7 +5,8 @@ void unused(MouseEvent* mevnt) {
 }
 
 void move_cursor(MouseEvent* mevnt) {
-    CursorPos = screen_getoff(&Buffer, CursorPos, mevnt->y, mevnt->x);
+    if (mevnt->y == 0) return;
+    CursorPos = screen_getoff(&Buffer, CursorPos, mevnt->y-1, mevnt->x);
     TargetCol = buf_getcol(&Buffer, CursorPos);
 }
 

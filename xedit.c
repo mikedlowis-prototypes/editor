@@ -132,7 +132,7 @@ void font_find(XftGlyphFontSpec* spec, Rune rune) {
 }
 
 int font_makespecs(XftGlyphFontSpec* specs, const UGlyph* glyphs, int len, int x, int y) {
-    int winx = x * Fonts.base.width, winy = y * Fonts.base.height;
+    int winx = x * Fonts.base.width, winy = y * Fonts.base.ascent;
     int numspecs = 0;
     for (int i = 0, xp = winx, yp = winy + Fonts.base.ascent; i < len;) {
         font_find(&(specs[numspecs]), glyphs[i].rune);
@@ -277,7 +277,7 @@ static MouseEvent* getmouse(XEvent* e) {
         event.type   = MouseMove;
         event.button = MOUSE_NONE;
         event.x      = e->xmotion.x / Fonts.base.width;
-        event.y      = e->xmotion.y / (Fonts.base.ascent + Fonts.base.descent);
+        event.y      = e->xmotion.y / Fonts.base.height;
     } else {
         event.type = (e->type = ButtonPress ? MouseDown : MouseUp);
         /* set the button id */
@@ -290,7 +290,7 @@ static MouseEvent* getmouse(XEvent* e) {
             default:      event.button = MOUSE_NONE;      break;
         }
         event.x = e->xbutton.x / Fonts.base.width;
-        event.y = e->xbutton.y / (Fonts.base.ascent + Fonts.base.descent);
+        event.y = e->xbutton.y / Fonts.base.height;
     }
     return &event;
 }
@@ -319,13 +319,46 @@ static void handle_event(XEvent* e) {
 void draw_runes(unsigned x, unsigned y, XftColor* fg, XftColor* bg, UGlyph* glyphs, size_t rlen) {
     (void)bg;
     XftGlyphFontSpec specs[rlen];
-    size_t nspecs = font_makespecs(specs, glyphs, rlen, x, y);
-    XftDrawGlyphFontSpec(X.xft, fg, specs, nspecs);
+    while (rlen) {
+        size_t nspecs = font_makespecs(specs, glyphs, rlen, x, y);
+        XftDrawGlyphFontSpec(X.xft, fg, specs, nspecs);
+        rlen -= nspecs;
+    }
+}
+
+void draw_glyphs(unsigned x, unsigned y, UGlyph* glyphs, size_t rlen, size_t ncols) {
+    XftGlyphFontSpec specs[rlen];
+    int i = 0;
+    while (rlen) {
+        int numspecs = 0;
+        int attr = glyphs[i].attr;
+        while (i < ncols && glyphs[i].attr == attr) {
+            font_find(&(specs[numspecs]), glyphs[i].rune);
+            specs[numspecs].x = x;
+            specs[numspecs].y = y - Fonts.base.descent;
+            x += Fonts.base.width;
+            numspecs++;
+            i++;
+            /* skip over null chars which mark multi column runes */
+            for (; i < ncols && !glyphs[i].rune; i++)
+                x += Fonts.base.width;
+        }
+        /* Draw the glyphs with the proper colors */
+        uint8_t bg = attr >> 8;
+        uint8_t fg = attr & 0xFF;
+        if (bg != CLR_BASE03)
+            XftDrawRect(X.xft, clr(bg), specs[0].x, y-Fonts.base.height, x-specs[0].x, Fonts.base.height);
+        XftDrawGlyphFontSpec(X.xft, clr(fg), specs, numspecs);
+        rlen -= numspecs;
+    }
+}
+
+void draw_row(unsigned x, unsigned y, Row* row) {
+    draw_glyphs(x, y, row->cols, row->rlen, row->len);
 }
 
 static void draw_status(XftColor* fg, unsigned ncols) {
-    UGlyph glyphs[ncols];
-    UGlyph* status = glyphs;
+    UGlyph glyphs[ncols], *status = glyphs;
     (status++)->rune = (Buffer.charset == BINARY ? 'B' : 'U');
     (status++)->rune = (Buffer.crlf ? 'C' : 'N');
     (status++)->rune = (Buffer.modified ? '*' : ' ');
@@ -336,11 +369,25 @@ static void draw_status(XftColor* fg, unsigned ncols) {
     draw_runes(0, 0, fg, NULL, glyphs, status - glyphs);
 }
 
+static void draw_cursor(unsigned csrx, unsigned csry) {
+    unsigned rwidth;
+    UGlyph* csrrune = screen_getglyph(csry, csrx, &rwidth);
+    csrrune->attr = (CLR_BASE3 << 8 | CLR_BASE03);
+    if (Buffer.insert_mode) {
+        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
+    } else {
+        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
+        draw_glyphs(csrx * Fonts.base.width, (csry+2) * Fonts.base.height, csrrune, 1, rwidth);
+    }
+}
+
 static void redraw(void) {
+    uint32_t start = getmillis();
     /* draw the background colors */
     XftDrawRect(X.xft, BKGCLR, 0, 0, X.width, X.height);
     XftDrawRect(X.xft, GTRCLR, 79 * Fonts.base.width, 0, Fonts.base.width, X.height);
-    XftDrawRect(X.xft, TXTCLR, 0, 0, X.width, Fonts.base.height);
+    XftDrawRect(X.xft, clr(CLR_BASE02), 0, 0, X.width, Fonts.base.height);
+    XftDrawRect(X.xft, clr(CLR_BASE01), 0, Fonts.base.height, X.width, 1);
 
     /* update the screen buffer and retrieve cursor coordinates */
     unsigned csrx, csry;
@@ -349,25 +396,19 @@ static void redraw(void) {
     /* flush the screen buffer */
     unsigned nrows, ncols;
     screen_getsize(&nrows, &ncols);
-    draw_status(BKGCLR, ncols);
+    draw_status(clr(CLR_BASE2), ncols);
     for (unsigned y = 0; y < nrows; y++) {
         Row* row = screen_getrow(y);
-        draw_runes(0, y+1, TXTCLR, NULL, row->cols, row->len);
+        draw_glyphs(0, (y+2) * Fonts.base.height, row->cols, row->rlen, row->len);
     }
 
     /* Place cursor on screen */
-    unsigned rwidth;
-    UGlyph* csrrune = screen_getglyph(csry, csrx, &rwidth);
-    if (Buffer.insert_mode) {
-        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
-    } else {
-        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
-        draw_runes(csrx, csry+1, BKGCLR, NULL, csrrune, 1);
-    }
+    draw_cursor(csrx, csry);
 
     /* flush pixels to the screen */
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
     XFlush(X.display);
+    printf("refresh: %u\n", getmillis() - start);
 }
 
 int main(int argc, char** argv) {
