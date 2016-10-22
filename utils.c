@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #ifdef __MACH__
 #define CLOCK_MONOTONIC 0
@@ -57,3 +58,8 @@ void funmap(FMap file) {
     if (file.buf)
         munmap(file.buf, file.len);
 }
+
+bool isword(Rune r) {
+    return (r < 127 && (isalnum(r) || r == '_'));
+}
+

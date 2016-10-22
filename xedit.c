@@ -7,13 +7,7 @@
 
 #include "edit.h"
 
-#define BKGCLR (clr(CLR_BASE03))
-#define GTRCLR (clr(CLR_BASE02))
-#define CSRCLR (clr(CLR_BASE3))
-#define TXTCLR (clr(CLR_BASE0))
-
 Buf Buffer;
-unsigned CursorPos = 0;
 unsigned TargetCol = 0;
 unsigned DotBeg = 0;
 unsigned DotEnd = 0;
@@ -173,6 +167,8 @@ static void deinit(void) {
 static int init(void) {
     atexit(deinit);
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
+    setlocale(LC_CTYPE, "");
+    XSetLocaleModifiers("");
     /* open the X display and get basic attributes */
     if (!(X.display = XOpenDisplay(0)))
         die("cannot open display");
@@ -275,7 +271,7 @@ static MouseEvent* getmouse(XEvent* e) {
     static MouseEvent event;
     if (e->type == MotionNotify) {
         event.type   = MouseMove;
-        event.button = MOUSE_NONE;
+        event.button = MOUSE_LEFT;
         event.x      = e->xmotion.x / Fonts.base.width;
         event.y      = e->xmotion.y / Fonts.base.height;
     } else {
@@ -297,10 +293,11 @@ static MouseEvent* getmouse(XEvent* e) {
 
 static void handle_event(XEvent* e) {
     switch (e->type) {
-        case FocusIn:     if (X.xic) XSetICFocus(X.xic);   break;
-        case FocusOut:    if (X.xic) XUnsetICFocus(X.xic); break;
-        case KeyPress:    handle_key(getkey(e));           break;
-        case ButtonPress: handle_mouse(getmouse(e));       break;
+        case FocusIn:      if (X.xic) XSetICFocus(X.xic);   break;
+        case FocusOut:     if (X.xic) XUnsetICFocus(X.xic); break;
+        case KeyPress:     handle_key(getkey(e));           break;
+        case ButtonPress:  handle_mouse(getmouse(e));       break;
+        case MotionNotify: handle_mouse(getmouse(e));       break;
         case ConfigureNotify: // Resize the window
             if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
                 X.width  = e->xconfigure.width;
@@ -328,10 +325,10 @@ void draw_runes(unsigned x, unsigned y, XftColor* fg, XftColor* bg, UGlyph* glyp
 
 void draw_glyphs(unsigned x, unsigned y, UGlyph* glyphs, size_t rlen, size_t ncols) {
     XftGlyphFontSpec specs[rlen];
-    int i = 0;
+    size_t i = 0;
     while (rlen) {
         int numspecs = 0;
-        int attr = glyphs[i].attr;
+        uint32_t attr = glyphs[i].attr;
         while (i < ncols && glyphs[i].attr == attr) {
             font_find(&(specs[numspecs]), glyphs[i].rune);
             specs[numspecs].x = x;
@@ -374,24 +371,24 @@ static void draw_cursor(unsigned csrx, unsigned csry) {
     UGlyph* csrrune = screen_getglyph(csry, csrx, &rwidth);
     csrrune->attr = (CLR_BASE3 << 8 | CLR_BASE03);
     if (Buffer.insert_mode) {
-        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
+        XftDrawRect(X.xft, clr(CLR_BASE3), csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
     } else {
-        XftDrawRect(X.xft, CSRCLR, csrx * Fonts.base.width, (csry+1) * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
+        XftDrawRect(X.xft, clr(CLR_BASE3), csrx * Fonts.base.width, (csry+1) * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
         draw_glyphs(csrx * Fonts.base.width, (csry+2) * Fonts.base.height, csrrune, 1, rwidth);
     }
 }
 
 static void redraw(void) {
-    uint32_t start = getmillis();
+    //uint32_t start = getmillis();
     /* draw the background colors */
-    XftDrawRect(X.xft, BKGCLR, 0, 0, X.width, X.height);
-    XftDrawRect(X.xft, GTRCLR, 79 * Fonts.base.width, 0, Fonts.base.width, X.height);
+    XftDrawRect(X.xft, clr(CLR_BASE03), 0, 0, X.width, X.height);
+    XftDrawRect(X.xft, clr(CLR_BASE02), 79 * Fonts.base.width, 0, Fonts.base.width, X.height);
     XftDrawRect(X.xft, clr(CLR_BASE02), 0, 0, X.width, Fonts.base.height);
     XftDrawRect(X.xft, clr(CLR_BASE01), 0, Fonts.base.height, X.width, 1);
 
     /* update the screen buffer and retrieve cursor coordinates */
     unsigned csrx, csry;
-    screen_update(&Buffer, CursorPos, &csrx, &csry);
+    screen_update(&Buffer, DotEnd, &csrx, &csry);
 
     /* flush the screen buffer */
     unsigned nrows, ncols;
@@ -408,7 +405,7 @@ static void redraw(void) {
     /* flush pixels to the screen */
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
     XFlush(X.display);
-    printf("refresh: %u\n", getmillis() - start);
+    //printf("refresh: %u\n", getmillis() - start);
 }
 
 int main(int argc, char** argv) {
@@ -416,10 +413,9 @@ int main(int argc, char** argv) {
     buf_init(&Buffer);
     if (argc > 1)
         buf_load(&Buffer, argv[1]);
-    /* main x11 event loop */
-    setlocale(LC_CTYPE, "");
-    XSetLocaleModifiers("");
+    /* initialize the display engine */
     init();
+    /* main x11 event loop */
     XEvent e;
     while (true) {
         XPeekEvent(X.display,&e);

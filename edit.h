@@ -5,18 +5,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-/* Utility Functions
- *****************************************************************************/
-typedef struct {
-    uint8_t* buf; /* memory mapped byte buffer */
-    size_t len;   /* length of the buffer */
-} FMap;
-
-FMap fmap(char* path);
-void funmap(FMap file);
-void die(const char* fmt, ...);
-uint32_t getmillis(void);
-
 /* Unicode Handling
  *****************************************************************************/
 enum {
@@ -36,6 +24,20 @@ bool utf8decode(Rune* rune, size_t* length, int byte);
 Rune fgetrune(FILE* f);
 void fputrune(Rune rune, FILE* f);
 int runewidth(unsigned col, Rune r);
+
+/* Utility Functions
+ *****************************************************************************/
+typedef struct {
+    uint8_t* buf; /* memory mapped byte buffer */
+    size_t len;   /* length of the buffer */
+} FMap;
+
+FMap fmap(char* path);
+void funmap(FMap file);
+void die(const char* fmt, ...);
+uint32_t getmillis(void);
+bool isword(Rune r);
+
 
 /* Buffer management functions
  *****************************************************************************/
@@ -62,6 +64,12 @@ Rune buf_get(Buf* buf, unsigned pos);
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);
+
+unsigned buf_bow(Buf* buf, unsigned pos);
+unsigned buf_eow(Buf* buf, unsigned pos);
+unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
+unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
+
 unsigned buf_end(Buf* buf);
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
@@ -241,7 +249,6 @@ enum ColorScheme {
 /* variable for holding the currently selected color scheme */
 extern enum ColorScheme ColorBase;
 extern Buf Buffer;
-extern unsigned CursorPos;
 extern unsigned TargetCol;
 extern unsigned DotBeg;
 extern unsigned DotEnd;

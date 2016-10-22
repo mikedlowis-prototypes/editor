@@ -5,43 +5,33 @@ static void toggle_colors(void) {
 }
 
 static void cursor_up(void) {
-    CursorPos = buf_byline(&Buffer, CursorPos, -1);
-    CursorPos = buf_setcol(&Buffer, CursorPos, TargetCol);
+    DotBeg = DotEnd = buf_byline(&Buffer, DotEnd, -1);
+    DotBeg = DotEnd = buf_setcol(&Buffer, DotEnd, TargetCol);
 }
 
 static void cursor_dn(void) {
-    CursorPos = buf_byline(&Buffer, CursorPos, 1);
-    CursorPos = buf_setcol(&Buffer, CursorPos, TargetCol);
+    DotBeg = DotEnd = buf_byline(&Buffer, DotEnd, 1);
+    DotBeg = DotEnd = buf_setcol(&Buffer, DotEnd, TargetCol);
 }
 
 static void cursor_left(void) {
-    CursorPos = buf_byrune(&Buffer, CursorPos, -1);
-    TargetCol = buf_getcol(&Buffer, CursorPos);
+    DotBeg = DotEnd = buf_byrune(&Buffer, DotEnd, -1);
+    TargetCol = buf_getcol(&Buffer, DotEnd);
 }
 
 static void cursor_right(void) {
-    CursorPos = buf_byrune(&Buffer, CursorPos, 1);
-    TargetCol = buf_getcol(&Buffer, CursorPos);
+    DotBeg = DotEnd = buf_byrune(&Buffer, DotEnd, 1);
+    TargetCol = buf_getcol(&Buffer, DotEnd);
 }
 
 static void cursor_bol(void) {
-    CursorPos = buf_bol(&Buffer, CursorPos);
+    DotBeg = DotEnd = buf_bol(&Buffer, DotEnd);
     TargetCol = 0;
 }
 
 static void cursor_eol(void) {
-    CursorPos = buf_eol(&Buffer, CursorPos);
+    DotBeg = DotEnd = buf_eol(&Buffer, DotEnd);
     TargetCol = (unsigned)-1;
-}
-
-static void backspace(void) {
-    if (CursorPos == 0) return;
-    buf_del(&Buffer, --CursorPos);
-    TargetCol = buf_getcol(&Buffer, CursorPos);
-}
-
-static void delete(void) {
-    buf_del(&Buffer, CursorPos);
 }
 
 static void insert_before(void) {
@@ -49,7 +39,7 @@ static void insert_before(void) {
 }
 
 static void insert_after(void) {
-    CursorPos++;
+    DotEnd++;
     Buffer.insert_mode = true;
 }
 
@@ -70,11 +60,30 @@ static void quit(void) {
     if (!Buffer.modified || num_clicks >= 2)
         exit(0);
 }
+static void dot_delete(void) {
+    if (DotEnd == buf_end(&Buffer)) return;
+    size_t n = DotEnd - DotBeg;
+    bool insert = Buffer.insert_mode;
+    if (!insert || !n) n++;
+    Buffer.insert_mode = true;
+    for (size_t i = 0; i < n; i++)
+        buf_del(&Buffer, DotBeg);
+    DotEnd = DotBeg;
+    TargetCol = buf_getcol(&Buffer, DotEnd);
+    Buffer.insert_mode = insert;
+}
+
+static void dot_backspace(void) {
+    if (DotBeg > 0 && DotBeg == DotEnd) DotBeg--;
+    while (DotBeg < DotEnd)
+        buf_del(&Buffer, --DotEnd);
+    TargetCol = buf_getcol(&Buffer, DotEnd);
+}
 
 static void insert(Rune r) {
     if (!Buffer.insert_mode) return;
-    buf_ins(&Buffer, CursorPos++, r);
-    TargetCol = buf_getcol(&Buffer, CursorPos);
+    buf_ins(&Buffer, DotEnd++, r);
+    TargetCol = buf_getcol(&Buffer, DotEnd);
 }
 
 /*****************************************************************************/
@@ -85,24 +94,26 @@ typedef struct {
 } KeyBinding_T;
 
 static KeyBinding_T Normal[] = {
-    { KEY_F6,    toggle_colors },
-    { KEY_UP,    cursor_up     },
-    { KEY_DOWN,  cursor_dn     },
-    { KEY_LEFT,  cursor_left   },
-    { KEY_RIGHT, cursor_right  },
-    { KEY_HOME,  cursor_bol    },
-    { KEY_END,   cursor_eol    },
-    { 'q',       quit          },
-    { 's',       write         },
-    { 'a',       insert_after  },
-    { 'i',       insert_before },
-    { 'k',       cursor_up     },
-    { 'j',       cursor_dn     },
-    { 'h',       cursor_left   },
-    { 'l',       cursor_right  },
-    { '0',       cursor_bol    },
-    { '$',       cursor_eol    },
-    { 0,         NULL          }
+    { KEY_F6,     toggle_colors },
+    { KEY_UP,     cursor_up     },
+    { KEY_DOWN,   cursor_dn     },
+    { KEY_LEFT,   cursor_left   },
+    { KEY_RIGHT,  cursor_right  },
+    { KEY_HOME,   cursor_bol    },
+    { KEY_END,    cursor_eol    },
+    { KEY_DELETE, dot_delete    },
+    { 'q',        quit          },
+    { 's',        write         },
+    { 'a',        insert_after  },
+    { 'i',        insert_before },
+    { 'k',        cursor_up     },
+    { 'j',        cursor_dn     },
+    { 'h',        cursor_left   },
+    { 'l',        cursor_right  },
+    { '0',        cursor_bol    },
+    { '$',        cursor_eol    },
+    { 'd',        dot_delete    },
+    { 0,          NULL          }
 };
 
 static KeyBinding_T Insert[] = {
@@ -114,8 +125,8 @@ static KeyBinding_T Insert[] = {
     { KEY_HOME,      cursor_bol    },
     { KEY_END,       cursor_eol    },
     { KEY_ESCAPE,    exit_insert   },
-    { KEY_DELETE,    delete        },
-    { KEY_BACKSPACE, backspace     },
+    { KEY_DELETE,    dot_delete    },
+    { KEY_BACKSPACE, dot_backspace },
     { 0,             NULL          }
 };
 

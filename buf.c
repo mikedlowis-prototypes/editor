@@ -137,6 +137,30 @@ unsigned buf_eol(Buf* buf, unsigned off) {
     return off;
 }
 
+unsigned buf_bow(Buf* buf, unsigned off)
+{
+    for (; isword(buf_get(buf, off-1)); off--);
+    return off;
+}
+
+unsigned buf_eow(Buf* buf, unsigned off)
+{
+    for (; isword(buf_get(buf, off)); off++);
+    return off-1;
+}
+
+unsigned buf_lscan(Buf* buf, unsigned off, Rune r)
+{
+    for (; r != buf_get(buf, off); off--);
+    return off;
+}
+
+unsigned buf_rscan(Buf* buf, unsigned off, Rune r)
+{
+    for (; r != buf_get(buf, off); off++);
+    return off;
+}
+
 unsigned buf_end(Buf* buf) {
     size_t bufsz = buf->bufend - buf->bufstart;
     size_t gapsz = buf->gapend - buf->gapstart;
