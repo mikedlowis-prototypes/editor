@@ -35,11 +35,12 @@ static void cursor_eol(void) {
 }
 
 static void insert_before(void) {
+    DotEnd = DotBeg;
     Buffer.insert_mode = true;
 }
 
 static void insert_after(void) {
-    DotEnd++;
+    DotBeg = ++DotEnd;
     Buffer.insert_mode = true;
 }
 
@@ -60,6 +61,7 @@ static void quit(void) {
     if (!Buffer.modified || num_clicks >= 2)
         exit(0);
 }
+
 static void dot_delete(void) {
     if (DotEnd == buf_end(&Buffer)) return;
     size_t n = DotEnd - DotBeg;
@@ -73,6 +75,11 @@ static void dot_delete(void) {
     Buffer.insert_mode = insert;
 }
 
+static void dot_change(void) {
+    dot_delete();
+    Buffer.insert_mode = true;
+}
+
 static void dot_backspace(void) {
     if (DotBeg > 0 && DotBeg == DotEnd) DotBeg--;
     while (DotBeg < DotEnd)
@@ -83,6 +90,7 @@ static void dot_backspace(void) {
 static void insert(Rune r) {
     if (!Buffer.insert_mode) return;
     buf_ins(&Buffer, DotEnd++, r);
+    DotBeg = DotEnd;
     TargetCol = buf_getcol(&Buffer, DotEnd);
 }
 
@@ -113,6 +121,7 @@ static KeyBinding_T Normal[] = {
     { '0',        cursor_bol    },
     { '$',        cursor_eol    },
     { 'd',        dot_delete    },
+    { 'c',        dot_change    },
     { 0,          NULL          }
 };
 
