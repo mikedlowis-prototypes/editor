@@ -1,4 +1,5 @@
 #include "edit.h"
+#include <ctype.h>
 
 void unused(MouseEvent* mevnt) {
     (void)mevnt;
@@ -8,7 +9,14 @@ void move_cursor(MouseEvent* mevnt) {
     if (mevnt->y == 0) return;
     DotBeg = DotEnd = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
     TargetCol = buf_getcol(&Buffer, DotEnd);
-    //DotBeg = DotEnd;
+}
+
+void bigword(MouseEvent* mevnt) {
+    (void)mevnt;
+    unsigned mbeg = DotEnd, mend = DotEnd;
+    for (; !isblank(buf_get(&Buffer, mbeg-1)); mbeg--);
+    for (; !isblank(buf_get(&Buffer, mend)); mend++);
+    DotBeg = mbeg, DotEnd = mend-1;
 }
 
 void select(MouseEvent* mevnt) {
@@ -35,7 +43,7 @@ void select(MouseEvent* mevnt) {
         DotEnd = buf_rscan(&Buffer, DotEnd, '}');
         if (Buffer.insert_mode) DotEnd++;
     } else {
-        /* scan for big word */
+        bigword(mevnt);
     }
 }
 
@@ -74,7 +82,7 @@ void (*Actions[5][3])(MouseEvent* mevnt) = {
     [MOUSE_LEFT] = {
         [SINGLE_CLICK] = move_cursor,
         [DOUBLE_CLICK] = select,
-        [TRIPLE_CLICK] = unused,
+        [TRIPLE_CLICK] = bigword,
     },
     [MOUSE_MIDDLE] = {
         [SINGLE_CLICK] = unused,
