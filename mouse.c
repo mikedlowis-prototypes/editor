@@ -6,9 +6,9 @@ void unused(MouseEvent* mevnt) {
 
 void move_cursor(MouseEvent* mevnt) {
     if (mevnt->y == 0) return;
-    DotEnd = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
+    DotBeg = DotEnd = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
     TargetCol = buf_getcol(&Buffer, DotEnd);
-    DotBeg = DotEnd;
+    //DotBeg = DotEnd;
 }
 
 void select(MouseEvent* mevnt) {
@@ -37,6 +37,14 @@ void select(MouseEvent* mevnt) {
     } else {
         /* scan for big word */
     }
+}
+
+void search(MouseEvent* mevnt) {
+    if (DotBeg == DotEnd) {
+        move_cursor(mevnt);
+        select(mevnt);
+    }
+    buf_find(&Buffer, &DotBeg, &DotEnd);
 }
 
 void scrollup(MouseEvent* mevnt) {
@@ -74,7 +82,7 @@ void (*Actions[5][3])(MouseEvent* mevnt) = {
         [TRIPLE_CLICK] = unused,
     },
     [MOUSE_RIGHT] = {
-        [SINGLE_CLICK] = unused,
+        [SINGLE_CLICK] = search,
         [DOUBLE_CLICK] = unused,
         [TRIPLE_CLICK] = unused,
     },

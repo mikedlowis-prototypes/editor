@@ -161,6 +161,38 @@ unsigned buf_rscan(Buf* buf, unsigned off, Rune r)
     return off;
 }
 
+int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend)
+{
+    unsigned n1 = dend-dbeg, n2 = mend-mbeg;
+    if (n1 != n2) return n1-n2;
+    for (; n1; n1--, dbeg++, mbeg++) {
+        int cmp = buf_get(buf, dbeg) - buf_get(buf, mbeg);
+        if (cmp != 0) return cmp;
+    }
+    return 0;
+}
+
+void buf_find(Buf* buf, unsigned* beg, unsigned* end)
+{
+    unsigned dbeg = *beg, dend = *end;
+    unsigned mbeg = dend+1, mend = mbeg + (dend-dbeg);
+    while (mend != dbeg) {
+        if ((buf_get(buf, mbeg) == buf_get(buf, dbeg)) &&
+            (buf_get(buf, mend) == buf_get(buf, dend)) &&
+            (0 == range_match(buf,dbeg,dend,mbeg,mend)))
+        {
+            *beg = mbeg;
+            *end = mend;
+            break;
+        }
+        mbeg++, mend++;
+        if (mend >= buf_end(buf)) {
+            unsigned n = mend-mbeg;
+            mbeg = 0, mend = n;
+        }
+    }
+}
+
 unsigned buf_end(Buf* buf) {
     size_t bufsz = buf->bufend - buf->bufstart;
     size_t gapsz = buf->gapend - buf->gapstart;
