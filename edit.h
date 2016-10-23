@@ -206,6 +206,9 @@ typedef struct {
 
 void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
+
+void screen_getcoords(Buf* buf, unsigned pos, unsigned* posx, unsigned* posy);
+
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
 Row* screen_getrow(unsigned row);

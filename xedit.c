@@ -428,3 +428,9 @@ int main(int argc, char** argv) {
     }
     return 0;
 }
+
+void move_pointer(unsigned x, unsigned y) {
+    x = (x * Fonts.base.width)  + (Fonts.base.width / 2);
+    y = ((y+1) * Fonts.base.height) + (Fonts.base.height / 2);
+    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
+}

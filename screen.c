@@ -162,6 +162,24 @@ static void sync_view(Buf* buf, unsigned csr) {
     }
 }
 
+void screen_getcoords(Buf* buf, unsigned pos, unsigned* posx, unsigned* posy) {
+    for (unsigned y = 0; y < NumRows; y++) {
+        unsigned start = Rows[y]->off;
+        unsigned end   = Rows[y]->off + Rows[y]->rlen - 1;
+        if (start <= pos && pos <= end) {
+            unsigned off = start;
+            for (unsigned x = 0; x < NumCols;) {
+                if (off == pos) {
+                    *posy = y, *posx = x;
+                    return;
+                }
+                x += runewidth(x, buf_get(buf,off++));
+            }
+            break;
+        }
+    }
+}
+
 void screen_update(Buf* buf, unsigned csr, unsigned* csrx, unsigned* csry) {
     /* scroll the view and reflow the screen lines */
     sync_view(buf, csr);
