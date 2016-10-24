@@ -1,5 +1,15 @@
+# Implementation Tweaks and Bug Fixes
+
+* block selection should handle brace-balancing
+* Selecting big words should not wrap newlines
+* Right click should fetch file if it exists, search otherwise
+    * urls should open in web
+    * directories in browse?
+
 # Internals and Miscellaneous
 
+* Mode to expand tabs to spaces
+* change indent of dot
 * Calculate line numbers and keep up to date while editing
 * Support multiple buffers
 * Implement undo/redo log

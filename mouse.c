@@ -48,7 +48,8 @@ void selection(MouseEvent* mevnt) {
 }
 
 void search(MouseEvent* mevnt) {
-    if (DotBeg == DotEnd) {
+    unsigned clickpos = screen_getoff(&Buffer, DotEnd, mevnt->y, mevnt->x);
+    if (DotBeg == DotEnd || clickpos < DotBeg || clickpos > DotEnd) {
         move_cursor(mevnt);
         selection(mevnt);
     }
