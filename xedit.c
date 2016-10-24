@@ -361,6 +361,13 @@ static void draw_status(XftColor* fg, unsigned ncols) {
     (status++)->rune = (Buffer.modified ? '*' : ' ');
     (status++)->rune = ' ';
     char* path = Buffer.path;
+    size_t len = strlen(path);
+    if (len > ncols-4) {
+        (status++)->rune = '.';
+        (status++)->rune = '.';
+        (status++)->rune = '.';
+        path += (len - ncols) + 6;
+    }
     while(*path)
         (status++)->rune = *path++;
     draw_runes(0, 0, fg, NULL, glyphs, status - glyphs);
