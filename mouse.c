@@ -53,9 +53,8 @@ void search(MouseEvent* mevnt) {
         select(mevnt);
     }
     buf_find(&Buffer, &DotBeg, &DotEnd);
-
     unsigned x, y;
-    screen_getcoords(&Buffer, DotEnd, &x, &y);
+    screen_update(&Buffer, DotEnd, &x, &y);
     extern void move_pointer(unsigned x, unsigned y);
     move_pointer(x, y);
 }
