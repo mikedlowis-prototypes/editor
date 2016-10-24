@@ -19,7 +19,7 @@ void bigword(MouseEvent* mevnt) {
     DotBeg = mbeg, DotEnd = mend-1;
 }
 
-void select(MouseEvent* mevnt) {
+void selection(MouseEvent* mevnt) {
     (void)mevnt;
     unsigned bol = buf_bol(&Buffer, DotEnd);
     Rune r = buf_get(&Buffer, DotEnd);
@@ -50,7 +50,7 @@ void select(MouseEvent* mevnt) {
 void search(MouseEvent* mevnt) {
     if (DotBeg == DotEnd) {
         move_cursor(mevnt);
-        select(mevnt);
+        selection(mevnt);
     }
     buf_find(&Buffer, &DotBeg, &DotEnd);
     unsigned x, y;
@@ -85,7 +85,7 @@ struct {
 void (*Actions[5][3])(MouseEvent* mevnt) = {
     [MOUSE_LEFT] = {
         [SINGLE_CLICK] = move_cursor,
-        [DOUBLE_CLICK] = select,
+        [DOUBLE_CLICK] = selection,
         [TRIPLE_CLICK] = bigword,
     },
     [MOUSE_MIDDLE] = {

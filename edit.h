@@ -64,13 +64,11 @@ Rune buf_get(Buf* buf, unsigned pos);
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);
-
 unsigned buf_bow(Buf* buf, unsigned pos);
 unsigned buf_eow(Buf* buf, unsigned pos);
 unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
 unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
 void buf_find(Buf* buf, unsigned* beg, unsigned* end);
-
 unsigned buf_end(Buf* buf);
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
@@ -206,9 +204,6 @@ typedef struct {
 
 void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
-
-void screen_getcoords(Buf* buf, unsigned pos, unsigned* posx, unsigned* posy);
-
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
 void screen_getsize(unsigned* nrows, unsigned* ncols);
 Row* screen_getrow(unsigned row);

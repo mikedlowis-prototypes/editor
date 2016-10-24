@@ -9,7 +9,10 @@ unsigned DotBeg;
 unsigned DotEnd;
 enum ColorScheme ColorBase;
 
-void move_pointer(unsigned x, unsigned y) { }
+void move_pointer(unsigned x, unsigned y) {
+    (void)x;
+    (void)y;
+}
 
 int main(int argc, char** argv) {
     atf_init(argc,argv);
