@@ -48,8 +48,8 @@ void selection(MouseEvent* mevnt) {
 }
 
 void search(MouseEvent* mevnt) {
-    unsigned clickpos = screen_getoff(&Buffer, DotEnd, mevnt->y, mevnt->x);
-    if (DotBeg == DotEnd || clickpos < DotBeg || clickpos > DotEnd) {
+    unsigned clickpos = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
+    if (clickpos < DotBeg || clickpos > DotEnd) {
         move_cursor(mevnt);
         selection(mevnt);
     }
@@ -96,8 +96,8 @@ void (*Actions[5][3])(MouseEvent* mevnt) = {
     },
     [MOUSE_RIGHT] = {
         [SINGLE_CLICK] = search,
-        [DOUBLE_CLICK] = unused,
-        [TRIPLE_CLICK] = unused,
+        [DOUBLE_CLICK] = search,
+        [TRIPLE_CLICK] = search,
     },
     [MOUSE_WHEELUP] = {
         [SINGLE_CLICK] = scrollup,
