@@ -14,8 +14,8 @@ void move_cursor(MouseEvent* mevnt) {
 void bigword(MouseEvent* mevnt) {
     (void)mevnt;
     unsigned mbeg = SelEnd, mend = SelEnd;
-    for (; !isblank(buf_get(&Buffer, mbeg-1)); mbeg--);
-    for (; !isblank(buf_get(&Buffer, mend)); mend++);
+    for (; !risblank(buf_get(&Buffer, mbeg-1)); mbeg--);
+    for (; !risblank(buf_get(&Buffer, mend));   mend++);
     SelBeg = mbeg, SelEnd = mend-1;
 }
 
@@ -26,7 +26,7 @@ void selection(MouseEvent* mevnt) {
     if (SelEnd == bol || r == '\n' || r == RUNE_CRLF) {
         SelBeg = bol;
         SelEnd = buf_eol(&Buffer, SelEnd);
-    } else if (isword(r)) {
+    } else if (risword(r)) {
         SelBeg = buf_bow(&Buffer, SelEnd);
         SelEnd = buf_eow(&Buffer, SelEnd);
         if (Buffer.insert_mode) SelEnd++;

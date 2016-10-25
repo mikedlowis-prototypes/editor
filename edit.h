@@ -36,8 +36,8 @@ FMap fmap(char* path);
 void funmap(FMap file);
 void die(const char* fmt, ...);
 uint32_t getmillis(void);
-bool isword(Rune r);
-
+bool risword(Rune r);
+bool risblank(Rune r);
 
 /* Buffer management functions
  *****************************************************************************/

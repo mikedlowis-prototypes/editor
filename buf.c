@@ -139,13 +139,13 @@ unsigned buf_eol(Buf* buf, unsigned off) {
 
 unsigned buf_bow(Buf* buf, unsigned off)
 {
-    for (; isword(buf_get(buf, off-1)); off--);
+    for (; risword(buf_get(buf, off-1)); off--);
     return off;
 }
 
 unsigned buf_eow(Buf* buf, unsigned off)
 {
-    for (; isword(buf_get(buf, off)); off++);
+    for (; risword(buf_get(buf, off)); off++);
     return off-1;
 }
 

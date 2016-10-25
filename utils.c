@@ -59,7 +59,10 @@ void funmap(FMap file) {
         munmap(file.buf, file.len);
 }
 
-bool isword(Rune r) {
+bool risword(Rune r) {
     return (r < 127 && (isalnum(r) || r == '_'));
 }
 
+bool risblank(Rune r) {
+    return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
+}
