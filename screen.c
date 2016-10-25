@@ -11,7 +11,7 @@ static unsigned fill_row(Buf* buf, unsigned row, unsigned pos) {
     screen_getrow(row)->off = pos;
     screen_clearrow(row);
     for (unsigned x = 0; x < NumCols;) {
-        uint32_t attr = (DotBeg <= pos && pos < DotEnd ? ATTR_SELECTED : ATTR_NORMAL);
+        uint32_t attr = (SelBeg <= pos && pos < SelEnd ? ATTR_SELECTED : ATTR_NORMAL);
         Rune r = buf_get(buf, pos++);
         x += screen_setcell(row, x, attr, r);
         if (buf_iseol(buf, pos-1)) break;

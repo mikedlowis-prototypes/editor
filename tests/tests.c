@@ -5,8 +5,8 @@
 Buf Buffer;
 unsigned CursorPos;
 unsigned TargetCol;
-unsigned DotBeg;
-unsigned DotEnd;
+unsigned SelBeg;
+unsigned SelEnd;
 enum ColorScheme ColorBase;
 
 void move_pointer(unsigned x, unsigned y) {

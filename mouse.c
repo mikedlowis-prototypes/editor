@@ -7,71 +7,72 @@ void unused(MouseEvent* mevnt) {
 
 void move_cursor(MouseEvent* mevnt) {
     if (mevnt->y == 0) return;
-    DotBeg = DotEnd = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+    SelBeg = SelEnd = screen_getoff(&Buffer, SelEnd, mevnt->y-1, mevnt->x);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 void bigword(MouseEvent* mevnt) {
     (void)mevnt;
-    unsigned mbeg = DotEnd, mend = DotEnd;
+    unsigned mbeg = SelEnd, mend = SelEnd;
     for (; !isblank(buf_get(&Buffer, mbeg-1)); mbeg--);
     for (; !isblank(buf_get(&Buffer, mend)); mend++);
-    DotBeg = mbeg, DotEnd = mend-1;
+    SelBeg = mbeg, SelEnd = mend-1;
 }
 
 void selection(MouseEvent* mevnt) {
     (void)mevnt;
-    unsigned bol = buf_bol(&Buffer, DotEnd);
-    Rune r = buf_get(&Buffer, DotEnd);
-    if (DotEnd == bol || r == '\n' || r == RUNE_CRLF) {
-        DotBeg = bol;
-        DotEnd = buf_eol(&Buffer, DotEnd);
+    unsigned bol = buf_bol(&Buffer, SelEnd);
+    Rune r = buf_get(&Buffer, SelEnd);
+    if (SelEnd == bol || r == '\n' || r == RUNE_CRLF) {
+        SelBeg = bol;
+        SelEnd = buf_eol(&Buffer, SelEnd);
     } else if (isword(r)) {
-        DotBeg = buf_bow(&Buffer, DotEnd);
-        DotEnd = buf_eow(&Buffer, DotEnd);
-        if (Buffer.insert_mode) DotEnd++;
+        SelBeg = buf_bow(&Buffer, SelEnd);
+        SelEnd = buf_eow(&Buffer, SelEnd);
+        if (Buffer.insert_mode) SelEnd++;
     } else if (r == '(' || r == ')') {
-        DotBeg = buf_lscan(&Buffer, DotEnd, '(');
-        DotEnd = buf_rscan(&Buffer, DotEnd, ')');
-        if (Buffer.insert_mode) DotEnd++;
+        SelBeg = buf_lscan(&Buffer, SelEnd, '(');
+        SelEnd = buf_rscan(&Buffer, SelEnd, ')');
+        if (Buffer.insert_mode) SelEnd++;
     } else if (r == '[' || r == ']') {
-        DotBeg = buf_lscan(&Buffer, DotEnd, '[');
-        DotEnd = buf_rscan(&Buffer, DotEnd, ']');
-        if (Buffer.insert_mode) DotEnd++;
+        SelBeg = buf_lscan(&Buffer, SelEnd, '[');
+        SelEnd = buf_rscan(&Buffer, SelEnd, ']');
+        if (Buffer.insert_mode) SelEnd++;
     } else if (r == '{' || r == '}') {
-        DotBeg = buf_lscan(&Buffer, DotEnd, '{');
-        DotEnd = buf_rscan(&Buffer, DotEnd, '}');
-        if (Buffer.insert_mode) DotEnd++;
+        SelBeg = buf_lscan(&Buffer, SelEnd, '{');
+        SelEnd = buf_rscan(&Buffer, SelEnd, '}');
+        if (Buffer.insert_mode) SelEnd++;
     } else {
         bigword(mevnt);
     }
 }
 
 void search(MouseEvent* mevnt) {
-    unsigned clickpos = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
-    if (clickpos < DotBeg || clickpos > DotEnd) {
+    unsigned clickpos = screen_getoff(&Buffer, SelEnd, mevnt->y-1, mevnt->x);
+    if (clickpos < SelBeg || clickpos > SelEnd) {
         move_cursor(mevnt);
         selection(mevnt);
+    } else {
+        buf_find(&Buffer, &SelBeg, &SelEnd);
     }
-    buf_find(&Buffer, &DotBeg, &DotEnd);
     unsigned x, y;
-    screen_update(&Buffer, DotEnd, &x, &y);
+    screen_update(&Buffer, SelEnd, &x, &y);
     extern void move_pointer(unsigned x, unsigned y);
     move_pointer(x, y);
+
 }
 
 void scrollup(MouseEvent* mevnt) {
     (void)mevnt;
-    DotBeg = DotEnd = buf_byline(&Buffer, DotEnd, -ScrollLines);
+    SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, -ScrollLines);
 }
 
 void scrolldn(MouseEvent* mevnt) {
     (void)mevnt;
-    DotBeg = DotEnd = buf_byline(&Buffer, DotEnd, ScrollLines);
+    SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, ScrollLines);
 }
 
 /*****************************************************************************/
-
 enum {
     SINGLE_CLICK = 0,
     DOUBLE_CLICK,
@@ -129,8 +130,8 @@ static void handle_click(MouseEvent* mevnt) {
 
 static void handle_drag(MouseEvent* mevnt) {
     if (mevnt->y == 0 || mevnt->button != MOUSE_LEFT) return;
-    DotEnd = screen_getoff(&Buffer, DotEnd, mevnt->y-1, mevnt->x);
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+    SelEnd = screen_getoff(&Buffer, SelEnd, mevnt->y-1, mevnt->x);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 void handle_mouse(MouseEvent* mevnt) {

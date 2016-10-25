@@ -249,8 +249,8 @@ enum ColorScheme {
 extern enum ColorScheme ColorBase;
 extern Buf Buffer;
 extern unsigned TargetCol;
-extern unsigned DotBeg;
-extern unsigned DotEnd;
+extern unsigned SelBeg;
+extern unsigned SelEnd;
 
 /* Configuration
  *****************************************************************************/

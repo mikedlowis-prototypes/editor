@@ -5,42 +5,42 @@ static void toggle_colors(void) {
 }
 
 static void cursor_up(void) {
-    DotBeg = DotEnd = buf_byline(&Buffer, DotEnd, -1);
-    DotBeg = DotEnd = buf_setcol(&Buffer, DotEnd, TargetCol);
+    SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, -1);
+    SelBeg = SelEnd = buf_setcol(&Buffer, SelEnd, TargetCol);
 }
 
 static void cursor_dn(void) {
-    DotBeg = DotEnd = buf_byline(&Buffer, DotEnd, 1);
-    DotBeg = DotEnd = buf_setcol(&Buffer, DotEnd, TargetCol);
+    SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, 1);
+    SelBeg = SelEnd = buf_setcol(&Buffer, SelEnd, TargetCol);
 }
 
 static void cursor_left(void) {
-    DotBeg = DotEnd = buf_byrune(&Buffer, DotEnd, -1);
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+    SelBeg = SelEnd = buf_byrune(&Buffer, SelEnd, -1);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 static void cursor_right(void) {
-    DotBeg = DotEnd = buf_byrune(&Buffer, DotEnd, 1);
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+    SelBeg = SelEnd = buf_byrune(&Buffer, SelEnd, 1);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 static void cursor_bol(void) {
-    DotBeg = DotEnd = buf_bol(&Buffer, DotEnd);
+    SelBeg = SelEnd = buf_bol(&Buffer, SelEnd);
     TargetCol = 0;
 }
 
 static void cursor_eol(void) {
-    DotBeg = DotEnd = buf_eol(&Buffer, DotEnd);
+    SelBeg = SelEnd = buf_eol(&Buffer, SelEnd);
     TargetCol = (unsigned)-1;
 }
 
 static void insert_before(void) {
-    DotEnd = DotBeg;
+    SelEnd = SelBeg;
     Buffer.insert_mode = true;
 }
 
 static void insert_after(void) {
-    DotBeg = ++DotEnd;
+    SelBeg = ++SelEnd;
     Buffer.insert_mode = true;
 }
 
@@ -63,15 +63,15 @@ static void quit(void) {
 }
 
 static void dot_delete(void) {
-    if (DotEnd == buf_end(&Buffer)) return;
-    size_t n = DotEnd - DotBeg;
+    if (SelEnd == buf_end(&Buffer)) return;
+    size_t n = SelEnd - SelBeg;
     bool insert = Buffer.insert_mode;
     if (!insert || !n) n++;
     Buffer.insert_mode = true;
     for (size_t i = 0; i < n; i++)
-        buf_del(&Buffer, DotBeg);
-    DotEnd = DotBeg;
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+        buf_del(&Buffer, SelBeg);
+    SelEnd = SelBeg;
+    TargetCol = buf_getcol(&Buffer, SelEnd);
     Buffer.insert_mode = insert;
 }
 
@@ -81,17 +81,17 @@ static void dot_change(void) {
 }
 
 static void dot_backspace(void) {
-    if (DotBeg > 0 && DotBeg == DotEnd) DotBeg--;
-    while (DotBeg < DotEnd)
-        buf_del(&Buffer, --DotEnd);
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+    if (SelBeg > 0 && SelBeg == SelEnd) SelBeg--;
+    while (SelBeg < SelEnd)
+        buf_del(&Buffer, --SelEnd);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 static void insert(Rune r) {
     if (!Buffer.insert_mode) return;
-    buf_ins(&Buffer, DotEnd++, r);
-    DotBeg = DotEnd;
-    TargetCol = buf_getcol(&Buffer, DotEnd);
+    buf_ins(&Buffer, SelEnd++, r);
+    SelBeg = SelEnd;
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 /*****************************************************************************/

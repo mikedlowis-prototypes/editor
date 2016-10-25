@@ -9,8 +9,8 @@
 
 Buf Buffer;
 unsigned TargetCol = 0;
-unsigned DotBeg = 0;
-unsigned DotEnd = 0;
+unsigned SelBeg = 0;
+unsigned SelEnd = 0;
 enum ColorScheme ColorBase = DEFAULT_COLORSCHEME;
 XftColor Palette[CLR_COUNT][2];
 struct {
@@ -395,7 +395,7 @@ static void redraw(void) {
 
     /* update the screen buffer and retrieve cursor coordinates */
     unsigned csrx, csry;
-    screen_update(&Buffer, DotEnd, &csrx, &csry);
+    screen_update(&Buffer, SelEnd, &csrx, &csry);
 
     /* flush the screen buffer */
     unsigned nrows, ncols;
