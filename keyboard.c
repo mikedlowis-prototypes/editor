@@ -96,6 +96,26 @@ static void insert(Rune r) {
 
 /*****************************************************************************/
 
+static void cursor_nextword(void) {
+}
+
+static void cursor_nextbigword(void) {
+}
+
+static void cursor_endword(void) {
+}
+
+static void cursor_endbigword(void) {
+}
+
+static void cursor_prevword(void) {
+}
+
+static void cursor_prevbigword(void) {
+}
+
+/*****************************************************************************/
+
 typedef struct {
     Rune key;
     void (*action)(void);
@@ -103,25 +123,64 @@ typedef struct {
 
 static KeyBinding_T Normal[] = {
     { KEY_F6,     toggle_colors },
+    { KEY_CTRL_Q, quit          },
+    { KEY_CTRL_W, write         },
+    //{ 'q',        quit          },
+    //{ 's',        write         },
+
+    /* visual selection modes */
+    //{ 'v',        visual        },
+    //{ 'V',        visual_line   },
+    //{ KEY_CTRL_V, visual_column },
+
+    /* normal cursor movements */
     { KEY_UP,     cursor_up     },
-    { KEY_DOWN,   cursor_dn     },
-    { KEY_LEFT,   cursor_left   },
-    { KEY_RIGHT,  cursor_right  },
-    { KEY_HOME,   cursor_bol    },
-    { KEY_END,    cursor_eol    },
-    { KEY_DELETE, dot_delete    },
-    { 'q',        quit          },
-    { 's',        write         },
-    { 'a',        insert_after  },
-    { 'i',        insert_before },
     { 'k',        cursor_up     },
+    { KEY_DOWN,   cursor_dn     },
     { 'j',        cursor_dn     },
+    { KEY_LEFT,   cursor_left   },
     { 'h',        cursor_left   },
+    { KEY_RIGHT,  cursor_right  },
     { 'l',        cursor_right  },
+    { KEY_HOME,   cursor_bol    },
     { '0',        cursor_bol    },
+    { KEY_END,    cursor_eol    },
     { '$',        cursor_eol    },
-    { 'd',        dot_delete    },
-    { 'c',        dot_change    },
+
+    /* advanced cursor movements */
+    { 'w',        cursor_nextword    },
+    { 'W',        cursor_nextbigword },
+    { 'e',        cursor_endword     },
+    { 'E',        cursor_endbigword  },
+    { 'b',        cursor_prevword    },
+    { 'B',        cursor_prevbigword },
+
+    /* undo/redo handling */
+    //{ 'u',        undo },
+    //{ 'r',        redo },
+
+    /* insert mode handling */
+    { 'a',        insert_after    },
+    //{ 'A',        insert_afterln  },
+    { 'i',        insert_before   },
+    //{ 'I',        insert_beforeln },
+    { 'd',        dot_delete      },
+    { 'c',        dot_change      },
+    //{ 'o',        insert_lnafter  },
+    //{ 'O',        insert_lnbefore },
+    { KEY_DELETE, dot_delete    },
+
+    /* Copy/Paste */
+    //{ 'y',        yank_selection },
+    //{ 'Y',        yank_line      },
+    //{ 'p',        paste_after    },
+    //{ 'P',        paste_before   },
+
+    /* context sensitive language */
+    //{ 's', dot_select  },
+    //{ 'x', dot_execute },
+    //{ 'f', dot_find    },
+
     { 0,          NULL          }
 };
 
