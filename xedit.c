@@ -377,11 +377,11 @@ static void draw_cursor(unsigned csrx, unsigned csry) {
     unsigned rwidth;
     UGlyph* csrrune = screen_getglyph(csry, csrx, &rwidth);
     csrrune->attr = (CLR_BASE3 << 8 | CLR_BASE03);
-    if (Buffer.insert_mode) {
-        XftDrawRect(X.xft, clr(CLR_BASE3), csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
-    } else {
+    if (buf_locked(&Buffer)) {
         XftDrawRect(X.xft, clr(CLR_BASE3), csrx * Fonts.base.width, (csry+1) * Fonts.base.height, rwidth * Fonts.base.width, Fonts.base.height);
         draw_glyphs(csrx * Fonts.base.width, (csry+2) * Fonts.base.height, csrrune, 1, rwidth);
+    } else {
+        XftDrawRect(X.xft, clr(CLR_BASE3), csrx * Fonts.base.width, (csry+1) * Fonts.base.height, 1, Fonts.base.height);
     }
 }
 

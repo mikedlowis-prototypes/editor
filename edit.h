@@ -41,26 +41,49 @@ bool risblank(Rune r);
 
 /* Buffer management functions
  *****************************************************************************/
+typedef struct Log {
+    struct Log* next;
+    bool locked;
+    bool insert;
+    union {
+        struct {
+            size_t beg;
+            size_t end;
+        } ins;
+        struct {
+            size_t off;
+            size_t len;
+            Rune* runes;
+        } del;
+    } data;
+} Log;
+
 typedef struct buf {
-    char* path;       /* the path to the open file */
-    int charset;      /* the character set of the buffer */
-    int crlf;         /* tracks whether the file uses dos style line endings */
-    bool insert_mode; /* tracks current mode */
-    bool modified;    /* tracks whether the buffer has been modified */
-    size_t bufsize;   /* size of the buffer in runes */
-    Rune* bufstart;   /* start of the data buffer */
-    Rune* bufend;     /* end of the data buffer */
-    Rune* gapstart;   /* start of the gap */
-    Rune* gapend;     /* end of the gap */
+    char* path;     /* the path to the open file */
+    int charset;    /* the character set of the buffer */
+    int crlf;       /* tracks whether the file uses dos style line endings */
+    bool locked;    /* tracks current mode */
+    bool modified;  /* tracks whether the buffer has been modified */
+    size_t bufsize; /* size of the buffer in runes */
+    Rune* bufstart; /* start of the data buffer */
+    Rune* bufend;   /* end of the data buffer */
+    Rune* gapstart; /* start of the gap */
+    Rune* gapend;   /* end of the gap */
+    Log* undo;      /* undo list */
+    Log* redo;      /* redo list */
 } Buf;
 
 void buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 void buf_init(Buf* buf);
-void buf_clr(Buf* buf);
-void buf_del(Buf* buf, unsigned pos);
 void buf_ins(Buf* buf, unsigned pos, Rune);
+void buf_del(Buf* buf, unsigned pos);
+unsigned buf_undo(Buf* buf, unsigned pos);
+unsigned buf_redo(Buf* buf, unsigned pos);
 Rune buf_get(Buf* buf, unsigned pos);
+void buf_setlocked(Buf* buf, bool locked);
+bool buf_locked(Buf* buf);
+
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);

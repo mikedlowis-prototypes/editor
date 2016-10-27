@@ -29,19 +29,19 @@ void selection(MouseEvent* mevnt) {
     } else if (risword(r)) {
         SelBeg = buf_bow(&Buffer, SelEnd);
         SelEnd = buf_eow(&Buffer, SelEnd);
-        if (Buffer.insert_mode) SelEnd++;
+        if (!buf_locked(&Buffer)) SelEnd++;
     } else if (r == '(' || r == ')') {
         SelBeg = buf_lscan(&Buffer, SelEnd, '(');
         SelEnd = buf_rscan(&Buffer, SelEnd, ')');
-        if (Buffer.insert_mode) SelEnd++;
+        if (!buf_locked(&Buffer)) SelEnd++;
     } else if (r == '[' || r == ']') {
         SelBeg = buf_lscan(&Buffer, SelEnd, '[');
         SelEnd = buf_rscan(&Buffer, SelEnd, ']');
-        if (Buffer.insert_mode) SelEnd++;
+        if (!buf_locked(&Buffer)) SelEnd++;
     } else if (r == '{' || r == '}') {
         SelBeg = buf_lscan(&Buffer, SelEnd, '{');
         SelEnd = buf_rscan(&Buffer, SelEnd, '}');
-        if (Buffer.insert_mode) SelEnd++;
+        if (!buf_locked(&Buffer)) SelEnd++;
     } else {
         bigword(mevnt);
     }

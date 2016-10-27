@@ -3,12 +3,17 @@
 
 static Buf TestBuf;
 
+static void buf_clr(Buf* buf) {
+    free(buf->bufstart);
+    buf_init(buf);
+}
+
 static void set_buffer_text(char* str) {
     int i = 0;
     buf_clr(&TestBuf);
     for (Rune* curr = TestBuf.bufstart; curr < TestBuf.bufend; curr++)
         *curr = '-';
-    TestBuf.insert_mode = true;
+    TestBuf.locked = false;
     while (*str)
         buf_ins(&TestBuf, i++, (Rune)*str++);
 }

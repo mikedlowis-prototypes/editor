@@ -36,16 +36,16 @@ static void cursor_eol(void) {
 
 static void insert_before(void) {
     SelEnd = SelBeg;
-    Buffer.insert_mode = true;
+    buf_setlocked(&Buffer,false);
 }
 
 static void insert_after(void) {
     SelBeg = ++SelEnd;
-    Buffer.insert_mode = true;
+    buf_setlocked(&Buffer,false);
 }
 
 static void exit_insert(void) {
-    Buffer.insert_mode = false;
+    buf_setlocked(&Buffer,true);
 }
 
 static void write(void) {
@@ -65,19 +65,19 @@ static void quit(void) {
 static void dot_delete(void) {
     if (SelEnd == buf_end(&Buffer)) return;
     size_t n = SelEnd - SelBeg;
-    bool insert = Buffer.insert_mode;
-    if (!insert || !n) n++;
-    Buffer.insert_mode = true;
+    bool locked = buf_locked(&Buffer);
+    if (locked || !n) n++;
+    buf_setlocked(&Buffer,false);
     for (size_t i = 0; i < n; i++)
         buf_del(&Buffer, SelBeg);
     SelEnd = SelBeg;
     TargetCol = buf_getcol(&Buffer, SelEnd);
-    Buffer.insert_mode = insert;
+    buf_setlocked(&Buffer, locked);
 }
 
 static void dot_change(void) {
     dot_delete();
-    Buffer.insert_mode = true;
+    buf_setlocked(&Buffer,false);
 }
 
 static void dot_backspace(void) {
@@ -88,7 +88,7 @@ static void dot_backspace(void) {
 }
 
 static void insert(Rune r) {
-    if (!Buffer.insert_mode) return;
+    if (buf_locked(&Buffer)) return;
     buf_ins(&Buffer, SelEnd++, r);
     SelBeg = SelEnd;
     TargetCol = buf_getcol(&Buffer, SelEnd);
@@ -112,6 +112,18 @@ static void cursor_prevword(void) {
 }
 
 static void cursor_prevbigword(void) {
+}
+
+/*****************************************************************************/
+
+static void undo(void) {
+    SelBeg = SelEnd = buf_undo(&Buffer, SelEnd);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
+}
+
+static void redo(void) {
+    SelBeg = SelEnd = buf_redo(&Buffer, SelEnd);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 /*****************************************************************************/
@@ -156,8 +168,8 @@ static KeyBinding_T Normal[] = {
     { 'B',        cursor_prevbigword },
 
     /* undo/redo handling */
-    //{ 'u',        undo },
-    //{ 'r',        redo },
+    { 'u',        undo },
+    { 'r',        redo },
 
     /* insert mode handling */
     { 'a',        insert_after    },
@@ -216,8 +228,8 @@ void handle_key(Rune key) {
     if (key == '\r') key = '\n';
     if (key == '\n' && Buffer.crlf) key = RUNE_CRLF;
     /* handle the key */
-    if (Buffer.insert_mode)
-        process_table(Insert, key);
-    else
+    if (buf_locked(&Buffer))
         process_table(Normal, key);
+    else
+        process_table(Insert, key);
 }
