@@ -1,4 +1,5 @@
-#GCOV     = --coverage
+PREFIX   = /usr/local
+GCOV     = --coverage
 LDFLAGS  = $(GCOV) -L/opt/X11/lib -lX11 -lXft -lfontconfig
 CFLAGS   = $(GCOV) -Os --std=gnu99 -Wall -Wextra -I. -I/opt/X11/include -I/opt/local/include/freetype2 -I/usr/include/freetype2
 OBJS     = buf.o screen.o utf8.o keyboard.o mouse.o charset.o utils.o
@@ -18,6 +19,8 @@ unittests: $(TESTOBJS) $(OBJS)
 coverage: test
 	gcov -fabc $(OBJS) > coverage.txt
 
+install:
+	cp
 
 clean:
 	$(RM) edit unittests xedit.o $(OBJS) $(TESTOBJS) coverage.txt

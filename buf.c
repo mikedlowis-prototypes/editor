@@ -248,7 +248,7 @@ unsigned buf_rscan(Buf* buf, unsigned off, Rune r) {
     return off;
 }
 
-int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend) {
+static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend) {
     unsigned n1 = dend-dbeg, n2 = mend-mbeg;
     if (n1 != n2) return n1-n2;
     for (; n1; n1--, dbeg++, mbeg++) {

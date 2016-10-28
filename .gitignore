@@ -35,3 +35,6 @@ edit
 unittests
 project.vim
 tags
+*.gcno
+*.gcda
+*.gcov
