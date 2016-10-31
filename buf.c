@@ -204,8 +204,8 @@ Rune buf_get(Buf* buf, unsigned off) {
 }
 
 void buf_setlocked(Buf* buf, bool locked) {
-    if (locked)
-        buf->undo->locked =true;
+    if (locked && buf->undo)
+        buf->undo->locked = true;
     buf->locked = locked;
 }
 
@@ -238,14 +238,17 @@ unsigned buf_eow(Buf* buf, unsigned off) {
     return off-1;
 }
 
-unsigned buf_lscan(Buf* buf, unsigned off, Rune r) {
-    for (; r != buf_get(buf, off); off--);
-    return off;
+unsigned buf_lscan(Buf* buf, unsigned pos, Rune r) {
+    unsigned off = pos;
+    for (; (off > 0) && (r != buf_get(buf, off)); off--);
+    return (buf_get(buf, off) == r ? off : pos);
 }
 
-unsigned buf_rscan(Buf* buf, unsigned off, Rune r) {
-    for (; r != buf_get(buf, off); off++);
-    return off;
+unsigned buf_rscan(Buf* buf, unsigned pos, Rune r) {
+    unsigned off = pos;
+    unsigned end = buf_end(buf);
+    for (; (off < end) && (r != buf_get(buf, off)); off++);
+    return (buf_get(buf, off) == r ? off : pos);
 }
 
 static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend) {
