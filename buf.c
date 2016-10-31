@@ -96,9 +96,6 @@ void buf_init(Buf* buf) {
 static void log_insert(Log** list, unsigned beg, unsigned end) {
     Log* log = *list;
     if (!log || log->locked || !log->insert || (log->data.ins.beg && beg < log->data.ins.beg-1) || end > log->data.ins.end+1) {
-        //if (log) printf("%d %d %d %d\n", log->locked, !log->insert, beg < log->data.ins.beg-1, end > log->data.ins.end+1);
-        //if (log) printf("%u < %u\n", beg, log->data.ins.beg-1);
-        //printf("new %u-%u\n", beg, end);
         Log* newlog  = (Log*)calloc(sizeof(Log), 1);
         newlog->insert = true;
         newlog->data.ins.beg = beg;
@@ -106,10 +103,8 @@ static void log_insert(Log** list, unsigned beg, unsigned end) {
         newlog->next = *list;
         *list = newlog;
     } else if (beg <= log->data.ins.beg) {
-        //puts("coalesce 1");
         log->data.ins.beg--;
     } else {
-        //puts("coalesce 2");
         log->data.ins.end++;
     }
 }

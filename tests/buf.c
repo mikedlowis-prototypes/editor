@@ -4,6 +4,13 @@
 static Buf TestBuf;
 
 static void buf_clr(Buf* buf) {
+    //while (buf->undo) {
+    //    Log* deadite = buf->undo;
+    //    buf->undo = deadite->next;
+    //    if (!deadite->insert)
+    //        free(deadite->data.del.runes);
+    //    free(deadite);
+    //}
     free(buf->bufstart);
     buf_init(buf);
 }
@@ -35,6 +42,51 @@ TEST_SUITE(BufferTests) {
     /* Saving
      *************************************************************************/
     /* Resizing
+     *************************************************************************/
+    /* Insertions
+     *************************************************************************/
+    TEST(buf_ins should insert at 0 in empty buf) {
+        buf_clr(&TestBuf);
+        buf_ins(&TestBuf, 0, 'a');
+        CHECK(buf_text_eq("a"));
+    }
+
+    TEST(buf_ins should insert at 0) {
+        buf_clr(&TestBuf);
+        buf_ins(&TestBuf, 0, 'b');
+        buf_ins(&TestBuf, 0, 'a');
+        CHECK(buf_text_eq("ab"));
+    }
+
+    TEST(buf_ins should insert at 1) {
+        buf_clr(&TestBuf);
+        buf_ins(&TestBuf, 0, 'a');
+        buf_ins(&TestBuf, 1, 'b');
+        CHECK(buf_text_eq("ab"));
+    }
+
+    TEST(buf_ins should insert at 1) {
+        buf_clr(&TestBuf);
+        buf_ins(&TestBuf, 0, 'a');
+        buf_ins(&TestBuf, 1, 'c');
+        buf_ins(&TestBuf, 1, 'b');
+        CHECK(buf_text_eq("abc"));
+    }
+
+    TEST(buf_ins should sentence in larger text) {
+        set_buffer_text(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam elementum eros quis venenatis. "
+        );
+
+        buf_ins(&TestBuf, 5, ' ');
+        buf_ins(&TestBuf, 6, 'a');
+
+        CHECK(buf_text_eq(
+            "Lorem a ipsum dolor sit amet, consectetur adipiscing elit. Aliquam elementum eros quis venenatis. "
+        ));
+    }
+
+    /* Deletions
      *************************************************************************/
     /* Undo/Redo
      *************************************************************************/
@@ -365,50 +417,8 @@ TEST_SUITE(BufferTests) {
         CHECK(5 == buf_setcol(&TestBuf, 4, 4));
     }
 
-    /* Insertions
-     *************************************************************************/
-    TEST(buf_ins should insert at 0 in empty buf) {
-        buf_clr(&TestBuf);
-        buf_ins(&TestBuf, 0, 'a');
-        CHECK(buf_text_eq("a"));
+    TEST(buf_setcol should not set column past the last rune) {
+        set_buffer_text("abc\n\tdef");
+        CHECK(8 == buf_setcol(&TestBuf, 4, 100));
     }
-
-    TEST(buf_ins should insert at 0) {
-        buf_clr(&TestBuf);
-        buf_ins(&TestBuf, 0, 'b');
-        buf_ins(&TestBuf, 0, 'a');
-        CHECK(buf_text_eq("ab"));
-    }
-
-    TEST(buf_ins should insert at 1) {
-        buf_clr(&TestBuf);
-        buf_ins(&TestBuf, 0, 'a');
-        buf_ins(&TestBuf, 1, 'b');
-        CHECK(buf_text_eq("ab"));
-    }
-
-    TEST(buf_ins should insert at 1) {
-        buf_clr(&TestBuf);
-        buf_ins(&TestBuf, 0, 'a');
-        buf_ins(&TestBuf, 1, 'c');
-        buf_ins(&TestBuf, 1, 'b');
-        CHECK(buf_text_eq("abc"));
-    }
-
-    TEST(buf_ins should sentence in larger text) {
-        set_buffer_text(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam elementum eros quis venenatis. "
-        );
-
-        buf_ins(&TestBuf, 5, ' ');
-        buf_ins(&TestBuf, 6, 'a');
-
-        CHECK(buf_text_eq(
-            "Lorem a ipsum dolor sit amet, consectetur adipiscing elit. Aliquam elementum eros quis venenatis. "
-        ));
-    }
-
-    /* Deletions
-     *************************************************************************/
-
 }
