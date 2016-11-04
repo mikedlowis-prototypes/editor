@@ -1,8 +1,7 @@
-#include "edit.h"
-
-static void toggle_colors(void) {
-    ColorBase = !ColorBase;
-}
+#include <stdc.h>
+#include <X.h>
+#include <utf.h>
+#include <edit.h>
 
 static void cursor_up(void) {
     SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, -1);
@@ -134,7 +133,6 @@ typedef struct {
 } KeyBinding_T;
 
 static KeyBinding_T Normal[] = {
-    { KEY_F6,     toggle_colors },
     { KEY_CTRL_Q, quit          },
     { KEY_CTRL_W, write         },
     //{ 'q',        quit          },
@@ -197,7 +195,6 @@ static KeyBinding_T Normal[] = {
 };
 
 static KeyBinding_T Insert[] = {
-    { KEY_F6,        toggle_colors },
     { KEY_UP,        cursor_up     },
     { KEY_DOWN,      cursor_dn     },
     { KEY_LEFT,      cursor_left   },

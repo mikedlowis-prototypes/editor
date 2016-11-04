@@ -1,4 +1,6 @@
-#include "edit.h"
+#include <stdc.h>
+#include <utf.h>
+#include <edit.h>
 
 static unsigned NumRows = 0;
 static unsigned NumCols = 0;
@@ -26,6 +28,7 @@ static void screen_reflow(Buf* buf) {
 }
 
 void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols) {
+    if (NumRows == nrows && NumCols == ncols)  return;
     /* free the old row data */
     if (Rows) {
         for (unsigned i = 0; i < NumRows; i++)

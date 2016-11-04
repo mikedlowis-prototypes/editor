@@ -1,4 +1,6 @@
-#include "edit.h"
+#include <stdc.h>
+#include <utf.h>
+#include <edit.h>
 
 static const struct {
     int type;

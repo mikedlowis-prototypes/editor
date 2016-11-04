@@ -1,5 +1,6 @@
-#include "edit.h"
-#include <ctype.h>
+#include <stdc.h>
+#include <utf.h>
+#include <edit.h>
 
 void unused(MouseEvent* mevnt) {
     (void)mevnt;

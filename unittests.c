@@ -1,13 +1,14 @@
+#include <stdc.h>
+#include <utf.h>
+#include <edit.h>
 #define INCLUDE_DEFS
-#include "atf.h"
-#include "edit.h"
+#include <atf.h>
 
 Buf Buffer;
 unsigned CursorPos;
 unsigned TargetCol;
 unsigned SelBeg;
 unsigned SelEnd;
-enum ColorScheme ColorBase;
 
 void move_pointer(unsigned x, unsigned y) {
     (void)x;

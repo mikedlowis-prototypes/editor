@@ -1,9 +1,6 @@
-#define _GNU_SOURCE
-#include <string.h>
-#include <assert.h>
-#include <wchar.h>
-
-#include "edit.h"
+#include <stdc.h>
+#include <utf.h>
+#include <edit.h>
 
 void buf_load(Buf* buf, char* path) {
     buf_setlocked(buf, false);

@@ -1,17 +1,17 @@
-#include "edit.h"
-
-#define _GNU_SOURCE
+#include <stdc.h>
+#include <utf.h>
+#include <edit.h>
 #include <time.h>
 #include <sys/time.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
 
 #ifdef __MACH__
 #define CLOCK_MONOTONIC 0
-// clock_gettime is not implemented on OSX
+// clock_gettime is not implemented on OSX (supposedly added on macOS)
 int clock_gettime(int id, struct timespec* t) {
     (void)id;
     struct timeval now;

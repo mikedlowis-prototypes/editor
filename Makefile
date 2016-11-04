@@ -1,32 +1,39 @@
-PREFIX   = /usr/local
-GCOV     = --coverage
-LDFLAGS  = $(GCOV) -L/opt/X11/lib -lX11 -lXft -lfontconfig
-CFLAGS   = $(GCOV) -O0 --std=gnu99 -Wall -Wextra -I. -I/opt/X11/include -I/opt/local/include/freetype2 -I/usr/include/freetype2
-OBJS     = buf.o screen.o utf8.o keyboard.o mouse.o charset.o utils.o
-TESTOBJS = tests/tests.o tests/buf.o tests/utf8.o
+CC = c99
+LDFLAGS = -L/usr/X11/lib -lX11 -lXft -lfontconfig
+CFLAGS = -Os -Iinc/ -I/usr/X11/include -I/usr/X11/include/freetype2
 
-all: edit test
+LIBEDIT_OBJS =         \
+	libedit/buf.o      \
+	libedit/charset.o  \
+	libedit/keyboard.o \
+	libedit/mouse.o    \
+	libedit/screen.o   \
+	libedit/utf8.o     \
+	libedit/utils.o
+
+LIBX_OBJS = \
+	libx/x11.o
+
+TEST_OBJS =     \
+	unittests.o \
+	tests/buf.o \
+	tests/utf8.o
+
+all: xedit xpick test
+
+clean:
+	$(RM) *.o lib*/*.o test/*.o *.a xpick xedit unittests
 
 test: unittests
 	./unittests
 
-edit: xedit.o $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+xedit: xedit.o libx.a libedit.a
+xpick: xpick.o libx.a libedit.a
 
-unittests: $(TESTOBJS) $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+libedit.a: $(LIBEDIT_OBJS)
+	$(AR) rcs $@ $^
 
-coverage: test
-	gcov -fabc $(OBJS) > coverage.txt
+libx.a: $(LIBX_OBJS)
+	$(AR) rcs $@ $^
 
-install:
-	cp
-
-clean:
-	$(RM) edit unittests xedit.o $(OBJS) $(TESTOBJS) coverage.txt
-	$(RM) *.gcno *.gcda *.gcov tests/*.gcno tests/*.gcda tests/*.gcov
-
-$(OBJS): edit.h Makefile
-xedit.o: edit.h Makefile
-
-.PHONY: all test
+unittests: $(TEST_OBJS) libedit.a
