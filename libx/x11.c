@@ -87,7 +87,6 @@ void x11_window(char* name, int width, int height) {
     /* initialize pixmap and drawing context */
     X.pixmap = XCreatePixmap(X.display, X.window, width, height, X.depth);
     X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
-
     /* initialize the graphics context */
     XGCValues gcv;
     gcv.foreground = WhitePixel(X.display, X.screen);
@@ -206,10 +205,12 @@ void x11_loop(void) {
                         break;
                 }
         }
-        /* redraw the window */
-        Config->redraw(X.width, X.height);
-        XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
-        XFlush(X.display);
+        if (Running) {
+            /* redraw the window */
+            Config->redraw(X.width, X.height);
+            XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+            XFlush(X.display);
+        }
     }
     XCloseDisplay(X.display);
 }

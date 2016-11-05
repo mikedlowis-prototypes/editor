@@ -153,21 +153,24 @@ static void redraw(int width, int height) {
     x11_draw_rect(CLR_BASE02, 0, 0, width, Fonts.base.height);
     x11_draw_rect(CLR_BASE01, 0, Fonts.base.height, width, 1);
     /* create the array for the query glyphs */
-    height = height / Fonts.base.height - 1,
-    width  = width  / Fonts.base.width;
-    XGlyph glyphs[width], *text = glyphs;
+    int rows = height / Fonts.base.height - 1;
+    int cols = width  / Fonts.base.width;
+    XGlyph glyphs[cols], *text = glyphs;
     /* draw the query */
     unsigned start = 0, end = buf_end(&Query);
-    while (start < end)
+    while (start < end && start < cols)
         (text++)->rune = buf_get(&Query, start++);
     draw_runes(0, 0, CLR_BASE3, CLR_BASE03, glyphs, text - glyphs);
-
-    for (size_t i = 0; i < vec_size(&Choices) && i < height; i++) {
-        Choice* choice = vec_at(&Choices, i);
-        if (i == ChoiceIdx)
+    /* Draw the choices */
+    size_t off = (ChoiceIdx >= rows ? (ChoiceIdx-rows+1) : 0);
+    for (size_t i = 0; i < vec_size(&Choices) && i < rows; i++) {
+        Choice* choice = vec_at(&Choices, i+off);
+        if (i+off == ChoiceIdx) {
+            x11_draw_rect(CLR_BASE1, 0, ((i+1) * Fonts.base.height)+Fonts.base.descent, width, Fonts.base.height);
             x11_draw_utf8(&Fonts, CLR_BASE03, CLR_BASE1, 0, (i+2) * Fonts.base.height, choice->string);
-        else
+        } else {
             x11_draw_utf8(&Fonts, CLR_BASE1, CLR_BASE03, 0, (i+2) * Fonts.base.height, choice->string);
+        }
     }
 }
 
@@ -218,8 +221,9 @@ int main(int argc, char** argv) {
     x11_font_load(&Fonts, FONTNAME);
     x11_loop();
     /* print out the choice */
-    Choice* choice = (Choice*)vec_at(&Choices, ChoiceIdx);
-    if (vec_size(&Choices) && ChoiceIdx != SIZE_MAX)
+    if (vec_size(&Choices) && ChoiceIdx != SIZE_MAX) {
+        Choice* choice = (Choice*)vec_at(&Choices, ChoiceIdx);
         puts(choice->string);
+    }
     return 0;
 }
