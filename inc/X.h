@@ -1,5 +1,4 @@
 #include <X11/Xft/Xft.h>
-#include <stdint.h>
 
 typedef enum {
     MOUSE_ACT_UP,
@@ -134,3 +133,4 @@ void x11_warp_mouse(int x, int y);
 void x11_font_load(XFont* font, char* name);
 void x11_font_getglyph(XFont* font, XftGlyphFontSpec* spec, uint32_t rune);
 size_t x11_font_getglyphs(XftGlyphFontSpec* specs, const XGlyph* glyphs, int len, XFont* font, int x, int y);
+void x11_draw_utf8(XFont* font, int fg, int bg, int x, int y, char* str);

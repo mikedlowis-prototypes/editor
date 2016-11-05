@@ -1,6 +1,11 @@
 CC = c99
 LDFLAGS = -L/usr/X11/lib -lX11 -lXft -lfontconfig
-CFLAGS = -Os -Iinc/ -I/usr/X11/include -I/usr/X11/include/freetype2
+CFLAGS = -Os $(INCS)
+INCS =                           \
+	-Iinc/                       \
+	-I/usr/X11/include           \
+	-I/usr/X11/include/freetype2 \
+	-I/usr/include/freetype2
 
 LIBEDIT_OBJS =         \
 	libedit/buf.o      \

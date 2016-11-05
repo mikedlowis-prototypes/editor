@@ -1,6 +1,7 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
+#define __USE_XOPEN
 #include <wchar.h>
 
 const uint8_t UTF8_SeqBits[] = { 0x00u, 0x80u, 0xC0u, 0xE0u, 0xF0u, 0xF8u, 0xFCu, 0xFEu };

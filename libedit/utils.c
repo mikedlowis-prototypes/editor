@@ -1,13 +1,13 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
-#include <time.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <time.h>
+#include <sys/time.h>
 
 #ifdef __MACH__
 #define CLOCK_MONOTONIC 0
@@ -65,4 +65,10 @@ bool risword(Rune r) {
 
 bool risblank(Rune r) {
     return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
+}
+
+char* stringdup(const char* s) {
+    char* ns = (char*)malloc(strlen(s) + 1);
+    strcpy(ns,s);
+    return ns;
 }

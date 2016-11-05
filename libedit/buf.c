@@ -8,10 +8,10 @@ void buf_load(Buf* buf, char* path) {
         buf->charset = UTF_8;
         Rune r;
         while (RUNE_EOF != (r = fgetrune(stdin)))
-            buf_ins(buf, buf_end(&Buffer), r);
+            buf_ins(buf, buf_end(buf), r);
     } else {
         FMap file = fmap(path);
-        buf->path = strdup(path);
+        buf->path = stringdup(path);
         buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
         /* load the file contents if it has any */
         if (buf->charset > UTF_8) {
@@ -22,8 +22,8 @@ void buf_load(Buf* buf, char* path) {
             utf8load(buf, file);
         }
         /* new files should have a newline in the buffer */
-        if (!file.buf)
-            buf_ins(buf, 0, (Rune)'\n');
+        //if (!file.buf)
+        //    buf_ins(buf, 0, (Rune)'\n');
         funmap(file);
     }
     buf_setlocked(buf, true);

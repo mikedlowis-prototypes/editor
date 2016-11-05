@@ -5,6 +5,7 @@
 #include <utf.h>
 #include <locale.h>
 
+static bool Running = true;
 static struct {
     Window root;
     Display* display;
@@ -33,7 +34,7 @@ static void xftcolor(XftColor* xc, uint32_t c) {
 }
 
 void x11_deinit(void) {
-    XCloseDisplay(X.display);
+    Running = false;
 }
 
 void x11_init(XConfig* cfg) {
@@ -184,7 +185,7 @@ static void handle_mouse(XEvent* e) {
 
 void x11_loop(void) {
     XEvent e;
-    while (true) {
+    while (Running) {
         XPeekEvent(X.display,&e);
         while (XPending(X.display)) {
             XNextEvent(X.display, &e);
@@ -210,6 +211,7 @@ void x11_loop(void) {
         XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
         XFlush(X.display);
     }
+    XCloseDisplay(X.display);
 }
 
 void x11_draw_rect(int color, int x, int y, int width, int height) {
@@ -332,6 +334,20 @@ size_t x11_font_getglyphs(XftGlyphFontSpec* specs, const XGlyph* glyphs, int len
             xp += font->base.width;
     }
     return numspecs;
+}
+
+void x11_draw_utf8(XFont* font, int fg, int bg, int x, int y, char* str) {
+    static XftGlyphFontSpec specs[256];
+    size_t nspecs = 0;
+    while (*str && nspecs < 256) {
+        x11_font_getglyph(font, &(specs[nspecs]), *str);
+        specs[nspecs].x = x;
+        specs[nspecs].y = y;
+        x += font->base.width;
+        nspecs++;
+        str++;
+    }
+    x11_draw_glyphs(fg, bg, specs, nspecs);
 }
 
 void x11_warp_mouse(int x, int y) {

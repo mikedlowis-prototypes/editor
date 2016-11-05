@@ -2,18 +2,31 @@
 #include <X.h>
 #include <utf.h>
 #include <edit.h>
+#include <vec.h>
+#include <ctype.h>
 
 static void redraw(int width, int height);
 static void mouse_input(MouseAct act, MouseBtn btn, int x, int y);
 static void keyboard_input(uint32_t key);
 
-Buf Buffer;
+typedef struct {
+    float score;
+    char* string;
+    size_t length;
+    size_t match_start;
+    size_t match_end;
+} Choice;
+
+static unsigned Pos = 0;
+static Buf Query;
+static vec_t Choices = {0};
+static size_t ChoiceIdx = 0;
 static XFont Fonts;
 static XConfig Config = {
     .redraw       = redraw,
     .handle_key   = keyboard_input,
     .handle_mouse = mouse_input,
-    .palette    = {
+    .palette      = {
         /* ARGB color values */
         0xff002b36,
         0xff073642,
@@ -34,11 +47,128 @@ static XConfig Config = {
     }
 };
 
+static char* rdline(FILE* fin) {
+    if (feof(fin) || ferror(fin))
+        return NULL;
+    size_t size  = 256;
+    size_t index = 0;
+    char*  str   = (char*)malloc(size);
+    while (true) {
+        char ch = fgetc(fin);
+        if (ch == EOF) break;
+        str[index++] = ch;
+        str[index]   = '\0';
+        if (index+1 >= size) {
+            size = size << 1;
+            str  = realloc(str, size);
+        }
+        if (ch == '\n') break;
+    }
+    return str;
+}
+
+static int by_score(const void* a, const void* b) {
+    Choice* ca = ((Choice*)a);
+    Choice* cb = ((Choice*)b);
+    if (ca->score < cb->score)
+        return 1;
+    else if (ca->score > cb->score)
+        return -1;
+    else
+        return strcmp(ca->string, cb->string);
+}
+
+static void load_choices(void) {
+    char* choice_text;
+    Choice choice = {0};
+    vec_init(&Choices, sizeof(Choice));
+    while ((choice_text = rdline(stdin)) != NULL) {
+        choice_text[strlen(choice_text)-1] = '\0';
+        if (strlen(choice_text) > 0) {
+            choice.string = choice_text;
+            choice.length = strlen(choice_text);
+            choice.score  = 1.0;
+            vec_push_back(&Choices, &choice);
+        }
+    }
+    vec_sort(&Choices, by_score);
+}
+
+static char* find_match_start(char *str, int ch) {
+    for (; *str; str++)
+        if (tolower(*str) == tolower(ch))
+            return str;
+    return NULL;
+}
+
+static bool match(char *string, size_t offset, size_t *start, size_t *end) {
+    unsigned qpos = 0;
+    char* s = find_match_start(&string[offset], buf_get(&Query, qpos));
+    char* e = s;
+    /* bail if no match for first char */
+    if (s == NULL) return 0;
+    /* find the end of the match */
+    for (unsigned bend = buf_end(&Query); qpos < bend; qpos++)
+        if ((e = find_match_start(e, buf_get(&Query, qpos))) == NULL)
+            return false;
+    /* make note of the matching range */
+    *start = s - string;
+    *end   = e - string;
+    /* Less than or equal is used in order to obtain the left-most match. */
+    if (match(string, offset + 1, start, end) && (size_t)(e - s) <= *end - *start) {
+        *start = s - string;
+        *end   = e - string;
+    }
+    return true;
+}
+
+static void score(void) {
+    for (int i = 0; i < vec_size(&Choices); i++) {
+        Choice* choice = (Choice*)vec_at(&Choices, i);
+        float qlen = (float)buf_end(&Query);
+        if (match(choice->string, 0, &choice->match_start, &choice->match_end)) {
+            float clen = (float)(choice->match_end - choice->match_start);
+            choice->score = qlen / clen / (float)(choice->length);
+        } else {
+            choice->match_start = 0;
+            choice->match_end   = 0;
+            choice->score       = 0.0f;
+        }
+    }
+    vec_sort(&Choices, by_score);
+}
+
+static void draw_runes(unsigned x, unsigned y, int fg, int bg, XGlyph* glyphs, size_t rlen) {
+    XftGlyphFontSpec specs[rlen];
+    while (rlen) {
+        size_t nspecs = x11_font_getglyphs(specs, glyphs, rlen, &Fonts, x, y);
+        x11_draw_glyphs(fg, bg, specs, nspecs);
+        rlen -= nspecs;
+    }
+}
+
 static void redraw(int width, int height) {
     /* draw the background colors */
     x11_draw_rect(CLR_BASE03, 0, 0, width, height);
     x11_draw_rect(CLR_BASE02, 0, 0, width, Fonts.base.height);
     x11_draw_rect(CLR_BASE01, 0, Fonts.base.height, width, 1);
+    /* create the array for the query glyphs */
+    height = height / Fonts.base.height - 1,
+    width  = width  / Fonts.base.width;
+    XGlyph glyphs[width], *text = glyphs;
+    /* draw the query */
+    unsigned start = 0, end = buf_end(&Query);
+    while (start < end)
+        (text++)->rune = buf_get(&Query, start++);
+    draw_runes(0, 0, CLR_BASE3, CLR_BASE03, glyphs, text - glyphs);
+
+    for (size_t i = 0; i < vec_size(&Choices) && i < height; i++) {
+        Choice* choice = vec_at(&Choices, i);
+        if (i == ChoiceIdx)
+            x11_draw_utf8(&Fonts, CLR_BASE03, CLR_BASE1, 0, (i+2) * Fonts.base.height, choice->string);
+        else
+            x11_draw_utf8(&Fonts, CLR_BASE1, CLR_BASE03, 0, (i+2) * Fonts.base.height, choice->string);
+    }
 }
 
 static void mouse_input(MouseAct act, MouseBtn btn, int x, int y) {
@@ -49,18 +179,47 @@ static void mouse_input(MouseAct act, MouseBtn btn, int x, int y) {
 }
 
 static void keyboard_input(uint32_t key) {
-    (void)key;
+    switch (key) {
+        case KEY_UP:
+            if (ChoiceIdx > 0) ChoiceIdx--;
+            break;
+        case KEY_DOWN:
+            if (ChoiceIdx+1 < vec_size(&Choices)) ChoiceIdx++;
+            break;
+        case KEY_ESCAPE:
+            ChoiceIdx = SIZE_MAX;
+            // fall-through
+        case '\n': case '\r':
+            x11_deinit();
+            break;
+        case '\b':
+            if (Pos > 0)
+                buf_del(&Query, --Pos);
+            break;
+        case RUNE_ERR:
+            break;
+        default:
+            ChoiceIdx = 0;
+            buf_ins(&Query, Pos++, key);
+            break;
+    }
+    score();
 }
 
 int main(int argc, char** argv) {
-    /* load the buffer */
-    buf_init(&Buffer);
-    buf_setlocked(&Buffer, false);
+    load_choices();
+    /* initialize the filter edit buffer */
+    buf_init(&Query);
+    buf_setlocked(&Query, false);
     /* initialize the display engine */
     x11_init(&Config);
-    x11_window("pick", Width, Height);
+    x11_dialog("pick", Width, Height);
     x11_show();
     x11_font_load(&Fonts, FONTNAME);
     x11_loop();
+    /* print out the choice */
+    Choice* choice = (Choice*)vec_at(&Choices, ChoiceIdx);
+    if (vec_size(&Choices) && ChoiceIdx != SIZE_MAX)
+        puts(choice->string);
     return 0;
 }

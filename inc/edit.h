@@ -10,6 +10,7 @@ void funmap(FMap file);
 uint32_t getmillis(void);
 bool risword(Rune r);
 bool risblank(Rune r);
+char* stringdup(const char* str);
 
 /* Buffer management functions
  *****************************************************************************/
