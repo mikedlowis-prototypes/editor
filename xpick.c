@@ -183,6 +183,8 @@ static void mouse_input(MouseAct act, MouseBtn btn, int x, int y) {
 
 static void keyboard_input(uint32_t key) {
     switch (key) {
+        case KEY_LEFT:  break;
+        case KEY_RIGHT: break;
         case KEY_UP:
             if (ChoiceIdx > 0) ChoiceIdx--;
             break;
