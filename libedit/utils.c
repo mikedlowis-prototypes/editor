@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
