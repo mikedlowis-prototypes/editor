@@ -21,9 +21,6 @@ void buf_load(Buf* buf, char* path) {
         } else {
             utf8load(buf, file);
         }
-        /* new files should have a newline in the buffer */
-        //if (!file.buf)
-        //    buf_ins(buf, 0, (Rune)'\n');
         funmap(file);
     }
     buf_setlocked(buf, true);
@@ -92,7 +89,9 @@ void buf_init(Buf* buf) {
 
 static void log_insert(Log** list, unsigned beg, unsigned end) {
     Log* log = *list;
-    if (!log || log->locked || !log->insert || (log->data.ins.beg && beg < log->data.ins.beg-1) || end > log->data.ins.end+1) {
+    if (!log || log->locked || !log->insert ||
+        (log->data.ins.beg && beg < log->data.ins.beg-1) ||
+        (end > log->data.ins.end+1)) {
         Log* newlog  = (Log*)calloc(sizeof(Log), 1);
         newlog->insert = true;
         newlog->data.ins.beg = beg;
@@ -107,15 +106,30 @@ static void log_insert(Log** list, unsigned beg, unsigned end) {
 }
 
 static void log_delete(Log** list, unsigned off, Rune* r, size_t len) {
-    Log* newlog  = (Log*)calloc(sizeof(Log), 1);
-    newlog->insert = false;
-    newlog->data.del.off = off;
-    newlog->data.del.len = len;
-    newlog->data.del.runes = (Rune*)malloc(sizeof(Rune) * len);
-    for (size_t i = 0; i < len; i++)
-        newlog->data.del.runes[i] = r[i];
-    newlog->next = *list;
-    *list = newlog;
+    Log* log = *list;
+    if (!log || log->locked || log->insert ||
+        ((off != log->data.del.off) && (off+1 != log->data.del.off))) {
+        Log* newlog = (Log*)calloc(sizeof(Log), 1);
+        newlog->insert = false;
+        newlog->data.del.off = off;
+        newlog->data.del.len = len;
+        newlog->data.del.runes = (Rune*)malloc(sizeof(Rune) * len);
+        for (size_t i = 0; i < len; i++)
+            newlog->data.del.runes[i] = r[i];
+        newlog->next = *list;
+        *list = newlog;
+    } else if (off == log->data.del.off) {
+        log->data.del.len++;
+        log->data.del.runes = (Rune*)realloc(log->data.del.runes, sizeof(Rune) * log->data.del.len);
+        log->data.del.runes[log->data.del.len-1] = *r;
+    } else {
+        size_t bytes = sizeof(Rune) * log->data.del.len;
+        log->data.del.len++;
+        log->data.del.off--;
+        log->data.del.runes = (Rune*)realloc(log->data.del.runes, bytes + sizeof(Rune));
+        memmove(log->data.del.runes+1, log->data.del.runes, bytes);
+        log->data.del.runes[0] = *r;
+    }
 }
 
 static void insert(Buf* buf, unsigned off, Rune rune) {
@@ -171,7 +185,7 @@ unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
         for (size_t i = log->data.del.len; i > 0; i--) {
             insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
         }
-        pos = newlog->data.ins.end;
+        pos = newlog->data.ins.end - 1;
     }
     newlog->next = *to;
     *to = newlog;
