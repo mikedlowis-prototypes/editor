@@ -1,11 +1,5 @@
-CC = c99
-LDFLAGS = -L/usr/X11/lib -lX11 -lXft -lfontconfig
-CFLAGS = -Os $(INCS)
-INCS =                           \
-	-Iinc/                       \
-	-I/usr/X11/include           \
-	-I/usr/X11/include/freetype2 \
-	-I/usr/include/freetype2
+
+INCS = -Iinc/
 
 LIBEDIT_OBJS =         \
 	libedit/buf.o      \
@@ -24,6 +18,8 @@ TEST_OBJS =     \
 	tests/buf.o \
 	tests/utf8.o
 
+include config.mk
+
 all: xedit xpick test
 
 clean:
@@ -36,9 +32,9 @@ xedit: xedit.o libx.a libedit.a
 xpick: xpick.o libx.a libedit.a
 
 libedit.a: $(LIBEDIT_OBJS)
-	$(AR) rcs $@ $^
+	$(AR) $(ARFLAGS) $@ $^
 
 libx.a: $(LIBX_OBJS)
-	$(AR) rcs $@ $^
+	$(AR) $(ARFLAGS) $@ $^
 
 unittests: $(TEST_OBJS) libedit.a
