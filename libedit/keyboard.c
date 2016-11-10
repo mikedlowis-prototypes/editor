@@ -121,7 +121,7 @@ static void undo(void) {
 }
 
 static void redo(void) {
-    SelBeg = SelEnd = buf_redo(&Buffer, SelEnd);
+    SelBeg = SelEnd = buf_redo(&Buffer, SelEnd)+1;
     TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 

@@ -47,6 +47,11 @@ typedef struct buf {
     Log* redo;      /* redo list */
 } Buf;
 
+typedef struct {
+    size_t beg;
+    size_t end;
+} Sel;
+
 void buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 void buf_init(Buf* buf);
@@ -72,6 +77,34 @@ unsigned buf_getcol(Buf* buf, unsigned pos);
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
 char* buf_getstr(Buf* buf, unsigned beg, unsigned end);
 unsigned buf_putstr(Buf* buf, unsigned beg, unsigned end, char* str);
+
+/*
+void buf_load(Buf* buf, char* path);
+void buf_save(Buf* buf);
+void buf_init(Buf* buf);
+void buf_ins(Buf* buf, Sel csr, Rune);
+void buf_del(Buf* buf, Sel csr);
+Sel buf_undo(Buf* buf, Sel csr);
+Sel buf_redo(Buf* buf, Sel csr);
+Rune buf_get(Buf* buf, Sel csr);
+void buf_setlocked(Buf* buf, bool locked);
+bool buf_locked(Buf* buf);
+bool buf_iseol(Buf* buf, Sel csr);
+Sel buf_bol(Buf* buf, Sel csr);
+Sel buf_eol(Buf* buf, Sel csr);
+Sel buf_bow(Buf* buf, Sel csr);
+Sel buf_eow(Buf* buf, Sel csr);
+Sel buf_lscan(Buf* buf, Sel csr, Rune r);
+Sel buf_rscan(Buf* buf, Sel csr, Rune r);
+Sel buf_find(Buf* buf, Sel csr);
+Sel buf_end(Buf* buf);
+Sel buf_byrune(Buf* buf, Sel csr, int count);
+Sel buf_byline(Buf* buf, Sel csr, int count);
+Sel buf_getcol(Buf* buf, Sel csr);
+Sel buf_setcol(Buf* buf, Sel csr, unsigned col);
+char* buf_getstr(Buf* buf, Sel csr);
+Sel buf_putstr(Buf* buf, Sel csr, char* str);
+*/
 
 /* Charset Handling
  *****************************************************************************/
