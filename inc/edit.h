@@ -16,35 +16,36 @@ char* fdgets(int fd);
 /* Buffer management functions
  *****************************************************************************/
 typedef struct Log {
-    struct Log* next;
-    bool locked;
-    bool insert;
+    struct Log* next;   /* pointer to next operation in the stack */
+    bool locked;        /* whether new operations can be coalesced or not */
+    bool insert;        /* whether this operation was an insert or delete */
     union {
         struct {
-            size_t beg;
-            size_t end;
+            size_t beg; /* offset in the file where insertion started */
+            size_t end; /* offset in the file where insertion ended */
         } ins;
         struct {
-            size_t off;
-            size_t len;
-            Rune* runes;
+            size_t off;  /* offset in the file where the deletion occurred */
+            size_t len;  /* number of runes deleted */
+            Rune* runes; /* array of runes containing deleted content */
         } del;
     } data;
 } Log;
 
 typedef struct buf {
-    char* path;     /* the path to the open file */
-    int charset;    /* the character set of the buffer */
-    int crlf;       /* tracks whether the file uses dos style line endings */
-    bool locked;    /* tracks current mode */
-    bool modified;  /* tracks whether the buffer has been modified */
-    size_t bufsize; /* size of the buffer in runes */
-    Rune* bufstart; /* start of the data buffer */
-    Rune* bufend;   /* end of the data buffer */
-    Rune* gapstart; /* start of the gap */
-    Rune* gapend;   /* end of the gap */
-    Log* undo;      /* undo list */
-    Log* redo;      /* redo list */
+    char* path;       /* the path to the open file */
+    int charset;      /* the character set of the buffer */
+    int crlf;         /* tracks whether the file uses dos style line endings */
+    bool locked;      /* tracks current mode */
+    bool modified;    /* tracks whether the buffer has been modified */
+    size_t bufsize;   /* size of the buffer in runes */
+    Rune* bufstart;   /* start of the data buffer */
+    Rune* bufend;     /* end of the data buffer */
+    Rune* gapstart;   /* start of the gap */
+    Rune* gapend;     /* end of the gap */
+    Log* undo;        /* undo list */
+    Log* redo;        /* redo list */
+    bool expand_tabs; /* tracks current mode */
 } Buf;
 
 typedef struct {
@@ -173,10 +174,10 @@ UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth);
 /* Command Executions
  *****************************************************************************/
 typedef struct {
-    int pid;
-    int in;
-    int out;
-    int err;
+    int pid; /* process id of the child process */
+    int in;  /* file descriptor for the child process's standard input */
+    int out; /* file descriptor for the child process's standard output */
+    int err; /* file descriptor for the child process's standard error */
 } Process;
 
 int execute(char** cmd, Process* proc);
