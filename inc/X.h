@@ -7,12 +7,12 @@ typedef enum {
 } MouseAct;
 
 typedef enum {
-        MOUSE_BTN_LEFT = 0,
-        MOUSE_BTN_MIDDLE,
-        MOUSE_BTN_RIGHT,
-        MOUSE_BTN_WHEELUP,
-        MOUSE_BTN_WHEELDOWN,
-        MOUSE_BTN_NONE
+    MOUSE_BTN_LEFT = 0,
+    MOUSE_BTN_MIDDLE,
+    MOUSE_BTN_RIGHT,
+    MOUSE_BTN_WHEELUP,
+    MOUSE_BTN_WHEELDOWN,
+    MOUSE_BTN_NONE
 } MouseBtn;
 
 typedef struct {

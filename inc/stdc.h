@@ -46,12 +46,6 @@ typedef intptr_t  intptr;
  *****************************************************************************/
 void die(const char* msgfmt, ...);
 
-//static char* estrdup(const char *s) {
-//    char* ns = (char*)emalloc(strlen(s) + 1);
-//    strcpy(ns,s);
-//    return ns;
-//}
-
 /* Option Parsing
  *
  * This following macros implement a simple POSIX-style option parsing strategy.
