@@ -23,7 +23,6 @@ static void set_buffer_text(char* str) {
     TestBuf.crlf = 1;
     for (Rune* curr = TestBuf.bufstart; curr < TestBuf.bufend; curr++)
         *curr = '-';
-    TestBuf.locked = false;
     while (*str)
         buf_ins(&TestBuf, i++, (Rune)*str++);
 }
@@ -92,42 +91,6 @@ TEST_SUITE(BufferTests) {
      *************************************************************************/
     /* Undo/Redo
      *************************************************************************/
-    /* Locking
-     *************************************************************************/
-    TEST(buf_setlocked should lock the buffer to prevent changes) {
-        TestBuf.locked = false;
-        if (TestBuf.undo) { free(TestBuf.undo); TestBuf.undo = NULL; }
-        buf_setlocked(&TestBuf, true);
-        CHECK(TestBuf.locked);
-    }
-
-    TEST(buf_setlocked should lock the buffer to prevent changes and lock the last undo op) {
-        Log log;
-        TestBuf.locked = false;
-        TestBuf.undo = &log;
-        buf_setlocked(&TestBuf, true);
-        CHECK(TestBuf.locked);
-        CHECK(TestBuf.undo->locked);
-    }
-
-    TEST(buf_setlocked should unlock the buffer) {
-        Log log;
-        TestBuf.locked = true;
-        TestBuf.undo = &log;
-        buf_setlocked(&TestBuf, false);
-        CHECK(!TestBuf.locked);
-    }
-
-    TEST(buf_islocked should return true if locked) {
-        TestBuf.locked = true;
-        CHECK(buf_locked(&TestBuf));
-    }
-
-    TEST(buf_islocked should return false if locked) {
-        TestBuf.locked = false;
-        CHECK(!buf_locked(&TestBuf));
-    }
-
     /* Accessors
      *************************************************************************/
     // buf_get

@@ -1,10 +1,10 @@
 enum {
-    UTF_MAX   = 6u,           /* maximum number of bytes that make up a rune */
-    RUNE_SELF = 0x80,         /* byte values larger than this are *not* ascii */
-    RUNE_ERR  = 0xFFFD,       /* rune value representing an error */
-    RUNE_MAX  = 0x10FFFF,     /* Maximum decodable rune value */
-    RUNE_EOF  = UINT32_MAX,   /* rune value representing end of file */
-    RUNE_CRLF = UINT32_MAX-1, /* rune value representing a \r\n sequence */
+    UTF_MAX   = 6u,       /* maximum number of bytes that make up a rune */
+    RUNE_SELF = 0x80,     /* byte values larger than this are *not* ascii */
+    RUNE_ERR  = 0xFFFD,   /* rune value representing an error */
+    RUNE_MAX  = 0x10FFFF, /* Maximum decodable rune value */
+    RUNE_EOF  = -1,       /* rune value representing end of file */
+    RUNE_CRLF = -2,       /* rune value representing a \r\n sequence */
 };
 
 /* Represents a unicode code point */

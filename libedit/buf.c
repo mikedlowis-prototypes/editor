@@ -3,7 +3,6 @@
 #include <edit.h>
 
 void buf_load(Buf* buf, char* path) {
-    buf_setlocked(buf, false);
     if (!strcmp(path,"-")) {
         buf->charset = UTF_8;
         Rune r;
@@ -23,8 +22,9 @@ void buf_load(Buf* buf, char* path) {
         }
         funmap(file);
     }
-    buf_setlocked(buf, true);
     buf->modified = false;
+    free(buf->undo);
+    buf->undo = NULL;
 }
 
 void buf_save(Buf* buf) {
@@ -74,7 +74,6 @@ static void syncgap(Buf* buf, unsigned off) {
 }
 
 void buf_init(Buf* buf) {
-    buf->locked   = true;
     buf->modified = false;
     buf->charset  = DEFAULT_CHARSET;
     buf->crlf     = DEFAULT_CRLF;
@@ -89,9 +88,7 @@ void buf_init(Buf* buf) {
 
 static void log_insert(Log** list, unsigned beg, unsigned end) {
     Log* log = *list;
-    if (!log || log->locked || !log->insert ||
-        (log->data.ins.beg && beg < log->data.ins.beg-1) ||
-        (end > log->data.ins.end+1)) {
+    if (!log || log->locked || !log->insert || (end != log->data.ins.end+1)) {
         Log* newlog  = (Log*)calloc(sizeof(Log), 1);
         newlog->insert = true;
         newlog->data.ins.beg = beg;
@@ -141,7 +138,6 @@ static void insert(Buf* buf, unsigned off, Rune rune) {
 }
 
 void buf_ins(Buf* buf, unsigned off, Rune rune) {
-    if (buf->locked) { return; }
     buf->modified = true;
     log_insert(&(buf->undo), off, off+1);
     insert(buf, off, rune);
@@ -153,7 +149,6 @@ static void delete(Buf* buf, unsigned off) {
 }
 
 void buf_del(Buf* buf, unsigned off) {
-    if (buf->locked) { return; }
     buf->modified = true;
     Rune r = buf_get(buf, off);
     log_delete(&(buf->undo), off, &r, 1);
@@ -207,16 +202,6 @@ Rune buf_get(Buf* buf, unsigned off) {
         return *(buf->bufstart + off);
     else
         return *(buf->gapend + (off - bsz));
-}
-
-void buf_setlocked(Buf* buf, bool locked) {
-    if (locked && buf->undo)
-        buf->undo->locked = true;
-    buf->locked = locked;
-}
-
-bool buf_locked(Buf* buf) {
-    return buf->locked;
 }
 
 bool buf_iseol(Buf* buf, unsigned off) {
@@ -373,8 +358,6 @@ char* buf_getstr(Buf* buf, unsigned beg, unsigned end) {
 }
 
 unsigned buf_putstr(Buf* buf, unsigned beg, unsigned end, char* str) {
-    bool locked = buf_locked(buf);
-    buf_setlocked(buf, false);
     /* delete the selected text first */
     for (unsigned i = beg; ((end-beg) > 1) && (i <= end); i++)
         buf_del(buf, beg);
@@ -385,6 +368,5 @@ unsigned buf_putstr(Buf* buf, unsigned beg, unsigned end, char* str) {
         while (!utf8decode(&rune, &length, *str++));
         buf_ins(buf, beg++, rune);
     }
-    buf_setlocked(buf, locked);
     return beg;
 }

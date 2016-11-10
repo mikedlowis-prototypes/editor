@@ -266,7 +266,6 @@ int main(int argc, char** argv) {
     buf_init(&Buffer);
     if (argc > 1)
         buf_load(&Buffer, argv[1]);
-    buf_setlocked(&Buffer, false);
     /* initialize the display engine */
     x11_init(&Config);
     x11_window("edit", Width, Height);

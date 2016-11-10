@@ -215,7 +215,6 @@ int main(int argc, char** argv) {
     load_choices();
     /* initialize the filter edit buffer */
     buf_init(&Query);
-    buf_setlocked(&Query, false);
     /* initialize the display engine */
     x11_init(&Config);
     x11_dialog("pick", Width, Height);

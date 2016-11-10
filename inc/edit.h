@@ -36,7 +36,6 @@ typedef struct buf {
     char* path;       /* the path to the open file */
     int charset;      /* the character set of the buffer */
     int crlf;         /* tracks whether the file uses dos style line endings */
-    bool locked;      /* tracks current mode */
     bool modified;    /* tracks whether the buffer has been modified */
     size_t bufsize;   /* size of the buffer in runes */
     Rune* bufstart;   /* start of the data buffer */
@@ -61,8 +60,6 @@ void buf_del(Buf* buf, unsigned pos);
 unsigned buf_undo(Buf* buf, unsigned pos);
 unsigned buf_redo(Buf* buf, unsigned pos);
 Rune buf_get(Buf* buf, unsigned pos);
-void buf_setlocked(Buf* buf, bool locked);
-bool buf_locked(Buf* buf);
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);
