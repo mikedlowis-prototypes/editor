@@ -185,7 +185,7 @@ unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
         for (size_t i = log->data.del.len; i > 0; i--) {
             insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
         }
-        pos = newlog->data.ins.end - 1;
+        pos = newlog->data.ins.end;
     }
     newlog->next = *to;
     *to = newlog;

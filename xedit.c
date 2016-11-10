@@ -6,105 +6,38 @@
 
 static void redraw(int width, int height);
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
-void handle_key(Rune key);
+static void key_handler(Rune key);
 
-static void quit(void);
-static void write(void);
-static void undo(void);
-static void redo(void);
-static void cut(void);
-static void copy(void);
-static void paste(void);
-static void cursor_up(void);
-static void cursor_dn(void);
-static void cursor_left(void);
-static void cursor_right(void);
-static void cursor_bol(void);
-static void cursor_eol(void);
-static void dot_delete(void);
-static void dot_backspace(void);
-
+/* Global Data
+ *****************************************************************************/
 Buf Buffer;
 unsigned TargetCol = 0;
 unsigned SelBeg = 0;
 unsigned SelEnd = 0;
-
 static XFont Fonts;
 static XConfig Config = {
     .redraw       = redraw,
-    .handle_key   = handle_key,
+    .handle_key   = key_handler,
     .handle_mouse = mouse_handler,
-    .palette    = {
-        /* ARGB color values */
-        0xff002b36,
-        0xff073642,
-        0xff586e75,
-        0xff657b83,
-        0xff839496,
-        0xff93a1a1,
-        0xffeee8d5,
-        0xfffdf6e3,
-        0xffb58900,
-        0xffcb4b16,
-        0xffdc322f,
-        0xffd33682,
-        0xff6c71c4,
-        0xff268bd2,
-        0xff2aa198,
-        0xff859900
-    }
+    .palette      = COLOR_PALETTE
 };
 
-typedef struct {
-    Rune key;
-    void (*action)(void);
-} KeyBinding_T;
-
-static KeyBinding_T Insert[] = {
-    { KEY_CTRL_Q,    quit          },
-    { KEY_CTRL_S,    write         },
-    { KEY_CTRL_Z,    undo          },
-    { KEY_CTRL_Y,    redo          },
-    { KEY_CTRL_X,    cut           },
-    { KEY_CTRL_C,    copy          },
-    { KEY_CTRL_V,    paste         },
-    { KEY_UP,        cursor_up     },
-    { KEY_DOWN,      cursor_dn     },
-    { KEY_LEFT,      cursor_left   },
-    { KEY_RIGHT,     cursor_right  },
-    { KEY_HOME,      cursor_bol    },
-    { KEY_END,       cursor_eol    },
-    { KEY_DELETE,    dot_delete    },
-    { KEY_BACKSPACE, dot_backspace },
-    { 0,             NULL          }
-};
-
-static void process_table(KeyBinding_T* bindings, Rune key) {
-    while (bindings->key) {
-        if (key == bindings->key) {
-            bindings->action();
-            return;
-        }
-        bindings++;
-    }
-    /* skip control and nonprintable characters */
-    if ((!isspace(key) && key < 0x20) ||
-        (key >= 0xE000 && key <= 0xF8FF))
-        return;
-    /* fallback to just inserting the rune */
-    buf_ins(&Buffer, SelEnd++, key);
-    SelBeg = SelEnd;
+/* Keyboard Actions
+ *****************************************************************************/
+static void delete(void) {
+    if (SelEnd == buf_end(&Buffer)) return;
+    size_t n = SelEnd - SelBeg;
+    for (size_t i = 0; i < n; i++)
+        buf_del(&Buffer, SelBeg);
+    SelEnd = SelBeg;
     TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
-void handle_key(Rune key) {
-    /* ignore invalid keys */
-    if (key == RUNE_ERR) return;
-    /* handle the proper line endings */
-    if (key == '\r') key = '\n';
-    if (key == '\n' && Buffer.crlf) key = RUNE_CRLF;
-    /* handle the key */
-    process_table(Insert, key);
+static void backspace(void) {
+    if (SelBeg > 0 && SelBeg == SelEnd) SelBeg--;
+    while (SelBeg < SelEnd)
+        buf_del(&Buffer, --SelEnd);
+    TargetCol = buf_getcol(&Buffer, SelEnd);
 }
 
 static void quit(void) {
@@ -135,7 +68,7 @@ static void cut(void) {
     char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
     clipcopy(str);
     free(str);
-    dot_delete();
+    delete();
 }
 
 static void copy(void) {
@@ -180,26 +113,62 @@ static void cursor_eol(void) {
     TargetCol = (unsigned)-1;
 }
 
-static void dot_delete(void) {
-    if (SelEnd == buf_end(&Buffer)) return;
-    size_t n = SelEnd - SelBeg;
-    bool locked = buf_locked(&Buffer);
-    if (locked || !n) n++;
-    buf_setlocked(&Buffer,false);
-    for (size_t i = 0; i < n; i++)
-        buf_del(&Buffer, SelBeg);
-    SelEnd = SelBeg;
+/* Keyboard Bindings
+ *****************************************************************************/
+typedef struct {
+    Rune key;
+    void (*action)(void);
+} KeyBinding_T;
+
+static KeyBinding_T Insert[] = {
+    { KEY_CTRL_Q,    quit          },
+    { KEY_CTRL_S,    write         },
+    { KEY_CTRL_Z,    undo          },
+    { KEY_CTRL_Y,    redo          },
+    { KEY_CTRL_X,    cut           },
+    { KEY_CTRL_C,    copy          },
+    { KEY_CTRL_V,    paste         },
+    { KEY_UP,        cursor_up     },
+    { KEY_DOWN,      cursor_dn     },
+    { KEY_LEFT,      cursor_left   },
+    { KEY_RIGHT,     cursor_right  },
+    { KEY_HOME,      cursor_bol    },
+    { KEY_END,       cursor_eol    },
+    { KEY_DELETE,    delete        },
+    { KEY_BACKSPACE, backspace     },
+    { 0,             NULL          }
+};
+
+static void process_table(KeyBinding_T* bindings, Rune key) {
+    while (bindings->key) {
+        if (key == bindings->key) {
+            bindings->action();
+            return;
+        }
+        bindings++;
+    }
+    /* skip control and nonprintable characters */
+    if ((!isspace(key) && key < 0x20) ||
+        (key >= 0xE000 && key <= 0xF8FF))
+        return;
+    /* fallback to just inserting the rune */
+    buf_ins(&Buffer, SelEnd++, key);
+    SelBeg = SelEnd;
     TargetCol = buf_getcol(&Buffer, SelEnd);
-    buf_setlocked(&Buffer, locked);
 }
 
-static void dot_backspace(void) {
-    if (SelBeg > 0 && SelBeg == SelEnd) SelBeg--;
-    while (SelBeg < SelEnd)
-        buf_del(&Buffer, --SelEnd);
-    TargetCol = buf_getcol(&Buffer, SelEnd);
+static void key_handler(Rune key) {
+    /* ignore invalid keys */
+    if (key == RUNE_ERR) return;
+    /* handle the proper line endings */
+    if (key == '\r') key = '\n';
+    if (key == '\n' && Buffer.crlf) key = RUNE_CRLF;
+    /* handle the key */
+    process_table(Insert, key);
 }
 
+/* Screen Redraw
+ *****************************************************************************/
 static void draw_runes(unsigned x, unsigned y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
     XftGlyphFontSpec specs[rlen];
     while (rlen) {

@@ -236,8 +236,25 @@ enum {
 #else
 #define FONTNAME "Liberation Mono:size=10.5:antialias=true:autohint=true"
 #endif
-
 #define DEFAULT_COLORSCHEME DARK
 #define DEFAULT_CRLF 1
 #define DEFAULT_CHARSET UTF_8
-
+#define COLOR_PALETTE \
+    {                 \
+        0xff002b36,   \
+        0xff073642,   \
+        0xff586e75,   \
+        0xff657b83,   \
+        0xff839496,   \
+        0xff93a1a1,   \
+        0xffeee8d5,   \
+        0xfffdf6e3,   \
+        0xffb58900,   \
+        0xffcb4b16,   \
+        0xffdc322f,   \
+        0xffd33682,   \
+        0xff6c71c4,   \
+        0xff268bd2,   \
+        0xff2aa198,   \
+        0xff859900    \
+    }
