@@ -11,6 +11,7 @@ uint32_t getmillis(void);
 bool risword(Rune r);
 bool risblank(Rune r);
 char* stringdup(const char* str);
+char* fdgets(int fd);
 
 /* Buffer management functions
  *****************************************************************************/
@@ -69,6 +70,8 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
 unsigned buf_getcol(Buf* buf, unsigned pos);
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
+char* buf_getstr(Buf* buf, unsigned beg, unsigned end);
+unsigned buf_putstr(Buf* buf, unsigned beg, unsigned end, char* str);
 
 /* Charset Handling
  *****************************************************************************/
@@ -133,6 +136,26 @@ Row* screen_getrow(unsigned row);
 void screen_clearrow(unsigned row);
 unsigned screen_setcell(unsigned row, unsigned col, uint32_t attr, Rune r);
 UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth);
+
+/* Command Executions
+ *****************************************************************************/
+typedef struct {
+    int pid;
+    int in;
+    int out;
+    int err;
+} Process;
+
+int execute(char** cmd, Process* proc);
+void detach(Process* proc);
+void terminate(Process* proc, int sig);
+char* cmdread(char** cmd);
+void cmdwrite(char** cmd, char* text);
+
+/* Clipboard Access
+ *****************************************************************************/
+void clipcopy(char* text);
+char* clippaste(void);
 
 /* Color Scheme Handling
  *****************************************************************************/

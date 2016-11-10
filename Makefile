@@ -1,4 +1,3 @@
-
 INCS = -Iinc/
 
 LIBEDIT_OBJS =         \
@@ -8,7 +7,9 @@ LIBEDIT_OBJS =         \
 	libedit/mouse.o    \
 	libedit/screen.o   \
 	libedit/utf8.o     \
-	libedit/utils.o
+	libedit/utils.o    \
+	libedit/exec.o     \
+	libedit/clip.o
 
 LIBX_OBJS = \
 	libx/x11.o

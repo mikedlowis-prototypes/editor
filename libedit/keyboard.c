@@ -127,6 +127,20 @@ static void redo(void) {
 
 /*****************************************************************************/
 
+static void yank_selection(void) {
+    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
+    clipcopy(str);
+    free(str);
+}
+
+static void paste_after(void) {
+    char* str = clippaste();
+    buf_putstr(&Buffer, SelBeg, SelEnd, str);
+    free(str);
+}
+
+/*****************************************************************************/
+
 typedef struct {
     Rune key;
     void (*action)(void);
@@ -181,9 +195,9 @@ static KeyBinding_T Normal[] = {
     { KEY_DELETE, dot_delete    },
 
     /* Copy/Paste */
-    //{ 'y',        yank_selection },
+    { 'y',        yank_selection },
+    { 'p',        paste_after    },
     //{ 'Y',        yank_line      },
-    //{ 'p',        paste_after    },
     //{ 'P',        paste_before   },
 
     /* context sensitive language */

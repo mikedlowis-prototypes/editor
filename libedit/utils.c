@@ -73,3 +73,16 @@ char* stringdup(const char* s) {
     strcpy(ns,s);
     return ns;
 }
+
+char* fdgets(int fd) {
+    char buf[256];
+    size_t len = 0, nread = 0;
+    char* str = NULL;
+    while ((nread = read(fd, buf, 256)) > 0) {
+        str = realloc(str, len + nread + 1);
+        memcpy(str+len, buf, nread);
+        len += nread;
+    }
+    if (str) str[len] = '\0';
+    return str;
+}
