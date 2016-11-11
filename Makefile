@@ -3,7 +3,6 @@ INCS = -Iinc/
 LIBEDIT_OBJS =         \
 	libedit/buf.o      \
 	libedit/charset.o  \
-	libedit/mouse.o    \
 	libedit/screen.o   \
 	libedit/utf8.o     \
 	libedit/utils.o    \

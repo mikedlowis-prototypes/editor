@@ -121,30 +121,6 @@ void utf8save(Buf* buf, FILE* file);
 void binload(Buf* buf, FMap file);
 void binsave(Buf* buf, FILE* file);
 
-/* Input Handling
- *****************************************************************************/
-/* Define the mouse buttons used for input */
-typedef struct {
-    enum {
-        MouseUp,
-        MouseDown,
-        MouseMove
-    } type;
-    enum {
-        MOUSE_LEFT = 0,
-        MOUSE_MIDDLE,
-        MOUSE_RIGHT,
-        MOUSE_WHEELUP,
-        MOUSE_WHEELDOWN,
-        MOUSE_NONE
-    } button;
-    int x;
-    int y;
-} MouseEvent;
-
-void handle_key(Rune key);
-void handle_mouse(MouseEvent* mevnt);
-
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
@@ -153,11 +129,27 @@ typedef struct {
 } UGlyph;
 
 typedef struct {
-    unsigned off;  /* offset of the first rune in the row */
-    unsigned rlen; /* number of runes displayed in the row */
-    unsigned len;  /* number of screen columns taken up by row */
+    size_t off;    /* offset of the first rune in the row */
+    size_t rlen;   /* number of runes displayed in the row */
+    size_t len;    /* number of screen columns taken up by row */
     UGlyph cols[]; /* row data */
 } Row;
+
+typedef struct {
+    size_t nrows; /* number of rows in the view */
+    size_t ncols; /* number of columns in the view */
+    Row** rows;   /* array of row data structures */
+    Buf buffer;   /* the buffer used to populate the view */
+} View;
+
+void view_update(View* view, unsigned crsr, unsigned* csrx, unsigned* csry);
+size_t view_getoff(View* view, unsigned pos, unsigned row, unsigned col);
+void view_setsize(View* view, unsigned nrows, unsigned ncols);
+void view_getsize(View* view, unsigned* nrows, unsigned* ncols);
+Row* view_getrow(View* view, unsigned row);
+void view_clearrow(View* view, unsigned row);
+size_t view_setcell(View* view, unsigned row, unsigned col, uint32_t attr, Rune r);
+UGlyph* view_getglyph(View* view, unsigned row, unsigned col, unsigned* scrwidth);
 
 void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
