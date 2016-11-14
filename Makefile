@@ -19,7 +19,7 @@ TEST_OBJS =     \
 
 include config.mk
 
-all: xedit xpick test
+all: xedit
 
 clean:
 	$(RM) *.o lib*/*.o test/*.o *.a xpick xedit unittests

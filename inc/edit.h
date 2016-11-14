@@ -154,6 +154,7 @@ void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move);
 void view_byline(View* view, int move);
+void view_setcursor(View* view, size_t row, size_t col);
 
 //size_t view_getoff(View* view, size_t pos, size_t row, size_t col);
 //void view_getsize(View* view, size_t* nrows, size_t* ncols);

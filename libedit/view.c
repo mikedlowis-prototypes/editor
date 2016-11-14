@@ -63,6 +63,57 @@ static void reflow(View* view) {
         pos = fill_row(view, y, pos);
 }
 
+static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
+    unsigned pos = bol;
+    while (true) {
+        unsigned x;
+        for (x = 0; x < view->ncols && (pos + x) < off; x++)
+            x += runewidth(x, buf_get(&(view->buffer), pos+x));
+        if ((pos + x) >= off) break;
+        pos += x;
+    }
+    return pos;
+}
+
+static void scroll_up(View* view, unsigned csr, unsigned first) {
+    while (csr < first) {
+        unsigned bol    = buf_bol(&(view->buffer), first);
+        unsigned prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+        prevln = prev_screen_line(view, prevln, first);
+        /* delete the last row and shift the others */
+        free(view->rows[view->nrows - 1]);
+        memmove(&view->rows[1], &view->rows[0], sizeof(Row*) * (view->nrows-1));
+        view->rows[0] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
+        view->rows[0]->off = prevln;
+        /* fill in row content */
+        fill_row(view, 0, view->rows[0]->off);
+        first = view->rows[0]->off;
+    }
+}
+
+static void scroll_dn(View* view, unsigned csr, unsigned last) {
+    while (csr > last) {
+        /* delete the first row and shift the others */
+        free(view->rows[0]);
+        memmove(&view->rows[0], &view->rows[1], sizeof(Row*) * (view->nrows-1));
+        view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
+        view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
+        /* fill in row content */
+        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
+        last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+    }
+}
+
+static void sync_view(View* view, size_t csr) {
+    unsigned first = view->rows[0]->off;
+    unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+    if (csr < first) {
+        scroll_up(view, csr, first);
+    } else if (csr > last) {
+        scroll_dn(view, csr, last);
+    }
+}
+
 void view_init(View* view, char* file) {
     memset(view, 0, sizeof(View));
     buf_init(&(view->buffer));
@@ -90,9 +141,9 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
-    size_t csr = view->selection.beg;
+    size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
-    //sync_view(buf, csr);
+    sync_view(view, csr);
     reflow(view);
     /* find the cursor on the new screen */
     for (size_t y = 0; y < view->nrows; y++) {
@@ -130,28 +181,29 @@ void view_byline(View* view, int move) {
     view->selection = sel;
 }
 
+void view_setcursor(View* view, size_t x, size_t y) {
+    //Row* scrrow = screen_getrow(row);
+    //if (!scrrow) return pos;
+    //pos = scrrow->off;
+    //if (col > scrrow->len) {
+    //    pos = (scrrow->off + scrrow->rlen - 1);
+    //} else {
+    //    /* multi column runes are followed by \0 slots so if we clicked on a \0
+    //       slot, slide backwards to the real rune. */
+    //    for (; !scrrow->cols[col].rune && col > 0; col--);
+    //    /* now lets count the number of runes up to the one we clicked on */
+    //    for (unsigned i = 0; i < col; i++)
+    //        if (scrrow->cols[i].rune)
+    //            pos++;
+    //}
+    //if (pos >= buf_end(buf))
+    //    return buf_end(buf)-1;
+    //return pos;
+}
 
-//void view_update(View* view, size_t crsr, size_t* csrx, size_t* csry) {
-//
-//}
-//
+
+
 //size_t view_getoff(View* view, size_t pos, size_t row, size_t col) {
-//    return 0;
-//}
-//
-//void view_setsize(View* view, size_t nrows, size_t ncols) {
-//
-//}
-//
-//void view_getsize(View* view, size_t* nrows, size_t* ncols) {
-//
-//}
-//
-//void view_clearrow(View* view, size_t row) {
-//
-//}
-//
-//size_t view_setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r) {
 //    return 0;
 //}
 //
