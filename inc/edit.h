@@ -150,6 +150,7 @@ typedef struct {
 
 void view_init(View* view, char* file);
 void view_resize(View* view, size_t nrows, size_t ncols);
+//void view_resize(View* view, size_t x, size_t y, size_t height, size_t width, size_t fheight, size_t fwidth);
 void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move);

@@ -183,7 +183,8 @@ static size_t draw_view(size_t off, View* view, size_t rows, size_t width) {
         draw_glyphs(2, off + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* Place cursor on screen */
-    x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, off + (csry * fheight), 1, fheight);
+    if (view == Focused)
+        x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, off + (csry * fheight), 1, fheight);
     return (off + 4 + (rows * x11_font_height(Font)));
 }
 
