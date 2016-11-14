@@ -1,5 +1,3 @@
-#include <X11/Xft/Xft.h>
-
 typedef enum {
     MOUSE_ACT_UP,
     MOUSE_ACT_DOWN,
@@ -22,31 +20,19 @@ typedef struct {
     uint32_t palette[16];
 } XConfig;
 
-#ifndef MAXFONTS
-#define MAXFONTS 16
-#endif
-
-typedef struct {
-    struct {
-        int height;
-        int width;
-        int ascent;
-        int descent;
-        XftFont* match;
-        FcFontSet* set;
-        FcPattern* pattern;
-    } base;
-    struct {
-        XftFont* font;
-        uint32_t unicodep;
-    } cache[MAXFONTS];
-    int ncached;
-} XFont;
+typedef void* XFont;
 
 typedef struct {
     uint32_t attr; /* attributes  applied to this cell */
     uint32_t rune; /* rune value for the cell */
 } XGlyph;
+
+typedef struct {
+    void* font;
+    uint32_t glyph;
+    short x;
+    short y;
+} XGlyphSpec;
 
 /* key definitions */
 enum Keys {
@@ -126,11 +112,14 @@ void x11_window(char* name, int width, int height);
 void x11_dialog(char* name, int height, int width);
 void x11_show(void);
 void x11_loop(void);
+XFont x11_font_load(char* name);
+size_t x11_font_height(XFont fnt);
+size_t x11_font_width(XFont fnt);
+size_t x11_font_descent(XFont fnt);
 void x11_draw_rect(int color, int x, int y, int width, int height);
-void x11_draw_glyphs(int fg, int bg, XftGlyphFontSpec* glyphs, size_t nglyphs);
 void x11_getsize(int* width, int* height);
 void x11_warp_mouse(int x, int y);
-void x11_font_load(XFont* font, char* name);
-void x11_font_getglyph(XFont* font, XftGlyphFontSpec* spec, uint32_t rune);
-size_t x11_font_getglyphs(XftGlyphFontSpec* specs, const XGlyph* glyphs, int len, XFont* font, int x, int y);
-void x11_draw_utf8(XFont* font, int fg, int bg, int x, int y, char* str);
+void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
+void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
+size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
+void x11_draw_glyphs(int fg, int bg, XGlyphSpec* glyphs, size_t nglyphs);

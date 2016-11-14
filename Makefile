@@ -7,7 +7,7 @@ LIBEDIT_OBJS =         \
 	libedit/utf8.o     \
 	libedit/utils.o    \
 	libedit/exec.o     \
-	libedit/clip.o
+	libedit/view.o
 
 LIBX_OBJS = \
 	libx/x11.o

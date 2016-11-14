@@ -50,6 +50,7 @@ typedef struct buf {
 typedef struct {
     size_t beg;
     size_t end;
+    size_t col;
 } Sel;
 
 void buf_load(Buf* buf, char* path);
@@ -136,20 +137,29 @@ typedef struct {
 } Row;
 
 typedef struct {
-    size_t nrows; /* number of rows in the view */
-    size_t ncols; /* number of columns in the view */
-    Row** rows;   /* array of row data structures */
-    Buf buffer;   /* the buffer used to populate the view */
+    //size_t posx;
+    //size_t posy;
+    //size_t height;
+    //size_t width;
+    size_t nrows;  /* number of rows in the view */
+    size_t ncols;  /* number of columns in the view */
+    Row** rows;    /* array of row data structures */
+    Buf buffer;    /* the buffer used to populate the view */
+    Sel selection; /* range of currently selected text */
 } View;
 
-void view_update(View* view, unsigned crsr, unsigned* csrx, unsigned* csry);
-size_t view_getoff(View* view, unsigned pos, unsigned row, unsigned col);
-void view_setsize(View* view, unsigned nrows, unsigned ncols);
-void view_getsize(View* view, unsigned* nrows, unsigned* ncols);
-Row* view_getrow(View* view, unsigned row);
-void view_clearrow(View* view, unsigned row);
-size_t view_setcell(View* view, unsigned row, unsigned col, uint32_t attr, Rune r);
-UGlyph* view_getglyph(View* view, unsigned row, unsigned col, unsigned* scrwidth);
+void view_init(View* view, char* file);
+void view_resize(View* view, size_t nrows, size_t ncols);
+void view_update(View* view, size_t* csrx, size_t* csry);
+Row* view_getrow(View* view, size_t row);
+void view_byrune(View* view, int move);
+void view_byline(View* view, int move);
+
+//size_t view_getoff(View* view, size_t pos, size_t row, size_t col);
+//void view_getsize(View* view, size_t* nrows, size_t* ncols);
+//void view_clearrow(View* view, size_t row);
+//size_t view_setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
+//UGlyph* view_getglyph(View* view, size_t row, size_t col, size_t* scrwidth);
 
 void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
 unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
@@ -174,11 +184,6 @@ void detach(Process* proc);
 void terminate(Process* proc, int sig);
 char* cmdread(char** cmd);
 void cmdwrite(char** cmd, char* text);
-
-/* Clipboard Access
- *****************************************************************************/
-void clipcopy(char* text);
-char* clippaste(void);
 
 /* Color Scheme Handling
  *****************************************************************************/
@@ -248,3 +253,4 @@ enum {
         0xff2aa198,   \
         0xff859900    \
     }
+#define DEFAULT_TAGS "Quit Save"

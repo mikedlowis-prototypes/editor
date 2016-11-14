@@ -1,5 +1,5 @@
 #include <stdc.h>
-#include <X.h>
+#include <x11.h>
 #include <utf.h>
 #include <edit.h>
 #include <vec.h>

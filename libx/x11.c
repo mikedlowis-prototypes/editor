@@ -1,9 +1,31 @@
-#include <stdc.h>
-#include <X.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xft/Xft.h>
+#include <x11.h>
+#include <stdc.h>
 #include <utf.h>
 #include <locale.h>
+
+#ifndef MAXFONTS
+#define MAXFONTS 16
+#endif
+
+struct XFont {
+    struct {
+        int height;
+        int width;
+        int ascent;
+        int descent;
+        XftFont* match;
+        FcFontSet* set;
+        FcPattern* pattern;
+    } base;
+    struct {
+        XftFont* font;
+        uint32_t unicodep;
+    } cache[MAXFONTS];
+    int ncached;
+};
 
 static bool Running = true;
 static struct {
@@ -215,19 +237,8 @@ void x11_loop(void) {
     XCloseDisplay(X.display);
 }
 
-void x11_draw_rect(int color, int x, int y, int width, int height) {
-    XftColor clr;
-    xftcolor(&clr, Config->palette[color]);
-    XftDrawRect(X.xft, &clr, x, y, width, height);
-    XftColorFree(X.display, X.visual, X.colormap, &clr);
-}
-
-void x11_getsize(int* width, int* height) {
-    *width  = X.width;
-    *height = X.height;
-}
-
-void x11_font_load(XFont* font, char* name) {
+XFont x11_font_load(char* name) {
+    struct XFont* font = calloc(1, sizeof(struct XFont));
     /* init the library and the base font pattern */
     if (!FcInit())
         die("Could not init fontconfig.\n");
@@ -255,9 +266,33 @@ void x11_font_load(XFont* font, char* name) {
     font->base.height  = font->base.ascent + font->base.descent;
     font->base.width   = ((extents.xOff + (sizeof(ascii) - 1)) / sizeof(ascii));
     FcPatternDestroy(pattern);
+    return font;
 }
 
-void x11_font_getglyph(XFont* font, XftGlyphFontSpec* spec, uint32_t rune) {
+size_t x11_font_height(XFont fnt) {
+    struct XFont* font = fnt;
+    return font->base.height;
+}
+
+size_t x11_font_width(XFont fnt) {
+    struct XFont* font = fnt;
+    return font->base.width;
+}
+
+size_t x11_font_descent(XFont fnt) {
+    struct XFont* font = fnt;
+    return font->base.descent;
+}
+
+void x11_draw_rect(int color, int x, int y, int width, int height) {
+    XftColor clr;
+    xftcolor(&clr, Config->palette[color]);
+    XftDrawRect(X.xft, &clr, x, y, width, height);
+    XftColorFree(X.display, X.visual, X.colormap, &clr);
+}
+
+void x11_font_getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
+    struct XFont* font = fnt;
     /* if the rune is in the base font, set it and return */
     FT_UInt glyphidx = XftCharIndex(X.display, font->base.match, rune);
     if (glyphidx) {
@@ -302,25 +337,8 @@ void x11_font_getglyph(XFont* font, XftGlyphFontSpec* spec, uint32_t rune) {
     FcCharSetDestroy(fccharset);
 }
 
-void x11_draw_glyphs(int fg, int bg, XftGlyphFontSpec* specs, size_t nspecs) {
-    if (!nspecs) return;
-    XftFont* font = specs[0].font;
-    XftColor fgc, bgc;
-    if (bg > 0) {
-        XGlyphInfo extent;
-        XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
-        int w = extent.xOff;
-        int h = (font->height - font->descent);
-        xftcolor(&bgc, Config->palette[bg]);
-        x11_draw_rect(bg, specs[0].x, specs[0].y - h, nspecs * w, font->height);
-        XftColorFree(X.display, X.visual, X.colormap, &bgc);
-    }
-    xftcolor(&fgc, Config->palette[fg]);
-    XftDrawGlyphFontSpec(X.xft, &fgc, specs, nspecs);
-    XftColorFree(X.display, X.visual, X.colormap, &fgc);
-}
-
-size_t x11_font_getglyphs(XftGlyphFontSpec* specs, const XGlyph* glyphs, int len, XFont* font, int x, int y) {
+size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont fnt, int x, int y) {
+    struct XFont* font = fnt;
     int winx = x * font->base.width, winy = y * font->base.ascent;
     size_t numspecs = 0;
     for (int i = 0, xp = winx, yp = winy + font->base.ascent; i < len;) {
@@ -337,20 +355,38 @@ size_t x11_font_getglyphs(XftGlyphFontSpec* specs, const XGlyph* glyphs, int len
     return numspecs;
 }
 
-void x11_draw_utf8(XFont* font, int fg, int bg, int x, int y, char* str) {
-    static XftGlyphFontSpec specs[256];
-    size_t nspecs = 0;
-    while (*str && nspecs < 256) {
-        x11_font_getglyph(font, &(specs[nspecs]), *str);
-        specs[nspecs].x = x;
-        specs[nspecs].y = y;
-        x += font->base.width;
-        nspecs++;
-        str++;
+void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
+    if (!nspecs) return;
+    XftFont* font = specs[0].font;
+    XftColor fgc, bgc;
+    if (bg > 0) {
+        XGlyphInfo extent;
+        XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
+        int w = extent.xOff;
+        int h = (font->height - font->descent);
+        xftcolor(&bgc, Config->palette[bg]);
+        x11_draw_rect(bg, specs[0].x, specs[0].y - h, nspecs * w, font->height);
+        XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
-    x11_draw_glyphs(fg, bg, specs, nspecs);
+    xftcolor(&fgc, Config->palette[fg]);
+    XftDrawGlyphFontSpec(X.xft, &fgc, (XftGlyphFontSpec*)specs, nspecs);
+    XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-void x11_warp_mouse(int x, int y) {
-    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
-}
+//void x11_draw_utf8(XFont* font, int fg, int bg, int x, int y, char* str) {
+//    static XftGlyphFontSpec specs[256];
+//    size_t nspecs = 0;
+//    while (*str && nspecs < 256) {
+//        x11_font_getglyph(font, &(specs[nspecs]), *str);
+//        specs[nspecs].x = x;
+//        specs[nspecs].y = y;
+//        x += font->base.width;
+//        nspecs++;
+//        str++;
+//    }
+//    x11_draw_glyphs(fg, bg, specs, nspecs);
+//}
+//
+//void x11_warp_mouse(int x, int y) {
+//    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
+//}
