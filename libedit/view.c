@@ -1,6 +1,7 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
+#include <ctype.h>
 
 #define ATTR_NORMAL   (CLR_BASE03 << 8 | CLR_BASE0)
 #define ATTR_SELECTED (CLR_BASE0  << 8 | CLR_BASE03)
@@ -122,9 +123,11 @@ void view_init(View* view, char* file) {
 }
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
+    size_t off = 0;
     if (view->nrows == nrows && view->ncols == ncols)  return;
     /* free the old row data */
     if (view->nrows) {
+        off = view->rows[0]->off;
         for (unsigned i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
@@ -134,16 +137,17 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
     for (unsigned i = 0; i < nrows; i++)
         view->rows[i] = calloc(1, sizeof(Row) + (ncols * sizeof(UGlyph)));
     /* update dimensions */
+    view->rows[0]->off = off;
     view->nrows = nrows;
     view->ncols = ncols;
     /* populate the screen buffer */
     reflow(view);
+    sync_view(view, view->selection.end);
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
-    sync_view(view, csr);
     reflow(view);
     /* find the cursor on the new screen */
     for (size_t y = 0; y < view->nrows; y++) {
@@ -172,6 +176,7 @@ void view_byrune(View* view, int move) {
     sel.beg = sel.end = buf_byrune(&(view->buffer), sel.end, move);
     sel.col = buf_getcol(&(view->buffer), sel.end);
     view->selection = sel;
+    sync_view(view, view->selection.end);
 }
 
 void view_byline(View* view, int move) {
@@ -179,6 +184,7 @@ void view_byline(View* view, int move) {
     sel.beg = sel.end = buf_byline(&(view->buffer), sel.end, move);
     sel.beg = sel.end = buf_setcol(&(view->buffer), sel.end, sel.col);
     view->selection = sel;
+    sync_view(view, view->selection.end);
 }
 
 void view_setcursor(View* view, size_t x, size_t y) {
@@ -201,12 +207,25 @@ void view_setcursor(View* view, size_t x, size_t y) {
     //return pos;
 }
 
+void view_insert(View* view, Rune rune) {
+    if (rune == '\b') {
+        if (view->selection.end > 0)
+            buf_del(&(view->buffer), --view->selection.end);
+    } else {
+        /* ignore non-printable control characters */
+        if (!isspace(rune) && rune < 0x20)
+            return;
+        buf_ins(&(view->buffer), view->selection.end++, rune);
+    }
+    view->selection.beg = view->selection.end;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+}
 
-
-//size_t view_getoff(View* view, size_t pos, size_t row, size_t col) {
-//    return 0;
-//}
-//
-//UGlyph* view_getglyph(View* view, size_t row, size_t col, size_t* scrwidth) {
-//    return NULL;
-//}
+void view_delete(View* view) {
+    //if (SelEnd == buf_end(&Buffer)) return;
+    //size_t n = SelEnd - SelBeg;
+    //for (size_t i = 0; i < n; i++)
+    //    buf_del(&Buffer, SelBeg);
+    //SelEnd = SelBeg;
+    //TargetCol = buf_getcol(&Buffer, SelEnd);
+}

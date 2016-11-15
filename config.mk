@@ -2,7 +2,7 @@
 
 # Compiler Setup
 CC = c99
-CFLAGS = -Os $(INCS)
+CFLAGS = -O0 $(INCS)
 
 # Linker Setup
 LD = $(CC)

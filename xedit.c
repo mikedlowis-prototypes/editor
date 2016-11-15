@@ -49,6 +49,17 @@ static void cursor_right(void) {
     view_byrune(Focused, +1);
 }
 
+static void change_focus(void) {
+    if (Focused == &TagView) {
+        if (TagWinExpanded)
+            TagWinExpanded = false;
+        Focused = &BufView;
+    } else {
+        Focused = &TagView;
+        TagWinExpanded = true;
+    }
+}
+
 /* UI Callbacks
  *****************************************************************************/
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
@@ -69,7 +80,7 @@ static KeyBinding_T Insert[] = {
     { KEY_RIGHT,     cursor_right  },
     //{ KEY_CTRL_Q,    quit          },
     //{ KEY_CTRL_S,    write         },
-    //{ KEY_CTRL_T,    tagwin        },
+    { KEY_CTRL_T,    change_focus    },
     //{ KEY_CTRL_Z,    undo          },
     //{ KEY_CTRL_Y,    redo          },
     //{ KEY_CTRL_X,    cut           },
@@ -90,14 +101,10 @@ static void process_table(KeyBinding_T* bindings, Rune key) {
         }
         bindings++;
     }
-    /* skip control and nonprintable characters */
-    if ((!isspace(key) && key < 0x20) ||
-        (key >= 0xE000 && key <= 0xF8FF))
-        return;
-    /* fallback to just inserting the rune */
-    //buf_ins(&Buffer, SelEnd++, key);
-    //SelBeg = SelEnd;
-    //TargetCol = buf_getcol(&Buffer, SelEnd);
+    /* fallback to just inserting the rune if it doesnt fall in the private use area.
+     * the private use area is used to encode special keys */
+    if (key < 0xE000 || key > 0xF8FF)
+        view_insert(Focused, key);
 }
 
 static void key_handler(Rune key) {
@@ -183,7 +190,7 @@ static size_t draw_view(size_t off, View* view, size_t rows, size_t width) {
         draw_glyphs(2, off + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* Place cursor on screen */
-    if (view == Focused)
+    if (view == Focused || view == &BufView)
         x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, off + (csry * fheight), 1, fheight);
     return (off + 4 + (rows * x11_font_height(Font)));
 }

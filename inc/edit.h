@@ -156,6 +156,7 @@ Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move);
 void view_byline(View* view, int move);
 void view_setcursor(View* view, size_t row, size_t col);
+void view_insert(View* view, Rune rune);
 
 //size_t view_getoff(View* view, size_t pos, size_t row, size_t col);
 //void view_getsize(View* view, size_t* nrows, size_t* ncols);
@@ -255,4 +256,4 @@ enum {
         0xff2aa198,   \
         0xff859900    \
     }
-#define DEFAULT_TAGS "Quit Save"
+#define DEFAULT_TAGS "Quit Save Cut Copy Paste | Find \n"
