@@ -187,7 +187,7 @@ static void handle_mouse(XEvent* e) {
         x      = e->xmotion.x;
         y      = e->xmotion.y;
     } else {
-        action = (e->type = ButtonPress ? MOUSE_ACT_DOWN : MOUSE_ACT_UP);
+        action = (e->type == ButtonPress ? MOUSE_ACT_DOWN : MOUSE_ACT_UP);
         /* set the button id */
         switch (e->xbutton.button) {
             case Button1: button = MOUSE_BTN_LEFT;      break;
@@ -212,11 +212,12 @@ void x11_loop(void) {
             XNextEvent(X.display, &e);
             if (!XFilterEvent(&e, None))
                 switch (e.type) {
-                    case FocusIn:      if (X.xic) XSetICFocus(X.xic);   break;
-                    case FocusOut:     if (X.xic) XUnsetICFocus(X.xic); break;
-                    case KeyPress:     Config->handle_key(getkey(&e));  break;
-                    case ButtonPress:  handle_mouse(&e);                break;
-                    case MotionNotify: handle_mouse(&e);                break;
+                    case FocusIn:       if (X.xic) XSetICFocus(X.xic);   break;
+                    case FocusOut:      if (X.xic) XUnsetICFocus(X.xic); break;
+                    case KeyPress:      Config->handle_key(getkey(&e));  break;
+                    case ButtonRelease: handle_mouse(&e);                break;
+                    case ButtonPress:   handle_mouse(&e);                break;
+                    case MotionNotify:  handle_mouse(&e);                break;
                     case ConfigureNotify: // Resize the window
                         if (e.xconfigure.width != X.width || e.xconfigure.height != X.height) {
                             X.width  = e.xconfigure.width;
@@ -339,7 +340,7 @@ void x11_font_getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
 
 size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont fnt, int x, int y) {
     struct XFont* font = fnt;
-    int winx = x * font->base.width, winy = y * font->base.ascent;
+    int winx = x, winy = y;
     size_t numspecs = 0;
     for (int i = 0, xp = winx, yp = winy + font->base.ascent; i < len;) {
         x11_font_getglyph(font, &(specs[numspecs]), glyphs[i].rune);

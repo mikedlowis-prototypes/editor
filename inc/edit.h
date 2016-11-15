@@ -213,10 +213,24 @@ enum ColorId {
 
 /* Global State
  *****************************************************************************/
-extern Buf Buffer;
-extern unsigned TargetCol;
-extern unsigned SelBeg;
-extern unsigned SelEnd;
+typedef struct {
+    Rune key;
+    void (*action)(void);
+} KeyBinding;
+
+typedef struct {
+    uint32_t time;
+    uint8_t count;
+    bool pressed;
+} ButtonState;
+
+typedef struct {
+    size_t x;
+    size_t y;
+    size_t height;
+    size_t width;
+    View view;
+} Region;
 
 /* Configuration
  *****************************************************************************/

@@ -10,19 +10,15 @@ static void key_handler(Rune key);
 
 /* Global Data
  *****************************************************************************/
-//Buf Buffer;
-//Buf TagBuffer;
-//unsigned TargetCol = 0;
-//unsigned SelBeg = 0;
-//unsigned SelEnd = 0;
-//static unsigned ScrRows = 0;
-//static unsigned ScrCols = 0;
-//static XFont Fonts;
-
+static enum RegionId {
+    STATUS   = 0,
+    TAGS     = 1,
+    EDIT     = 2,
+    NREGIONS = 3
+} Focused = EDIT;
+static Region Regions[NREGIONS] = { 0 };
 static bool TagWinExpanded = false;
-static View TagView;
-static View BufView;
-static View* Focused = &BufView;
+static ButtonState MouseBtns[MOUSE_BTN_COUNT] = { 0 };
 static XFont Font;
 static XConfig Config = {
     .redraw       = redraw,
@@ -31,49 +27,110 @@ static XConfig Config = {
     .palette      = COLOR_PALETTE
 };
 
+/* Region Utils
+ *****************************************************************************/
+static View* getview(enum RegionId id) {
+    return &(Regions[id].view);
+}
+
+static Buf* getbuf(enum RegionId id) {
+    return &(getview(id)->buffer);
+}
+
+static View* currview(void) {
+    return getview(Focused);
+}
+
+static Buf* currbuf(void) {
+    return getbuf(Focused);
+}
+
 /* UI Callbacks
  *****************************************************************************/
 static void cursor_up(void) {
-    view_byline(Focused, -1);
+    view_byline(currview(), -1);
 }
 
 static void cursor_dn(void) {
-    view_byline(Focused, +1);
+    view_byline(currview(), +1);
 }
 
 static void cursor_left(void) {
-    view_byrune(Focused, -1);
+    view_byrune(currview(), -1);
 }
 
 static void cursor_right(void) {
-    view_byrune(Focused, +1);
+    view_byrune(currview(), +1);
 }
 
 static void change_focus(void) {
-    if (Focused == &TagView) {
+    if (Focused == TAGS) {
         if (TagWinExpanded)
             TagWinExpanded = false;
-        Focused = &BufView;
+        Focused = EDIT;
     } else {
-        Focused = &TagView;
+        Focused = TAGS;
         TagWinExpanded = true;
     }
 }
 
-/* UI Callbacks
+/* Mouse Handling
  *****************************************************************************/
-static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
+static void mouse_select(size_t x, size_t y) {
+    printf("select: %lu, %lu\n", x, y);
+}
 
+static void mouse_exec(size_t x, size_t y) {
+    printf("exec: %lu, %lu\n", x, y);
+}
+
+static void mouse_fetch(size_t x, size_t y) {
+    printf("fetch: %lu, %lu\n", x, y);
+}
+
+static void mouse_wheelup(size_t x, size_t y) {
+    printf("scroll up: %lu, %lu\n", x, y);
+}
+
+static void mouse_wheeldn(size_t x, size_t y) {
+    printf("scroll down: %lu, %lu\n", x, y);
+}
+
+void (*MouseActs[MOUSE_BTN_COUNT])(size_t x, size_t y) = {
+    [MOUSE_BTN_LEFT]      = mouse_select,
+    [MOUSE_BTN_MIDDLE]    = mouse_exec,
+    [MOUSE_BTN_RIGHT]     = mouse_fetch,
+    [MOUSE_BTN_WHEELUP]   = mouse_wheelup,
+    [MOUSE_BTN_WHEELDOWN] = mouse_wheeldn,
+};
+
+static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
+    printf("%d %d\n", act, btn);
+    if (act == MOUSE_ACT_MOVE) {
+        //if (mevnt->y == 0 || mevnt->button != MOUSE_LEFT) return;
+        //SelEnd = screen_getoff(&Buffer, SelEnd, mevnt->y-1, mevnt->x);
+        //TargetCol = buf_getcol(&Buffer, SelEnd);
+    } else {
+        MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);
+        if (MouseBtns[btn].pressed) {
+            /* update the number of clicks and click time */
+            uint32_t now = getmillis();
+            uint32_t elapsed = now - MouseBtns[btn].time;
+            MouseBtns[btn].time = now;
+            if (elapsed <= 250)
+                MouseBtns[btn].count++;
+            else
+                MouseBtns[btn].count = 1;
+        } else {
+            /* execute the action on button release */
+            MouseActs[btn](x,y);
+        }
+    }
 }
 
 /* Keyboard Bindings
  *****************************************************************************/
-typedef struct {
-    Rune key;
-    void (*action)(void);
-} KeyBinding_T;
-
-static KeyBinding_T Insert[] = {
+static KeyBinding Insert[] = {
     { KEY_UP,        cursor_up     },
     { KEY_DOWN,      cursor_dn     },
     { KEY_LEFT,      cursor_left   },
@@ -93,7 +150,7 @@ static KeyBinding_T Insert[] = {
     { 0,             NULL          }
 };
 
-static void process_table(KeyBinding_T* bindings, Rune key) {
+static void process_table(KeyBinding* bindings, Rune key) {
     while (bindings->key) {
         if (key == bindings->key) {
             bindings->action();
@@ -104,7 +161,7 @@ static void process_table(KeyBinding_T* bindings, Rune key) {
     /* fallback to just inserting the rune if it doesnt fall in the private use area.
      * the private use area is used to encode special keys */
     if (key < 0xE000 || key > 0xF8FF)
-        view_insert(Focused, key);
+        view_insert(currview(), key);
 }
 
 static void key_handler(Rune key) {
@@ -112,7 +169,7 @@ static void key_handler(Rune key) {
     if (key == RUNE_ERR) return;
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
-    if (key == '\n' && Focused->buffer.crlf) key = RUNE_CRLF;
+    if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
     /* handle the key */
     process_table(Insert, key);
 }
@@ -154,12 +211,13 @@ static void draw_glyphs(unsigned x, unsigned y, UGlyph* glyphs, size_t rlen, siz
 }
 
 static void draw_status(int fg, unsigned ncols) {
+    View* view = &(Regions[EDIT].view);
     UGlyph glyphs[ncols], *status = glyphs;
-    (status++)->rune = (BufView.buffer.charset == BINARY ? 'B' : 'U');
-    (status++)->rune = (BufView.buffer.crlf ? 'C' : 'N');
-    (status++)->rune = (BufView.buffer.modified ? '*' : ' ');
+    (status++)->rune = (view->buffer.charset == BINARY ? 'B' : 'U');
+    (status++)->rune = (view->buffer.crlf ? 'C' : 'N');
+    (status++)->rune = (view->buffer.modified ? '*' : ' ');
     (status++)->rune = ' ';
-    char* path = (BufView.buffer.path ? BufView.buffer.path : "*scratch*");
+    char* path = (view->buffer.path ? view->buffer.path : "*scratch*");
     size_t len = strlen(path);
     if (len > ncols-4) {
         (status++)->rune = '.';
@@ -169,60 +227,69 @@ static void draw_status(int fg, unsigned ncols) {
     }
     while(*path)
         (status++)->rune = *path++;
-    draw_runes(0, 0, fg, 0, glyphs, status - glyphs);
+    draw_runes(2, 2, fg, 0, glyphs, status - glyphs);
 }
 
-static size_t stackvert(size_t off, size_t rows) {
-    return (off + 4 + (rows * x11_font_height(Font)));
-}
-
-static size_t draw_view(size_t off, View* view, size_t rows, size_t width) {
+static void draw_region(enum RegionId id) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-    size_t cols    = (width - 4) / fwidth;
-    view_resize(view, rows, cols);
     /* update the screen buffer and retrieve cursor coordinates */
+    View* view = &(Regions[id].view);
     size_t csrx, csry;
     view_update(view, &csrx, &csry);
-    /* flush the screen buffer */
-    for (size_t y = 0; y < rows; y++) {
+    /* draw the region to the frame buffer */
+    if (id == TAGS)
+        x11_draw_rect(CLR_BASE02, Regions[id].x-2, Regions[id].y-2, Regions[id].width+4, Regions[id].height+4);
+    x11_draw_rect(CLR_BASE01, 0, Regions[id].y - 3, Regions[id].width + 4, 1);
+    for (size_t y = 0; y < view->nrows; y++) {
         Row* row = view_getrow(view, y);
-        draw_glyphs(2, off + ((y+1) * fheight), row->cols, row->rlen, row->len);
+        draw_glyphs(2, Regions[id].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* Place cursor on screen */
-    if (view == Focused || view == &BufView)
-        x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, off + (csry * fheight), 1, fheight);
-    return (off + 4 + (rows * x11_font_height(Font)));
+    if (id == Focused || id == EDIT)
+        x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, Regions[id].y + (csry * fheight), 1, fheight);
+}
+
+static void layout(int width, int height) {
+    /* initialize all of the regions to overlap the status region */
+    size_t fheight = x11_font_height(Font);
+    size_t fwidth  = x11_font_width(Font);
+    for (int i = 0; i < NREGIONS; i++) {
+        Regions[i].x      = 2;
+        Regions[i].y      = 2;
+        Regions[i].width  = (width - 4);
+        Regions[i].height = fheight;
+    }
+    /* Place the tag region relative to status */
+    Regions[TAGS].y      = 5 + Regions[STATUS].y + Regions[STATUS].height;
+    size_t maxtagrows    = ((height - Regions[TAGS].y - 5) / 4) / fheight;
+    size_t tagrows       = (TagWinExpanded ? maxtagrows : 1);
+    Regions[TAGS].height = tagrows * fheight;
+    view_resize(&(Regions[TAGS].view), tagrows, Regions[TAGS].width / fwidth);
+    /* Place the edit region relative to status */
+    Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
+    Regions[EDIT].height = fheight * ((height - Regions[EDIT].y - 5) / 4);
+    view_resize(&(Regions[EDIT].view), Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
 static void redraw(int width, int height) {
-    size_t vmargin = 2;
-    size_t hmargin = 2;
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-    /* clear background and draw status */
-    size_t vpos = 0;
-    x11_draw_rect(CLR_BASE03, 0, vpos, width, height);
-    draw_status(CLR_BASE3, width / fwidth);
-    /* draw the tag buffer */
-    vpos = stackvert(vpos, 1);
-    x11_draw_rect(CLR_BASE01, 0, vpos++, width, 1);
-    size_t totrows = (height - vpos - 9) / fheight;
-    size_t tagrows = (TagWinExpanded ? (totrows / 4) : 1);
-    size_t bufrows = totrows - tagrows;
-    vpos = draw_view(3+vpos, &TagView, tagrows, width);
-    /* draw thee dit buffer */
-    x11_draw_rect(CLR_BASE01, 0, ++vpos, width, 1);
-    vpos = draw_view(3+vpos, &BufView, bufrows, width);
+    layout(width, height);
+    x11_draw_rect(CLR_BASE03, 0, 0, width, height);
+    x11_draw_rect(CLR_BASE02, (79 * fwidth) + 2, Regions[EDIT].y-2, fwidth, height - Regions[EDIT].y + 2);
+    draw_status(CLR_BASE3, (width - 4) / x11_font_width(Font));
+    draw_region(TAGS);
+    draw_region(EDIT);
 }
 
 /* Main Routine
  *****************************************************************************/
 int main(int argc, char** argv) {
     /* load the buffer views */
-    view_init(&TagView, NULL);
-    view_init(&BufView, (argc > 1 ? argv[1] : NULL));
-    buf_putstr(&(TagView.buffer), 0, 0, DEFAULT_TAGS);
+    view_init(getview(TAGS), NULL);
+    view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
+    buf_putstr(getbuf(TAGS), 0, 0, DEFAULT_TAGS);
     /* initialize the display engine */
     x11_init(&Config);
     x11_window("edit", Width, Height);
@@ -387,11 +454,6 @@ void scrolldn(int x, int y) {
 #endif
 /* Mouse Input Handler
  *****************************************************************************/
-struct {
-    uint32_t time;
-    uint32_t count;
-} Buttons[5] = { 0 };
-
 void (*Actions[5][3])(int x, int y) = { 0
                           /*  Single       Double     Triple    */
     //[MOUSE_BTN_LEFT]      = { move_cursor, selection, bigword,  },
