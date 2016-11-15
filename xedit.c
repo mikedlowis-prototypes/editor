@@ -211,13 +211,13 @@ static void draw_glyphs(unsigned x, unsigned y, UGlyph* glyphs, size_t rlen, siz
 }
 
 static void draw_status(int fg, unsigned ncols) {
-    View* view = &(Regions[EDIT].view);
+    Buf* buf = getbuf(EDIT);
     UGlyph glyphs[ncols], *status = glyphs;
-    (status++)->rune = (view->buffer.charset == BINARY ? 'B' : 'U');
-    (status++)->rune = (view->buffer.crlf ? 'C' : 'N');
-    (status++)->rune = (view->buffer.modified ? '*' : ' ');
+    (status++)->rune = (buf->charset == BINARY ? 'B' : 'U');
+    (status++)->rune = (buf->crlf ? 'C' : 'N');
+    (status++)->rune = (buf->modified ? '*' : ' ');
     (status++)->rune = ' ';
-    char* path = (view->buffer.path ? view->buffer.path : "*scratch*");
+    char* path = (buf->path ? buf->path : "*scratch*");
     size_t len = strlen(path);
     if (len > ncols-4) {
         (status++)->rune = '.';
@@ -234,7 +234,7 @@ static void draw_region(enum RegionId id) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
     /* update the screen buffer and retrieve cursor coordinates */
-    View* view = &(Regions[id].view);
+    View* view = getview(id);
     size_t csrx, csry;
     view_update(view, &csrx, &csry);
     /* draw the region to the frame buffer */
@@ -265,11 +265,11 @@ static void layout(int width, int height) {
     size_t maxtagrows    = ((height - Regions[TAGS].y - 5) / 4) / fheight;
     size_t tagrows       = (TagWinExpanded ? maxtagrows : 1);
     Regions[TAGS].height = tagrows * fheight;
-    view_resize(&(Regions[TAGS].view), tagrows, Regions[TAGS].width / fwidth);
+    view_resize(getview(TAGS), tagrows, Regions[TAGS].width / fwidth);
     /* Place the edit region relative to status */
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[EDIT].height = fheight * ((height - Regions[EDIT].y - 5) / 4);
-    view_resize(&(Regions[EDIT].view), Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
+    view_resize(getview(EDIT), Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
 static void redraw(int width, int height) {
