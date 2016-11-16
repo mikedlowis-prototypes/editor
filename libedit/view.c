@@ -36,14 +36,17 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     return ncols;
 }
 
-static bool selected(View* view, size_t pos) {
-    Sel sel = view->selection;
+static bool in_selection(Sel sel, size_t off) {
     if (sel.end < sel.beg) {
         size_t temp = sel.beg;
         sel.beg = sel.end;
         sel.end = temp;
     }
-    return (sel.beg <= pos && pos < sel.end);
+    return (sel.beg <= off && off < sel.end);
+}
+
+static bool selected(View* view, size_t pos) {
+    return in_selection(view->selection, pos);
 }
 
 static size_t fill_row(View* view, unsigned row, size_t pos) {
@@ -113,6 +116,26 @@ static void sync_view(View* view, size_t csr) {
     } else if (csr > last) {
         scroll_dn(view, csr, last);
     }
+}
+
+static size_t getoffset(View* view, size_t row, size_t col) {
+    Row* scrrow = view_getrow(view, row);
+    assert(scrrow);
+    size_t pos = scrrow->off;
+    if (col > scrrow->len) {
+        pos = (scrrow->off + scrrow->rlen - 1);
+    } else {
+        /* multi column runes are followed by \0 slots so if we clicked on a \0
+           slot, slide backwards to the real rune. */
+        for (; !scrrow->cols[col].rune && col > 0; col--);
+        /* now lets count the number of runes up to the one we clicked on */
+        for (unsigned i = 0; i < col; i++)
+            if (scrrow->cols[i].rune)
+                pos++;
+    }
+    if (pos >= buf_end(&(view->buffer)))
+        return buf_end(&(view->buffer))-1;
+    return pos;
 }
 
 void view_init(View* view, char* file) {
@@ -187,24 +210,18 @@ void view_byline(View* view, int move) {
     sync_view(view, view->selection.end);
 }
 
-void view_setcursor(View* view, size_t x, size_t y) {
-    //Row* scrrow = screen_getrow(row);
-    //if (!scrrow) return pos;
-    //pos = scrrow->off;
-    //if (col > scrrow->len) {
-    //    pos = (scrrow->off + scrrow->rlen - 1);
-    //} else {
-    //    /* multi column runes are followed by \0 slots so if we clicked on a \0
-    //       slot, slide backwards to the real rune. */
-    //    for (; !scrrow->cols[col].rune && col > 0; col--);
-    //    /* now lets count the number of runes up to the one we clicked on */
-    //    for (unsigned i = 0; i < col; i++)
-    //        if (scrrow->cols[i].rune)
-    //            pos++;
-    //}
-    //if (pos >= buf_end(buf))
-    //    return buf_end(buf)-1;
-    //return pos;
+void view_setcursor(View* view, size_t row, size_t col) {
+    size_t off = getoffset(view, row, col);
+    if (!in_selection(view->selection, off)) {
+        view->selection.beg = view->selection.end = off;
+        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+        sync_view(view, view->selection.end);
+    }
+}
+
+void view_selext(View* view, size_t row, size_t col) {
+    view->selection.end = getoffset(view, row, col);
+    sync_view(view, view->selection.end);
 }
 
 void view_insert(View* view, Rune rune) {
@@ -219,6 +236,7 @@ void view_insert(View* view, Rune rune) {
     }
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    //sync_view(view, view->selection.end);
 }
 
 void view_delete(View* view) {

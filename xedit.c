@@ -45,6 +45,15 @@ static Buf* currbuf(void) {
     return getbuf(Focused);
 }
 
+static enum RegionId getregion(size_t x, size_t y) {
+    for (int i = 0; i < NREGIONS; i++) {
+        size_t startx = Regions[i].x, endx = startx + Regions[i].width;
+        size_t starty = Regions[i].y, endy = starty + Regions[i].height;
+        if ((startx <= x && x <= endx) && (starty <= y && y <= endy))
+            return (enum RegionId)i;
+    }
+    return NREGIONS;
+}
 /* UI Callbacks
  *****************************************************************************/
 static void cursor_up(void) {
@@ -65,9 +74,12 @@ static void cursor_right(void) {
 
 static void change_focus(void) {
     if (Focused == TAGS) {
-        if (TagWinExpanded)
+        if (TagWinExpanded) {
             TagWinExpanded = false;
-        Focused = EDIT;
+            Focused = EDIT;
+        } else {
+            TagWinExpanded = true;
+        }
     } else {
         Focused = TAGS;
         TagWinExpanded = true;
@@ -76,40 +88,60 @@ static void change_focus(void) {
 
 /* Mouse Handling
  *****************************************************************************/
-static void mouse_select(size_t x, size_t y) {
-    printf("select: %lu, %lu\n", x, y);
+static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
+    if (count == 1) {
+        view_setcursor(getview(id), row, col);
+    } else if (count == 2) {
+        //view_select(getview(id), row, col);
+    } else if (count == 3) {
+        //view_selword(getview(id), row, col);
+    }
 }
 
-static void mouse_exec(size_t x, size_t y) {
-    printf("exec: %lu, %lu\n", x, y);
+static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
+    //if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+    //    cut();
+    //else
+    //    view_exec(getview(id), row, col);
 }
 
-static void mouse_fetch(size_t x, size_t y) {
-    printf("fetch: %lu, %lu\n", x, y);
+static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
+    //if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+    //    paste();
+    //else
+    //    view_find(getview(id), row, col);
 }
 
-static void mouse_wheelup(size_t x, size_t y) {
-    printf("scroll up: %lu, %lu\n", x, y);
+static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
+    //view_scroll(getview(id), -1);
 }
 
-static void mouse_wheeldn(size_t x, size_t y) {
-    printf("scroll down: %lu, %lu\n", x, y);
+static void mouse_wheeldn(enum RegionId id, size_t count, size_t row, size_t col) {
+    //view_scroll(getview(id), 1);
 }
 
-void (*MouseActs[MOUSE_BTN_COUNT])(size_t x, size_t y) = {
-    [MOUSE_BTN_LEFT]      = mouse_select,
-    [MOUSE_BTN_MIDDLE]    = mouse_exec,
-    [MOUSE_BTN_RIGHT]     = mouse_fetch,
+void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
+    [MOUSE_BTN_LEFT]      = mouse_left,
+    [MOUSE_BTN_MIDDLE]    = mouse_middle,
+    [MOUSE_BTN_RIGHT]     = mouse_right,
     [MOUSE_BTN_WHEELUP]   = mouse_wheelup,
     [MOUSE_BTN_WHEELDOWN] = mouse_wheeldn,
 };
 
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
-    printf("%d %d\n", act, btn);
+    enum RegionId id = getregion(x, y);
+    if (id != TAGS && id != EDIT) return;
+    if (Focused != id) Focused = id;
+    size_t row = (y-Regions[id].y) / x11_font_height(Font);
+    size_t col = (x-Regions[id].x) / x11_font_width(Font);
     if (act == MOUSE_ACT_MOVE) {
-        //if (mevnt->y == 0 || mevnt->button != MOUSE_LEFT) return;
-        //SelEnd = screen_getoff(&Buffer, SelEnd, mevnt->y-1, mevnt->x);
-        //TargetCol = buf_getcol(&Buffer, SelEnd);
+        if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
+            view_setcursor(getview(id), row, col);
+            MouseBtns[MOUSE_BTN_LEFT].pressed = false;
+            MouseBtns[MOUSE_BTN_LEFT].count = 0;
+        } else {
+            view_selext(getview(id), row, col);
+        }
     } else {
         MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);
         if (MouseBtns[btn].pressed) {
@@ -121,9 +153,9 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
                 MouseBtns[btn].count++;
             else
                 MouseBtns[btn].count = 1;
-        } else {
+        } else if (MouseBtns[btn].count > 0) {
             /* execute the action on button release */
-            MouseActs[btn](x,y);
+            MouseActs[btn](id, MouseBtns[btn].count, row, col);
         }
     }
 }
@@ -176,7 +208,7 @@ static void key_handler(Rune key) {
 
 /* Redisplay Functions
  *****************************************************************************/
-static void draw_runes(unsigned x, unsigned y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
+static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
     XGlyphSpec specs[rlen];
     while (rlen) {
         size_t nspecs = x11_font_getglyphs(specs, (XGlyph*)glyphs, rlen, Font, x, y);
@@ -185,7 +217,7 @@ static void draw_runes(unsigned x, unsigned y, int fg, int bg, UGlyph* glyphs, s
     }
 }
 
-static void draw_glyphs(unsigned x, unsigned y, UGlyph* glyphs, size_t rlen, size_t ncols) {
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
     XGlyphSpec specs[rlen];
     size_t i = 0;
     while (rlen) {
@@ -210,7 +242,7 @@ static void draw_glyphs(unsigned x, unsigned y, UGlyph* glyphs, size_t rlen, siz
     }
 }
 
-static void draw_status(int fg, unsigned ncols) {
+static void draw_status(int fg, size_t ncols) {
     Buf* buf = getbuf(EDIT);
     UGlyph glyphs[ncols], *status = glyphs;
     (status++)->rune = (buf->charset == BINARY ? 'B' : 'U');
@@ -278,7 +310,7 @@ static void redraw(int width, int height) {
     layout(width, height);
     x11_draw_rect(CLR_BASE03, 0, 0, width, height);
     x11_draw_rect(CLR_BASE02, (79 * fwidth) + 2, Regions[EDIT].y-2, fwidth, height - Regions[EDIT].y + 2);
-    draw_status(CLR_BASE3, (width - 4) / x11_font_width(Font));
+    draw_status(CLR_BASE1, (width - 4) / x11_font_width(Font));
     draw_region(TAGS);
     draw_region(EDIT);
 }
@@ -299,7 +331,6 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-#if 0
 #if 0
 /* External Commands
  *****************************************************************************/
@@ -379,18 +410,15 @@ static void cursor_bol(void) {
 
 static void cursor_eol(void) {
     SelBeg = SelEnd = buf_eol(&Buffer, SelEnd);
-    TargetCol = (unsigned)-1;
+    TargetCol = (size_t)-1;
 }
 
 static void tagwin(void) {
     TagWinExpanded = !TagWinExpanded;
 }
 
-#endif
-
 /* Mouse Actions
  *****************************************************************************/
-#if 0
 void unused(int x, int y) {
 }
 
@@ -401,14 +429,14 @@ void move_cursor(int x, int y) {
 }
 
 void bigword(int x, int y) {
-    unsigned mbeg = SelEnd, mend = SelEnd;
+    size_t mbeg = SelEnd, mend = SelEnd;
     for (; !risblank(buf_get(&Buffer, mbeg-1)); mbeg--);
     for (; !risblank(buf_get(&Buffer, mend));   mend++);
     SelBeg = mbeg, SelEnd = mend-1;
 }
 
 void selection(int x, int y) {
-    unsigned bol = buf_bol(&Buffer, SelEnd);
+    size_t bol = buf_bol(&Buffer, SelEnd);
     Rune r = buf_get(&Buffer, SelEnd);
     if (SelEnd == bol || r == '\n' || r == RUNE_CRLF) {
         SelBeg = bol;
@@ -431,16 +459,16 @@ void selection(int x, int y) {
 }
 
 void search(int x, int y) {
-    //unsigned clickpos = screen_getoff(&Buffer, SelEnd, y-1, x);
+    //size_t clickpos = screen_getoff(&Buffer, SelEnd, y-1, x);
     //if (clickpos < SelBeg || clickpos > SelEnd) {
     //    move_cursor(x,y);
     //    selection(x,y);
     //} else {
     //    buf_find(&Buffer, &SelBeg, &SelEnd);
     //}
-    //unsigned c, r;
+    //size_t c, r;
     //screen_update(&Buffer, SelEnd, &c, &r);
-    //extern void move_pointer(unsigned c, unsigned r);
+    //extern void move_pointer(size_t c, size_t r);
     //move_pointer(c, r);
 }
 
@@ -451,22 +479,12 @@ void scrollup(int x, int y) {
 void scrolldn(int x, int y) {
     SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, ScrollLines);
 }
-#endif
 /* Mouse Input Handler
  *****************************************************************************/
-void (*Actions[5][3])(int x, int y) = { 0
-                          /*  Single       Double     Triple    */
-    //[MOUSE_BTN_LEFT]      = { move_cursor, selection, bigword,  },
-    //[MOUSE_BTN_MIDDLE]    = { unused,      unused,    unused,   },
-    //[MOUSE_BTN_RIGHT]     = { search,      search,    search,   },
-    //[MOUSE_BTN_WHEELUP]   = { scrollup,    scrollup,  scrollup, },
-    //[MOUSE_BTN_WHEELDOWN] = { scrolldn,    scrolldn,  scrolldn, },
-};
-
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
-    //unsigned row  = y / Fonts.base.height;
-    //unsigned col  = x / Fonts.base.width;
-    //unsigned twsz = (TagWinExpanded ? ((ScrRows - 1) / 4) : 1);
+    //size_t row  = y / Fonts.base.height;
+    //size_t col  = x / Fonts.base.width;
+    //size_t twsz = (TagWinExpanded ? ((ScrRows - 1) / 4) : 1);
 
     ////if (row == 0) {
     ////    puts("status");
@@ -498,63 +516,7 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     //}
 }
 
-/* Screen Redraw
- *****************************************************************************/
-
-static void draw_tagwin(unsigned off, unsigned rows, unsigned cols) {
-    //screen_setsize(&TagBuffer, rows, cols);
-
-}
-
-static void draw_bufwin(unsigned off, unsigned rows, unsigned cols) {
-    //screen_setsize(&Buffer, rows, cols);
-    ///* update the screen buffer and retrieve cursor coordinates */
-    //unsigned csrx, csry;
-    //screen_update(&Buffer, SelEnd, &csrx, &csry);
-    ///* flush the screen buffer */
-    //unsigned nrows, ncols;
-    //screen_getsize(&nrows, &ncols);
-    //draw_status(CLR_BASE2, ncols);
-    //for (unsigned y = 0; y < nrows; y++) {
-    //    Row* row = screen_getrow(y);
-    //    draw_glyphs(0, off + ((y+1) * Fonts.base.height), row->cols, row->rlen, row->len);
-    //}
-    ///* Place cursor on screen */
-    //x11_draw_rect(CLR_BASE3, csrx * Fonts.base.width, off + (csry * Fonts.base.height), 1, Fonts.base.height);
-}
-
-static void redraw(int width, int height) {
-    //unsigned fheight = Fonts.base.height;
-    //unsigned fwidth  = Fonts.base.width;
-    //ScrRows = height / Fonts.base.height;
-    //ScrCols = width  / Fonts.base.width;
-    ///* clear background and draw status */
-    //x11_draw_rect(CLR_BASE03, 0, 0, width, height);
-    //draw_status(CLR_BASE2, ScrCols);
-    ///* draw the tag window */
-    //unsigned twsz = (TagWinExpanded ? ((ScrRows - 1) / 4) : 1);
-    //x11_draw_rect(CLR_BASE02, 0, fheight, width, twsz * fheight);
-    //x11_draw_rect(CLR_BASE01, 0, fheight, width, 1);
-    //draw_tagwin(fheight, twsz, ScrCols);
-    ///* draw the file window */
-    //x11_draw_rect(CLR_BASE01, 0, (twsz+1) * fheight, width, 1);
-    //draw_bufwin((twsz+1) * fheight, ScrRows - (twsz), ScrCols);
-}
-
-int main(int argc, char** argv) {
-    /* load the buffer views */
-    view_init(&TagView, NULL);
-    view_init(&BufView, (argc > 1 ? argv[1] : NULL));
-    /* initialize the display engine */
-    x11_init(&Config);
-    x11_window("edit", Width, Height);
-    x11_show();
-    x11_font_load(&Fonts, FONTNAME);
-    x11_loop();
-    return 0;
-}
-
-void move_pointer(unsigned x, unsigned y) {
+void move_pointer(size_t x, size_t y) {
     x = (x * Fonts.base.width)  + (Fonts.base.width / 2);
     y = ((y+1) * Fonts.base.height) + (Fonts.base.height / 2);
     x11_warp_mouse(x,y);

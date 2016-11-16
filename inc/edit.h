@@ -156,6 +156,7 @@ Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move);
 void view_byline(View* view, int move);
 void view_setcursor(View* view, size_t row, size_t col);
+void view_selext(View* view, size_t row, size_t col);
 void view_insert(View* view, Rune rune);
 
 //size_t view_getoff(View* view, size_t pos, size_t row, size_t col);
