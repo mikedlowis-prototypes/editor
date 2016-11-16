@@ -284,7 +284,7 @@ static void draw_region(enum RegionId id) {
         draw_glyphs(2, Regions[id].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* Place cursor on screen */
-    if (id == Focused || id == EDIT)
+    if (id == Focused)
         x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, Regions[id].y + (csry * fheight), 1, fheight);
 }
 
