@@ -137,20 +137,16 @@ typedef struct {
 } Row;
 
 typedef struct {
-    //size_t posx;
-    //size_t posy;
-    //size_t height;
-    //size_t width;
-    size_t nrows;  /* number of rows in the view */
-    size_t ncols;  /* number of columns in the view */
-    Row** rows;    /* array of row data structures */
-    Buf buffer;    /* the buffer used to populate the view */
-    Sel selection; /* range of currently selected text */
+    bool sync_needed; /* determines whether the view needs to be synced with cursor */
+    size_t nrows;     /* number of rows in the view */
+    size_t ncols;     /* number of columns in the view */
+    Row** rows;       /* array of row data structures */
+    Buf buffer;       /* the buffer used to populate the view */
+    Sel selection;    /* range of currently selected text */
 } View;
 
 void view_init(View* view, char* file);
 void view_resize(View* view, size_t nrows, size_t ncols);
-//void view_resize(View* view, size_t x, size_t y, size_t height, size_t width, size_t fheight, size_t fwidth);
 void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move);
@@ -164,15 +160,6 @@ void view_insert(View* view, Rune rune);
 //void view_clearrow(View* view, size_t row);
 //size_t view_setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
 //UGlyph* view_getglyph(View* view, size_t row, size_t col, size_t* scrwidth);
-
-void screen_update(Buf* buf, unsigned crsr, unsigned* csrx, unsigned* csry);
-unsigned screen_getoff(Buf* buf, unsigned pos, unsigned row, unsigned col);
-void screen_setsize(Buf* buf, unsigned nrows, unsigned ncols);
-void screen_getsize(unsigned* nrows, unsigned* ncols);
-Row* screen_getrow(unsigned row);
-void screen_clearrow(unsigned row);
-unsigned screen_setcell(unsigned row, unsigned col, uint32_t attr, Rune r);
-UGlyph* screen_getglyph(unsigned row, unsigned col, unsigned* scrwidth);
 
 /* Command Executions
  *****************************************************************************/
