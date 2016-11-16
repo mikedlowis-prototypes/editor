@@ -98,12 +98,17 @@ static void scroll_up(View* view, unsigned csr, unsigned first) {
 static void scroll_dn(View* view, unsigned csr, unsigned last) {
     while (csr > last) {
         /* delete the first row and shift the others */
-        free(view->rows[0]);
-        memmove(&view->rows[0], &view->rows[1], sizeof(Row*) * (view->nrows-1));
-        view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
-        view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
-        /* fill in row content */
-        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
+        if (view->nrows > 1) {
+            free(view->rows[0]);
+            memmove(&view->rows[0], &view->rows[1], sizeof(Row*) * (view->nrows-1));
+            view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
+            view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
+            /* fill in row content */
+            fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
+        } else {
+            view->rows[0]->off += view->rows[0]->rlen;
+            fill_row(view, 0, view->rows[0]->off);
+        }
         last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
     }
 }
@@ -171,6 +176,7 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
 void view_update(View* view, size_t* csrx, size_t* csry) {
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
+    sync_view(view, view->selection.end);
     reflow(view);
     /* find the cursor on the new screen */
     for (size_t y = 0; y < view->nrows; y++) {
@@ -236,7 +242,7 @@ void view_insert(View* view, Rune rune) {
     }
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    //sync_view(view, view->selection.end);
+    sync_view(view, view->selection.end);
 }
 
 void view_delete(View* view) {

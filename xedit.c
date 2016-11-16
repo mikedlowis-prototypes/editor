@@ -92,23 +92,29 @@ static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
     if (count == 1) {
         view_setcursor(getview(id), row, col);
     } else if (count == 2) {
+        puts("select");
         //view_select(getview(id), row, col);
     } else if (count == 3) {
+        puts("select bigword");
         //view_selword(getview(id), row, col);
     }
 }
 
 static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
-    //if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+    if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+        puts("cut");
     //    cut();
-    //else
+    else
+        puts("exec");
     //    view_exec(getview(id), row, col);
 }
 
 static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
-    //if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+    if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+        puts("paste");
     //    paste();
-    //else
+    else
+        puts("find");
     //    view_find(getview(id), row, col);
 }
 
@@ -300,7 +306,7 @@ static void layout(int width, int height) {
     view_resize(getview(TAGS), tagrows, Regions[TAGS].width / fwidth);
     /* Place the edit region relative to status */
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
-    Regions[EDIT].height = fheight * ((height - Regions[EDIT].y - 5) / 4);
+    Regions[EDIT].height = (height - Regions[EDIT].y - 5);
     view_resize(getview(EDIT), Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
