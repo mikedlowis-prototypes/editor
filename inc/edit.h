@@ -210,6 +210,7 @@ typedef struct {
     uint32_t time;
     uint8_t count;
     bool pressed;
+    int region;
 } ButtonState;
 
 typedef struct {

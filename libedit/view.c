@@ -126,7 +126,7 @@ static void sync_view(View* view, size_t csr) {
 
 static size_t getoffset(View* view, size_t row, size_t col) {
     Row* scrrow = view_getrow(view, row);
-    assert(scrrow);
+    if (!scrrow) return SIZE_MAX;
     size_t pos = scrrow->off;
     if (col > scrrow->len) {
         pos = (scrrow->off + scrrow->rlen - 1);
@@ -217,16 +217,17 @@ void view_byline(View* view, int move) {
 
 void view_setcursor(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
-    if (!in_selection(view->selection, off)) {
-        view->selection.beg = view->selection.end = off;
-        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-        sync_view(view, view->selection.end);
-    }
+    view->selection.beg = view->selection.end = off;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    sync_view(view, view->selection.end);
 }
 
 void view_selext(View* view, size_t row, size_t col) {
-    view->selection.end = getoffset(view, row, col);
-    sync_view(view, view->selection.end);
+    size_t off = getoffset(view, row, col);
+    if (off != SIZE_MAX) {
+        view->selection.end = off;
+        sync_view(view, view->selection.end);
+    }
 }
 
 void view_insert(View* view, Rune rune) {

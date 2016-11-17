@@ -145,6 +145,8 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
             view_setcursor(getview(id), row, col);
             MouseBtns[MOUSE_BTN_LEFT].pressed = false;
             MouseBtns[MOUSE_BTN_LEFT].count = 0;
+        } else if (MouseBtns[MOUSE_BTN_LEFT].region < id) {
+        } else if (MouseBtns[MOUSE_BTN_LEFT].region > id) {
         } else {
             view_selext(getview(id), row, col);
         }
@@ -155,6 +157,7 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
             uint32_t now = getmillis();
             uint32_t elapsed = now - MouseBtns[btn].time;
             MouseBtns[btn].time = now;
+            MouseBtns[btn].region = id;
             if (elapsed <= 250)
                 MouseBtns[btn].count++;
             else
