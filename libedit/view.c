@@ -283,3 +283,15 @@ void view_eol(View* view) {
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
+
+void view_undo(View* view) {
+    view->selection.beg = view->selection.end = buf_undo(&(view->buffer), view->selection.end);
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}
+
+void view_redo(View* view) {
+    view->selection.beg = view->selection.end = buf_redo(&(view->buffer), view->selection.end);
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}

@@ -111,17 +111,15 @@ static void quit(void) {
 static void save(void) {
     buf_save(getbuf(EDIT));
 }
-//
-//static void undo(void) {
-//    SelBeg = SelEnd = buf_undo(&Buffer, SelEnd);
-//    TargetCol = buf_getcol(&Buffer, SelEnd);
-//}
-//
-//static void redo(void) {
-//    SelBeg = SelEnd = buf_redo(&Buffer, SelEnd);
-//    TargetCol = buf_getcol(&Buffer, SelEnd);
-//}
-//
+
+static void undo(void) {
+    view_undo(currview());
+}
+
+static void redo(void) {
+    view_redo(currview());
+}
+
 //static void cut(void) {
 //    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
 //    cmdwrite(CopyCmd, str);
@@ -237,8 +235,8 @@ static KeyBinding Insert[] = {
     { KEY_CTRL_T,    change_focus  },
     { KEY_CTRL_Q,    quit          },
     { KEY_CTRL_S,    save          },
-    //{ KEY_CTRL_Z,    undo          },
-    //{ KEY_CTRL_Y,    redo          },
+    { KEY_CTRL_Z,    undo          },
+    { KEY_CTRL_Y,    redo          },
     //{ KEY_CTRL_X,    cut           },
     //{ KEY_CTRL_C,    copy          },
     //{ KEY_CTRL_V,    paste         },
