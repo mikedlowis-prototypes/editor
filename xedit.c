@@ -313,6 +313,9 @@ static void layout(int width, int height) {
 static void redraw(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
+    /* if the window is too small, don't bother updating. */
+    if (width < fwidth || height < (4 * fheight))
+        return;
     layout(width, height);
     x11_draw_rect(CLR_BASE03, 0, 0, width, height);
     x11_draw_rect(CLR_BASE02, (79 * fwidth) + 2, Regions[EDIT].y-2, fwidth, height - Regions[EDIT].y + 2);
