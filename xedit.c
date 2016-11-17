@@ -107,10 +107,10 @@ static void quit(void) {
     if (!getbuf(EDIT)->modified || num_clicks >= 2)
         exit(0);
 }
-//
-//static void write(void) {
-//    buf_save(&Buffer);
-//}
+
+static void save(void) {
+    buf_save(getbuf(EDIT));
+}
 //
 //static void undo(void) {
 //    SelBeg = SelEnd = buf_undo(&Buffer, SelEnd);
@@ -236,7 +236,7 @@ static KeyBinding Insert[] = {
     { KEY_END,       cursor_eol    },
     { KEY_CTRL_T,    change_focus  },
     { KEY_CTRL_Q,    quit          },
-    //{ KEY_CTRL_S,    write         },
+    { KEY_CTRL_S,    save          },
     //{ KEY_CTRL_Z,    undo          },
     //{ KEY_CTRL_Y,    redo          },
     //{ KEY_CTRL_X,    cut           },
