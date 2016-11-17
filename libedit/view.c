@@ -36,12 +36,21 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     return ncols;
 }
 
-static bool in_selection(Sel sel, size_t off) {
-    if (sel.end < sel.beg) {
-        size_t temp = sel.beg;
-        sel.beg = sel.end;
-        sel.end = temp;
+static void selswap(Sel* sel) {
+    if (sel->end < sel->beg) {
+        size_t temp = sel->beg;
+        sel->beg = sel->end;
+        sel->end = temp;
     }
+}
+
+static size_t num_selected(Sel sel) {
+    selswap(&sel);
+    return (sel.end - sel.beg);
+}
+
+static bool in_selection(Sel sel, size_t off) {
+    selswap(&sel);
     return (sel.beg <= off && off < sel.end);
 }
 
@@ -232,12 +241,16 @@ void view_selext(View* view, size_t row, size_t col) {
 
 void view_insert(View* view, Rune rune) {
     if (rune == '\b') {
-        if (view->selection.end > 0)
+        if (num_selected(view->selection))
+            view_delete(view);
+        else if (view->selection.end > 0)
             buf_del(&(view->buffer), --view->selection.end);
     } else {
         /* ignore non-printable control characters */
         if (!isspace(rune) && rune < 0x20)
             return;
+        if (num_selected(view->selection))
+            view_delete(view);
         buf_ins(&(view->buffer), view->selection.end++, rune);
     }
     view->selection.beg = view->selection.end;
@@ -246,11 +259,15 @@ void view_insert(View* view, Rune rune) {
 }
 
 void view_delete(View* view) {
-    //if (SelEnd == buf_end(&Buffer)) return;
-    //size_t n = SelEnd - SelBeg;
-    //for (size_t i = 0; i < n; i++)
-    //    buf_del(&Buffer, SelBeg);
-    //SelEnd = SelBeg;
-    //TargetCol = buf_getcol(&Buffer, SelEnd);
-    //view->sync_needed = true;
+    Sel sel = view->selection;
+    selswap(&sel);
+    size_t num = num_selected(view->selection);
+    if (num == 0)
+        buf_del(&(view->buffer), sel.beg);
+    else
+        for (size_t i = 0; i < num; i++)
+            buf_del(&(view->buffer), sel.beg);
+    view->selection.beg = view->selection.end = sel.beg;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
 }

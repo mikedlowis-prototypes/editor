@@ -56,6 +56,10 @@ static enum RegionId getregion(size_t x, size_t y) {
 }
 /* UI Callbacks
  *****************************************************************************/
+static void delete(void) {
+    view_delete(currview());
+}
+
 static void cursor_up(void) {
     view_byline(currview(), -1);
 }
@@ -172,6 +176,7 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
 /* Keyboard Bindings
  *****************************************************************************/
 static KeyBinding Insert[] = {
+    { KEY_DELETE,    delete        },
     { KEY_UP,        cursor_up     },
     { KEY_DOWN,      cursor_dn     },
     { KEY_LEFT,      cursor_left   },
@@ -186,7 +191,6 @@ static KeyBinding Insert[] = {
     //{ KEY_CTRL_V,    paste         },
     //{ KEY_HOME,      cursor_bol    },
     //{ KEY_END,       cursor_eol    },
-    //{ KEY_DELETE,    delete        },
     //{ KEY_BACKSPACE, backspace     },
     { 0,             NULL          }
 };
