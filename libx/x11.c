@@ -366,7 +366,8 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
         int w = extent.xOff;
         int h = (font->height - font->descent);
         xftcolor(&bgc, Config->palette[bg]);
-        x11_draw_rect(bg, specs[0].x, specs[0].y - h, nspecs * w, font->height);
+        size_t width = specs[nspecs-1].x - specs[0].x + w;
+        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height);
         XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
     xftcolor(&fgc, Config->palette[fg]);
