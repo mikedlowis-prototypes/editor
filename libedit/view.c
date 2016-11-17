@@ -271,3 +271,15 @@ void view_delete(View* view) {
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
+
+void view_bol(View* view) {
+    view->selection.beg = view->selection.end = buf_bol(&(view->buffer), view->selection.end);
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}
+
+void view_eol(View* view) {
+    view->selection.beg = view->selection.end = buf_eol(&(view->buffer), view->selection.end);
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}

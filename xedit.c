@@ -76,6 +76,14 @@ static void cursor_right(void) {
     view_byrune(currview(), +1);
 }
 
+static void cursor_bol(void) {
+    view_bol(currview());
+}
+
+static void cursor_eol(void) {
+    view_eol(currview());
+}
+
 static void change_focus(void) {
     if (Focused == TAGS) {
         if (TagWinExpanded) {
@@ -89,6 +97,49 @@ static void change_focus(void) {
         TagWinExpanded = true;
     }
 }
+
+static void quit(void) {
+    static uint32_t num_clicks = 0;
+    static uint32_t prevtime = 0;
+    uint32_t now = getmillis();
+    num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
+    prevtime = now;
+    if (!getbuf(EDIT)->modified || num_clicks >= 2)
+        exit(0);
+}
+//
+//static void write(void) {
+//    buf_save(&Buffer);
+//}
+//
+//static void undo(void) {
+//    SelBeg = SelEnd = buf_undo(&Buffer, SelEnd);
+//    TargetCol = buf_getcol(&Buffer, SelEnd);
+//}
+//
+//static void redo(void) {
+//    SelBeg = SelEnd = buf_redo(&Buffer, SelEnd);
+//    TargetCol = buf_getcol(&Buffer, SelEnd);
+//}
+//
+//static void cut(void) {
+//    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
+//    cmdwrite(CopyCmd, str);
+//    free(str);
+//    delete();
+//}
+//
+//static void copy(void) {
+//    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
+//    cmdwrite(CopyCmd, str);
+//    free(str);
+//}
+//
+//static void paste(void) {
+//    char* str = cmdread(PasteCmd);
+//    buf_putstr(&Buffer, SelBeg, SelEnd, str);
+//    free(str);
+//}
 
 /* Mouse Handling
  *****************************************************************************/
@@ -181,17 +232,16 @@ static KeyBinding Insert[] = {
     { KEY_DOWN,      cursor_dn     },
     { KEY_LEFT,      cursor_left   },
     { KEY_RIGHT,     cursor_right  },
-    //{ KEY_CTRL_Q,    quit          },
+    { KEY_HOME,      cursor_bol    },
+    { KEY_END,       cursor_eol    },
+    { KEY_CTRL_T,    change_focus  },
+    { KEY_CTRL_Q,    quit          },
     //{ KEY_CTRL_S,    write         },
-    { KEY_CTRL_T,    change_focus    },
     //{ KEY_CTRL_Z,    undo          },
     //{ KEY_CTRL_Y,    redo          },
     //{ KEY_CTRL_X,    cut           },
     //{ KEY_CTRL_C,    copy          },
     //{ KEY_CTRL_V,    paste         },
-    //{ KEY_HOME,      cursor_bol    },
-    //{ KEY_END,       cursor_eol    },
-    //{ KEY_BACKSPACE, backspace     },
     { 0,             NULL          }
 };
 
@@ -360,74 +410,6 @@ static char* PasteCmd[] = { "xsel", "-bo", NULL };
 
 /* Keyboard Actions
  *****************************************************************************/
-static void delete(void) {
-    if (SelEnd == buf_end(&Buffer)) return;
-    size_t n = SelEnd - SelBeg;
-    for (size_t i = 0; i < n; i++)
-        buf_del(&Buffer, SelBeg);
-    SelEnd = SelBeg;
-    TargetCol = buf_getcol(&Buffer, SelEnd);
-}
-
-static void backspace(void) {
-    if (SelBeg > 0 && SelBeg == SelEnd) SelBeg--;
-    while (SelBeg < SelEnd)
-        buf_del(&Buffer, --SelEnd);
-    TargetCol = buf_getcol(&Buffer, SelEnd);
-}
-
-static void quit(void) {
-    static uint32_t num_clicks = 0;
-    static uint32_t prevtime = 0;
-    uint32_t now = getmillis();
-    num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
-    prevtime = now;
-    if (!Buffer.modified || num_clicks >= 2)
-        exit(0);
-}
-
-static void write(void) {
-    buf_save(&Buffer);
-}
-
-static void undo(void) {
-    SelBeg = SelEnd = buf_undo(&Buffer, SelEnd);
-    TargetCol = buf_getcol(&Buffer, SelEnd);
-}
-
-static void redo(void) {
-    SelBeg = SelEnd = buf_redo(&Buffer, SelEnd);
-    TargetCol = buf_getcol(&Buffer, SelEnd);
-}
-
-static void cut(void) {
-    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
-    cmdwrite(CopyCmd, str);
-    free(str);
-    delete();
-}
-
-static void copy(void) {
-    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
-    cmdwrite(CopyCmd, str);
-    free(str);
-}
-
-static void paste(void) {
-    char* str = cmdread(PasteCmd);
-    buf_putstr(&Buffer, SelBeg, SelEnd, str);
-    free(str);
-}
-
-static void cursor_bol(void) {
-    SelBeg = SelEnd = buf_bol(&Buffer, SelEnd);
-    TargetCol = 0;
-}
-
-static void cursor_eol(void) {
-    SelBeg = SelEnd = buf_eol(&Buffer, SelEnd);
-    TargetCol = (size_t)-1;
-}
 
 static void tagwin(void) {
     TagWinExpanded = !TagWinExpanded;

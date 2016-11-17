@@ -155,6 +155,8 @@ void view_setcursor(View* view, size_t row, size_t col);
 void view_selext(View* view, size_t row, size_t col);
 void view_insert(View* view, Rune rune);
 void view_delete(View* view);
+void view_bol(View* view);
+void view_eol(View* view);
 
 //size_t view_getoff(View* view, size_t pos, size_t row, size_t col);
 //void view_getsize(View* view, size_t* nrows, size_t* ncols);
