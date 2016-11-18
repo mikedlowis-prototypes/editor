@@ -218,7 +218,9 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
             MouseBtns[MOUSE_BTN_LEFT].pressed = false;
             MouseBtns[MOUSE_BTN_LEFT].count = 0;
         } else if (MouseBtns[MOUSE_BTN_LEFT].region < id) {
+            //view_scroll(getview(MouseBtns[MOUSE_BTN_LEFT].region), +1);
         } else if (MouseBtns[MOUSE_BTN_LEFT].region > id) {
+            //view_scroll(getview(MouseBtns[MOUSE_BTN_LEFT].region), -1);
         } else {
             view_selext(getview(id), row, col);
         }
@@ -417,15 +419,8 @@ int main(int argc, char** argv) {
 }
 
 #if 0
-
 /* Mouse Actions
  *****************************************************************************/
-void move_cursor(int x, int y) {
-    if (y == 0) return;
-    //SelBeg = SelEnd = screen_getoff(&Buffer, SelEnd, y-1, x);
-    TargetCol = buf_getcol(&Buffer, SelEnd);
-}
-
 void bigword(int x, int y) {
     size_t mbeg = SelEnd, mend = SelEnd;
     for (; !risblank(buf_get(&Buffer, mbeg-1)); mbeg--);
@@ -468,50 +463,6 @@ void search(int x, int y) {
     //screen_update(&Buffer, SelEnd, &c, &r);
     //extern void move_pointer(size_t c, size_t r);
     //move_pointer(c, r);
-}
-
-void scrollup(int x, int y) {
-    SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, -ScrollLines);
-}
-
-void scrolldn(int x, int y) {
-    SelBeg = SelEnd = buf_byline(&Buffer, SelEnd, ScrollLines);
-}
-/* Mouse Input Handler
- *****************************************************************************/
-static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
-    //size_t row  = y / Fonts.base.height;
-    //size_t col  = x / Fonts.base.width;
-    //size_t twsz = (TagWinExpanded ? ((ScrRows - 1) / 4) : 1);
-
-    ////if (row == 0) {
-    ////    puts("status");
-    ////} else if (row >= 1 && row <= twsz) {
-    ////    puts("tagwin");
-    ////} else {
-    ////    puts("editwin");
-    ////}
-
-    //if (act == MOUSE_ACT_DOWN) {
-    //    //if (mevnt->button >= 5) return;
-    //    ///* update the number of clicks */
-    //    //uint32_t now = getmillis();
-    //    //uint32_t elapsed = now - Buttons[mevnt->button].time;
-    //    //if (elapsed <= 250)
-    //    //    Buttons[mevnt->button].count++;
-    //    //else
-    //    //    Buttons[mevnt->button].count = 1;
-    //    //Buttons[mevnt->button].time = now;
-    //    ///* execute the click action */
-    //    //uint32_t nclicks = Buttons[mevnt->button].count;
-    //    //nclicks = (nclicks > 3 ? 1 : nclicks);
-    //    //Actions[mevnt->button][nclicks-1](mevnt);
-    //} else if (act == MOUSE_ACT_MOVE) {
-    //    puts("move");
-    //    //if (mevnt->y == 0 || mevnt->button != MOUSE_LEFT) return;
-    //    //SelEnd = screen_getoff(&Buffer, SelEnd, mevnt->y-1, mevnt->x);
-    //    //TargetCol = buf_getcol(&Buffer, SelEnd);
-    //}
 }
 
 void move_pointer(size_t x, size_t y) {
