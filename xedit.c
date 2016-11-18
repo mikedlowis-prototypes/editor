@@ -148,8 +148,8 @@ static void cut(void) {
 }
 
 static void copy(void) {
-    if (str && *str)
     char* str = view_getstr(currview(), NULL);
+    if (str && *str)
         cmdwrite(CopyCmd, str);
     free(str);
 }
