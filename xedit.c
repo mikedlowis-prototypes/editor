@@ -27,6 +27,16 @@ static XConfig Config = {
     .palette      = COLOR_PALETTE
 };
 
+/* External Commands
+ *****************************************************************************/
+#ifdef __MACH__
+static char* CopyCmd[]  = { "pbcopy", NULL };
+static char* PasteCmd[] = { "pbpaste", NULL };
+#else
+static char* CopyCmd[]  = { "xsel", "-bi", NULL };
+static char* PasteCmd[] = { "xsel", "-bo", NULL };
+#endif
+
 /* Region Utils
  *****************************************************************************/
 static View* getview(enum RegionId id) {
@@ -120,24 +130,24 @@ static void redo(void) {
     view_redo(currview());
 }
 
-//static void cut(void) {
-//    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
-//    cmdwrite(CopyCmd, str);
-//    free(str);
-//    delete();
-//}
-//
-//static void copy(void) {
-//    char* str = buf_getstr(&Buffer, SelBeg, SelEnd);
-//    cmdwrite(CopyCmd, str);
-//    free(str);
-//}
-//
-//static void paste(void) {
-//    char* str = cmdread(PasteCmd);
-//    buf_putstr(&Buffer, SelBeg, SelEnd, str);
-//    free(str);
-//}
+static void cut(void) {
+    char* str = view_getstr(currview(), NULL);
+    cmdwrite(CopyCmd, str);
+    free(str);
+    delete();
+}
+
+static void copy(void) {
+    char* str = view_getstr(currview(), NULL);
+    cmdwrite(CopyCmd, str);
+    free(str);
+}
+
+static void paste(void) {
+    char* str = cmdread(PasteCmd);
+    view_putstr(currview(), str);
+    free(str);
+}
 
 /* Mouse Handling
  *****************************************************************************/
@@ -225,22 +235,22 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
 /* Keyboard Bindings
  *****************************************************************************/
 static KeyBinding Insert[] = {
-    { KEY_DELETE,    delete        },
-    { KEY_UP,        cursor_up     },
-    { KEY_DOWN,      cursor_dn     },
-    { KEY_LEFT,      cursor_left   },
-    { KEY_RIGHT,     cursor_right  },
-    { KEY_HOME,      cursor_bol    },
-    { KEY_END,       cursor_eol    },
-    { KEY_CTRL_T,    change_focus  },
-    { KEY_CTRL_Q,    quit          },
-    { KEY_CTRL_S,    save          },
-    { KEY_CTRL_Z,    undo          },
-    { KEY_CTRL_Y,    redo          },
-    //{ KEY_CTRL_X,    cut           },
-    //{ KEY_CTRL_C,    copy          },
-    //{ KEY_CTRL_V,    paste         },
-    { 0,             NULL          }
+    { KEY_DELETE,    delete       },
+    { KEY_UP,        cursor_up    },
+    { KEY_DOWN,      cursor_dn    },
+    { KEY_LEFT,      cursor_left  },
+    { KEY_RIGHT,     cursor_right },
+    { KEY_HOME,      cursor_bol   },
+    { KEY_END,       cursor_eol   },
+    { KEY_CTRL_T,    change_focus },
+    { KEY_CTRL_Q,    quit         },
+    { KEY_CTRL_S,    save         },
+    { KEY_CTRL_Z,    undo         },
+    { KEY_CTRL_Y,    redo         },
+    { KEY_CTRL_X,    cut          },
+    { KEY_CTRL_C,    copy         },
+    { KEY_CTRL_V,    paste        },
+    { 0,             NULL         }
 };
 
 static void process_table(KeyBinding* bindings, Rune key) {
@@ -384,8 +394,8 @@ static void redraw(int width, int height) {
 int main(int argc, char** argv) {
     /* load the buffer views */
     view_init(getview(TAGS), NULL);
+    view_putstr(getview(TAGS), DEFAULT_TAGS);
     view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
-    buf_putstr(getbuf(TAGS), 0, 0, DEFAULT_TAGS);
     /* initialize the display engine */
     x11_init(&Config);
     x11_window("edit", Width, Height);
@@ -396,28 +406,9 @@ int main(int argc, char** argv) {
 }
 
 #if 0
-/* External Commands
- *****************************************************************************/
-#ifdef __MACH__
-static char* CopyCmd[]  = { "pbcopy", NULL };
-static char* PasteCmd[] = { "pbpaste", NULL };
-#else
-static char* CopyCmd[]  = { "xsel", "-bi", NULL };
-static char* PasteCmd[] = { "xsel", "-bo", NULL };
-#endif
-
-/* Keyboard Actions
- *****************************************************************************/
-
-static void tagwin(void) {
-    TagWinExpanded = !TagWinExpanded;
-}
 
 /* Mouse Actions
  *****************************************************************************/
-void unused(int x, int y) {
-}
-
 void move_cursor(int x, int y) {
     if (y == 0) return;
     //SelBeg = SelEnd = screen_getoff(&Buffer, SelEnd, y-1, x);

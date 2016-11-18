@@ -159,12 +159,8 @@ void view_bol(View* view);
 void view_eol(View* view);
 void view_undo(View* view);
 void view_redo(View* view);
-
-//size_t view_getoff(View* view, size_t pos, size_t row, size_t col);
-//void view_getsize(View* view, size_t* nrows, size_t* ncols);
-//void view_clearrow(View* view, size_t row);
-//size_t view_setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
-//UGlyph* view_getglyph(View* view, size_t row, size_t col, size_t* scrwidth);
+void view_putstr(View* view, char* str);
+char* view_getstr(View* view, Sel* sel);
 
 /* Command Executions
  *****************************************************************************/
@@ -264,4 +260,4 @@ enum {
         0xff2aa198,   \
         0xff859900    \
     }
-#define DEFAULT_TAGS "Quit Save Cut Copy Paste | Find \n"
+#define DEFAULT_TAGS "Quit Save Cut Copy Paste | Find "

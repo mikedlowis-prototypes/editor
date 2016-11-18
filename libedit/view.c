@@ -149,7 +149,7 @@ static size_t getoffset(View* view, size_t row, size_t col) {
                 pos++;
     }
     if (pos >= buf_end(&(view->buffer)))
-        return buf_end(&(view->buffer))-1;
+        return buf_end(&(view->buffer));
     return pos;
 }
 
@@ -226,9 +226,11 @@ void view_byline(View* view, int move) {
 
 void view_setcursor(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
-    view->selection.beg = view->selection.end = off;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    sync_view(view, view->selection.end);
+    if (off != SIZE_MAX) {
+        view->selection.beg = view->selection.end = off;
+        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+        view->sync_needed = true;
+    }
 }
 
 void view_selext(View* view, size_t row, size_t col) {
@@ -294,4 +296,41 @@ void view_redo(View* view) {
     view->selection.beg = view->selection.end = buf_redo(&(view->buffer), view->selection.end);
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
+}
+
+void view_putstr(View* view, char* str) {
+    while (*str) {
+        Rune rune = 0;
+        size_t length = 0;
+        while (!utf8decode(&rune, &length, *str++));
+        view_insert(view, rune);
+    }
+}
+
+char* view_getstr(View* view, Sel* range) {
+    Buf* buf = &(view->buffer);
+    Sel sel = (range ? *range : view->selection);
+    selswap(&sel);
+    char utf[UTF_MAX] = {0};
+    size_t len = 0;
+    char*  str = NULL;
+
+    for (; sel.beg <= sel.end; sel.beg++) {
+        Rune rune = buf_get(buf, sel.beg);
+        if (rune == RUNE_CRLF) {
+            str = realloc(str, len + 2);
+            str[len + 1] = '\r';
+            str[len + 2] = '\n';
+            len += 2;
+        } else {
+            size_t n = utf8encode(utf, rune);
+            str = realloc(str, len + n);
+            memcpy(str+len, utf, n);
+            len += n;
+        }
+    }
+
+    str = realloc(str, len+1);
+    if (str) str[len] = '\0';
+    return str;
 }
