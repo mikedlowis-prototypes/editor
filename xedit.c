@@ -94,6 +94,14 @@ static void cursor_eol(void) {
     view_eol(currview());
 }
 
+static void page_up(void) {
+    view_scrollpage(currview(), -1);
+}
+
+static void page_dn(void) {
+    view_scrollpage(currview(), +1);
+}
+
 static void change_focus(void) {
     if (Focused == TAGS) {
         if (TagWinExpanded) {
@@ -132,14 +140,17 @@ static void redo(void) {
 
 static void cut(void) {
     char* str = view_getstr(currview(), NULL);
-    cmdwrite(CopyCmd, str);
+    if (str && *str) {
+        cmdwrite(CopyCmd, str);
+        delete();
+    }
     free(str);
-    delete();
 }
 
 static void copy(void) {
+    if (str && *str)
     char* str = view_getstr(currview(), NULL);
-    cmdwrite(CopyCmd, str);
+        cmdwrite(CopyCmd, str);
     free(str);
 }
 
@@ -165,8 +176,7 @@ static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
 
 static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
     if (MouseBtns[MOUSE_BTN_LEFT].pressed)
-        puts("cut");
-    //    cut();
+        cut();
     else
         puts("exec");
     //    view_exec(getview(id), row, col);
@@ -174,8 +184,7 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
 
 static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
     if (MouseBtns[MOUSE_BTN_LEFT].pressed)
-        puts("paste");
-    //    paste();
+        paste();
     else
         puts("find");
     //    view_find(getview(id), row, col);
@@ -242,6 +251,8 @@ static KeyBinding Insert[] = {
     { KEY_RIGHT,     cursor_right },
     { KEY_HOME,      cursor_bol   },
     { KEY_END,       cursor_eol   },
+    { KEY_PGUP,      page_up      },
+    { KEY_PGDN,      page_dn      },
     { KEY_CTRL_T,    change_focus },
     { KEY_CTRL_Q,    quit         },
     { KEY_CTRL_S,    save         },

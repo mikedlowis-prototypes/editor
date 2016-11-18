@@ -313,7 +313,7 @@ char* view_getstr(View* view, Sel* range) {
     char utf[UTF_MAX] = {0};
     size_t len = 0;
     char*  str = NULL;
-    for (; sel.beg <= sel.end; sel.beg++) {
+    for (; sel.beg < sel.end; sel.beg++) {
         Rune rune = buf_get(buf, sel.beg);
         if (rune == RUNE_CRLF) {
             str = realloc(str, len + 2);
@@ -333,8 +333,17 @@ char* view_getstr(View* view, Sel* range) {
 }
 
 void view_scroll(View* view, int move) {
-    if (move < 0)
-        scroll_up(view);
-    else
-        scroll_dn(view);
+    int dir = (move < 0 ? -1 : 1);
+    move *= dir;
+    for (int i = 0; i < move; i++) {
+        if (dir < 0)
+            scroll_up(view);
+        else
+            scroll_dn(view);
+    }
+}
+
+void view_scrollpage(View* view, int move) {
+    move = (move < 0 ? -1 : 1) * view->nrows;
+    view_scroll(view, move);
 }
