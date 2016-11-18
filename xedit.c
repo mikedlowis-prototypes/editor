@@ -182,11 +182,11 @@ static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) 
 }
 
 static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
-    //view_scroll(getview(id), -1);
+    view_scroll(getview(id), -1);
 }
 
 static void mouse_wheeldn(enum RegionId id, size_t count, size_t row, size_t col) {
-    //view_scroll(getview(id), 1);
+    view_scroll(getview(id), 1);
 }
 
 void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
@@ -338,7 +338,7 @@ static void draw_region(enum RegionId id) {
     size_t fwidth  = x11_font_width(Font);
     /* update the screen buffer and retrieve cursor coordinates */
     View* view = getview(id);
-    size_t csrx, csry;
+    size_t csrx = SIZE_MAX, csry = SIZE_MAX;
     view_update(view, &csrx, &csry);
     /* draw the region to the frame buffer */
     if (id == TAGS)
@@ -349,7 +349,7 @@ static void draw_region(enum RegionId id) {
         draw_glyphs(2, Regions[id].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* Place cursor on screen */
-    if (id == Focused)
+    if (id == Focused && csrx != SIZE_MAX && csry != SIZE_MAX)
         x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, Regions[id].y + (csry * fheight), 1, fheight);
 }
 

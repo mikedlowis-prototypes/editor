@@ -88,48 +88,47 @@ static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
     return pos;
 }
 
-static void scroll_up(View* view, unsigned csr, unsigned first) {
-    while (csr < first) {
-        unsigned bol    = buf_bol(&(view->buffer), first);
-        unsigned prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
-        prevln = prev_screen_line(view, prevln, first);
-        /* delete the last row and shift the others */
-        free(view->rows[view->nrows - 1]);
-        memmove(&view->rows[1], &view->rows[0], sizeof(Row*) * (view->nrows-1));
-        view->rows[0] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
-        view->rows[0]->off = prevln;
-        /* fill in row content */
-        fill_row(view, 0, view->rows[0]->off);
-        first = view->rows[0]->off;
-    }
+static unsigned scroll_up(View* view) {
+    unsigned first = view->rows[0]->off;
+    unsigned bol    = buf_bol(&(view->buffer), first);
+    unsigned prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+    prevln = prev_screen_line(view, prevln, first);
+    /* delete the last row and shift the others */
+    free(view->rows[view->nrows - 1]);
+    memmove(&view->rows[1], &view->rows[0], sizeof(Row*) * (view->nrows-1));
+    view->rows[0] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
+    view->rows[0]->off = prevln;
+    /* fill in row content */
+    fill_row(view, 0, view->rows[0]->off);
+    return view->rows[0]->off;
 }
 
-static void scroll_dn(View* view, unsigned csr, unsigned last) {
-    while (csr > last) {
-        /* delete the first row and shift the others */
-        if (view->nrows > 1) {
-            free(view->rows[0]);
-            memmove(&view->rows[0], &view->rows[1], sizeof(Row*) * (view->nrows-1));
-            view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
-            view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
-            /* fill in row content */
-            fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
-        } else {
-            view->rows[0]->off += view->rows[0]->rlen;
-            fill_row(view, 0, view->rows[0]->off);
-        }
-        last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+static unsigned scroll_dn(View* view) {
+    unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+    if (last >= buf_end(&(view->buffer)))
+        return last;
+    /* delete the first row and shift the others */
+    if (view->nrows > 1) {
+        free(view->rows[0]);
+        memmove(&view->rows[0], &view->rows[1], sizeof(Row*) * (view->nrows-1));
+        view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
+        view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
+        /* fill in row content */
+        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
+    } else {
+        view->rows[0]->off += view->rows[0]->rlen;
+        fill_row(view, 0, view->rows[0]->off);
     }
+    return view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
 }
 
 static void sync_view(View* view, size_t csr) {
     unsigned first = view->rows[0]->off;
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
-    if (csr < first) {
-        scroll_up(view, csr, first);
-    } else if (csr > last) {
-        scroll_dn(view, csr, last);
-    }
+    while (csr < first)
+        first = scroll_up(view);
+    while (csr > last)
+        last = scroll_dn(view);
     view->sync_needed = false;
 }
 
@@ -314,7 +313,6 @@ char* view_getstr(View* view, Sel* range) {
     char utf[UTF_MAX] = {0};
     size_t len = 0;
     char*  str = NULL;
-
     for (; sel.beg <= sel.end; sel.beg++) {
         Rune rune = buf_get(buf, sel.beg);
         if (rune == RUNE_CRLF) {
@@ -329,8 +327,14 @@ char* view_getstr(View* view, Sel* range) {
             len += n;
         }
     }
-
     str = realloc(str, len+1);
     if (str) str[len] = '\0';
     return str;
+}
+
+void view_scroll(View* view, int move) {
+    if (move < 0)
+        scroll_up(view);
+    else
+        scroll_dn(view);
 }

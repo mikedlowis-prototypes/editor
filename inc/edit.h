@@ -161,6 +161,7 @@ void view_undo(View* view);
 void view_redo(View* view);
 void view_putstr(View* view, char* str);
 char* view_getstr(View* view, Sel* sel);
+void view_scroll(View* view, int move);
 
 /* Command Executions
  *****************************************************************************/
