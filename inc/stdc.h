@@ -147,6 +147,9 @@ static inline char* _getopt_(int* p_argc, char*** p_argv) {
 
 /* Error Handling
  *****************************************************************************/
+#define trace() \
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__)
+
 #ifdef NDEBUG
     #define debug(msg, ...) \
         ((void)0)

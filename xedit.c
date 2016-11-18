@@ -291,7 +291,7 @@ static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
     XGlyphSpec specs[rlen];
     size_t i = 0;
-    while (rlen) {
+    while (rlen && i < ncols) {
         int numspecs = 0;
         uint32_t attr = glyphs[i].attr;
         while (i < ncols && glyphs[i].attr == attr) {
