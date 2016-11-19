@@ -285,15 +285,19 @@ void view_select(View* view, size_t row, size_t col) {
     } else if (risword(r)) {
         sel.beg = buf_bow(buf, sel.end);
         sel.end = buf_eow(buf, sel.end++);
+        sel.beg++, sel.end--;
     } else if (r == '(' || r == ')') {
         sel.beg = buf_lscan(buf, sel.end,   '(');
         sel.end = buf_rscan(buf, sel.end++, ')');
+        sel.beg++, sel.end--;
     } else if (r == '[' || r == ']') {
         sel.beg = buf_lscan(buf, sel.end,   '[');
         sel.end = buf_rscan(buf, sel.end++, ']');
+        sel.beg++, sel.end--;
     } else if (r == '{' || r == '}') {
         sel.beg = buf_lscan(buf, sel.end,   '{');
         sel.end = buf_rscan(buf, sel.end++, '}');
+        sel.beg++, sel.end--;
     } else {
         selbigword(view, &sel);
     }
