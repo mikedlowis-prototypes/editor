@@ -184,8 +184,7 @@ static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) 
     if (MouseBtns[MOUSE_BTN_LEFT].pressed)
         paste();
     else
-        puts("find");
-    //    view_find(getview(id), row, col);
+        view_find(getview(id), row, col);
 }
 
 static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
@@ -418,23 +417,6 @@ int main(int argc, char** argv) {
 }
 
 #if 0
-/* Mouse Actions
- *****************************************************************************/
-
-void search(int x, int y) {
-    //size_t clickpos = screen_getoff(&Buffer, SelEnd, y-1, x);
-    //if (clickpos < SelBeg || clickpos > SelEnd) {
-    //    move_cursor(x,y);
-    //    selection(x,y);
-    //} else {
-    //    buf_find(&Buffer, &SelBeg, &SelEnd);
-    //}
-    //size_t c, r;
-    //screen_update(&Buffer, SelEnd, &c, &r);
-    //extern void move_pointer(size_t c, size_t r);
-    //move_pointer(c, r);
-}
-
 void move_pointer(size_t x, size_t y) {
     x = (x * Fonts.base.width)  + (Fonts.base.width / 2);
     y = ((y+1) * Fonts.base.height) + (Fonts.base.height / 2);

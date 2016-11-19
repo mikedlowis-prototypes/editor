@@ -252,7 +252,7 @@ static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, un
     return 0;
 }
 
-void buf_find(Buf* buf, unsigned* beg, unsigned* end) {
+void buf_find(Buf* buf, size_t* beg, size_t* end) {
     unsigned dbeg = *beg, dend = *end;
     unsigned mbeg = dend+1, mend = mbeg + (dend-dbeg);
     while (mend != dbeg) {
