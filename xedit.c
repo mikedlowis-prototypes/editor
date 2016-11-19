@@ -377,11 +377,12 @@ static void layout(int width, int height) {
         Regions[i].height = fheight;
     }
     /* Place the tag region relative to status */
-    Regions[TAGS].y      = 5 + Regions[STATUS].y + Regions[STATUS].height;
-    size_t maxtagrows    = ((height - Regions[TAGS].y - 5) / 4) / fheight;
-    size_t tagrows       = (TagWinExpanded ? maxtagrows : 1);
+    Regions[TAGS].y = 5 + Regions[STATUS].y + Regions[STATUS].height;
+    size_t maxtagrows = ((height - Regions[TAGS].y - 5) / 4) / fheight;
+    size_t tagcols    = Regions[TAGS].width / fwidth;
+    size_t tagrows    = view_limitrows(getview(TAGS), maxtagrows, tagcols);
     Regions[TAGS].height = tagrows * fheight;
-    view_resize(getview(TAGS), tagrows, Regions[TAGS].width / fwidth);
+    view_resize(getview(TAGS), tagrows, tagcols);
     /* Place the edit region relative to status */
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[EDIT].height = (height - Regions[EDIT].y - 5);

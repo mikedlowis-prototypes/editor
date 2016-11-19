@@ -146,6 +146,7 @@ typedef struct {
 } View;
 
 void view_init(View* view, char* file);
+size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
 void view_resize(View* view, size_t nrows, size_t ncols);
 void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
