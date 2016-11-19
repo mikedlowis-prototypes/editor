@@ -256,6 +256,51 @@ void view_selext(View* view, size_t row, size_t col) {
     }
 }
 
+static void selbigword(View* view, Sel* sel) {
+    Buf* buf = &(view->buffer);
+    size_t mbeg = sel->end, mend = sel->end;
+    for (; !risblank(buf_get(buf, mbeg-1)); mbeg--);
+    for (; !risblank(buf_get(buf, mend));   mend++);
+    sel->beg = mbeg, sel->end = mend-1;
+}
+
+void view_selword(View* view, size_t row, size_t col) {
+    view_setcursor(view, row, col);
+    Sel sel  = view->selection;
+    Buf* buf = &(view->buffer);
+    selbigword(view, &sel);
+    sel.end++;
+    view->selection = sel;
+}
+
+void view_select(View* view, size_t row, size_t col) {
+    view_setcursor(view, row, col);
+    Sel sel  = view->selection;
+    Buf* buf = &(view->buffer);
+    size_t bol = buf_bol(buf, sel.end);
+    Rune r = buf_get(buf, sel.end);
+    if (sel.end == bol || r == '\n' || r == RUNE_CRLF) {
+        sel.beg = bol;
+        sel.end = buf_eol(buf, sel.end);
+    } else if (risword(r)) {
+        sel.beg = buf_bow(buf, sel.end);
+        sel.end = buf_eow(buf, sel.end++);
+    } else if (r == '(' || r == ')') {
+        sel.beg = buf_lscan(buf, sel.end,   '(');
+        sel.end = buf_rscan(buf, sel.end++, ')');
+    } else if (r == '[' || r == ']') {
+        sel.beg = buf_lscan(buf, sel.end,   '[');
+        sel.end = buf_rscan(buf, sel.end++, ']');
+    } else if (r == '{' || r == '}') {
+        sel.beg = buf_lscan(buf, sel.end,   '{');
+        sel.end = buf_rscan(buf, sel.end++, '}');
+    } else {
+        selbigword(view, &sel);
+    }
+    sel.end++;
+    view->selection = sel;
+}
+
 void view_insert(View* view, Rune rune) {
     if (rune == '\b') {
         if (num_selected(view->selection))

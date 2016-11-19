@@ -166,11 +166,9 @@ static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
     if (count == 1) {
         view_setcursor(getview(id), row, col);
     } else if (count == 2) {
-        puts("select");
-        //view_select(getview(id), row, col);
+        view_select(getview(id), row, col);
     } else if (count == 3) {
-        puts("select bigword");
-        //view_selword(getview(id), row, col);
+        view_selword(getview(id), row, col);
     }
 }
 
@@ -422,35 +420,6 @@ int main(int argc, char** argv) {
 #if 0
 /* Mouse Actions
  *****************************************************************************/
-void bigword(int x, int y) {
-    size_t mbeg = SelEnd, mend = SelEnd;
-    for (; !risblank(buf_get(&Buffer, mbeg-1)); mbeg--);
-    for (; !risblank(buf_get(&Buffer, mend));   mend++);
-    SelBeg = mbeg, SelEnd = mend-1;
-}
-
-void selection(int x, int y) {
-    size_t bol = buf_bol(&Buffer, SelEnd);
-    Rune r = buf_get(&Buffer, SelEnd);
-    if (SelEnd == bol || r == '\n' || r == RUNE_CRLF) {
-        SelBeg = bol;
-        SelEnd = buf_eol(&Buffer, SelEnd);
-    } else if (risword(r)) {
-        SelBeg = buf_bow(&Buffer, SelEnd);
-        SelEnd = buf_eow(&Buffer, SelEnd++);
-    } else if (r == '(' || r == ')') {
-        SelBeg = buf_lscan(&Buffer, SelEnd,   '(');
-        SelEnd = buf_rscan(&Buffer, SelEnd++, ')');
-    } else if (r == '[' || r == ']') {
-        SelBeg = buf_lscan(&Buffer, SelEnd,   '[');
-        SelEnd = buf_rscan(&Buffer, SelEnd++, ']');
-    } else if (r == '{' || r == '}') {
-        SelBeg = buf_lscan(&Buffer, SelEnd,   '{');
-        SelEnd = buf_rscan(&Buffer, SelEnd++, '}');
-    } else {
-        bigword(x,y);
-    }
-}
 
 void search(int x, int y) {
     //size_t clickpos = screen_getoff(&Buffer, SelEnd, y-1, x);
