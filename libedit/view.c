@@ -308,10 +308,21 @@ void view_select(View* view, size_t row, size_t col) {
 }
 
 void view_find(View* view, size_t row, size_t col) {
-    view_select(view, row, col);
-    Sel sel = view->selection;
-    buf_find(&(view->buffer), &sel.beg, &sel.end);
-    view->selection = sel;
+    size_t off = getoffset(view, row, col);
+    if (off != SIZE_MAX) {
+        Sel sel = view->selection;
+        if (!num_selected(sel) || !in_selection(sel, off)) {
+            view_setcursor(view, row, col);
+            sel = view->selection;
+            selcontext(view, &sel);
+            buf_find(&(view->buffer), &sel.beg, &sel.end);
+            sel.end++;
+        } else {
+            buf_find(&(view->buffer), &sel.beg, &sel.end);
+        }
+        view->selection = sel;
+        view->sync_needed = true;
+    }
 }
 
 void view_insert(View* view, Rune rune) {
