@@ -64,6 +64,7 @@ static enum RegionId getregion(size_t x, size_t y) {
     }
     return NREGIONS;
 }
+
 /* UI Callbacks
  *****************************************************************************/
 static void delete(void) {
@@ -104,15 +105,9 @@ static void page_dn(void) {
 
 static void change_focus(void) {
     if (Focused == TAGS) {
-        if (TagWinExpanded) {
-            TagWinExpanded = false;
-            Focused = EDIT;
-        } else {
-            TagWinExpanded = true;
-        }
+        Focused = EDIT;
     } else {
         Focused = TAGS;
-        TagWinExpanded = true;
     }
 }
 
@@ -160,6 +155,30 @@ static void paste(void) {
     free(str);
 }
 
+/* Builtin Tags
+ *****************************************************************************/
+Tag Builtins[] = {
+    { "Quit",  quit  },
+    { "Save",  save  },
+    { "Cut",   cut   },
+    { "Copy",  copy  },
+    { "Paste", paste },
+    //{ "Find",  NULL  },
+    { NULL,    NULL  }
+};
+
+static void tagexec(char* cmd) {
+    Tag* tags = Builtins;
+    while (tags->tag) {
+        if (!strcmp(tags->tag, cmd)) {
+            Focused = EDIT;
+            tags->action();
+            break;
+        }
+        tags++;
+    }
+}
+
 /* Mouse Handling
  *****************************************************************************/
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
@@ -175,9 +194,11 @@ static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
 static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
     if (MouseBtns[MOUSE_BTN_LEFT].pressed)
         cut();
-    else
-        puts("exec");
-    //    view_exec(getview(id), row, col);
+    else {
+        char* str = view_fetch(getview(id), row, col);
+        tagexec(str);
+        free(str);
+    }
 }
 
 static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
@@ -188,11 +209,11 @@ static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) 
 }
 
 static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
-    view_scroll(getview(id), -1);
+    view_scroll(getview(id), -ScrollLines);
 }
 
 static void mouse_wheeldn(enum RegionId id, size_t count, size_t row, size_t col) {
-    view_scroll(getview(id), 1);
+    view_scroll(getview(id), +ScrollLines);
 }
 
 void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {

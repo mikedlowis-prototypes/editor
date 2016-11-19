@@ -156,6 +156,7 @@ void view_setcursor(View* view, size_t row, size_t col);
 void view_selext(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);
+char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);
 void view_insert(View* view, Rune rune);
 void view_delete(View* view);
@@ -227,6 +228,12 @@ typedef struct {
     size_t width;
     View view;
 } Region;
+
+typedef struct {
+    char* tag;
+    void (*action)(void);
+} Tag;
+
 
 /* Configuration
  *****************************************************************************/

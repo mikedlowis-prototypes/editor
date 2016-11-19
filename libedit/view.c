@@ -307,6 +307,22 @@ void view_select(View* view, size_t row, size_t col) {
     view->selection = sel;
 }
 
+char* view_fetch(View* view, size_t row, size_t col) {
+    char* str = NULL;
+    size_t off = getoffset(view, row, col);
+    if (off != SIZE_MAX) {
+        Sel sel = { .beg = off, .end = off };
+        if (in_selection(view->selection, off)) {
+            sel = view->selection;
+        } else {
+            selcontext(view, &sel);
+            sel.end++;
+        }
+        str = view_getstr(view, &sel);
+    }
+    return str;
+}
+
 void view_find(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {

@@ -27,7 +27,7 @@ test: unittests
 	./unittests
 
 xedit: xedit.o libx.a libedit.a
-xpick: xpick.o libx.a libedit.a
+#xpick: xpick.o libx.a libedit.a
 
 libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
