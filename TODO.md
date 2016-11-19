@@ -1,6 +1,5 @@
 # Implementation Tweaks and Bug Fixes
 * off by one error on scrolling wrapped lines
-* delete at end of file hits assert
 * block selection should handle brace-balancing
 * Selecting big words should not wrap newlines
 * Right click should fetch file if it exists, search otherwise
