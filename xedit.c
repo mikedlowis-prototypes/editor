@@ -4,18 +4,62 @@
 #include <edit.h>
 #include <ctype.h>
 
-static void redraw(int width, int height);
-static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
-static void key_handler(Rune key);
-
-/* Global Data
- *****************************************************************************/
-static enum RegionId {
+enum RegionId {
     STATUS   = 0,
     TAGS     = 1,
     EDIT     = 2,
     NREGIONS = 3
-} Focused = EDIT;
+};
+
+// Input Handlers
+static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
+static void tag_handler(char* cmd);
+static void key_handler(Rune key);
+
+// Drawing Rotuines
+static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen);
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
+static void draw_status(int fg, size_t ncols);
+static void draw_region(enum RegionId id);
+static void layout(int width, int height);
+static void redraw(int width, int height);
+
+// UI Callbacks
+static void delete(void);
+static void cursor_up(void);
+static void cursor_dn(void);
+static void cursor_left(void);
+static void cursor_right(void);
+static void cursor_bol(void);
+static void cursor_eol(void);
+static void page_up(void);
+static void page_dn(void);
+static void change_focus(void);
+static void quit(void);
+static void save(void);
+static void undo(void);
+static void redo(void);
+static void cut(void);
+static void copy(void);
+static void paste(void);
+
+// Mouse Handling
+static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col);
+static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col);
+static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col);
+static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col);
+static void mouse_wheeldn(enum RegionId id, size_t count, size_t row, size_t col);
+
+// Region Utils
+static View* getview(enum RegionId id);
+static Buf* getbuf(enum RegionId id);
+static View* currview(void);
+static Buf* currbuf(void);
+static enum RegionId getregion(size_t x, size_t y);
+
+/* Global Data
+ *****************************************************************************/
+static enum RegionId Focused = EDIT;
 static Region Regions[NREGIONS] = { 0 };
 static bool TagWinExpanded = false;
 static ButtonState MouseBtns[MOUSE_BTN_COUNT] = { 0 };
@@ -25,6 +69,45 @@ static XConfig Config = {
     .handle_key   = key_handler,
     .handle_mouse = mouse_handler,
     .palette      = COLOR_PALETTE
+};
+
+Tag Builtins[] = {
+    { "Quit",  quit  },
+    { "Save",  save  },
+    { "Cut",   cut   },
+    { "Copy",  copy  },
+    { "Paste", paste },
+    //{ "Find",  NULL  },
+    { NULL,    NULL  }
+};
+
+void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
+    [MOUSE_BTN_LEFT]      = mouse_left,
+    [MOUSE_BTN_MIDDLE]    = mouse_middle,
+    [MOUSE_BTN_RIGHT]     = mouse_right,
+    [MOUSE_BTN_WHEELUP]   = mouse_wheelup,
+    [MOUSE_BTN_WHEELDOWN] = mouse_wheeldn,
+};
+
+static KeyBinding Insert[] = {
+    { KEY_DELETE,    delete       },
+    { KEY_UP,        cursor_up    },
+    { KEY_DOWN,      cursor_dn    },
+    { KEY_LEFT,      cursor_left  },
+    { KEY_RIGHT,     cursor_right },
+    { KEY_HOME,      cursor_bol   },
+    { KEY_END,       cursor_eol   },
+    { KEY_PGUP,      page_up      },
+    { KEY_PGDN,      page_dn      },
+    { KEY_CTRL_T,    change_focus },
+    { KEY_CTRL_Q,    quit         },
+    { KEY_CTRL_S,    save         },
+    { KEY_CTRL_Z,    undo         },
+    { KEY_CTRL_Y,    redo         },
+    { KEY_CTRL_X,    cut          },
+    { KEY_CTRL_C,    copy         },
+    { KEY_CTRL_V,    paste        },
+    { 0,             NULL         }
 };
 
 /* External Commands
@@ -37,192 +120,21 @@ static char* CopyCmd[]  = { "xsel", "-bi", NULL };
 static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
 
-/* Region Utils
+/* Main Routine
  *****************************************************************************/
-static View* getview(enum RegionId id) {
-    return &(Regions[id].view);
+int main(int argc, char** argv) {
+    /* load the buffer views */
+    view_init(getview(TAGS), NULL);
+    view_putstr(getview(TAGS), DEFAULT_TAGS);
+    view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
+    /* initialize the display engine */
+    x11_init(&Config);
+    x11_window("edit", Width, Height);
+    x11_show();
+    Font = x11_font_load(FONTNAME);
+    x11_loop();
+    return 0;
 }
-
-static Buf* getbuf(enum RegionId id) {
-    return &(getview(id)->buffer);
-}
-
-static View* currview(void) {
-    return getview(Focused);
-}
-
-static Buf* currbuf(void) {
-    return getbuf(Focused);
-}
-
-static enum RegionId getregion(size_t x, size_t y) {
-    for (int i = 0; i < NREGIONS; i++) {
-        size_t startx = Regions[i].x, endx = startx + Regions[i].width;
-        size_t starty = Regions[i].y, endy = starty + Regions[i].height;
-        if ((startx <= x && x <= endx) && (starty <= y && y <= endy))
-            return (enum RegionId)i;
-    }
-    return NREGIONS;
-}
-
-/* UI Callbacks
- *****************************************************************************/
-static void delete(void) {
-    view_delete(currview());
-}
-
-static void cursor_up(void) {
-    view_byline(currview(), -1);
-}
-
-static void cursor_dn(void) {
-    view_byline(currview(), +1);
-}
-
-static void cursor_left(void) {
-    view_byrune(currview(), -1);
-}
-
-static void cursor_right(void) {
-    view_byrune(currview(), +1);
-}
-
-static void cursor_bol(void) {
-    view_bol(currview());
-}
-
-static void cursor_eol(void) {
-    view_eol(currview());
-}
-
-static void page_up(void) {
-    view_scrollpage(currview(), -1);
-}
-
-static void page_dn(void) {
-    view_scrollpage(currview(), +1);
-}
-
-static void change_focus(void) {
-    if (Focused == TAGS) {
-        Focused = EDIT;
-    } else {
-        Focused = TAGS;
-    }
-}
-
-static void quit(void) {
-    static uint32_t num_clicks = 0;
-    static uint32_t prevtime = 0;
-    uint32_t now = getmillis();
-    num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
-    prevtime = now;
-    if (!getbuf(EDIT)->modified || num_clicks >= 2)
-        exit(0);
-}
-
-static void save(void) {
-    buf_save(getbuf(EDIT));
-}
-
-static void undo(void) {
-    view_undo(currview());
-}
-
-static void redo(void) {
-    view_redo(currview());
-}
-
-static void cut(void) {
-    char* str = view_getstr(currview(), NULL);
-    if (str && *str) {
-        cmdwrite(CopyCmd, str);
-        delete();
-    }
-    free(str);
-}
-
-static void copy(void) {
-    char* str = view_getstr(currview(), NULL);
-    if (str && *str)
-        cmdwrite(CopyCmd, str);
-    free(str);
-}
-
-static void paste(void) {
-    char* str = cmdread(PasteCmd);
-    view_putstr(currview(), str);
-    free(str);
-}
-
-/* Builtin Tags
- *****************************************************************************/
-Tag Builtins[] = {
-    { "Quit",  quit  },
-    { "Save",  save  },
-    { "Cut",   cut   },
-    { "Copy",  copy  },
-    { "Paste", paste },
-    //{ "Find",  NULL  },
-    { NULL,    NULL  }
-};
-
-static void tagexec(char* cmd) {
-    Tag* tags = Builtins;
-    while (tags->tag) {
-        if (!strcmp(tags->tag, cmd)) {
-            Focused = EDIT;
-            tags->action();
-            break;
-        }
-        tags++;
-    }
-}
-
-/* Mouse Handling
- *****************************************************************************/
-static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
-    if (count == 1) {
-        view_setcursor(getview(id), row, col);
-    } else if (count == 2) {
-        view_select(getview(id), row, col);
-    } else if (count == 3) {
-        view_selword(getview(id), row, col);
-    }
-}
-
-static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
-    if (MouseBtns[MOUSE_BTN_LEFT].pressed)
-        cut();
-    else {
-        char* str = view_fetch(getview(id), row, col);
-        tagexec(str);
-        free(str);
-    }
-}
-
-static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
-    if (MouseBtns[MOUSE_BTN_LEFT].pressed)
-        paste();
-    else
-        view_find(getview(id), row, col);
-}
-
-static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
-    view_scroll(getview(id), -ScrollLines);
-}
-
-static void mouse_wheeldn(enum RegionId id, size_t count, size_t row, size_t col) {
-    view_scroll(getview(id), +ScrollLines);
-}
-
-void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
-    [MOUSE_BTN_LEFT]      = mouse_left,
-    [MOUSE_BTN_MIDDLE]    = mouse_middle,
-    [MOUSE_BTN_RIGHT]     = mouse_right,
-    [MOUSE_BTN_WHEELUP]   = mouse_wheelup,
-    [MOUSE_BTN_WHEELDOWN] = mouse_wheeldn,
-};
 
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     enum RegionId id = getregion(x, y);
@@ -261,30 +173,26 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     }
 }
 
-/* Keyboard Bindings
- *****************************************************************************/
-static KeyBinding Insert[] = {
-    { KEY_DELETE,    delete       },
-    { KEY_UP,        cursor_up    },
-    { KEY_DOWN,      cursor_dn    },
-    { KEY_LEFT,      cursor_left  },
-    { KEY_RIGHT,     cursor_right },
-    { KEY_HOME,      cursor_bol   },
-    { KEY_END,       cursor_eol   },
-    { KEY_PGUP,      page_up      },
-    { KEY_PGDN,      page_dn      },
-    { KEY_CTRL_T,    change_focus },
-    { KEY_CTRL_Q,    quit         },
-    { KEY_CTRL_S,    save         },
-    { KEY_CTRL_Z,    undo         },
-    { KEY_CTRL_Y,    redo         },
-    { KEY_CTRL_X,    cut          },
-    { KEY_CTRL_C,    copy         },
-    { KEY_CTRL_V,    paste        },
-    { 0,             NULL         }
-};
+static void tag_handler(char* cmd) {
+    Tag* tags = Builtins;
+    while (tags->tag) {
+        if (!strcmp(tags->tag, cmd)) {
+            Focused = EDIT;
+            tags->action();
+            break;
+        }
+        tags++;
+    }
+}
 
-static void process_table(KeyBinding* bindings, Rune key) {
+static void key_handler(Rune key) {
+    /* ignore invalid keys */
+    if (key == RUNE_ERR) return;
+    /* handle the proper line endings */
+    if (key == '\r') key = '\n';
+    if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
+    /* handle the key */
+    KeyBinding* bindings = Insert;
     while (bindings->key) {
         if (key == bindings->key) {
             bindings->action();
@@ -298,17 +206,7 @@ static void process_table(KeyBinding* bindings, Rune key) {
         view_insert(currview(), key);
 }
 
-static void key_handler(Rune key) {
-    /* ignore invalid keys */
-    if (key == RUNE_ERR) return;
-    /* handle the proper line endings */
-    if (key == '\r') key = '\n';
-    if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
-    /* handle the key */
-    process_table(Insert, key);
-}
-
-/* Redisplay Functions
+/* Drawing Routines
  *****************************************************************************/
 static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
     XGlyphSpec specs[rlen];
@@ -421,20 +319,155 @@ static void redraw(int width, int height) {
     draw_region(EDIT);
 }
 
-/* Main Routine
+/* UI Callbacks
  *****************************************************************************/
-int main(int argc, char** argv) {
-    /* load the buffer views */
-    view_init(getview(TAGS), NULL);
-    view_putstr(getview(TAGS), DEFAULT_TAGS);
-    view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
-    /* initialize the display engine */
-    x11_init(&Config);
-    x11_window("edit", Width, Height);
-    x11_show();
-    Font = x11_font_load(FONTNAME);
-    x11_loop();
-    return 0;
+static void delete(void) {
+    view_delete(currview());
+}
+
+static void cursor_up(void) {
+    view_byline(currview(), -1);
+}
+
+static void cursor_dn(void) {
+    view_byline(currview(), +1);
+}
+
+static void cursor_left(void) {
+    view_byrune(currview(), -1);
+}
+
+static void cursor_right(void) {
+    view_byrune(currview(), +1);
+}
+
+static void cursor_bol(void) {
+    view_bol(currview());
+}
+
+static void cursor_eol(void) {
+    view_eol(currview());
+}
+
+static void page_up(void) {
+    view_scrollpage(currview(), -1);
+}
+
+static void page_dn(void) {
+    view_scrollpage(currview(), +1);
+}
+
+static void change_focus(void) {
+    Focused = (Focused == TAGS ? EDIT : TAGS);
+}
+
+static void quit(void) {
+    static uint32_t num_clicks = 0;
+    static uint32_t prevtime = 0;
+    uint32_t now = getmillis();
+    num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
+    prevtime = now;
+    if (!getbuf(EDIT)->modified || num_clicks >= 2)
+        exit(0);
+}
+
+static void save(void) {
+    buf_save(getbuf(EDIT));
+}
+
+static void undo(void) {
+    view_undo(currview());
+}
+
+static void redo(void) {
+    view_redo(currview());
+}
+
+static void cut(void) {
+    char* str = view_getstr(currview(), NULL);
+    if (str && *str) {
+        cmdwrite(CopyCmd, str);
+        delete();
+    }
+    free(str);
+}
+
+static void copy(void) {
+    char* str = view_getstr(currview(), NULL);
+    if (str && *str)
+        cmdwrite(CopyCmd, str);
+    free(str);
+}
+
+static void paste(void) {
+    char* str = cmdread(PasteCmd);
+    view_putstr(currview(), str);
+    free(str);
+}
+
+/* Mouse Handling
+ *****************************************************************************/
+static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
+    if (count == 1) {
+        view_setcursor(getview(id), row, col);
+    } else if (count == 2) {
+        view_select(getview(id), row, col);
+    } else if (count == 3) {
+        view_selword(getview(id), row, col);
+    }
+}
+
+static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
+    if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
+        cut();
+    } else {
+        char* str = view_fetch(getview(id), row, col);
+        tag_handler(str);
+        free(str);
+    }
+}
+
+static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
+    if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+        paste();
+    else
+        view_find(getview(id), row, col);
+}
+
+static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
+    view_scroll(getview(id), -ScrollLines);
+}
+
+static void mouse_wheeldn(enum RegionId id, size_t count, size_t row, size_t col) {
+    view_scroll(getview(id), +ScrollLines);
+}
+
+/* Region Utils
+ *****************************************************************************/
+static View* getview(enum RegionId id) {
+    return &(Regions[id].view);
+}
+
+static Buf* getbuf(enum RegionId id) {
+    return &(getview(id)->buffer);
+}
+
+static View* currview(void) {
+    return getview(Focused);
+}
+
+static Buf* currbuf(void) {
+    return getbuf(Focused);
+}
+
+static enum RegionId getregion(size_t x, size_t y) {
+    for (int i = 0; i < NREGIONS; i++) {
+        size_t startx = Regions[i].x, endx = startx + Regions[i].width;
+        size_t starty = Regions[i].y, endy = starty + Regions[i].height;
+        if ((startx <= x && x <= endx) && (starty <= y && y <= endy))
+            return (enum RegionId)i;
+    }
+    return NREGIONS;
 }
 
 #if 0
