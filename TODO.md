@@ -1,37 +1,28 @@
 # Implementation Tweaks and Bug Fixes
+
+* Add tag for ctags lookup
+* Implement minimal regex search (per Kernighan article)
+* Arbitrary command execution (<|> operators)
+
 * off by one error on scrolling wrapped lines
 * block selection should handle brace-balancing
-* Selecting big words should not wrap newlines
 * Right click should fetch file if it exists, search otherwise
     * directories in browse?
 
 # Internals and Miscellaneous
 
 * Mode to expand tabs to spaces
-* change indent of dot
 * Calculate line numbers and keep up to date while editing
-* Support multiple buffers
-* Implement undo/redo log
 * Implement ctags lookup and regeneration
 * Implement cscope lookup and regeneration
 * Implement fuzzy file/buffer/tag picker
 * Implement omnicomplete pop-up
-* Implement Tab for command/tag execution
+* Implement keyboard shortcut for command/tag execution
 
 # Graphical User Interface
 
 * Display line location and num lines in status
 * Implement visual mode
-
-# Mouse User Interface
-
-* Triple left click to select "big" word (contiguous block of non-ws chars)
-* Right click to plumb word or search
-* Copy to clipboard on select
-
-# Keyboard User Interface
-
-* Implement VI-like keybindings
 
 # Command Language
 
