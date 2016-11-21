@@ -16,7 +16,7 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
 static void tag_handler(char* cmd);
 static void key_handler(Rune key);
 
-// Drawing Rotuines
+// Drawing Routines
 static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static void draw_status(int fg, size_t ncols);
@@ -401,7 +401,8 @@ static void copy(void) {
 
 static void paste(void) {
     char* str = cmdread(PasteCmd);
-    view_putstr(currview(), str);
+    if (str && *str)
+        view_putstr(currview(), str);
     free(str);
 }
 
