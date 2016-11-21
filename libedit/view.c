@@ -364,7 +364,7 @@ void view_delete(View* view) {
     Sel sel = view->selection;
     selswap(&sel);
     size_t num = num_selected(view->selection);
-    for (size_t i = 0; i < num; i++)
+    for (size_t i = 0; i <= num; i++)
         buf_del(&(view->buffer), sel.beg);
     view->selection.beg = view->selection.end = sel.beg;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
