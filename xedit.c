@@ -259,7 +259,7 @@ static void draw_status(int fg, size_t ncols) {
         (status++)->rune = '.';
         path += (len - ncols) + 6;
     }
-    while(*path)
+    while (*path)
         (status++)->rune = *path++;
     draw_runes(2, 2, fg, 0, glyphs, status - glyphs);
 }
@@ -411,13 +411,12 @@ static void paste(void) {
 /* Mouse Handling
  *****************************************************************************/
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
-    if (count == 1) {
+    if (count == 1)
         view_setcursor(getview(id), row, col);
-    } else if (count == 2) {
+    else if (count == 2)
         view_select(getview(id), row, col);
-    } else if (count == 3) {
+    else if (count == 3)
         view_selword(getview(id), row, col);
-    }
 }
 
 static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {
