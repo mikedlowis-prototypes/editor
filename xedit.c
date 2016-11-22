@@ -77,6 +77,8 @@ Tag Builtins[] = {
     { "Cut",   cut   },
     { "Copy",  copy  },
     { "Paste", paste },
+    { "Undo",  undo  },
+    { "Redo",  redo  },
     //{ "Find",  NULL  },
     { NULL,    NULL  }
 };
