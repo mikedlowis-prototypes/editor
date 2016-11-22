@@ -249,7 +249,7 @@ enum {
 #ifdef __MACH__
 #define FONTNAME "Monaco:size=10:antialias=true:autohint=true"
 #else
-#define FONTNAME "Liberation Mono:size=10.5:antialias=true:autohint=true"
+#define FONTNAME "Liberation Mono:size=10:antialias=true:autohint=true"
 #endif
 #define DEFAULT_COLORSCHEME DARK
 #define DEFAULT_CRLF 1
@@ -273,4 +273,4 @@ enum {
         0xff2aa198,   \
         0xff859900    \
     }
-#define DEFAULT_TAGS "Quit Save Cut Copy Paste | Find "
+#define DEFAULT_TAGS "Quit Save Undo Redo Cut Copy Paste | Find "
