@@ -43,6 +43,7 @@ static void redo(void);
 static void cut(void);
 static void copy(void);
 static void paste(void);
+static void search(void);
 static void find(char* arg);
 
 // Mouse Handling
@@ -111,6 +112,7 @@ static KeyBinding Insert[] = {
     { KEY_CTRL_X,    cut          },
     { KEY_CTRL_C,    copy         },
     { KEY_CTRL_V,    paste        },
+    { KEY_CTRL_F,    search       },
     { 0,             NULL         }
 };
 
@@ -412,6 +414,13 @@ static void paste(void) {
     if (str && *str)
         view_putstr(currview(), str);
     free(str);
+}
+
+static void search(void) {
+    char* str = view_getstr(currview(), NULL);
+    view_findstr(getview(EDIT), str);
+    free(str);
+    Focused = EDIT;
 }
 
 static void find(char* arg) {
