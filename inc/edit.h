@@ -69,6 +69,7 @@ unsigned buf_eow(Buf* buf, unsigned pos);
 unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
 unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
 void buf_find(Buf* buf, size_t* beg, size_t* end);
+void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end);
 unsigned buf_end(Buf* buf);
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
@@ -158,6 +159,7 @@ void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);
 char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);
+void view_findstr(View* view, char* str);
 void view_insert(View* view, Rune rune);
 void view_delete(View* view);
 void view_bol(View* view);
@@ -231,7 +233,10 @@ typedef struct {
 
 typedef struct {
     char* tag;
-    void (*action)(void);
+    union {
+        void (*noarg)(void);
+        void (*arg)(char* arg);
+    } action;
 } Tag;
 
 

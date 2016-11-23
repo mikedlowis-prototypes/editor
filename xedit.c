@@ -13,7 +13,7 @@ enum RegionId {
 
 // Input Handlers
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
-static void tag_handler(char* cmd);
+static void tag_handler(char* cmd, char* arg);
 static void key_handler(Rune key);
 
 // Drawing Routines
@@ -42,6 +42,7 @@ static void redo(void);
 static void cut(void);
 static void copy(void);
 static void paste(void);
+static void find(char* arg);
 
 // Mouse Handling
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col);
@@ -61,7 +62,6 @@ static enum RegionId getregion(size_t x, size_t y);
  *****************************************************************************/
 static enum RegionId Focused = EDIT;
 static Region Regions[NREGIONS] = { 0 };
-static bool TagWinExpanded = false;
 static ButtonState MouseBtns[MOUSE_BTN_COUNT] = { 0 };
 static XFont Font;
 static XConfig Config = {
@@ -72,15 +72,15 @@ static XConfig Config = {
 };
 
 Tag Builtins[] = {
-    { "Quit",  quit  },
-    { "Save",  save  },
-    { "Cut",   cut   },
-    { "Copy",  copy  },
-    { "Paste", paste },
-    { "Undo",  undo  },
-    { "Redo",  redo  },
-    //{ "Find",  NULL  },
-    { NULL,    NULL  }
+    { .tag = "Quit",  .action.noarg = quit  },
+    { .tag = "Save",  .action.noarg = save  },
+    { .tag = "Cut",   .action.noarg = cut   },
+    { .tag = "Copy",  .action.noarg = copy  },
+    { .tag = "Paste", .action.noarg = paste },
+    { .tag = "Undo",  .action.noarg = undo  },
+    { .tag = "Redo",  .action.noarg = redo  },
+    { .tag = "Find",  .action.arg   = find  },
+    { .tag = NULL,    .action.noarg = NULL  }
 };
 
 void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
@@ -175,12 +175,12 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     }
 }
 
-static void tag_handler(char* cmd) {
+static void tag_handler(char* cmd, char* arg) {
     Tag* tags = Builtins;
     while (tags->tag) {
         if (!strcmp(tags->tag, cmd)) {
             Focused = EDIT;
-            tags->action();
+            tags->action.arg(arg);
             break;
         }
         tags++;
@@ -408,6 +408,10 @@ static void paste(void) {
     free(str);
 }
 
+static void find(char* arg) {
+    view_findstr(getview(EDIT), arg);
+}
+
 /* Mouse Handling
  *****************************************************************************/
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
@@ -424,8 +428,22 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
         cut();
     } else {
         char* str = view_fetch(getview(id), row, col);
-        tag_handler(str);
+        char* arg = str;
+        if (!str) { return; }
+        /* first check if the arg is in the same selection as the tag/cmd */
+        while (*arg && !isspace(*arg++));
+        if (*arg) {
+            char* temp = stringdup(arg);
+            *arg = '\0', arg = temp;
+        } else {
+            /* if it isn't then check the tags buffer selection */
+            arg = view_getstr(getview(TAGS), NULL);
+        }
+        /* if we still haven't found it, check the edit buffer selection */
+        if (!arg) arg = view_getstr(getview(EDIT), NULL);
+        tag_handler(str, arg);
         free(str);
+        free(arg);
     }
 }
 

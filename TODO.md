@@ -1,8 +1,8 @@
 # Implementation Tweaks and Bug Fixes
 
+* Arbitrary command execution (<|> operators)
 * Add tag for ctags lookup
 * Implement minimal regex search (per Kernighan article)
-* Arbitrary command execution (<|> operators)
 
 * off by one error on scrolling wrapped lines
 * block selection should handle brace-balancing

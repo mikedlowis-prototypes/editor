@@ -272,6 +272,60 @@ void buf_find(Buf* buf, size_t* beg, size_t* end) {
     }
 }
 
+static Rune* charstorunes(char* str) {
+    size_t len = 0;
+    Rune* runes = NULL;
+    while (str && *str) {
+        Rune rune = 0;
+        size_t length = 0;
+        while (!utf8decode(&rune, &length, *str++));
+        runes = realloc(runes, (len + 1) * sizeof(Rune));
+        runes[len++] = rune;
+    }
+    if (runes) {
+        runes = realloc(runes, (len + 1) * sizeof(Rune));
+        runes[len++] = '\0';
+    }
+    return runes;
+}
+
+static size_t runelen(Rune* runes) {
+    size_t len = 0;
+    for (; runes[len]; len++);
+    return len;
+}
+
+static int rune_match(Buf* buf, unsigned mbeg, unsigned mend, Rune* runes) {
+    for (; *runes; runes++, mbeg++) {
+        int cmp = *runes - buf_get(buf, mbeg);
+        if (cmp != 0) return cmp;
+    }
+    return 0;
+}
+
+void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
+    if (!str) return;
+    Rune* runes = charstorunes(str);
+    size_t rlen = runelen(runes);
+    unsigned start = *beg, mbeg = start+1, mend = mbeg + rlen;
+
+    while (mbeg != start) {
+        if ((buf_get(buf, mbeg) == runes[0]) &&
+            (buf_get(buf, mend-1) == runes[rlen-1]) &&
+            (0 == rune_match(buf, mbeg, mend, runes)))
+        {
+            *beg = mbeg;
+            *end = mend;
+            break;
+        }
+        mbeg++, mend++;
+        if (mend >= buf_end(buf))
+            mbeg = 0, mend = rlen;
+    }
+
+    free(runes);
+}
+
 unsigned buf_end(Buf* buf) {
     size_t bufsz = buf->bufend - buf->bufstart;
     size_t gapsz = buf->gapend - buf->gapstart;

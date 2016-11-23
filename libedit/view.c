@@ -341,6 +341,13 @@ void view_find(View* view, size_t row, size_t col) {
     }
 }
 
+void view_findstr(View* view, char* str) {
+    Sel sel = view->selection;
+    buf_findstr(&(view->buffer), str, &sel.beg, &sel.end);
+    view->selection = sel;
+    view->sync_needed = true;
+}
+
 void view_insert(View* view, Rune rune) {
     if (rune == '\b') {
         if (num_selected(view->selection))
@@ -425,8 +432,10 @@ char* view_getstr(View* view, Sel* range) {
             len += n;
         }
     }
-    str = realloc(str, len+1);
-    if (str) str[len] = '\0';
+    if (str) {
+        str = realloc(str, len+1);
+        str[len] = '\0';
+    }
     return str;
 }
 
