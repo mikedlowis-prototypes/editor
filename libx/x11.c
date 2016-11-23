@@ -375,20 +375,6 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-//void x11_draw_utf8(XFont* font, int fg, int bg, int x, int y, char* str) {
-//    static XftGlyphFontSpec specs[256];
-//    size_t nspecs = 0;
-//    while (*str && nspecs < 256) {
-//        x11_font_getglyph(font, &(specs[nspecs]), *str);
-//        specs[nspecs].x = x;
-//        specs[nspecs].y = y;
-//        x += font->base.width;
-//        nspecs++;
-//        str++;
-//    }
-//    x11_draw_glyphs(fg, bg, specs, nspecs);
-//}
-//
 //void x11_warp_mouse(int x, int y) {
 //    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
 //}

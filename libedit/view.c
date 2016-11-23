@@ -105,8 +105,6 @@ static unsigned scroll_up(View* view) {
 
 static unsigned scroll_dn(View* view) {
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
-    if (last >= buf_end(&(view->buffer)))
-        return last;
     /* delete the first row and shift the others */
     if (view->nrows > 1) {
         free(view->rows[0]);
@@ -127,7 +125,7 @@ static void sync_view(View* view, size_t csr) {
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
     while (csr < first)
         first = scroll_up(view);
-    while (csr > last)
+    while (csr > last && last < buf_end(&(view->buffer)))
         last = scroll_dn(view);
     view->sync_needed = false;
 }
@@ -371,8 +369,13 @@ void view_delete(View* view) {
     Sel sel = view->selection;
     selswap(&sel);
     size_t num = num_selected(view->selection);
-    for (size_t i = 0; i <= num; i++)
-        buf_del(&(view->buffer), sel.beg);
+    if (num == 0) {
+        if (sel.end < buf_end(&(view->buffer)))
+            buf_del(&(view->buffer), sel.end);
+    } else {
+        for (size_t i = 0; i < num; i++)
+            buf_del(&(view->buffer), sel.beg);
+    }
     view->selection.beg = view->selection.end = sel.beg;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
