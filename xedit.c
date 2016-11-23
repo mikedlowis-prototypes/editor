@@ -175,10 +175,10 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     }
 }
 
-static void tag_handler(char* cmd, char* arg) {
+static void tag_handler(char* tag, char* arg) {
     Tag* tags = Builtins;
     while (tags->tag) {
-        if (!strcmp(tags->tag, cmd)) {
+        if (!strcmp(tags->tag, tag)) {
             Focused = EDIT;
             tags->action.arg(arg);
             break;
@@ -428,20 +428,22 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
         cut();
     } else {
         char* str = view_fetch(getview(id), row, col);
-        char* arg = str;
+        char* tag = str;
         if (!str) { return; }
+        for (; *tag && isspace(*tag); tag++);
         /* first check if the arg is in the same selection as the tag/cmd */
+        char* arg = tag;
         while (*arg && !isspace(*arg++));
         if (*arg) {
             char* temp = stringdup(arg);
-            *arg = '\0', arg = temp;
+            *(arg-1) = '\0', arg = temp;
         } else {
             /* if it isn't then check the tags buffer selection */
             arg = view_getstr(getview(TAGS), NULL);
         }
         /* if we still haven't found it, check the edit buffer selection */
         if (!arg) arg = view_getstr(getview(EDIT), NULL);
-        tag_handler(str, arg);
+        tag_handler(tag, arg);
         free(str);
         free(arg);
     }
