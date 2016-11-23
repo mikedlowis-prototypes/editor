@@ -290,6 +290,7 @@ static void selcontext(View* view, Sel* sel) {
 }
 
 void view_selword(View* view, size_t row, size_t col) {
+    buf_loglock(&(view->buffer));
     view_setcursor(view, row, col);
     Sel sel = view->selection;
     selbigword(view, &sel);
@@ -298,12 +299,14 @@ void view_selword(View* view, size_t row, size_t col) {
 }
 
 void view_selprev(View* view) {
+    buf_loglock(&(view->buffer));
     Sel sel = view->selection;
     buf_lastins(&(view->buffer), &sel.beg, &sel.end);
     view->selection = sel;
 }
 
 void view_select(View* view, size_t row, size_t col) {
+    buf_loglock(&(view->buffer));
     view_setcursor(view, row, col);
     Sel sel = view->selection;
     selcontext(view, &sel);

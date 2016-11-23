@@ -407,12 +407,7 @@ unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
 
 void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
     Log* log = buf->undo;
-    while (log) {
-        if (log->insert)
-            break;
-        log = log->next;
-    }
-    if (log) {
+    if (log && log->insert) {
         *beg = log->data.ins.beg;
         *end = log->data.ins.end;
     }
