@@ -75,8 +75,8 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
 unsigned buf_getcol(Buf* buf, unsigned pos);
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
-char* buf_getstr(Buf* buf, unsigned beg, unsigned end);
-unsigned buf_putstr(Buf* buf, unsigned beg, unsigned end, char* str);
+void buf_lastins(Buf* buf, size_t* beg, size_t* end);
+void buf_loglock(Buf* buf);
 
 /*
 void buf_load(Buf* buf, char* path);
@@ -156,6 +156,7 @@ void view_byline(View* view, int move);
 void view_setcursor(View* view, size_t row, size_t col);
 void view_selext(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
+void view_selprev(View* view);
 void view_select(View* view, size_t row, size_t col);
 char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);

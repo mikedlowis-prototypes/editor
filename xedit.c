@@ -34,6 +34,7 @@ static void cursor_bol(void);
 static void cursor_eol(void);
 static void page_up(void);
 static void page_dn(void);
+static void select_prev(void);
 static void change_focus(void);
 static void quit(void);
 static void save(void);
@@ -101,6 +102,7 @@ static KeyBinding Insert[] = {
     { KEY_END,       cursor_eol   },
     { KEY_PGUP,      page_up      },
     { KEY_PGDN,      page_dn      },
+    { KEY_ESCAPE,    select_prev  },
     { KEY_CTRL_T,    change_focus },
     { KEY_CTRL_Q,    quit         },
     { KEY_CTRL_S,    save         },
@@ -357,6 +359,10 @@ static void page_up(void) {
 
 static void page_dn(void) {
     view_scrollpage(currview(), +1);
+}
+
+static void select_prev(void) {
+    view_selprev(currview());
 }
 
 static void change_focus(void) {

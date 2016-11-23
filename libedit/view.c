@@ -297,6 +297,12 @@ void view_selword(View* view, size_t row, size_t col) {
     view->selection = sel;
 }
 
+void view_selprev(View* view) {
+    Sel sel = view->selection;
+    buf_lastins(&(view->buffer), &sel.beg, &sel.end);
+    view->selection = sel;
+}
+
 void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col);
     Sel sel = view->selection;
@@ -406,12 +412,14 @@ void view_redo(View* view) {
 }
 
 void view_putstr(View* view, char* str) {
+    buf_loglock(&(view->buffer));
     while (*str) {
         Rune rune = 0;
         size_t length = 0;
         while (!utf8decode(&rune, &length, *str++));
         view_insert(view, rune);
     }
+    buf_loglock(&(view->buffer));
 }
 
 char* view_getstr(View* view, Sel* range) {

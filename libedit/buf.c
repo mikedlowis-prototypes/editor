@@ -404,3 +404,21 @@ unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
     }
     return curr;
 }
+
+void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
+    Log* log = buf->undo;
+    while (log) {
+        if (log->insert)
+            break;
+        log = log->next;
+    }
+    if (log) {
+        *beg = log->data.ins.beg;
+        *end = log->data.ins.end;
+    }
+}
+
+void buf_loglock(Buf* buf) {
+    if (buf->undo)
+        buf->undo->locked = true;
+}
