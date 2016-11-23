@@ -139,9 +139,22 @@ static void insert(Buf* buf, unsigned off, Rune rune) {
         *(buf->gapstart++) = rune;
 }
 
+static void clear_redo(Buf* buf) {
+    Log* log = buf->redo;
+    while (log) {
+        Log* deadite = log;
+        log = deadite->next;
+        if (!deadite->insert)
+            free(deadite->data.del.runes);
+        free(deadite);
+    }
+    buf->redo = NULL;
+}
+
 void buf_ins(Buf* buf, unsigned off, Rune rune) {
     buf->modified = true;
     log_insert(&(buf->undo), off, off+1);
+    clear_redo(buf);
     insert(buf, off, rune);
 }
 
@@ -154,6 +167,7 @@ void buf_del(Buf* buf, unsigned off) {
     buf->modified = true;
     Rune r = buf_get(buf, off);
     log_delete(&(buf->undo), off, &r, 1);
+    clear_redo(buf);
     delete(buf, off);
 }
 
