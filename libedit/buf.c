@@ -94,6 +94,7 @@ static void log_insert(Log** list, unsigned beg, unsigned end) {
         newlog->data.ins.beg = beg;
         newlog->data.ins.end = end;
         newlog->next = *list;
+        if (log) log->locked = true;
         *list = newlog;
     } else if (beg <= log->data.ins.beg) {
         log->data.ins.beg--;
@@ -114,6 +115,7 @@ static void log_delete(Log** list, unsigned off, Rune* r, size_t len) {
         for (size_t i = 0; i < len; i++)
             newlog->data.del.runes[i] = r[i];
         newlog->next = *list;
+        if (log) log->locked = true;
         *list = newlog;
     } else if (off == log->data.del.off) {
         log->data.del.len++;
@@ -162,6 +164,7 @@ unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
     *from = log->next;
     /* invert the log type and move it to the destination */
     Log* newlog = (Log*)calloc(sizeof(Log), 1);
+    newlog->locked = true;
     if (log->insert) {
         newlog->insert = false;
         size_t n = (log->data.ins.end - log->data.ins.beg);
