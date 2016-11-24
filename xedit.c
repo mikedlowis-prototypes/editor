@@ -46,6 +46,12 @@ static void paste(void);
 static void search(void);
 static void find(char* arg);
 
+// Tag/Cmd Execution
+static Tag* tag_lookup(char* cmd);
+static void tag_exec(Tag* tag, char* arg);
+static void cmd_exec(char* cmd);
+static void exec(char* cmd);
+
 // Mouse Handling
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col);
 static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col);
@@ -176,18 +182,6 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
             /* execute the action on button release */
             MouseActs[btn](id, MouseBtns[btn].count, row, col);
         }
-    }
-}
-
-static void tag_handler(char* tag, char* arg) {
-    Tag* tags = Builtins;
-    while (tags->tag) {
-        if (!strcmp(tags->tag, tag)) {
-            Focused = EDIT;
-            tags->action.arg(arg);
-            break;
-        }
-        tags++;
     }
 }
 
@@ -426,6 +420,46 @@ static void find(char* arg) {
     view_findstr(getview(EDIT), arg);
 }
 
+/* Tag/Cmd Execution
+ *****************************************************************************/
+static Tag* tag_lookup(char* cmd) {
+    size_t len = 0;
+    Tag* tags = Builtins;
+    for (char* tag = cmd; !isspace(*tag); tag++, len++);
+    while (tags->tag) {
+        if (!strncmp(tags->tag, cmd, len))
+            return tags;
+        tags++;
+    }
+    return NULL;
+}
+
+static void tag_exec(Tag* tag, char* arg) {
+    /* if we didnt get an arg, find one in the selection */
+    if (!arg) arg = view_getstr(getview(TAGS), NULL);
+    if (!arg) arg = view_getstr(getview(EDIT), NULL);
+    /* execute the tag handler */
+    tag->action.arg(arg);
+    free(arg);
+}
+
+static void cmd_exec(char* cmd) {
+    printf("exec cmd: '%s'\n", cmd);
+}
+
+static void exec(char* cmd) {
+    /* skip leading space */
+    for (; *cmd && isspace(*cmd); cmd++);
+    /* see if it matches a builtin tag */
+    Tag* tag = tag_lookup(cmd);
+    if (tag) {
+        while (*cmd && !isspace(*cmd++));
+        tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
+    } else {
+        cmd_exec(cmd);
+    }
+}
+
 /* Mouse Handling
  *****************************************************************************/
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
@@ -442,24 +476,8 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
         cut();
     } else {
         char* str = view_fetch(getview(id), row, col);
-        char* tag = str;
-        if (!str) { return; }
-        for (; *tag && isspace(*tag); tag++);
-        /* first check if the arg is in the same selection as the tag/cmd */
-        char* arg = tag;
-        while (*arg && !isspace(*arg++));
-        if (*arg) {
-            char* temp = stringdup(arg);
-            *(arg-1) = '\0', arg = temp;
-        } else {
-            /* if it isn't then check the tags buffer selection */
-            arg = view_getstr(getview(TAGS), NULL);
-            /* if we still haven't found it, check the edit buffer selection */
-            if (!arg) arg = view_getstr(getview(EDIT), NULL);
-        }
-        tag_handler(tag, arg);
+        if (str) exec(str);
         free(str);
-        free(arg);
     }
 }
 
