@@ -67,7 +67,7 @@ void x11_init(XConfig* cfg) {
     /* open the X display and get basic attributes */
     Config = cfg;
     if (!(X.display = XOpenDisplay(0)))
-        assert(false);
+        die("could not open display");
     X.root = DefaultRootWindow(X.display);
     XWindowAttributes wa;
     XGetWindowAttributes(X.display, X.root, &wa);

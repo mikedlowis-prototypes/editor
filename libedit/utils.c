@@ -10,20 +10,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#ifdef __MACH__
-#define CLOCK_MONOTONIC 0
-// clock_gettime is not implemented on OSX (supposedly added on macOS)
-int clock_gettime(int id, struct timespec* t) {
-    (void)id;
-    struct timeval now;
-    int rv = gettimeofday(&now, NULL);
-    if (rv) return rv;
-    t->tv_sec  = now.tv_sec;
-    t->tv_nsec = now.tv_usec * 1000;
-    return 0;
-}
-#endif
-
 uint32_t getmillis(void) {
     struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);

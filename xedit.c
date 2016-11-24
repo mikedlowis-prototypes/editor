@@ -420,7 +420,6 @@ static void search(void) {
     char* str = view_getstr(currview(), NULL);
     view_findstr(getview(EDIT), str);
     free(str);
-    Focused = EDIT;
 }
 
 static void find(char* arg) {
@@ -455,9 +454,9 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
         } else {
             /* if it isn't then check the tags buffer selection */
             arg = view_getstr(getview(TAGS), NULL);
+            /* if we still haven't found it, check the edit buffer selection */
+            if (!arg) arg = view_getstr(getview(EDIT), NULL);
         }
-        /* if we still haven't found it, check the edit buffer selection */
-        if (!arg) arg = view_getstr(getview(EDIT), NULL);
         tag_handler(tag, arg);
         free(str);
         free(arg);
