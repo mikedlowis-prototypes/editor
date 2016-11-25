@@ -444,7 +444,40 @@ static void tag_exec(Tag* tag, char* arg) {
 }
 
 static void cmd_exec(char* cmd) {
-    printf("exec cmd: '%s'\n", cmd);
+    char op = '\0';
+    if (*cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
+        op = *cmd, cmd++;
+    /* convert the command to an array */
+    size_t len = 0;
+    char **cmdary = NULL, *part = NULL;
+    while (true) {
+        part = strtok((!part ? cmd : NULL), " ");
+        cmdary = realloc(cmdary, len+1 * sizeof(char*));
+        cmdary[len++] = part;
+        if (!part) break;
+    }
+    /* execute the command */
+    char *input = NULL, *output = NULL;
+    enum RegionId dest = EDIT;
+    input = view_getstr(getview(EDIT), NULL);
+    if (op == '!') {
+        printf("null: '%s' argc: %lu\n", cmd, len);
+    } else if (op == '>') {
+        cmdwrite(cmdary, input);
+    } else if (op == '|') {
+        output = cmdwriteread(cmdary, input);
+    } else {
+        if (op != '<') dest = Focused;
+        output = cmdread(cmdary);
+    }
+    if (output) {
+        view_putstr(getview(dest), output);
+        view_selprev(getview(dest));
+    }
+    /* cleanup */
+    free(input);
+    free(output);
+    free(cmdary);
 }
 
 static void exec(char* cmd) {

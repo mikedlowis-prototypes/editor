@@ -186,6 +186,7 @@ void detach(Process* proc);
 void terminate(Process* proc, int sig);
 char* cmdread(char** cmd);
 void cmdwrite(char** cmd, char* text);
+char* cmdwriteread(char** cmd, char* text);
 
 /* Color Scheme Handling
  *****************************************************************************/

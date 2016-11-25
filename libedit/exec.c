@@ -80,3 +80,19 @@ void cmdwrite(char** cmd, char* text) {
     detach(&proc);
     waitpid(proc.pid, NULL, 0);
 }
+
+char* cmdwriteread(char** cmd, char* text) {
+    Process proc;
+    if (execute(cmd, &proc) < 0) {
+        perror("failed to execute");
+        return NULL;
+    }
+    if (write(proc.in, text, strlen(text)) < 0) {
+        perror("failed to write");
+        return NULL;
+    }
+    char* str = fdgets(proc.out);
+    detach(&proc);
+    waitpid(proc.pid, NULL, 0);
+    return str;
+}
