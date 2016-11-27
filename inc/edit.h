@@ -181,7 +181,6 @@ typedef struct {
     int err; /* file descriptor for the child process's standard error */
 } Process;
 
-int execute(char** cmd, Process* proc);
 void detach(Process* proc);
 void terminate(Process* proc, int sig);
 char* cmdread(char** cmd);

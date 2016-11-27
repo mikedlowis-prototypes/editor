@@ -8,7 +8,7 @@
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
-int execute(char** cmd, Process* proc) {
+static int execute(char** cmd, Process* proc) {
     int inpipe[2], outpipe[2], errpipe[2];
     /* create the pipes */
     if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0) || (pipe(errpipe) < 0))

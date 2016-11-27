@@ -44,6 +44,7 @@ static void cut(void);
 static void copy(void);
 static void paste(void);
 static void search(void);
+static void execute(void);
 static void find(char* arg);
 
 // Tag/Cmd Execution
@@ -119,6 +120,7 @@ static KeyBinding Insert[] = {
     { KEY_CTRL_C,    copy         },
     { KEY_CTRL_V,    paste        },
     { KEY_CTRL_F,    search       },
+    { KEY_CTRL_E,    execute      },
     { 0,             NULL         }
 };
 
@@ -132,7 +134,6 @@ static char* CopyCmd[]  = { "xsel", "-bi", NULL };
 static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
 static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
-
 
 /* Main Routine
  *****************************************************************************/
@@ -418,6 +419,12 @@ static void search(void) {
     free(str);
 }
 
+static void execute(void) {
+    char* str = view_getstr(currview(), NULL);
+    if (str) exec(str);
+    free(str);
+}
+
 static void find(char* arg) {
     view_findstr(getview(EDIT), arg);
 }
@@ -449,6 +456,7 @@ static void cmd_exec(char* cmd) {
     char op = '\0';
     if (*cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
         op = *cmd, cmd++;
+    ShellCmd[2] = cmd;
     /* execute the command */
     char *input = NULL, *output = NULL;
     enum RegionId dest = EDIT;
