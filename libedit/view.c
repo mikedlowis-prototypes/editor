@@ -425,6 +425,14 @@ void view_putstr(View* view, char* str) {
     buf_loglock(&(view->buffer));
 }
 
+void view_append(View* view, char* str) {
+    size_t end = buf_end(&(view->buffer));
+    if (view->selection.end != end)
+        view->selection = (Sel){ .beg = end, .end = end };
+    view_putstr(view, str);
+    view_selprev(view);
+}
+
 char* view_getstr(View* view, Sel* range) {
     Buf* buf = &(view->buffer);
     Sel sel = (range ? *range : view->selection);

@@ -376,6 +376,9 @@ static void quit(void) {
     prevtime = now;
     if (!getbuf(EDIT)->modified || num_clicks >= 2)
         exit(0);
+    else
+        view_append(getview(TAGS),
+            "File is modified. Double click Quit tag or press Ctrl+Q twice to discard changes.");
 }
 
 static void save(void) {
