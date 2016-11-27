@@ -91,6 +91,7 @@ char* cmdwriteread(char** cmd, char* text) {
         perror("failed to write");
         return NULL;
     }
+    close(proc.in);
     char* str = fdgets(proc.out);
     detach(&proc);
     waitpid(proc.pid, NULL, 0);

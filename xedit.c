@@ -131,6 +131,8 @@ static char* PasteCmd[] = { "pbpaste", NULL };
 static char* CopyCmd[]  = { "xsel", "-bi", NULL };
 static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
+static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
+
 
 /* Main Routine
  *****************************************************************************/
@@ -425,7 +427,7 @@ static void find(char* arg) {
 static Tag* tag_lookup(char* cmd) {
     size_t len = 0;
     Tag* tags = Builtins;
-    for (char* tag = cmd; !isspace(*tag); tag++, len++);
+    for (char* tag = cmd; *tag && !isspace(*tag); tag++, len++);
     while (tags->tag) {
         if (!strncmp(tags->tag, cmd, len))
             return tags;
@@ -447,28 +449,19 @@ static void cmd_exec(char* cmd) {
     char op = '\0';
     if (*cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
         op = *cmd, cmd++;
-    /* convert the command to an array */
-    size_t len = 0;
-    char **cmdary = NULL, *part = NULL;
-    while (true) {
-        part = strtok((!part ? cmd : NULL), " ");
-        cmdary = realloc(cmdary, len+1 * sizeof(char*));
-        cmdary[len++] = part;
-        if (!part) break;
-    }
     /* execute the command */
     char *input = NULL, *output = NULL;
     enum RegionId dest = EDIT;
     input = view_getstr(getview(EDIT), NULL);
     if (op == '!') {
-        printf("null: '%s' argc: %lu\n", cmd, len);
+        printf("null: '%s'\n", cmd);
     } else if (op == '>') {
-        cmdwrite(cmdary, input);
+        cmdwrite(ShellCmd, input);
     } else if (op == '|') {
-        output = cmdwriteread(cmdary, input);
+        output = cmdwriteread(ShellCmd, input);
     } else {
         if (op != '<') dest = Focused;
-        output = cmdread(cmdary);
+        output = cmdread(ShellCmd);
     }
     if (output) {
         view_putstr(getview(dest), output);
@@ -477,7 +470,6 @@ static void cmd_exec(char* cmd) {
     /* cleanup */
     free(input);
     free(output);
-    free(cmdary);
 }
 
 static void exec(char* cmd) {
