@@ -124,3 +124,4 @@ void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
 size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
 void x11_draw_glyphs(int fg, int bg, XGlyphSpec* glyphs, size_t nglyphs);
+void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);

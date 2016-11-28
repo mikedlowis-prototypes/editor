@@ -18,7 +18,7 @@ TEST_OBJS =     \
 
 include config.mk
 
-all: xedit
+all: xedit xpick
 
 clean:
 	$(RM) *.o lib*/*.o test/*.o *.a xpick xedit unittests
@@ -29,7 +29,8 @@ test: unittests
 xedit: xedit.o libx.a libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
 
-#xpick: xpick.o libx.a libedit.a
+xpick: xpick.o libx.a libedit.a
+	$(LD) -o $@ $^ $(LDFLAGS)
 
 libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
