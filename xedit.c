@@ -100,25 +100,40 @@ void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, s
     [MOUSE_BTN_WHEELDOWN] = mouse_wheeldn,
 };
 
-static KeyBinding Insert[] = {
-    { KEY_DELETE,    delete       },
-    { KEY_UP,        cursor_up    },
-    { KEY_DOWN,      cursor_dn    },
-    { KEY_LEFT,      cursor_left  },
-    { KEY_RIGHT,     cursor_right },
-    { KEY_HOME,      cursor_bol   },
-    { KEY_END,       cursor_eol   },
-    { KEY_PGUP,      page_up      },
-    { KEY_PGDN,      page_dn      },
-    { KEY_ESCAPE,    select_prev  },
-    { KEY_CTRL_T,    change_focus },
-    { KEY_CTRL_Q,    quit         },
+static KeyBinding Bindings[] = {
+    /* Function Keys */
+    //{ KEY_CTRL_F1,    welcome     },
+
+    /* Standard Unix Shortcuts */
+    //{ KEY_CTRL_U,    del_to_bol   },
+    //{ KEY_CTRL_W,    del_to_bow   },
+    //{ KEY_CTRL_H,    del_prev_char},
+    { KEY_CTRL_A,    cursor_bol   },
+    { KEY_CTRL_E,    cursor_eol   },
+
+    /* Standard Text Editing Shortcuts */
     { KEY_CTRL_S,    save         },
     { KEY_CTRL_Z,    undo         },
     { KEY_CTRL_Y,    redo         },
     { KEY_CTRL_X,    cut          },
     { KEY_CTRL_C,    copy         },
     { KEY_CTRL_V,    paste        },
+
+    /* Common Special Keys */
+    { KEY_DELETE,    delete       },
+    { KEY_HOME,      cursor_bol   },
+    { KEY_END,       cursor_eol   },
+    { KEY_PGUP,      page_up      },
+    { KEY_PGDN,      page_dn      },
+    { KEY_UP,        cursor_up    },
+    { KEY_DOWN,      cursor_dn    },
+    { KEY_LEFT,      cursor_left  },
+    { KEY_RIGHT,     cursor_right },
+
+    /* Implementation Specific */
+    { KEY_ESCAPE,    select_prev  },
+    { KEY_CTRL_T,    change_focus },
+    { KEY_CTRL_Q,    quit         },
     { KEY_CTRL_F,    search       },
     { KEY_CTRL_E,    execute      },
     { 0,             NULL         }
@@ -195,7 +210,7 @@ static void key_handler(Rune key) {
     if (key == '\r') key = '\n';
     if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
     /* handle the key */
-    KeyBinding* bindings = Insert;
+    KeyBinding* bindings = Bindings;
     while (bindings->key) {
         if (key == bindings->key) {
             bindings->action();
