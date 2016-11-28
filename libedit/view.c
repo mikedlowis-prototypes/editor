@@ -429,6 +429,10 @@ void view_append(View* view, char* str) {
     size_t end = buf_end(&(view->buffer));
     if (view->selection.end != end)
         view->selection = (Sel){ .beg = end, .end = end };
+	if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
+        buf_ins(&(view->buffer), view->selection.end++, '\n');
+        view->selection.beg++;
+    }
     view_putstr(view, str);
     view_selprev(view);
 }
