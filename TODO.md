@@ -1,28 +1,31 @@
 # Implementation Tweaks and Bug Fixes
 
-* Arbitrary command execution (<|> operators)
+* Should not be able to undo initial tag line text insertion
+* capture stderr of executed commands and place it in tags view
+* Disallow scrolling past end of buffer
+* track down double click bug  for selecting whole line
 * Add tag for ctags lookup
 * Implement minimal regex search (per Kernighan article)
-
-* off by one error on scrolling wrapped lines
+* Implement fuzzy file/buffer/tag picker
+* Implement omnicomplete pop-up
+* Mode to expand tabs to spaces* off by one error on scrolling up with wrapped lines
 * block selection should handle brace-balancing
 * Right click should fetch file if it exists, search otherwise
     * directories in browse?
 
 # Internals and Miscellaneous
 
-* Mode to expand tabs to spaces
 * Calculate line numbers and keep up to date while editing
 * Implement ctags lookup and regeneration
 * Implement cscope lookup and regeneration
-* Implement fuzzy file/buffer/tag picker
-* Implement omnicomplete pop-up
-* Implement keyboard shortcut for command/tag execution
+
+# Auxillary Programs
+
+* Win-like terminal emulator
 
 # Graphical User Interface
 
 * Display line location and num lines in status
-* Implement visual mode
 
 # Command Language
 
@@ -33,3 +36,5 @@
 * Implement fuse file-system backend?
 * Spell checker integration
 * Syntax highlighting
+* Implement full featured regex engine
+
