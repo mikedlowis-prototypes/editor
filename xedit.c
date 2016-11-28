@@ -46,6 +46,7 @@ static void paste(void);
 static void search(void);
 static void execute(void);
 static void find(char* arg);
+static void open_file(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -103,6 +104,8 @@ void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, s
 static KeyBinding Bindings[] = {
     /* Function Keys */
     //{ KEY_CTRL_F1,    welcome     },
+    //{ KEY_CTRL_F2,    ctags_scan  },
+    //{ KEY_CTRL_F11,   fullscreen  },
 
     /* Standard Unix Shortcuts */
     //{ KEY_CTRL_U,    del_to_bol   },
@@ -135,7 +138,13 @@ static KeyBinding Bindings[] = {
     { KEY_CTRL_T,    change_focus },
     { KEY_CTRL_Q,    quit         },
     { KEY_CTRL_F,    search       },
-    { KEY_CTRL_E,    execute      },
+    { KEY_CTRL_D,    execute      },
+
+    /* Picker Shortcuts */
+    { KEY_CTRL_O,    open_file    },
+    //{ KEY_CTRL_P,    find_ctag    },
+    //{ KEY_CTRL_G,    goto_ctag    },
+
     { 0,             NULL         }
 };
 
@@ -149,6 +158,8 @@ static char* CopyCmd[]  = { "xsel", "-bi", NULL };
 static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
 static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
+static char* PickFileCmd[] = { "./xfilepick", ".", NULL };
+static char* OpenCmd[] = { "./xedit", NULL, NULL };
 
 /* Main Routine
  *****************************************************************************/
@@ -445,6 +456,16 @@ static void execute(void) {
 
 static void find(char* arg) {
     view_findstr(getview(EDIT), arg);
+}
+
+static void open_file(void) {
+    char* file = cmdread(PickFileCmd);
+    if (file) {
+        file[strlen(file)-1] = '\0';
+        OpenCmd[1] = file;
+        free(cmdread(OpenCmd));
+    }
+    free(file);
 }
 
 /* Tag/Cmd Execution
