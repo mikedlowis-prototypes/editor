@@ -462,8 +462,12 @@ static void open_file(void) {
     char* file = cmdread(PickFileCmd);
     if (file) {
         file[strlen(file)-1] = '\0';
-        OpenCmd[1] = file;
-        free(cmdread(OpenCmd));
+        if (!getbuf(EDIT)->path && !getbuf(EDIT)->modified) {
+            buf_load(getbuf(EDIT), file);
+        } else {
+            OpenCmd[1] = file;
+            free(cmdread(OpenCmd));
+        }
     }
     free(file);
 }
