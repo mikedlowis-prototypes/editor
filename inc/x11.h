@@ -16,7 +16,7 @@ typedef enum {
 
 typedef struct {
     void (*redraw)(int width, int height);
-    void (*handle_key)(uint32_t rune);
+    void (*handle_key)(int mods, uint32_t rune);
     void (*handle_mouse)(MouseAct act, MouseBtn btn, int x, int y);
     uint32_t palette[16];
 } XConfig;
@@ -105,6 +105,19 @@ enum Keys {
     KEY_CTRL_7           = 0x1F,
     KEY_CTRL_SLASH       = 0x1F,
     KEY_CTRL_UNDERSCORE  = 0x1F,
+};
+
+/* Key modifier masks */
+enum {
+    ModNone       = 0,
+    ModShift      = (1 << 0),
+    ModCapsLock   = (1 << 1),
+    ModCtrl       = (1 << 2),
+    ModAlt        = (1 << 3),
+    ModNumLock    = (1 << 4),
+    ModScrollLock = (1 << 5),
+    ModWindows    = (1 << 6),
+    ModAny        = ModWindows-1
 };
 
 void x11_init(XConfig* cfg);

@@ -14,7 +14,7 @@ enum RegionId {
 // Input Handlers
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
 static void tag_handler(char* cmd, char* arg);
-static void key_handler(Rune key);
+static void key_handler(int mods, Rune key);
 
 // Drawing Routines
 static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen);
@@ -47,6 +47,24 @@ static void search(void);
 static void execute(void);
 static void find(char* arg);
 static void open_file(void);
+static void delrune_right(void);
+static void delword_right(void);
+static void delrune_left(void);
+static void delword_left(void);
+static void cursor_bof(void);
+static void select_bol(void);
+static void select_bof(void);
+static void cursor_eof(void);
+static void select_eol(void);
+static void select_eof(void);
+static void select_up(void);
+static void select_dn(void);
+static void select_left(void);
+static void word_left(void);
+static void selword_left(void);
+static void select_right(void);
+static void word_right(void);
+static void selword_right(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -111,41 +129,60 @@ static KeyBinding Bindings[] = {
     //{ KEY_CTRL_U,    del_to_bol   },
     //{ KEY_CTRL_W,    del_to_bow   },
     //{ KEY_CTRL_H,    del_prev_char},
-    { KEY_CTRL_A,    cursor_bol   },
-    { KEY_CTRL_E,    cursor_eol   },
+    { ModCtrl, 'a', cursor_bol },
+    { ModCtrl, 'e', cursor_eol },
 
     /* Standard Text Editing Shortcuts */
-    { KEY_CTRL_S,    save         },
-    { KEY_CTRL_Z,    undo         },
-    { KEY_CTRL_Y,    redo         },
-    { KEY_CTRL_X,    cut          },
-    { KEY_CTRL_C,    copy         },
-    { KEY_CTRL_V,    paste        },
+    { ModCtrl, 's', save  },
+    { ModCtrl, 'z', undo  },
+    { ModCtrl, 'y', redo  },
+    { ModCtrl, 'x', cut   },
+    { ModCtrl, 'c', copy  },
+    { ModCtrl, 'v', paste },
 
     /* Common Special Keys */
-    { KEY_DELETE,    delete       },
-    { KEY_HOME,      cursor_bol   },
-    { KEY_END,       cursor_eol   },
-    { KEY_PGUP,      page_up      },
-    { KEY_PGDN,      page_dn      },
-    { KEY_UP,        cursor_up    },
-    { KEY_DOWN,      cursor_dn    },
-    { KEY_LEFT,      cursor_left  },
-    { KEY_RIGHT,     cursor_right },
+    { ModNone, KEY_PGUP,      page_up       },
+    { ModNone, KEY_PGDN,      page_dn       },
+    { ModNone, KEY_DELETE,    delrune_right },
+    { ModCtrl, KEY_DELETE,    delword_right },
+    { ModNone, KEY_BACKSPACE, delrune_left  },
+    { ModCtrl, KEY_BACKSPACE, delword_left  },
+
+    /* Cursor Movements */
+    { ModNone,          KEY_HOME,   cursor_bol    },
+    { ModCtrl,          KEY_HOME,   cursor_bof    },
+    { ModShift,         KEY_HOME,   select_bol    },
+    { ModCtrl|ModShift, KEY_HOME,   select_bof    },
+    { ModNone,          KEY_END,    cursor_eol    },
+    { ModCtrl,          KEY_END,    cursor_eof    },
+    { ModShift,         KEY_END,    select_eol    },
+    { ModCtrl|ModShift, KEY_END,    select_eof    },
+    { ModNone,          KEY_UP,     cursor_up     },
+    { ModShift,         KEY_UP,     select_up     },
+    { ModNone,          KEY_DOWN,   cursor_dn     },
+    { ModShift,         KEY_DOWN,   select_dn     },
+    { ModNone,          KEY_LEFT,   cursor_left   },
+    { ModShift,         KEY_LEFT,   select_left   },
+    { ModCtrl,          KEY_LEFT,   word_left     },
+    { ModCtrl|ModShift, KEY_LEFT,   selword_left  },
+    { ModNone,          KEY_RIGHT,  cursor_right  },
+    { ModShift,         KEY_RIGHT,  select_right  },
+    { ModCtrl,          KEY_RIGHT,  word_right    },
+    { ModCtrl|ModShift, KEY_RIGHT,  selword_right },
 
     /* Implementation Specific */
-    { KEY_ESCAPE,    select_prev  },
-    { KEY_CTRL_T,    change_focus },
-    { KEY_CTRL_Q,    quit         },
-    { KEY_CTRL_F,    search       },
-    { KEY_CTRL_D,    execute      },
+    { ModAny,  KEY_ESCAPE, select_prev  },
+    { ModCtrl, 't',        change_focus },
+    { ModCtrl, 'q',        quit         },
+    { ModCtrl, 'f',        search       },
+    { ModCtrl, 'd',        execute      },
 
     /* Picker Shortcuts */
-    { KEY_CTRL_O,    open_file    },
+    { ModCtrl, 'o', open_file },
     //{ KEY_CTRL_P,    find_ctag    },
     //{ KEY_CTRL_G,    goto_ctag    },
 
-    { 0,             NULL         }
+    { 0, 0, NULL } // End the table
 };
 
 /* External Commands
@@ -214,7 +251,7 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     }
 }
 
-static void key_handler(Rune key) {
+static void key_handler(int mods, Rune key) {
     /* ignore invalid keys */
     if (key == RUNE_ERR) return;
     /* handle the proper line endings */
@@ -222,8 +259,10 @@ static void key_handler(Rune key) {
     if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
     /* handle the key */
     KeyBinding* bindings = Bindings;
+    uint32_t mkey = tolower(key);
     while (bindings->key) {
-        if (key == bindings->key) {
+        int keymods = bindings->mods;
+        if ((mkey == bindings->key) && (keymods == ModAny || keymods == mods)) {
             bindings->action();
             return;
         }
@@ -395,9 +434,9 @@ static void change_focus(void) {
 }
 
 static void quit(void) {
-    static uint32_t num_clicks = 0;
-    static uint32_t prevtime = 0;
-    uint32_t now = getmillis();
+    static uint64_t num_clicks = 0;
+    static uint64_t prevtime = 0;
+    uint64_t now = getmillis();
     num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
     prevtime = now;
     if (!getbuf(EDIT)->modified || num_clicks >= 2)
@@ -471,6 +510,25 @@ static void open_file(void) {
     }
     free(file);
 }
+
+static void delrune_right(void){}
+static void delword_right(void){}
+static void delrune_left(void){}
+static void delword_left(void){}
+static void cursor_bof(void){}
+static void select_bol(void){}
+static void select_bof(void){}
+static void cursor_eof(void){}
+static void select_eol(void){}
+static void select_eof(void){}
+static void select_up(void){}
+static void select_dn(void){}
+static void select_left(void){}
+static void word_left(void){}
+static void selword_left(void){}
+static void select_right(void){}
+static void word_right(void){}
+static void selword_right(void){}
 
 /* Tag/Cmd Execution
  *****************************************************************************/

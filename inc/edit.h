@@ -7,7 +7,7 @@ typedef struct {
 
 FMap fmap(char* path);
 void funmap(FMap file);
-uint32_t getmillis(void);
+uint64_t getmillis(void);
 bool risword(Rune r);
 bool risblank(Rune r);
 char* stringdup(const char* str);
@@ -214,12 +214,13 @@ enum ColorId {
 /* Global State
  *****************************************************************************/
 typedef struct {
+    int mods;
     Rune key;
     void (*action)(void);
 } KeyBinding;
 
 typedef struct {
-    uint32_t time;
+    uint64_t time;
     uint8_t count;
     bool pressed;
     int region;

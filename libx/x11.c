@@ -133,23 +133,7 @@ void x11_show(void) {
     XMapWindow(X.display, X.window);
 }
 
-static uint32_t getkey(XEvent* e) {
-    uint32_t rune = 0xFFFD;
-    size_t len = 0;
-    char buf[8];
-    KeySym key;
-    Status status;
-    /* Read the key string */
-    if (X.xic)
-        len = Xutf8LookupString(X.xic, &e->xkey, buf, sizeof(buf), &key, &status);
-    else
-        len = XLookupString(&e->xkey, buf, sizeof(buf), &key, 0);
-    /* decode it */
-    if (len > 0) {
-        len = 0;
-        for(int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
-    }
-    /* translate the key code into a unicode codepoint */
+static uint32_t special_keys(uint32_t key) {
     switch (key) {
         case XK_F1:        return KEY_F1;
         case XK_F2:        return KEY_F2;
@@ -173,8 +157,39 @@ static uint32_t getkey(XEvent* e) {
         case XK_Down:      return KEY_DOWN;
         case XK_Left:      return KEY_LEFT;
         case XK_Right:     return KEY_RIGHT;
-        default:           return rune;
+        default:           return key;
     }
+}
+
+static uint32_t getkey(XEvent* e) {
+    uint32_t rune = RUNE_ERR;
+    size_t len = 0;
+    char buf[8];
+    KeySym key;
+    Status status;
+    /* Read the key string */
+    if (X.xic)
+        len = Xutf8LookupString(X.xic, &e->xkey, buf, sizeof(buf), &key, &status);
+    else
+        len = XLookupString(&e->xkey, buf, sizeof(buf), &key, 0);
+    /* if it's ascii, just return it */
+    if (key >= 0x20 && key <= 0x7F)
+        return (uint32_t)key;
+    /* decode it */
+    if (len > 0) {
+        len = 0;
+        for (int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
+    }
+    /* translate special key codes into unicode codepoints */
+    key = special_keys(key);
+    return rune;
+}
+
+static void handle_key(XEvent* event) {
+    uint32_t key = getkey(event);
+    int mods = event->xkey.state & ModAny;
+    if (key == RUNE_ERR) return;
+    Config->handle_key(mods, key);
 }
 
 static void handle_mouse(XEvent* e) {
@@ -214,7 +229,7 @@ void x11_loop(void) {
                 switch (e.type) {
                     case FocusIn:       if (X.xic) XSetICFocus(X.xic);   break;
                     case FocusOut:      if (X.xic) XUnsetICFocus(X.xic); break;
-                    case KeyPress:      Config->handle_key(getkey(&e));  break;
+                    case KeyPress:      handle_key(&e);                  break;
                     case ButtonRelease: handle_mouse(&e);                break;
                     case ButtonPress:   handle_mouse(&e);                break;
                     case MotionNotify:  handle_mouse(&e);                break;

@@ -10,10 +10,12 @@
 #include <time.h>
 #include <sys/time.h>
 
-uint32_t getmillis(void) {
+uint64_t getmillis(void) {
     struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
-    return ((time.tv_sec * 1000) + (time.tv_nsec / 1000000));
+    uint64_t ms = ((uint64_t)time.tv_sec * (uint64_t)1000);
+    ms += ((uint64_t)time.tv_nsec / (uint64_t)1000000);
+    return ms;
 }
 
 void die(const char* msgfmt, ...) {

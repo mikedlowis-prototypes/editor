@@ -7,7 +7,7 @@
 
 static void redraw(int width, int height);
 static void mouse_input(MouseAct act, MouseBtn btn, int x, int y);
-static void keyboard_input(uint32_t key);
+static void keyboard_input(int mods, uint32_t key);
 
 typedef struct {
     float score;
@@ -163,7 +163,7 @@ static void mouse_input(MouseAct act, MouseBtn btn, int x, int y) {
     (void)y;
 }
 
-static void keyboard_input(uint32_t key) {
+static void keyboard_input(int mods, uint32_t key) {
     switch (key) {
         case KEY_LEFT:  break;
         case KEY_RIGHT: break;
