@@ -143,10 +143,11 @@ static KeyBinding Bindings[] = {
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up       },
     { ModNone, KEY_PGDN,      page_dn       },
-    { ModNone, KEY_DELETE,    delrune_right },
-    { ModCtrl, KEY_DELETE,    delword_right },
-    { ModNone, KEY_BACKSPACE, delrune_left  },
-    { ModCtrl, KEY_BACKSPACE, delword_left  },
+    { ModNone, KEY_DELETE,    delete        }, // DELETE
+    //{ ModNone, KEY_DELETE,    delrune_right },
+    //{ ModCtrl, KEY_DELETE,    delword_right },
+    //{ ModNone, KEY_BACKSPACE, delrune_left  },
+    //{ ModCtrl, KEY_BACKSPACE, delword_left  },
 
     /* Cursor Movements */
     { ModNone,          KEY_HOME,   cursor_bol    },
@@ -252,8 +253,6 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
 }
 
 static void key_handler(int mods, Rune key) {
-    /* ignore invalid keys */
-    if (key == RUNE_ERR) return;
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
     if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
@@ -394,27 +393,27 @@ static void delete(void) {
 }
 
 static void cursor_up(void) {
-    view_byline(currview(), -1);
+    view_byline(currview(), -1, false);
 }
 
 static void cursor_dn(void) {
-    view_byline(currview(), +1);
+    view_byline(currview(), +1, false);
 }
 
 static void cursor_left(void) {
-    view_byrune(currview(), -1);
+    view_byrune(currview(), -1, false);
 }
 
 static void cursor_right(void) {
-    view_byrune(currview(), +1);
+    view_byrune(currview(), +1, false);
 }
 
 static void cursor_bol(void) {
-    view_bol(currview());
+    view_bol(currview(), false);
 }
 
 static void cursor_eol(void) {
-    view_eol(currview());
+    view_eol(currview(), false);
 }
 
 static void page_up(void) {
@@ -516,17 +515,39 @@ static void delword_right(void){}
 static void delrune_left(void){}
 static void delword_left(void){}
 static void cursor_bof(void){}
-static void select_bol(void){}
+
+static void select_bol(void){
+    view_bol(currview(), true);
+}
+
 static void select_bof(void){}
 static void cursor_eof(void){}
-static void select_eol(void){}
+
+static void select_eol(void) {
+    view_eol(currview(), true);
+}
+
 static void select_eof(void){}
-static void select_up(void){}
-static void select_dn(void){}
-static void select_left(void){}
+
+static void select_up(void) {
+    view_byline(currview(), -1, true);
+}
+
+static void select_dn(void) {
+    view_byline(currview(), +1, true);
+}
+
+static void select_left(void) {
+    view_byrune(currview(), -1, true);
+}
+
 static void word_left(void){}
 static void selword_left(void){}
-static void select_right(void){}
+
+static void select_right(void) {
+    view_byrune(currview(), +1, true);
+}
+
 static void word_right(void){}
 static void selword_right(void){}
 

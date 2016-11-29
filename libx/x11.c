@@ -157,7 +157,33 @@ static uint32_t special_keys(uint32_t key) {
         case XK_Down:      return KEY_DOWN;
         case XK_Left:      return KEY_LEFT;
         case XK_Right:     return KEY_RIGHT;
-        default:           return key;
+        case XK_Escape:    return KEY_ESCAPE;
+        case XK_BackSpace: return '\b';
+        case XK_Tab:       return '\t';
+        case XK_Return:    return '\r';
+        case XK_Linefeed:  return '\n';
+
+        /* modifiers should not trigger key presses */
+        case XK_Scroll_Lock:
+        case XK_Shift_L:
+        case XK_Shift_R:
+        case XK_Control_L:
+        case XK_Control_R:
+        case XK_Caps_Lock:
+        case XK_Shift_Lock:
+        case XK_Meta_L:
+        case XK_Meta_R:
+        case XK_Alt_L:
+        case XK_Alt_R:
+        case XK_Super_L:
+        case XK_Super_R:
+        case XK_Hyper_L:
+        case XK_Hyper_R:
+            return RUNE_ERR;
+
+        /* if it ain't special, don't touch it */
+        default:
+            return key;
     }
 }
 
@@ -181,7 +207,7 @@ static uint32_t getkey(XEvent* e) {
         for (int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
     }
     /* translate special key codes into unicode codepoints */
-    key = special_keys(key);
+    rune = special_keys(key);
     return rune;
 }
 

@@ -221,18 +221,20 @@ Row* view_getrow(View* view, size_t row) {
     return (row < view->nrows ? view->rows[row] : NULL);
 }
 
-void view_byrune(View* view, int move) {
+void view_byrune(View* view, int move, bool extsel) {
     Sel sel = view->selection;
-    sel.beg = sel.end = buf_byrune(&(view->buffer), sel.end, move);
+    sel.end = buf_byrune(&(view->buffer), sel.end, move);
+    if (!extsel) sel.beg = sel.end;
     sel.col = buf_getcol(&(view->buffer), sel.end);
     view->selection = sel;
     view->sync_needed = true;
 }
 
-void view_byline(View* view, int move) {
+void view_byline(View* view, int move, bool extsel) {
     Sel sel = view->selection;
-    sel.beg = sel.end = buf_byline(&(view->buffer), sel.end, move);
-    sel.beg = sel.end = buf_setcol(&(view->buffer), sel.end, sel.col);
+    sel.end = buf_byline(&(view->buffer), sel.end, move);
+    sel.end = buf_setcol(&(view->buffer), sel.end, sel.col);
+    if (!extsel) sel.beg = sel.end;
     view->selection = sel;
     view->sync_needed = true;
 }
@@ -390,14 +392,18 @@ void view_delete(View* view) {
     view->sync_needed = true;
 }
 
-void view_bol(View* view) {
-    view->selection.beg = view->selection.end = buf_bol(&(view->buffer), view->selection.end);
+void view_bol(View* view, bool extsel) {
+    view->selection.end = buf_bol(&(view->buffer), view->selection.end);
+    if (!extsel)
+        view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
 
-void view_eol(View* view) {
-    view->selection.beg = view->selection.end = buf_eol(&(view->buffer), view->selection.end);
+void view_eol(View* view, bool extsel) {
+    view->selection.end = buf_eol(&(view->buffer), view->selection.end);
+    if (!extsel)
+        view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
@@ -429,7 +435,7 @@ void view_append(View* view, char* str) {
     size_t end = buf_end(&(view->buffer));
     if (view->selection.end != end)
         view->selection = (Sel){ .beg = end, .end = end };
-	if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
+    if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
         buf_ins(&(view->buffer), view->selection.end++, '\n');
         view->selection.beg++;
     }
