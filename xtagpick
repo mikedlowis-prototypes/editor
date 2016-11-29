@@ -3,4 +3,4 @@ if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <tagfile>"
     exit 1
 fi
-cut -f1 "$1" | uniq | ./xpick
+cut -f1 "$1" | grep -v '^!' | uniq | ./xpick
