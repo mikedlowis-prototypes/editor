@@ -8,7 +8,9 @@
 * Implement minimal regex search (per Kernighan article)
 * Implement fuzzy file/buffer/tag picker
 * Implement omnicomplete pop-up
-* Mode to expand tabs to spaces* off by one error on scrolling up with wrapped lines
+* Mode to expand tabs to spaces
+* Auto indent mode
+* off by one error on scrolling up with wrapped lines
 * block selection should handle brace-balancing
 * Right click should fetch file if it exists, search otherwise
     * directories in browse?
@@ -21,7 +23,10 @@
 
 # Auxillary Programs
 
+* Acme-like window manager
 * Win-like terminal emulator
+* File browser
+* Webkit-based web browser
 
 # Graphical User Interface
 
