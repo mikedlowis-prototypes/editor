@@ -486,7 +486,7 @@ static void open_file(void) {
             buf_load(getbuf(EDIT), file);
         } else {
             OpenCmd[1] = file;
-            free(cmdread(OpenCmd, NULL));
+            cmdrun(OpenCmd, NULL);
         }
     }
     free(file);
