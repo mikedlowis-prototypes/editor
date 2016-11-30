@@ -26,6 +26,7 @@ static void redraw(int width, int height);
 
 // UI Callbacks
 static void delete(void);
+static void backspace(void);
 static void cursor_home(void);
 static void cursor_end(void);
 static void cursor_up(void);
@@ -138,7 +139,7 @@ static KeyBinding Bindings[] = {
     { ModNone, KEY_PGUP,      page_up       },
     { ModNone, KEY_PGDN,      page_dn       },
     { ModAny,  KEY_DELETE,    delete        },
-    //{ ModAny,  KEY_BACKSPACE, backspace     },
+    { ModAny,  KEY_BACKSPACE, backspace     },
 
     /* Cursor Movements */
     { ModAny, KEY_HOME,  cursor_home  },
@@ -360,7 +361,13 @@ static void redraw(int width, int height) {
 /* UI Callbacks
  *****************************************************************************/
 static void delete(void) {
-    view_delete(currview());
+    bool byword = x11_keymodsset(ModCtrl);
+    view_delete(currview(), RIGHT, byword);
+}
+
+static void backspace(void) {
+    bool byword = x11_keymodsset(ModCtrl);
+    view_delete(currview(), LEFT, byword);
 }
 
 static void cursor_home(void) {
@@ -375,30 +382,30 @@ static void cursor_end(void) {
 
 static void cursor_up(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byline(currview(), -1, extsel);
+    view_byline(currview(), UP, extsel);
 }
 
 static void cursor_dn(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byline(currview(), +1, extsel);
+    view_byline(currview(), DOWN, extsel);
 }
 
 static void cursor_left(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byrune(currview(), -1, extsel);
+    view_byrune(currview(), LEFT, extsel);
 }
 
 static void cursor_right(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byrune(currview(), +1, true);
+    view_byrune(currview(), RIGHT, extsel);
 }
 
 static void page_up(void) {
-    view_scrollpage(currview(), -1);
+    view_scrollpage(currview(), UP);
 }
 
 static void page_dn(void) {
-    view_scrollpage(currview(), +1);
+    view_scrollpage(currview(), DOWN);
 }
 
 static void select_prev(void) {

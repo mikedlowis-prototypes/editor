@@ -358,36 +358,32 @@ void view_findstr(View* view, char* str) {
 }
 
 void view_insert(View* view, Rune rune) {
-    if (rune == '\b') {
-        if (num_selected(view->selection))
-            view_delete(view);
-        else if (view->selection.end > 0)
-            buf_del(&(view->buffer), --view->selection.end);
-    } else {
-        /* ignore non-printable control characters */
-        if (!isspace(rune) && rune < 0x20)
-            return;
-        if (num_selected(view->selection))
-            view_delete(view);
-        buf_ins(&(view->buffer), view->selection.end++, rune);
-    }
+    /* ignore non-printable control characters */
+    if (!isspace(rune) && rune < 0x20)
+        return;
+    if (num_selected(view->selection))
+        view_delete(view, RIGHT, false);
+    buf_ins(&(view->buffer), view->selection.end++, rune);
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
 
-void view_delete(View* view) {
+void view_delete(View* view, int dir, bool byword) {
     Sel sel = view->selection;
     selswap(&sel);
-    size_t num = num_selected(view->selection);
-    if (num == 0) {
-        if (sel.end < buf_end(&(view->buffer)))
-            buf_del(&(view->buffer), sel.end);
-    } else {
+    size_t num = num_selected(sel);
+    if (num != 0) {
         for (size_t i = 0; i < num; i++)
             buf_del(&(view->buffer), sel.beg);
+        sel.end = sel.beg;
+    } else {
+        if ((dir == LEFT) && (sel.end > 0))
+            buf_del(&(view->buffer), --sel.end);
+        else if ((dir == RIGHT) && (sel.end < buf_end(&(view->buffer))))
+            buf_del(&(view->buffer), sel.end);
     }
-    view->selection.beg = view->selection.end = sel.beg;
+    view->selection.beg = view->selection.end = sel.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }

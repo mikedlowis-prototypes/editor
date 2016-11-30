@@ -146,6 +146,13 @@ typedef struct {
     Sel selection;    /* range of currently selected text */
 } View;
 
+enum {
+    LEFT  = -1,
+    RIGHT = +1,
+    UP    = -1,
+    DOWN  = +1
+};
+
 void view_init(View* view, char* file);
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
 void view_resize(View* view, size_t nrows, size_t ncols);
@@ -162,7 +169,7 @@ char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);
 void view_findstr(View* view, char* str);
 void view_insert(View* view, Rune rune);
-void view_delete(View* view);
+void view_delete(View* view, int dir, bool byword);
 void view_bol(View* view, bool extsel);
 void view_eol(View* view, bool extsel);
 void view_undo(View* view);
