@@ -1,6 +1,19 @@
 #!/bin/sh
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <tagfile>"
+TAGFILE="$1"
+TAG="$2"
+
+if [ "" == "$TAG" ] || [ "" == "$TAGFILE" ]; then
+    echo "Usage: $0 TAGFILE TAG"
     exit 1
 fi
-cut -f1 "$1" | grep -v '^!' | uniq | ./xpick
+
+awk -vTAG="$TAG" '
+BEGIN { FS = "[\t]+" }
+($1 == TAG) {
+    matchstr = $3
+    sub(/^\//, "\"", matchstr)
+    sub(/\/;"$/, "\"", matchstr)
+    gsub(/\*/, "\\*", matchstr)
+    print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
+}
+' "$TAGFILE" | /bin/sh | xpick

@@ -28,11 +28,13 @@ install: all
 	cp xedit $(PREFIX)/bin
 	cp xpick $(PREFIX)/bin
 	cp xfilepick $(PREFIX)/bin
+	cp xtagpick $(PREFIX)/bin
 
 uninstall:
 	rm -f $(PREFIX)/bin/xedit
 	rm -f $(PREFIX)/bin/xpick
 	rm -f $(PREFIX)/bin/xfilepick
+	rm -f $(PREFIX)/bin/xtagpick
 
 test: unittests
 	./unittests
