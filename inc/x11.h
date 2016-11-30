@@ -122,6 +122,8 @@ enum {
 
 void x11_init(XConfig* cfg);
 void x11_deinit(void);
+int x11_keymods(void);
+bool x11_keymodsset(int mask);
 void x11_window(char* name, int width, int height);
 void x11_dialog(char* name, int height, int width);
 void x11_show(void);

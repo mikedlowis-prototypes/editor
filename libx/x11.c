@@ -46,6 +46,7 @@ static struct {
     GC gc;
 } X;
 static XConfig* Config;
+static int Mods;
 
 static void xftcolor(XftColor* xc, uint32_t c) {
     xc->color.alpha = 0xFF | ((c & 0xFF000000) >> 16);
@@ -75,6 +76,14 @@ void x11_init(XConfig* cfg) {
     X.colormap = wa.colormap;
     X.screen   = DefaultScreen(X.display);
     X.depth    = DefaultDepth(X.display, X.screen);
+}
+
+int x11_keymods(void) {
+    return Mods;
+}
+
+bool x11_keymodsset(int mask) {
+    return ((Mods & mask) == mask);
 }
 
 void x11_window(char* name, int width, int height) {
@@ -213,9 +222,9 @@ static uint32_t getkey(XEvent* e) {
 
 static void handle_key(XEvent* event) {
     uint32_t key = getkey(event);
-    int mods = event->xkey.state & ModAny;
+    Mods = event->xkey.state & ModAny;
     if (key == RUNE_ERR) return;
-    Config->handle_key(mods, key);
+    Config->handle_key(Mods, key);
 }
 
 static void handle_mouse(XEvent* e) {
@@ -228,6 +237,7 @@ static void handle_mouse(XEvent* e) {
         x      = e->xmotion.x;
         y      = e->xmotion.y;
     } else {
+        Mods = e->xbutton.state & ModAny;
         action = (e->type == ButtonPress ? MOUSE_ACT_DOWN : MOUSE_ACT_UP);
         /* set the button id */
         switch (e->xbutton.button) {

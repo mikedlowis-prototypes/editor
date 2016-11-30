@@ -26,12 +26,12 @@ static void redraw(int width, int height);
 
 // UI Callbacks
 static void delete(void);
+static void cursor_home(void);
+static void cursor_end(void);
 static void cursor_up(void);
 static void cursor_dn(void);
 static void cursor_left(void);
 static void cursor_right(void);
-static void cursor_bol(void);
-static void cursor_eol(void);
 static void page_up(void);
 static void page_dn(void);
 static void select_prev(void);
@@ -52,17 +52,11 @@ static void delword_right(void);
 static void delrune_left(void);
 static void delword_left(void);
 static void cursor_bof(void);
-static void select_bol(void);
 static void select_bof(void);
 static void cursor_eof(void);
-static void select_eol(void);
 static void select_eof(void);
-static void select_up(void);
-static void select_dn(void);
-static void select_left(void);
 static void word_left(void);
 static void selword_left(void);
-static void select_right(void);
 static void word_right(void);
 static void selword_right(void);
 
@@ -129,8 +123,8 @@ static KeyBinding Bindings[] = {
     //{ KEY_CTRL_U,    del_to_bol   },
     //{ KEY_CTRL_W,    del_to_bow   },
     //{ KEY_CTRL_H,    del_prev_char},
-    { ModCtrl, 'a', cursor_bol },
-    { ModCtrl, 'e', cursor_eol },
+    { ModCtrl, 'a', cursor_home },
+    { ModCtrl, 'e', cursor_end  },
 
     /* Standard Text Editing Shortcuts */
     { ModCtrl, 's', save  },
@@ -143,45 +137,26 @@ static KeyBinding Bindings[] = {
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up       },
     { ModNone, KEY_PGDN,      page_dn       },
-    { ModNone, KEY_DELETE,    delete        }, // DELETE
-    //{ ModNone, KEY_DELETE,    delrune_right },
-    //{ ModCtrl, KEY_DELETE,    delword_right },
-    //{ ModNone, KEY_BACKSPACE, delrune_left  },
-    //{ ModCtrl, KEY_BACKSPACE, delword_left  },
+    { ModAny,  KEY_DELETE,    delete        },
+    //{ ModAny,  KEY_BACKSPACE, backspace     },
 
     /* Cursor Movements */
-    { ModNone,          KEY_HOME,   cursor_bol    },
-    { ModCtrl,          KEY_HOME,   cursor_bof    },
-    { ModShift,         KEY_HOME,   select_bol    },
-    { ModCtrl|ModShift, KEY_HOME,   select_bof    },
-    { ModNone,          KEY_END,    cursor_eol    },
-    { ModCtrl,          KEY_END,    cursor_eof    },
-    { ModShift,         KEY_END,    select_eol    },
-    { ModCtrl|ModShift, KEY_END,    select_eof    },
-    { ModNone,          KEY_UP,     cursor_up     },
-    { ModShift,         KEY_UP,     select_up     },
-    { ModNone,          KEY_DOWN,   cursor_dn     },
-    { ModShift,         KEY_DOWN,   select_dn     },
-    { ModNone,          KEY_LEFT,   cursor_left   },
-    { ModShift,         KEY_LEFT,   select_left   },
-    { ModCtrl,          KEY_LEFT,   word_left     },
-    { ModCtrl|ModShift, KEY_LEFT,   selword_left  },
-    { ModNone,          KEY_RIGHT,  cursor_right  },
-    { ModShift,         KEY_RIGHT,  select_right  },
-    { ModCtrl,          KEY_RIGHT,  word_right    },
-    { ModCtrl|ModShift, KEY_RIGHT,  selword_right },
+    { ModAny, KEY_HOME,  cursor_home  },
+    { ModAny, KEY_END,   cursor_end   },
+    { ModAny, KEY_UP,    cursor_up    },
+    { ModAny, KEY_DOWN,  cursor_dn    },
+    { ModAny, KEY_LEFT,  cursor_left  },
+    { ModAny, KEY_RIGHT, cursor_right },
 
     /* Implementation Specific */
-    { ModAny,  KEY_ESCAPE, select_prev  },
+    { ModNone, KEY_ESCAPE, select_prev  },
     { ModCtrl, 't',        change_focus },
     { ModCtrl, 'q',        quit         },
     { ModCtrl, 'f',        search       },
     { ModCtrl, 'd',        execute      },
-
-    /* Picker Shortcuts */
-    { ModCtrl, 'o', open_file },
-    //{ KEY_CTRL_P,    find_ctag    },
-    //{ KEY_CTRL_G,    goto_ctag    },
+    { ModCtrl, 'o',        open_file    },
+    //{ ModCtrl, 'p',        find_ctag    },
+    //{ ModCtrl, 'g',        goto_ctag    },
 
     { 0, 0, NULL } // End the table
 };
@@ -392,28 +367,33 @@ static void delete(void) {
     view_delete(currview());
 }
 
+static void cursor_home(void) {
+    bool extsel = x11_keymodsset(ModShift);
+    view_bol(currview(), extsel);
+}
+
+static void cursor_end(void) {
+    bool extsel = x11_keymodsset(ModShift);
+    view_eol(currview(), extsel);
+}
+
 static void cursor_up(void) {
-    view_byline(currview(), -1, false);
+    bool extsel = x11_keymodsset(ModShift);
+    view_byline(currview(), -1, extsel);
 }
 
 static void cursor_dn(void) {
-    view_byline(currview(), +1, false);
+    bool extsel = x11_keymodsset(ModShift);
+    view_byline(currview(), +1, extsel);
 }
 
 static void cursor_left(void) {
-    view_byrune(currview(), -1, false);
+    bool extsel = x11_keymodsset(ModShift);
+    view_byrune(currview(), -1, extsel);
 }
 
 static void cursor_right(void) {
     view_byrune(currview(), +1, false);
-}
-
-static void cursor_bol(void) {
-    view_bol(currview(), false);
-}
-
-static void cursor_eol(void) {
-    view_eol(currview(), false);
 }
 
 static void page_up(void) {
@@ -515,39 +495,11 @@ static void delword_right(void){}
 static void delrune_left(void){}
 static void delword_left(void){}
 static void cursor_bof(void){}
-
-static void select_bol(void){
-    view_bol(currview(), true);
-}
-
 static void select_bof(void){}
 static void cursor_eof(void){}
-
-static void select_eol(void) {
-    view_eol(currview(), true);
-}
-
 static void select_eof(void){}
-
-static void select_up(void) {
-    view_byline(currview(), -1, true);
-}
-
-static void select_dn(void) {
-    view_byline(currview(), +1, true);
-}
-
-static void select_left(void) {
-    view_byrune(currview(), -1, true);
-}
-
 static void word_left(void){}
 static void selword_left(void){}
-
-static void select_right(void) {
-    view_byrune(currview(), +1, true);
-}
-
 static void word_right(void){}
 static void selword_right(void){}
 
