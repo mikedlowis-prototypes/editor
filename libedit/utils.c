@@ -74,3 +74,7 @@ char* fdgets(int fd) {
     if (str) str[len] = '\0';
     return str;
 }
+
+char* chomp(char* in) {
+    return strtok(in, "\r\n");
+}

@@ -481,7 +481,7 @@ static void find(char* arg) {
 static void open_file(void) {
     char* file = cmdread(PickFileCmd, NULL);
     if (file) {
-        file[strlen(file)-1] = '\0';
+        file = chomp(file);
         if (!getbuf(EDIT)->path && !getbuf(EDIT)->modified) {
             buf_load(getbuf(EDIT), file);
         } else {
@@ -528,9 +528,6 @@ static void tag_exec(Tag* tag, char* arg) {
     free(arg);
 }
 
-static char* chomp(char* in) {
-    return (in[strlen(in)-1] = '\0', in);
-}
 static void cmd_exec(char* cmd) {
     char op = '\0';
     if (*cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')

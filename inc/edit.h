@@ -12,6 +12,7 @@ bool risword(Rune r);
 bool risblank(Rune r);
 char* stringdup(const char* str);
 char* fdgets(int fd);
+char* chomp(char* in);
 
 /* Buffer management functions
  *****************************************************************************/
