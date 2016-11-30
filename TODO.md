@@ -1,9 +1,8 @@
 # Implementation Tweaks and Bug Fixes
 
 * Should not be able to undo initial tag line text insertion
-* capture stderr of executed commands and place it in tags view
 * Disallow scrolling past end of buffer
-* track down double click bug  for selecting whole line
+* track down double click bug for selecting whole line
 * Add tag for ctags lookup
 * Implement minimal regex search (per Kernighan article)
 * Implement fuzzy file/buffer/tag picker

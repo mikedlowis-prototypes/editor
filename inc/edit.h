@@ -182,18 +182,10 @@ void view_scrollpage(View* view, int move);
 
 /* Command Executions
  *****************************************************************************/
-typedef struct {
-    int pid; /* process id of the child process */
-    int in;  /* file descriptor for the child process's standard input */
-    int out; /* file descriptor for the child process's standard output */
-    int err; /* file descriptor for the child process's standard error */
-} Process;
-
-void detach(Process* proc);
-void terminate(Process* proc, int sig);
-char* cmdread(char** cmd);
-void cmdwrite(char** cmd, char* text);
-char* cmdwriteread(char** cmd, char* text);
+int cmdrun(char** cmd, char** err);
+char* cmdread(char** cmd, char** err);
+void cmdwrite(char** cmd, char* text, char** err);
+char* cmdwriteread(char** cmd, char* text, char** err);
 
 /* Color Scheme Handling
  *****************************************************************************/
@@ -248,7 +240,6 @@ typedef struct {
         void (*arg)(char* arg);
     } action;
 } Tag;
-
 
 /* Configuration
  *****************************************************************************/

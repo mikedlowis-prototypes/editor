@@ -8,6 +8,13 @@
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
+typedef struct {
+    int pid; /* process id of the child process */
+    int in;  /* file descriptor for the child process's standard input */
+    int out; /* file descriptor for the child process's standard output */
+    int err; /* file descriptor for the child process's standard error */
+} Process;
+
 static int execute(char** cmd, Process* proc) {
     int inpipe[2], outpipe[2], errpipe[2];
     /* create the pipes */
@@ -44,30 +51,37 @@ static int execute(char** cmd, Process* proc) {
     return proc->pid;
 }
 
-void detach(Process* proc) {
+static void detach(Process* proc) {
     close(proc->in);
     close(proc->out);
     close(proc->err);
 }
 
-void terminate(Process* proc, int sig) {
-    detach(proc);
-    kill(proc->pid, sig);
+int cmdrun(char** cmd, char** err) {
+    Process proc;
+    if (execute(cmd, &proc) < 0) {
+        perror("failed to execute");
+        return -1;
+    }
+    if (err) *err = fdgets(proc.err);
+    detach(&proc);
+    return proc.pid;
 }
 
-char* cmdread(char** cmd) {
+char* cmdread(char** cmd, char** err) {
     Process proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
         return NULL;
     }
     char* str = fdgets(proc.out);
+    if (err) *err = fdgets(proc.err);
     detach(&proc);
     waitpid(proc.pid, NULL, 0);
     return str;
 }
 
-void cmdwrite(char** cmd, char* text) {
+void cmdwrite(char** cmd, char* text, char** err) {
     Process proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
@@ -77,11 +91,12 @@ void cmdwrite(char** cmd, char* text) {
         perror("failed to write");
         return;
     }
+    if (err) *err = fdgets(proc.err);
     detach(&proc);
     waitpid(proc.pid, NULL, 0);
 }
 
-char* cmdwriteread(char** cmd, char* text) {
+char* cmdwriteread(char** cmd, char* text, char** err) {
     Process proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
@@ -93,6 +108,7 @@ char* cmdwriteread(char** cmd, char* text) {
     }
     close(proc.in);
     char* str = fdgets(proc.out);
+    if (err) *err = fdgets(proc.err);
     detach(&proc);
     waitpid(proc.pid, NULL, 0);
     return str;

@@ -442,7 +442,7 @@ static void redo(void) {
 static void cut(void) {
     char* str = view_getstr(currview(), NULL);
     if (str && *str) {
-        cmdwrite(CopyCmd, str);
+        cmdwrite(CopyCmd, str, NULL);
         delete();
     }
     free(str);
@@ -451,12 +451,12 @@ static void cut(void) {
 static void copy(void) {
     char* str = view_getstr(currview(), NULL);
     if (str && *str)
-        cmdwrite(CopyCmd, str);
+        cmdwrite(CopyCmd, str, NULL);
     free(str);
 }
 
 static void paste(void) {
-    char* str = cmdread(PasteCmd);
+    char* str = cmdread(PasteCmd, NULL);
     if (str && *str)
         view_putstr(currview(), str);
     free(str);
@@ -479,14 +479,14 @@ static void find(char* arg) {
 }
 
 static void open_file(void) {
-    char* file = cmdread(PickFileCmd);
+    char* file = cmdread(PickFileCmd, NULL);
     if (file) {
         file[strlen(file)-1] = '\0';
         if (!getbuf(EDIT)->path && !getbuf(EDIT)->modified) {
             buf_load(getbuf(EDIT), file);
         } else {
             OpenCmd[1] = file;
-            free(cmdread(OpenCmd));
+            free(cmdread(OpenCmd, NULL));
         }
     }
     free(file);
@@ -528,25 +528,30 @@ static void tag_exec(Tag* tag, char* arg) {
     free(arg);
 }
 
+static char* chomp(char* in) {
+    return (in[strlen(in)-1] = '\0', in);
+}
 static void cmd_exec(char* cmd) {
     char op = '\0';
     if (*cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
         op = *cmd, cmd++;
     ShellCmd[2] = cmd;
     /* execute the command */
-    char *input = NULL, *output = NULL;
+    char *input = NULL, *output = NULL, *error = NULL;
     enum RegionId dest = EDIT;
     input = view_getstr(getview(EDIT), NULL);
     if (op == '!') {
         printf("null: '%s'\n", cmd);
     } else if (op == '>') {
-        cmdwrite(ShellCmd, input);
+        cmdwrite(ShellCmd, input, &error);
     } else if (op == '|') {
-        output = cmdwriteread(ShellCmd, input);
+        output = cmdwriteread(ShellCmd, input, &error);
     } else {
         if (op != '<') dest = Focused;
-        output = cmdread(ShellCmd);
+        output = cmdread(ShellCmd, &error);
     }
+    if (error)
+        view_append(getview(TAGS), chomp(error));
     if (output) {
         view_putstr(getview(dest), output);
         view_selprev(getview(dest));
@@ -554,6 +559,7 @@ static void cmd_exec(char* cmd) {
     /* cleanup */
     free(input);
     free(output);
+    free(error);
 }
 
 static void exec(char* cmd) {
