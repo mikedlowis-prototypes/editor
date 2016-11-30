@@ -23,6 +23,17 @@ all: xedit xpick
 clean:
 	$(RM) *.o lib*/*.o test/*.o *.a xpick xedit unittests
 
+install: all
+	mkdir -p $(PREFIX)/bin
+	cp xedit $(PREFIX)/bin
+	cp xpick $(PREFIX)/bin
+	cp xfilepick $(PREFIX)/bin
+
+uninstall: all
+	rm -f $(PREFIX)/bin/xedit
+	rm -f $(PREFIX)/bin/xpick
+	rm -f $(PREFIX)/bin/xfilepick
+
 test: unittests
 	./unittests
 

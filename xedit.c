@@ -170,8 +170,8 @@ static char* CopyCmd[]  = { "xsel", "-bi", NULL };
 static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
 static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
-static char* PickFileCmd[] = { "./xfilepick", ".", NULL };
-static char* OpenCmd[] = { "./xedit", NULL, NULL };
+static char* PickFileCmd[] = { "xfilepick", ".", NULL };
+static char* OpenCmd[] = { "xedit", NULL, NULL };
 
 /* Main Routine
  *****************************************************************************/

@@ -1,5 +1,8 @@
 # Customize this file to fit your system
 
+# Install location
+PREFIX = $(HOME)
+
 # Compiler Setup
 CC = c99
 CFLAGS = -g -O0 $(INCS)
