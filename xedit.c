@@ -389,7 +389,8 @@ static void cursor_left(void) {
 }
 
 static void cursor_right(void) {
-    view_byrune(currview(), +1, false);
+    bool extsel = x11_keymodsset(ModShift);
+    view_byrune(currview(), +1, true);
 }
 
 static void page_up(void) {
