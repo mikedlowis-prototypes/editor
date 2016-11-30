@@ -1,2 +1,2 @@
 #!/bin/sh
-(nohup man -P cat "$@" | fmt | edit -) &> /dev/null &
+(nohup man -P cat "$@" | fmt | xedit -) &> /dev/null &
