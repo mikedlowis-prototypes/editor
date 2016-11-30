@@ -29,7 +29,7 @@ install: all
 	cp xpick $(PREFIX)/bin
 	cp xfilepick $(PREFIX)/bin
 
-uninstall: all
+uninstall:
 	rm -f $(PREFIX)/bin/xedit
 	rm -f $(PREFIX)/bin/xpick
 	rm -f $(PREFIX)/bin/xfilepick
