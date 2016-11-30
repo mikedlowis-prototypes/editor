@@ -157,8 +157,6 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'o',        open_file    },
     //{ ModCtrl, 'p',        find_ctag    },
     //{ ModCtrl, 'g',        goto_ctag    },
-
-    { 0, 0, NULL } // End the table
 };
 
 /* External Commands
@@ -231,18 +229,16 @@ static void key_handler(int mods, Rune key) {
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
     if (key == '\n' && currview()->buffer.crlf) key = RUNE_CRLF;
-    /* handle the key */
-    KeyBinding* bindings = Bindings;
+    /* search for a key binding entry */
     uint32_t mkey = tolower(key);
-    while (bindings->key) {
-        int keymods = bindings->mods;
-        if ((mkey == bindings->key) && (keymods == ModAny || keymods == mods)) {
-            bindings->action();
+    for (int i = 0; i < nelem(Bindings); i++) {
+        int keymods = Bindings[i].mods;
+        if ((mkey == Bindings[i].key) && (keymods == ModAny || keymods == mods)) {
+            Bindings[i].action();
             return;
         }
-        bindings++;
     }
-    /* fallback to just inserting the rune if it doesnt fall in the private use area.
+    /* fallback to just inserting the rune if it doesn't fall in the private use area.
      * the private use area is used to encode special keys */
     if (key < 0xE000 || key > 0xF8FF)
         view_insert(currview(), key);
