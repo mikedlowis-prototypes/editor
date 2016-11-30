@@ -413,16 +413,14 @@ static void change_focus(void) {
 }
 
 static void quit(void) {
-    static uint64_t num_clicks = 0;
-    static uint64_t prevtime = 0;
+    static uint64_t before = 0;
     uint64_t now = getmillis();
-    num_clicks = (now - prevtime < 250 ? num_clicks+1 : 1);
-    prevtime = now;
-    if (!getbuf(EDIT)->modified || num_clicks >= 2)
+    if (!getbuf(EDIT)->modified || (now-before) <= 250)
         exit(0);
     else
         view_append(getview(TAGS),
             "File is modified. Double click Quit tag or press Ctrl+Q twice to discard changes.");
+    before = now;
 }
 
 static void save(void) {
