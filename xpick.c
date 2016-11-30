@@ -195,14 +195,16 @@ static void keyboard_input(int mods, uint32_t key) {
 
 int main(int argc, char** argv) {
     load_choices();
-    /* initialize the filter edit buffer */
-    buf_init(&Query);
-    /* initialize the display engine */
-    x11_init(&Config);
-    x11_dialog("pick", Width, Height);
-    x11_show();
-    Font = x11_font_load(FONTNAME);
-    x11_loop();
+    if (vec_size(&Choices) > 1) {
+        /* initialize the filter edit buffer */
+        buf_init(&Query);
+        /* initialize the display engine */
+        x11_init(&Config);
+        x11_dialog("pick", Width, Height);
+        x11_show();
+        Font = x11_font_load(FONTNAME);
+        x11_loop();
+    }
     /* print out the choice */
     if (vec_size(&Choices) && ChoiceIdx != SIZE_MAX) {
         Choice* choice = (Choice*)vec_at(&Choices, ChoiceIdx);
