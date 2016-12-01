@@ -160,6 +160,7 @@ static char* PasteCmd[] = { "xsel", "-bo", NULL };
 static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
 static char* OpenCmd[] = { "xedit", NULL, NULL };
+static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
 /* Main Routine
  *****************************************************************************/
@@ -523,7 +524,7 @@ static void tag_exec(Tag* tag, char* arg) {
 
 static void cmd_exec(char* cmd) {
     char op = '\0';
-    if (*cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
+    if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
         op = *cmd, cmd++;
     ShellCmd[2] = cmd;
     /* execute the command */
@@ -531,11 +532,14 @@ static void cmd_exec(char* cmd) {
     enum RegionId dest = EDIT;
     input = view_getstr(getview(EDIT), NULL);
     if (op == '!') {
-        printf("null: '%s'\n", cmd);
+        cmdrun(ShellCmd, NULL);
     } else if (op == '>') {
         cmdwrite(ShellCmd, input, &error);
     } else if (op == '|') {
         output = cmdwriteread(ShellCmd, input, &error);
+    } else if (op == ':') {
+        SedCmd[2] = cmd;
+        output = cmdwriteread(SedCmd, input, &error);
     } else {
         if (op != '<') dest = Focused;
         output = cmdread(ShellCmd, &error);
@@ -630,11 +634,3 @@ static enum RegionId getregion(size_t x, size_t y) {
     }
     return NREGIONS;
 }
-
-#if 0
-void move_pointer(size_t x, size_t y) {
-    x = (x * Fonts.base.width)  + (Fonts.base.width / 2);
-    y = ((y+1) * Fonts.base.height) + (Fonts.base.height / 2);
-    x11_warp_mouse(x,y);
-}
-#endif

@@ -87,7 +87,7 @@ void cmdwrite(char** cmd, char* text, char** err) {
         perror("failed to execute");
         return;
     }
-    if (write(proc.in, text, strlen(text)) < 0) {
+    if (text && write(proc.in, text, strlen(text)) < 0) {
         perror("failed to write");
         return;
     }
@@ -102,7 +102,7 @@ char* cmdwriteread(char** cmd, char* text, char** err) {
         perror("failed to execute");
         return NULL;
     }
-    if (write(proc.in, text, strlen(text)) < 0) {
+    if (text && write(proc.in, text, strlen(text)) < 0) {
         perror("failed to write");
         return NULL;
     }
