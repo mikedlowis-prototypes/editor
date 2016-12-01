@@ -441,6 +441,6 @@ void x11_draw_utf8(XFont fnt, int fg, int bg, int x, int y, char* str) {
     x11_draw_glyphs(fg, bg, (XGlyphSpec*)specs, nspecs);
 }
 
-//void x11_warp_mouse(int x, int y) {
-//    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
-//}
+void x11_warp_mouse(int x, int y) {
+    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
+}
