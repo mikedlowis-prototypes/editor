@@ -13,7 +13,6 @@ enum RegionId {
 
 // Input Handlers
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y);
-static void tag_handler(char* cmd, char* arg);
 static void key_handler(int mods, Rune key);
 
 // Drawing Routines
@@ -48,18 +47,6 @@ static void search(void);
 static void execute(void);
 static void find(char* arg);
 static void open_file(void);
-static void delrune_right(void);
-static void delword_right(void);
-static void delrune_left(void);
-static void delword_left(void);
-static void cursor_bof(void);
-static void select_bof(void);
-static void cursor_eof(void);
-static void select_eof(void);
-static void word_left(void);
-static void selword_left(void);
-static void word_right(void);
-static void selword_right(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -319,6 +306,13 @@ static void draw_region(enum RegionId id) {
     /* Place cursor on screen */
     if (id == Focused && csrx != SIZE_MAX && csry != SIZE_MAX)
         x11_draw_rect(CLR_BASE3, 2 + csrx * fwidth, Regions[id].y + (csry * fheight), 1, fheight);
+
+    if (Regions[id].warp_ptr) {
+        Regions[id].warp_ptr = false;
+        size_t x = 2 + (csrx * fwidth) - (fwidth/2);
+        size_t y = Regions[id].y + (csry * fheight) + (fheight/2);
+        x11_warp_mouse(x,y);
+    }
 }
 
 static void layout(int width, int height) {
@@ -492,19 +486,6 @@ static void open_file(void) {
     free(file);
 }
 
-static void delrune_right(void){}
-static void delword_right(void){}
-static void delrune_left(void){}
-static void delword_left(void){}
-static void cursor_bof(void){}
-static void select_bof(void){}
-static void cursor_eof(void){}
-static void select_eof(void){}
-static void word_left(void){}
-static void selword_left(void){}
-static void word_right(void){}
-static void selword_right(void){}
-
 /* Tag/Cmd Execution
  *****************************************************************************/
 static Tag* tag_lookup(char* cmd) {
@@ -594,10 +575,12 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
 }
 
 static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) {
-    if (MouseBtns[MOUSE_BTN_LEFT].pressed)
+    if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
         paste();
-    else
+    } else {
         view_find(getview(id), row, col);
+        Regions[id].warp_ptr = true;
+    }
 }
 
 static void mouse_wheelup(enum RegionId id, size_t count, size_t row, size_t col) {
