@@ -173,6 +173,8 @@ void view_insert(View* view, Rune rune);
 void view_delete(View* view, int dir, bool byword);
 void view_bol(View* view, bool extsel);
 void view_eol(View* view, bool extsel);
+void view_bof(View* view, bool extsel);
+void view_eof(View* view, bool extsel);
 void view_undo(View* view);
 void view_redo(View* view);
 void view_putstr(View* view, char* str);

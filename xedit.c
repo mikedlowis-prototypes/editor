@@ -366,12 +366,18 @@ static void backspace(void) {
 
 static void cursor_home(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_bol(currview(), extsel);
+    if (x11_keymodsset(ModCtrl))
+        view_bof(currview(), extsel);
+    else
+        view_bol(currview(), extsel);
 }
 
 static void cursor_end(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_eol(currview(), extsel);
+    if (x11_keymodsset(ModCtrl))
+        view_eof(currview(), extsel);
+    else
+        view_eol(currview(), extsel);
 }
 
 static void cursor_up(void) {

@@ -30,6 +30,7 @@ install: all
 	cp xfilepick $(PREFIX)/bin
 	cp xtagpick $(PREFIX)/bin
 	cp xman $(PREFIX)/bin
+	cp edit $(PREFIX)/bin
 
 uninstall:
 	rm -f $(PREFIX)/bin/xedit
@@ -37,6 +38,7 @@ uninstall:
 	rm -f $(PREFIX)/bin/xfilepick
 	rm -f $(PREFIX)/bin/xtagpick
 	rm -f $(PREFIX)/bin/xman
+	rm -f $(PREFIX)/bin/edit
 
 test: unittests
 	./unittests

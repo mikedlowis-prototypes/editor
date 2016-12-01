@@ -404,6 +404,22 @@ void view_eol(View* view, bool extsel) {
     view->sync_needed = true;
 }
 
+void view_bof(View* view, bool extsel) {
+    view->selection.end = 0;
+    if (!extsel)
+        view->selection.beg = view->selection.end;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}
+
+void view_eof(View* view, bool extsel) {
+    view->selection.end = buf_end(&(view->buffer));
+    if (!extsel)
+        view->selection.beg = view->selection.end;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}
+
 void view_undo(View* view) {
     view->selection.beg = view->selection.end = buf_undo(&(view->buffer), view->selection.end);
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
