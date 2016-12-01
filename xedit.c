@@ -25,6 +25,7 @@ static void redraw(int width, int height);
 
 // UI Callbacks
 static void delete(void);
+static void del_to_bol(void);
 static void backspace(void);
 static void cursor_home(void);
 static void cursor_end(void);
@@ -108,9 +109,9 @@ static KeyBinding Bindings[] = {
     //{ KEY_CTRL_F11,   fullscreen  },
 
     /* Standard Unix Shortcuts */
-    //{ KEY_CTRL_U,    del_to_bol   },
+    { ModCtrl, 'u', del_to_bol  },
     //{ KEY_CTRL_W,    del_to_bow   },
-    //{ KEY_CTRL_H,    del_prev_char},
+    { ModCtrl, 'h', backspace   },
     { ModCtrl, 'a', cursor_home },
     { ModCtrl, 'e', cursor_end  },
 
@@ -357,6 +358,11 @@ static void redraw(int width, int height) {
 static void delete(void) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(currview(), RIGHT, byword);
+}
+
+static void del_to_bol(void) {
+    view_bol(currview(), true);
+    delete();
 }
 
 static void backspace(void) {
