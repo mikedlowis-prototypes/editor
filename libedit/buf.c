@@ -156,7 +156,7 @@ static void clear_redo(Buf* buf) {
 
 static unsigned getindent(Buf* buf, unsigned off) {
     off = buf_bol(buf, off);
-    for (; off < buf_end(buf) && isspace(buf_get(buf, off)); off++);
+    for (; off < buf_end(buf) && (' ' == buf_get(buf, off) || '\t' == buf_get(buf, off)); off++);
     return buf_getcol(buf, off) / TabWidth;
 }
 

@@ -38,4 +38,3 @@
 * Spell checker integration
 * Syntax highlighting
 * Implement full featured regex engine
-
