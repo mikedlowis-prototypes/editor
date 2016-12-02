@@ -187,7 +187,7 @@ static void keyboard_input(int mods, uint32_t key) {
             break;
         default:
             ChoiceIdx = 0;
-            buf_ins(&Query, Pos++, key);
+            buf_ins(&Query, false, Pos++, key);
             break;
     }
     score();

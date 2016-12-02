@@ -1,6 +1,6 @@
 # Implementation Tweaks and Bug Fixes
 
-* Auto indent mode
+* Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
 * Disallow scrolling past end of buffer
 * track down double click bug for selecting whole line

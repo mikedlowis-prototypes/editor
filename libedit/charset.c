@@ -49,7 +49,7 @@ int charset(const uint8_t* buf, size_t len, int* crlf) {
 
 void binload(Buf* buf, FMap file) {
     for (size_t i = 0; i < file.len; i++)
-        buf_ins(buf, buf_end(buf), file.buf[i]);
+        buf_ins(buf, false, buf_end(buf), file.buf[i]);
 }
 
 void binsave(Buf* buf, FILE* file) {

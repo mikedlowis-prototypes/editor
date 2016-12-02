@@ -37,7 +37,6 @@ typedef struct buf {
     char* path;       /* the path to the open file */
     int charset;      /* the character set of the buffer */
     int crlf;         /* tracks whether the file uses dos style line endings */
-    bool modified;    /* tracks whether the buffer has been modified */
     size_t bufsize;   /* size of the buffer in runes */
     Rune* bufstart;   /* start of the data buffer */
     Rune* bufend;     /* end of the data buffer */
@@ -45,7 +44,9 @@ typedef struct buf {
     Rune* gapend;     /* end of the gap */
     Log* undo;        /* undo list */
     Log* redo;        /* redo list */
+    bool modified;    /* tracks whether the buffer has been modified */
     bool expand_tabs; /* tracks current mode */
+    bool copy_indent; /* copy the indent level from the previous line on new lines */
 } Buf;
 
 typedef struct {
@@ -57,7 +58,7 @@ typedef struct {
 void buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 void buf_init(Buf* buf);
-unsigned buf_ins(Buf* buf, unsigned pos, Rune);
+unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune);
 void buf_del(Buf* buf, unsigned pos);
 unsigned buf_undo(Buf* buf, unsigned pos);
 unsigned buf_redo(Buf* buf, unsigned pos);

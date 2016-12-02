@@ -91,7 +91,7 @@ void utf8load(Buf* buf, FMap file) {
         Rune r = 0;
         size_t len = 0;
         while (!utf8decode(&r, &len, file.buf[i++]));
-        buf_ins(buf, buf_end(buf), r);
+        buf_ins(buf, false, buf_end(buf), r);
     }
 }
 

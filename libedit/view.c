@@ -372,7 +372,7 @@ void view_insert(View* view, Rune rune) {
         return;
     if (num_selected(view->selection))
         view_delete(view, RIGHT, false);
-    view->selection.end = buf_ins(&(view->buffer), view->selection.end, rune);
+    view->selection.end = buf_ins(&(view->buffer), true, view->selection.end, rune);
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed   = true;
@@ -457,7 +457,7 @@ void view_append(View* view, char* str) {
     if (view->selection.end != end)
         view->selection = (Sel){ .beg = end, .end = end };
     if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
-        buf_ins(&(view->buffer), view->selection.end++, '\n');
+        buf_ins(&(view->buffer), false, view->selection.end++, '\n');
         view->selection.beg++;
     }
     view_putstr(view, str);

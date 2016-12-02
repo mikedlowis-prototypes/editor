@@ -1,13 +1,14 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
+#include <ctype.h>
 
 void buf_load(Buf* buf, char* path) {
     if (!strcmp(path,"-")) {
         buf->charset = UTF_8;
         Rune r;
         while (RUNE_EOF != (r = fgetrune(stdin)))
-            buf_ins(buf, buf_end(buf), r);
+            buf_ins(buf, false, buf_end(buf), r);
     } else {
         FMap file = fmap(path);
         buf->path = stringdup(path);
@@ -76,6 +77,7 @@ static void syncgap(Buf* buf, unsigned off) {
 void buf_init(Buf* buf) {
     buf->modified    = false;
     buf->expand_tabs = true;
+    buf->copy_indent = true;
     buf->charset     = DEFAULT_CHARSET;
     buf->crlf        = DEFAULT_CRLF;
     buf->bufsize     = BufSize;
@@ -152,7 +154,13 @@ static void clear_redo(Buf* buf) {
     buf->redo = NULL;
 }
 
-unsigned buf_ins(Buf* buf, unsigned off, Rune rune) {
+static unsigned getindent(Buf* buf, unsigned off) {
+    off = buf_bol(buf, off);
+    for (; off < buf_end(buf) && isspace(buf_get(buf, off)); off++);
+    return buf_getcol(buf, off) / TabWidth;
+}
+
+unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune) {
     buf->modified = true;
     if (buf->expand_tabs && rune == '\t') {
         size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
@@ -161,6 +169,11 @@ unsigned buf_ins(Buf* buf, unsigned off, Rune rune) {
     } else {
         log_insert(&(buf->undo), off, off+1);
         insert(buf, off++, rune);
+    }
+    if (indent && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
+        unsigned indent = getindent(buf, off-1);
+        for (; indent > 0; indent--)
+            off = buf_ins(buf, indent, off, '\t');
     }
     clear_redo(buf);
     return off;
@@ -270,7 +283,7 @@ unsigned buf_rscan(Buf* buf, unsigned pos, Rune r) {
 static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend) {
     unsigned n1 = dend-dbeg, n2 = mend-mbeg;
     if (n1 != n2) return n1-n2;
-    for (; n1; n1--, dbeg++, mbeg++) {
+    for (; n1 > 0; n1--, dbeg++, mbeg++) {
         int cmp = buf_get(buf, dbeg) - buf_get(buf, mbeg);
         if (cmp != 0) return cmp;
     }
@@ -281,8 +294,8 @@ void buf_find(Buf* buf, size_t* beg, size_t* end) {
     unsigned dbeg = *beg, dend = *end;
     unsigned mbeg = dend+1, mend = mbeg + (dend-dbeg);
     while (mend != dbeg) {
-        if ((buf_get(buf, mbeg) == buf_get(buf, dbeg)) &&
-            (buf_get(buf, mend) == buf_get(buf, dend)) &&
+        if ((buf_get(buf, mbeg)   == buf_get(buf, dbeg)) &&
+            (buf_get(buf, mend-1) == buf_get(buf, dend-1)) &&
             (0 == range_match(buf,dbeg,dend,mbeg,mend)))
         {
             *beg = mbeg;
