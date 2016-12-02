@@ -1,5 +1,6 @@
 # Implementation Tweaks and Bug Fixes
 
+* Auto indent mode
 * Should not be able to undo initial tag line text insertion
 * Disallow scrolling past end of buffer
 * track down double click bug for selecting whole line
@@ -7,12 +8,8 @@
 * Implement minimal regex search (per Kernighan article)
 * Implement fuzzy file/buffer/tag picker
 * Implement omnicomplete pop-up
-* Mode to expand tabs to spaces
-* Auto indent mode
 * off by one error on scrolling up with wrapped lines
 * block selection should handle brace-balancing
-* Right click should fetch file if it exists, search otherwise
-    * directories in browse?
 
 # Internals and Miscellaneous
 

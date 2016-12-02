@@ -57,7 +57,7 @@ typedef struct {
 void buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 void buf_init(Buf* buf);
-void buf_ins(Buf* buf, unsigned pos, Rune);
+unsigned buf_ins(Buf* buf, unsigned pos, Rune);
 void buf_del(Buf* buf, unsigned pos);
 unsigned buf_undo(Buf* buf, unsigned pos);
 unsigned buf_redo(Buf* buf, unsigned pos);

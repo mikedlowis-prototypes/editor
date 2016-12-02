@@ -74,16 +74,17 @@ static void syncgap(Buf* buf, unsigned off) {
 }
 
 void buf_init(Buf* buf) {
-    buf->modified = false;
-    buf->charset  = DEFAULT_CHARSET;
-    buf->crlf     = DEFAULT_CRLF;
-    buf->bufsize  = BufSize;
-    buf->bufstart = (Rune*)malloc(buf->bufsize * sizeof(Rune));
-    buf->bufend   = buf->bufstart + buf->bufsize;
-    buf->gapstart = buf->bufstart;
-    buf->gapend   = buf->bufend;
-    buf->undo     = NULL;
-    buf->redo     = NULL;
+    buf->modified    = false;
+    buf->expand_tabs = true;
+    buf->charset     = DEFAULT_CHARSET;
+    buf->crlf        = DEFAULT_CRLF;
+    buf->bufsize     = BufSize;
+    buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
+    buf->bufend      = buf->bufstart + buf->bufsize;
+    buf->gapstart    = buf->bufstart;
+    buf->gapend      = buf->bufend;
+    buf->undo        = NULL;
+    buf->redo        = NULL;
 }
 
 static void log_insert(Log** list, unsigned beg, unsigned end) {
@@ -151,11 +152,18 @@ static void clear_redo(Buf* buf) {
     buf->redo = NULL;
 }
 
-void buf_ins(Buf* buf, unsigned off, Rune rune) {
+unsigned buf_ins(Buf* buf, unsigned off, Rune rune) {
     buf->modified = true;
-    log_insert(&(buf->undo), off, off+1);
+    if (buf->expand_tabs && rune == '\t') {
+        size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
+        log_insert(&(buf->undo), off, off+n);
+        for(; n > 0; n--) insert(buf, off++, ' ');
+    } else {
+        log_insert(&(buf->undo), off, off+1);
+        insert(buf, off++, rune);
+    }
     clear_redo(buf);
-    insert(buf, off, rune);
+    return off;
 }
 
 static void delete(Buf* buf, unsigned off) {

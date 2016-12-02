@@ -372,10 +372,10 @@ void view_insert(View* view, Rune rune) {
         return;
     if (num_selected(view->selection))
         view_delete(view, RIGHT, false);
-    buf_ins(&(view->buffer), view->selection.end++, rune);
+    view->selection.end = buf_ins(&(view->buffer), view->selection.end, rune);
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    view->sync_needed   = true;
 }
 
 void view_delete(View* view, int dir, bool byword) {
