@@ -233,6 +233,13 @@ unsigned buf_redo(Buf* buf, unsigned pos) {
     return swaplog(buf, &(buf->redo), &(buf->undo), pos);
 }
 
+unsigned buf_setln(Buf* buf, unsigned line) {
+    unsigned off = 0;
+    while (line > 0 && off < buf_end(buf))
+        line--, off = buf_byline(buf, off, DOWN);
+    return off;
+}
+
 Rune buf_get(Buf* buf, unsigned off) {
     if (off >= buf_end(buf)) return (Rune)'\n';
     size_t bsz = (buf->gapstart - buf->bufstart);

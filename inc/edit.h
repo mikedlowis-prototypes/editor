@@ -62,6 +62,7 @@ unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune);
 void buf_del(Buf* buf, unsigned pos);
 unsigned buf_undo(Buf* buf, unsigned pos);
 unsigned buf_redo(Buf* buf, unsigned pos);
+unsigned buf_setln(Buf* buf, unsigned line);
 Rune buf_get(Buf* buf, unsigned pos);
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
