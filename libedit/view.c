@@ -230,6 +230,15 @@ void view_byrune(View* view, int move, bool extsel) {
     view->sync_needed = true;
 }
 
+void view_byword(View* view, int move, bool extsel) {
+    Sel sel = view->selection;
+    sel.end = buf_byword(&(view->buffer), sel.end, move);
+    if (!extsel) sel.beg = sel.end;
+    sel.col = buf_getcol(&(view->buffer), sel.end);
+    view->selection = sel;
+    view->sync_needed = true;
+}
+
 void view_byline(View* view, int move, bool extsel) {
     Sel sel = view->selection;
     sel.end = buf_byline(&(view->buffer), sel.end, move);

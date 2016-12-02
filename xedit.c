@@ -26,6 +26,7 @@ static void redraw(int width, int height);
 // UI Callbacks
 static void delete(void);
 static void del_to_bol(void);
+static void del_to_bow(void);
 static void backspace(void);
 static void cursor_home(void);
 static void cursor_end(void);
@@ -110,7 +111,7 @@ static KeyBinding Bindings[] = {
 
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
-    //{ KEY_CTRL_W,    del_to_bow   },
+    { ModCtrl, 'w', del_to_bow  },
     { ModCtrl, 'h', backspace   },
     { ModCtrl, 'a', cursor_home },
     { ModCtrl, 'e', cursor_end  },
@@ -366,6 +367,11 @@ static void del_to_bol(void) {
     delete();
 }
 
+static void del_to_bow(void) {
+    view_byword(currview(), LEFT, true);
+    delete();
+}
+
 static void backspace(void) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(currview(), LEFT, byword);
@@ -399,12 +405,18 @@ static void cursor_dn(void) {
 
 static void cursor_left(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byrune(currview(), LEFT, extsel);
+    if (x11_keymodsset(ModCtrl))
+        view_byword(currview(), LEFT, extsel);
+    else
+        view_byrune(currview(), LEFT, extsel);
 }
 
 static void cursor_right(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byrune(currview(), RIGHT, extsel);
+    if (x11_keymodsset(ModCtrl))
+        view_byword(currview(), RIGHT, extsel);
+    else
+        view_byrune(currview(), RIGHT, extsel);
 }
 
 static void page_up(void) {

@@ -73,39 +73,12 @@ void buf_find(Buf* buf, size_t* beg, size_t* end);
 void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end);
 unsigned buf_end(Buf* buf);
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
+unsigned buf_byword(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
 unsigned buf_getcol(Buf* buf, unsigned pos);
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
 void buf_lastins(Buf* buf, size_t* beg, size_t* end);
 void buf_loglock(Buf* buf);
-
-/*
-void buf_load(Buf* buf, char* path);
-void buf_save(Buf* buf);
-void buf_init(Buf* buf);
-void buf_ins(Buf* buf, Sel csr, Rune);
-void buf_del(Buf* buf, Sel csr);
-Sel buf_undo(Buf* buf, Sel csr);
-Sel buf_redo(Buf* buf, Sel csr);
-Rune buf_get(Buf* buf, Sel csr);
-void buf_setlocked(Buf* buf, bool locked);
-bool buf_locked(Buf* buf);
-bool buf_iseol(Buf* buf, Sel csr);
-Sel buf_bol(Buf* buf, Sel csr);
-Sel buf_eol(Buf* buf, Sel csr);
-Sel buf_bow(Buf* buf, Sel csr);
-Sel buf_eow(Buf* buf, Sel csr);
-Sel buf_lscan(Buf* buf, Sel csr, Rune r);
-Sel buf_rscan(Buf* buf, Sel csr, Rune r);
-Sel buf_find(Buf* buf, Sel csr);
-Sel buf_end(Buf* buf);
-Sel buf_byrune(Buf* buf, Sel csr, int count);
-Sel buf_byline(Buf* buf, Sel csr, int count);
-Sel buf_getcol(Buf* buf, Sel csr);
-Sel buf_setcol(Buf* buf, Sel csr, unsigned col);
-char* buf_getstr(Buf* buf, Sel csr);
-Sel buf_putstr(Buf* buf, Sel csr, char* str);
-*/
 
 /* Charset Handling
  *****************************************************************************/
@@ -160,6 +133,7 @@ void view_resize(View* view, size_t nrows, size_t ncols);
 void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move, bool extsel);
+void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
 void view_setcursor(View* view, size_t row, size_t col);
 void view_selext(View* view, size_t row, size_t col);

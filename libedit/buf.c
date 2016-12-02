@@ -361,6 +361,20 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
     return pos;
 }
 
+unsigned buf_byword(Buf* buf, unsigned off, int count) {
+    int move = (count < 0 ? -1 : 1);
+    unsigned end = buf_end(buf);
+    if (move < 0) {
+        for (; off > 0 && !risword(buf_get(buf, off-1)); off--);
+        for (; off > 0 && risword(buf_get(buf, off-1)); off--);
+    } else {
+        for (; off < end && risword(buf_get(buf, off+1)); off++);
+        for (; off < end && !risword(buf_get(buf, off+1)); off++);
+        off++;
+    }
+    return off;
+}
+
 unsigned buf_byline(Buf* buf, unsigned pos, int count) {
     int move = (count < 0 ? -1 : 1);
     count *= move; // remove the sign if there is one
