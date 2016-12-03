@@ -484,7 +484,7 @@ static void paste(void) {
 }
 
 static void search(void) {
-    char* str = view_getstr(currview(), NULL);
+    char* str = view_getctx(currview());
     view_findstr(getview(EDIT), str);
     free(str);
 }
