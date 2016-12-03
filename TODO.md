@@ -1,6 +1,5 @@
 # Implementation Tweaks and Bug Fixes
 
-* bug when jumping to ctag from tag view instead of edit view
 * add a shortcut to autocomplete ctag
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion

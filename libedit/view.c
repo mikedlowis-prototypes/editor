@@ -551,6 +551,7 @@ void view_scrollpage(View* view, int move) {
 void view_setln(View* view, size_t line) {
     view->selection.end = buf_setln(&(view->buffer), line);
     view->selection.beg = view->selection.end;
+    view->selection.col = 0;
     view->sync_needed   = true;
     view->sync_center   = true;
 }
