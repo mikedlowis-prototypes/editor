@@ -55,7 +55,7 @@ typedef struct {
     size_t col;
 } Sel;
 
-void buf_load(Buf* buf, char* path);
+unsigned buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 void buf_init(Buf* buf);
 unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune);

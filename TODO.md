@@ -1,5 +1,4 @@
 # Implementation Tweaks and Bug Fixes
-
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
 * Disallow scrolling past end of buffer

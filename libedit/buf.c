@@ -3,15 +3,18 @@
 #include <edit.h>
 #include <ctype.h>
 
-void buf_load(Buf* buf, char* path) {
-    if (!strcmp(path,"-")) {
+unsigned buf_load(Buf* buf, char* path) {
+    unsigned off = 0;
+    buf->path = stringdup(path);
+    char* addr = strrchr(buf->path, ':');
+    if (addr) *addr = '\0', addr++;
+    if (!strcmp(buf->path,"-")) {
         buf->charset = UTF_8;
         Rune r;
         while (RUNE_EOF != (r = fgetrune(stdin)))
             buf_ins(buf, false, buf_end(buf), r);
     } else {
-        FMap file = fmap(path);
-        buf->path = stringdup(path);
+        FMap file = fmap(buf->path);
         buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
         /* load the file contents if it has any */
         if (buf->charset > UTF_8) {
@@ -22,10 +25,13 @@ void buf_load(Buf* buf, char* path) {
             utf8load(buf, file);
         }
         funmap(file);
+        if (addr)
+            off = buf_setln(buf, strtoul(addr, NULL, 0));
     }
     buf->modified = false;
     free(buf->undo);
     buf->undo = NULL;
+    return off;
 }
 
 void buf_save(Buf* buf) {
@@ -235,7 +241,7 @@ unsigned buf_redo(Buf* buf, unsigned pos) {
 
 unsigned buf_setln(Buf* buf, unsigned line) {
     unsigned off = 0;
-    while (line > 0 && off < buf_end(buf))
+    while (line > 1 && off < buf_end(buf))
         line--, off = buf_byline(buf, off, DOWN);
     return off;
 }
