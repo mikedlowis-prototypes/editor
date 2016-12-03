@@ -516,16 +516,22 @@ static void open_file(void) {
 static void goto_ctag(void) {
     char* str = view_getctx(currview());
     if (str) {
-        PickTagCmd[2] = str;
-        char* pick = cmdread(PickTagCmd, NULL);
-        if (pick) {
-            Buf* buf = getbuf(EDIT);
-            if (0 == strncmp(buf->path, pick, strlen(buf->path))) {
-                view_setln(getview(EDIT), strtoul(strrchr(pick, ':')+1, NULL, 0));
-                Focused = EDIT;
-            } else {
-                OpenCmd[1] = pick;
-                cmdrun(OpenCmd, NULL);
+        size_t line = strtoul(str, NULL, 0);
+        if (line) {
+            view_setln(getview(EDIT), line);
+            Focused = EDIT;
+        } else {
+            PickTagCmd[2] = str;
+            char* pick = cmdread(PickTagCmd, NULL);
+            if (pick) {
+                Buf* buf = getbuf(EDIT);
+                if (0 == strncmp(buf->path, pick, strlen(buf->path))) {
+                    view_setln(getview(EDIT), strtoul(strrchr(pick, ':')+1, NULL, 0));
+                    Focused = EDIT;
+                } else {
+                    OpenCmd[1] = pick;
+                    cmdrun(OpenCmd, NULL);
+                }
             }
         }
     }
