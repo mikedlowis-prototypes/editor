@@ -1,9 +1,9 @@
 # Implementation Tweaks and Bug Fixes
 
-* center find results and jumped to line on screen
+* bug when jumping to ctag from tag view instead of edit view
+* add a shortcut to autocomplete ctag
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
-* Disallow scrolling past end of buffer
 * track down double click bug for selecting whole line
 * Add tag for ctags lookup
 * Implement minimal regex search (per Kernighan article)

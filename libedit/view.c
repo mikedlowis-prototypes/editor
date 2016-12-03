@@ -92,6 +92,7 @@ static unsigned scroll_up(View* view) {
     unsigned first = view->rows[0]->off;
     unsigned bol    = buf_bol(&(view->buffer), first);
     unsigned prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+    if (!first) return first;
     prevln = prev_screen_line(view, prevln, first);
     /* delete the last row and shift the others */
     free(view->rows[view->nrows - 1]);
@@ -105,6 +106,7 @@ static unsigned scroll_up(View* view) {
 
 static unsigned scroll_dn(View* view) {
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+    if (last >= buf_end(&(view->buffer))) return last;
     /* delete the first row and shift the others */
     if (view->nrows > 1) {
         free(view->rows[0]);
@@ -120,6 +122,26 @@ static unsigned scroll_dn(View* view) {
     return view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
 }
 
+static void sync_center(View* view, size_t csr) {
+    /* determine the screenline containing the cursor */
+    size_t scrln = 0; 
+    for (; scrln < view->nrows; scrln++) {
+        unsigned first = view->rows[scrln]->off;
+        unsigned last  = first + view->rows[scrln]->rlen - 1;
+        if (csr >= first && csr <= last)
+            break;
+    }
+    /* find the middle row and scroll until the cursor is on that row */
+    unsigned midrow = view->nrows / 2;
+    int move = (scrln - midrow);
+    unsigned count = (move < 0 ? -move : move);
+    for (; count > 0; count--)
+        if (move < 0)
+            scroll_up(view);
+        else
+            scroll_dn(view);
+}
+
 static void sync_view(View* view, size_t csr) {
     unsigned first = view->rows[0]->off;
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
@@ -128,6 +150,10 @@ static void sync_view(View* view, size_t csr) {
     while (csr > last && last < buf_end(&(view->buffer)))
         last = scroll_dn(view);
     view->sync_needed = false;
+    if (view->sync_center) {
+        sync_center(view, csr);
+        view->sync_center = false;
+    }
 }
 
 static size_t getoffset(View* view, size_t row, size_t col) {
@@ -157,6 +183,7 @@ void view_init(View* view, char* file) {
         view->selection.end = buf_load(&(view->buffer), file);
         view->selection.beg = view->selection.end;
         view->sync_needed   = true;
+        view->sync_center = true;
     }
 }
 
@@ -359,6 +386,7 @@ void view_find(View* view, size_t row, size_t col) {
         }
         view->selection = sel;
         view->sync_needed = true;
+        view->sync_center   = true;
     }
 }
 
@@ -367,6 +395,7 @@ void view_findstr(View* view, char* str) {
     buf_findstr(&(view->buffer), str, &sel.beg, &sel.end);
     view->selection = sel;
     view->sync_needed = true;
+    view->sync_center   = true;
 }
 
 void view_insert(View* view, bool indent, Rune rune) {
@@ -523,4 +552,5 @@ void view_setln(View* view, size_t line) {
     view->selection.end = buf_setln(&(view->buffer), line);
     view->selection.beg = view->selection.end;
     view->sync_needed   = true;
+    view->sync_center   = true;
 }
