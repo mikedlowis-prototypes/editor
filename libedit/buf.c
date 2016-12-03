@@ -4,6 +4,8 @@
 #include <ctype.h>
 
 unsigned buf_load(Buf* buf, char* path) {
+    if (path && path[0] == '.' && path[1] == '/')
+        path += 2;
     unsigned off = 0;
     buf->path = stringdup(path);
     char* addr = strrchr(buf->path, ':');
