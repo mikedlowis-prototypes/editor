@@ -158,6 +158,7 @@ void view_append(View* view, char* str);
 char* view_getstr(View* view, Sel* sel);
 void view_scroll(View* view, int move);
 void view_scrollpage(View* view, int move);
+void view_setln(View* view, size_t line);
 
 /* Command Executions
  *****************************************************************************/

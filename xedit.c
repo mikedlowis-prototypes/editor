@@ -49,6 +49,7 @@ static void search(void);
 static void execute(void);
 static void find(char* arg);
 static void open_file(void);
+static void goto_ctag(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -146,7 +147,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'd',        execute      },
     { ModCtrl, 'o',        open_file    },
     //{ ModCtrl, 'p',        find_ctag    },
-    //{ ModCtrl, 'g',        goto_ctag    },
+    { ModCtrl, 'g',        goto_ctag    },
 };
 
 /* External Commands
@@ -160,6 +161,7 @@ static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
 static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
+static char* PickTagCmd[] = { "xtagpick", "tags", NULL, NULL };
 static char* OpenCmd[] = { "xedit", NULL, NULL };
 static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
@@ -509,6 +511,25 @@ static void open_file(void) {
         }
     }
     free(file);
+}
+
+static void goto_ctag(void) {
+    char* str = view_getstr(currview(), NULL);
+    if (str) {
+        PickTagCmd[2] = str;
+        char* pick = cmdread(PickTagCmd, NULL);
+        if (pick) {
+            Buf* buf = getbuf(EDIT);
+            if (0 == strncmp(buf->path, pick, strlen(buf->path))) {
+                view_setln(getview(EDIT), strtoul(strrchr(pick, ':')+1, NULL, 0));
+                Focused = EDIT;
+            } else {
+                OpenCmd[1] = pick;
+                cmdrun(OpenCmd, NULL);
+            }
+        }
+    }
+    free(str);
 }
 
 /* Tag/Cmd Execution

@@ -509,3 +509,9 @@ void view_scrollpage(View* view, int move) {
     move = (move < 0 ? -1 : 1) * view->nrows;
     view_scroll(view, move);
 }
+
+void view_setln(View* view, size_t line) {
+    view->selection.end = buf_setln(&(view->buffer), line);
+    view->selection.beg = view->selection.end;
+    view->sync_needed   = true;
+}

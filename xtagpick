@@ -7,7 +7,7 @@ if [ "" == "$TAG" ] || [ "" == "$TAGFILE" ]; then
     exit 1
 fi
 
-awk -vTAG="$TAG" '
+awk -v TAG="$TAG" '
 BEGIN { FS = "[\t]+" }
 ($1 == TAG) {
     matchstr = $3
