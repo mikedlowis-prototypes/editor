@@ -369,13 +369,13 @@ void view_findstr(View* view, char* str) {
     view->sync_needed = true;
 }
 
-void view_insert(View* view, Rune rune) {
+void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && rune < 0x20)
         return;
     if (num_selected(view->selection))
         view_delete(view, RIGHT, false);
-    view->selection.end = buf_ins(&(view->buffer), true, view->selection.end, rune);
+    view->selection.end = buf_ins(&(view->buffer), indent, view->selection.end, rune);
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed   = true;
@@ -450,7 +450,7 @@ void view_putstr(View* view, char* str) {
         Rune rune = 0;
         size_t length = 0;
         while (!utf8decode(&rune, &length, *str++));
-        view_insert(view, rune);
+        view_insert(view, false, rune);
     }
     buf_loglock(&(view->buffer));
 }

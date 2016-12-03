@@ -1,7 +1,5 @@
 # Implementation Tweaks and Bug Fixes
 
-* disable autoindent when pasting text
-* update getstr to select context when selection is null
 * center find results and jumped to line on screen
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion

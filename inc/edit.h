@@ -145,7 +145,7 @@ void view_select(View* view, size_t row, size_t col);
 char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);
 void view_findstr(View* view, char* str);
-void view_insert(View* view, Rune rune);
+void view_insert(View* view, bool indent, Rune rune);
 void view_delete(View* view, int dir, bool byword);
 void view_bol(View* view, bool extsel);
 void view_eol(View* view, bool extsel);

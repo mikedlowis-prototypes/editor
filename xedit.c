@@ -146,7 +146,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'f',        search       },
     { ModCtrl, 'd',        execute      },
     { ModCtrl, 'o',        open_file    },
-    //{ ModCtrl, 'p',        find_ctag    },
+    //{ ModCtrl, 'p',        pick_ctag    },
     { ModCtrl, 'g',        goto_ctag    },
 };
 
@@ -234,7 +234,7 @@ static void key_handler(int mods, Rune key) {
     /* fallback to just inserting the rune if it doesn't fall in the private use area.
      * the private use area is used to encode special keys */
     if (key < 0xE000 || key > 0xF8FF)
-        view_insert(currview(), key);
+        view_insert(currview(), true, key);
 }
 
 /* Drawing Routines
