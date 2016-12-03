@@ -2,6 +2,7 @@
 
 * disable autoindent when pasting text
 * update getstr to select context when selection is null
+* center find results and jumped to line on screen
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
 * Disallow scrolling past end of buffer
@@ -16,8 +17,6 @@
 # Internals and Miscellaneous
 
 * Calculate line numbers and keep up to date while editing
-* Implement ctags lookup and regeneration
-* Implement cscope lookup and regeneration
 
 # Auxillary Programs
 

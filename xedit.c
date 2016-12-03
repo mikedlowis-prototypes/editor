@@ -514,7 +514,7 @@ static void open_file(void) {
 }
 
 static void goto_ctag(void) {
-    char* str = view_getstr(currview(), NULL);
+    char* str = view_getctx(currview());
     if (str) {
         PickTagCmd[2] = str;
         char* pick = cmdread(PickTagCmd, NULL);

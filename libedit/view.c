@@ -156,6 +156,7 @@ void view_init(View* view, char* file) {
     if (file) {
         view->selection.end = buf_load(&(view->buffer), file);
         view->selection.beg = view->selection.end;
+        view->sync_needed   = true;
     }
 }
 
@@ -492,6 +493,14 @@ char* view_getstr(View* view, Sel* range) {
         str[len] = '\0';
     }
     return str;
+}
+
+char* view_getctx(View* view) {
+    if (0 == num_selected(view->selection)) {
+        selcontext(view, &(view->selection));
+        view->selection.end++;
+    }
+    return view_getstr(view, NULL);
 }
 
 void view_scroll(View* view, int move) {
