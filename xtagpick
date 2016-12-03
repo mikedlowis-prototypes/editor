@@ -2,9 +2,18 @@
 TAGFILE="$1"
 TAG="$2"
 
-if [ "" == "$TAG" ] || [ "" == "$TAGFILE" ]; then
-    echo "Usage: $0 TAGFILE TAG"
+usage(){
+    echo "Usage: $0 TAGFILE [TAG]"
     exit 1
+}
+
+if [ "" == "$TAGFILE" ]; then
+    usage
+fi
+
+if [ "" == "$TAG" ]; then
+    TAG=$(cat tags | grep -v '^!' | cut -f1 | uniq | xpick)
+    [ "" == "$TAG" ] && exit
 fi
 
 awk -v TAG="$TAG" '

@@ -49,6 +49,7 @@ static void search(void);
 static void execute(void);
 static void find(char* arg);
 static void open_file(void);
+static void pick_ctag(void);
 static void goto_ctag(void);
 
 // Tag/Cmd Execution
@@ -146,7 +147,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'f',        search       },
     { ModCtrl, 'd',        execute      },
     { ModCtrl, 'o',        open_file    },
-    //{ ModCtrl, 'p',        pick_ctag    },
+    { ModCtrl, 'p',        pick_ctag    },
     { ModCtrl, 'g',        goto_ctag    },
 };
 
@@ -513,27 +514,33 @@ static void open_file(void) {
     free(file);
 }
 
+static void pick_symbol(char* symbol) {
+    PickTagCmd[2] = symbol;
+    char* pick = cmdread(PickTagCmd, NULL);
+    if (pick) {
+        Buf* buf = getbuf(EDIT);
+        if (buf->path && 0 == strncmp(buf->path, pick, strlen(buf->path))) {
+            view_setln(getview(EDIT), strtoul(strrchr(pick, ':')+1, NULL, 0));
+            Focused = EDIT;
+        } else {
+            if (!buf->path && !buf->modified) {
+                view_init(getview(EDIT), pick);
+            } else {
+                OpenCmd[1] = chomp(pick);
+                cmdrun(OpenCmd, NULL);
+            }
+        }
+    }
+}
+
+static void pick_ctag(void) {
+    pick_symbol(NULL);
+}
+
 static void goto_ctag(void) {
     char* str = view_getctx(currview());
     if (str) {
-        size_t line = strtoul(str, NULL, 0);
-        if (line) {
-            view_setln(getview(EDIT), line);
-            Focused = EDIT;
-        } else {
-            PickTagCmd[2] = str;
-            char* pick = cmdread(PickTagCmd, NULL);
-            if (pick) {
-                Buf* buf = getbuf(EDIT);
-                if (0 == strncmp(buf->path, pick, strlen(buf->path))) {
-                    view_setln(getview(EDIT), strtoul(strrchr(pick, ':')+1, NULL, 0));
-                    Focused = EDIT;
-                } else {
-                    OpenCmd[1] = pick;
-                    cmdrun(OpenCmd, NULL);
-                }
-            }
-        }
+        pick_symbol(str);
     }
     free(str);
 }
