@@ -51,6 +51,8 @@ static void find(char* arg);
 static void open_file(void);
 static void pick_ctag(void);
 static void goto_ctag(void);
+static void tabs(void);
+static void indent(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -86,15 +88,17 @@ static XConfig Config = {
 };
 
 Tag Builtins[] = {
-    { .tag = "Quit",  .action.noarg = quit  },
-    { .tag = "Save",  .action.noarg = save  },
-    { .tag = "Cut",   .action.noarg = cut   },
-    { .tag = "Copy",  .action.noarg = copy  },
-    { .tag = "Paste", .action.noarg = paste },
-    { .tag = "Undo",  .action.noarg = undo  },
-    { .tag = "Redo",  .action.noarg = redo  },
-    { .tag = "Find",  .action.arg   = find  },
-    { .tag = NULL,    .action.noarg = NULL  }
+    { .tag = "Quit",   .action.noarg = quit   },
+    { .tag = "Save",   .action.noarg = save   },
+    { .tag = "Cut",    .action.noarg = cut    },
+    { .tag = "Copy",   .action.noarg = copy   },
+    { .tag = "Paste",  .action.noarg = paste  },
+    { .tag = "Undo",   .action.noarg = undo   },
+    { .tag = "Redo",   .action.noarg = redo   },
+    { .tag = "Find",   .action.arg   = find   },
+    { .tag = "Tabs",   .action.noarg = tabs   },
+    { .tag = "Indent", .action.noarg = indent },
+    { .tag = NULL,     .action.noarg = NULL   }
 };
 
 void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
@@ -280,6 +284,8 @@ static void draw_status(int fg, size_t ncols) {
     UGlyph glyphs[ncols], *status = glyphs;
     (status++)->rune = (buf->charset == BINARY ? 'B' : 'U');
     (status++)->rune = (buf->crlf ? 'C' : 'N');
+    (status++)->rune = (buf->expand_tabs ? 'S' : 'T');
+    (status++)->rune = (buf->copy_indent ? 'I' : 'i');
     (status++)->rune = (buf->modified ? '*' : ' ');
     (status++)->rune = ' ';
     char* path = (buf->path ? buf->path : "*scratch*");
@@ -544,6 +550,18 @@ static void goto_ctag(void) {
         pick_symbol(str);
     }
     free(str);
+}
+
+static void tabs(void) {
+    bool enabled = !(getbuf(EDIT)->expand_tabs);
+    getbuf(EDIT)->expand_tabs = enabled;
+    getbuf(TAGS)->expand_tabs = enabled;
+}
+
+static void indent(void) {
+    bool enabled = !(getbuf(EDIT)->copy_indent);
+    getbuf(EDIT)->copy_indent = enabled;
+    getbuf(TAGS)->copy_indent = enabled;
 }
 
 /* Tag/Cmd Execution

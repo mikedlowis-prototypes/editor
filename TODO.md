@@ -1,7 +1,5 @@
 # Implementation Tweaks and Bug Fixes
 
-* add tag for toggling expand tabs 
-* add tag for toggling auto indent
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
