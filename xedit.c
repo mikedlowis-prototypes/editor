@@ -547,7 +547,13 @@ static void pick_ctag(void) {
 static void goto_ctag(void) {
     char* str = view_getctx(currview());
     if (str) {
-        pick_symbol(str);
+        size_t line = strtoul(str, NULL, 0);
+        if (line) {
+            view_setln(getview(EDIT), line);
+            Focused = EDIT;
+        } else {
+            pick_symbol(str);
+        }
     }
     free(str);
 }
