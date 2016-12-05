@@ -620,6 +620,7 @@ static void cmd_exec(char* cmd) {
     if (output) {
         view_putstr(getview(dest), output);
         view_selprev(getview(dest));
+        Focused = dest;
     }
     /* cleanup */
     free(input);
