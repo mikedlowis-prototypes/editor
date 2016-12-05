@@ -113,6 +113,7 @@ static KeyBinding Bindings[] = {
 
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
+    //{ ModCtrl, 'k', del_to_eol  },
     { ModCtrl, 'w', del_to_bow  },
     { ModCtrl, 'h', backspace   },
     { ModCtrl, 'a', cursor_home },

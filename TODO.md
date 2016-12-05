@@ -1,19 +1,17 @@
 # Implementation Tweaks and Bug Fixes
 
+* add tag for toggling expand tabs 
+* add tag for toggling auto indent
+* Expand tabs setting should be disabled if opened file contains tabs
+* Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
+* off by one error on scrolling up with wrapped lines
+* block selection should handle brace-balancing
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
 * track down double click bug for selecting whole line
-* Add tag for ctags lookup
 * Implement minimal regex search (per Kernighan article)
 * Implement fuzzy file/buffer/tag picker
-* Implement omnicomplete pop-up
-* off by one error on scrolling up with wrapped lines
-* block selection should handle brace-balancing
-
-# Internals and Miscellaneous
-
-* Calculate line numbers and keep up to date while editing
 
 # Auxillary Programs
 

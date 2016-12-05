@@ -168,9 +168,9 @@ static unsigned getindent(Buf* buf, unsigned off) {
     return buf_getcol(buf, off) / TabWidth;
 }
 
-unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune) {
+unsigned buf_ins(Buf* buf, bool fmt, unsigned off, Rune rune) {
     buf->modified = true;
-    if (buf->expand_tabs && rune == '\t') {
+    if (fmt && buf->expand_tabs && rune == '\t') {
         size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
         log_insert(&(buf->undo), off, off+n);
         for(; n > 0; n--) insert(buf, off++, ' ');
@@ -178,7 +178,7 @@ unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune) {
         log_insert(&(buf->undo), off, off+1);
         insert(buf, off++, rune);
     }
-    if (indent && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
+    if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
         unsigned indent = getindent(buf, off-1);
         for (; indent > 0; indent--)
             off = buf_ins(buf, indent, off, '\t');
