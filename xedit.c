@@ -28,6 +28,8 @@ static void delete(void);
 static void del_to_bol(void);
 static void del_to_bow(void);
 static void backspace(void);
+static void cursor_bol(void);
+static void cursor_eol(void);
 static void cursor_home(void);
 static void cursor_end(void);
 static void cursor_up(void);
@@ -53,6 +55,8 @@ static void pick_ctag(void);
 static void goto_ctag(void);
 static void tabs(void);
 static void indent(void);
+static void del_indent(void);
+static void add_indent(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -74,6 +78,7 @@ static View* currview(void);
 static Buf* currbuf(void);
 static enum RegionId getregion(size_t x, size_t y);
 static Sel* getsel(enum RegionId id);
+static Sel* currsel(void);
 
 /* Global Data
  *****************************************************************************/
@@ -121,8 +126,8 @@ static KeyBinding Bindings[] = {
     //{ ModCtrl, 'k', del_to_eol  },
     { ModCtrl, 'w', del_to_bow  },
     { ModCtrl, 'h', backspace   },
-    { ModCtrl, 'a', cursor_home },
-    { ModCtrl, 'e', cursor_end  },
+    { ModCtrl, 'a', cursor_bol  },
+    { ModCtrl, 'e', cursor_eol  },
 
     /* Standard Text Editing Shortcuts */
     { ModCtrl, 's', save  },
@@ -131,6 +136,10 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'x', cut   },
     { ModCtrl, 'c', copy  },
     { ModCtrl, 'v', paste },
+    
+    /* Block Indent */
+    { ModCtrl, '[', del_indent },
+    { ModCtrl, ']', add_indent },
 
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up       },
@@ -392,6 +401,14 @@ static void backspace(void) {
     view_delete(currview(), LEFT, byword);
 }
 
+static void cursor_bol(void) {
+    view_bol(currview(), false);
+}
+
+static void cursor_eol(void) {
+    view_eol(currview(), false);
+}
+
 static void cursor_home(void) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
@@ -575,6 +592,14 @@ static void indent(void) {
     getbuf(TAGS)->copy_indent = enabled;
 }
 
+static void del_indent(void) {
+    view_indent(currview(), LEFT);
+}
+
+static void add_indent(void) {
+    view_indent(currview(), RIGHT);
+}
+
 /* Tag/Cmd Execution
  *****************************************************************************/
 static Tag* tag_lookup(char* cmd) {
@@ -718,3 +743,8 @@ static enum RegionId getregion(size_t x, size_t y) {
 static Sel* getsel(enum RegionId id) {
     return &(getview(id)->selection);
 }
+
+static Sel* currsel(void) {
+    return getsel(Focused);
+}
+

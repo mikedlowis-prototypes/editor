@@ -3,6 +3,7 @@
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
+* Add a tools dir to namespace utility scripts only useful inside the editor
 * off by one error on scrolling up with wrapped lines
 * block selection should handle brace-balancing
 * Use select to check for error strings in exec.c
@@ -10,6 +11,8 @@
 * track down double click bug for selecting whole line
 * Implement minimal regex search (per Kernighan article)
 * Implement fuzzy file/buffer/tag picker
+* check for file changes when window regains focus
+* check for file changes on save
 
 # Auxillary Programs
 

@@ -434,10 +434,19 @@ void view_delete(View* view, int dir, bool byword) {
 }
 
 void view_bol(View* view, bool extsel) {
-    view->selection.end = buf_bol(&(view->buffer), view->selection.end);
+    /* determine whether we are jumping to start of content or line */
+    Buf* buf = &(view->buffer);
+    unsigned bol = buf_bol(buf, view->selection.end);
+    unsigned boi = bol;
+    for (; ' ' == buf_get(buf, boi) || '\t' == buf_get(buf, boi); boi++);
+    unsigned pos = view->selection.end;
+    pos = (pos == bol || pos > boi ? boi : bol);
+
+    /* set the new cursor position */
+    view->selection.end = pos;
     if (!extsel)
         view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->selection.col = buf_getcol(buf, view->selection.end);
     view->sync_needed = true;
 }
 
@@ -558,4 +567,33 @@ void view_setln(View* view, size_t line) {
     view->selection.col = 0;
     view->sync_needed   = true;
     view->sync_center   = true;
+}
+
+void view_indent(View* view, int dir) {
+    Buf* buf = &(view->buffer);
+    unsigned indoff = (buf->expand_tabs ? TabWidth : 1);
+    view->selection.beg = buf_bol(buf, view->selection.beg);
+    view->selection.end = buf_eol(buf, view->selection.end);
+    unsigned off = buf_bol(buf, view->selection.end);
+    while (off >= view->selection.beg) {
+        if (dir == RIGHT) {
+            buf_ins(buf, true, off, '\t');
+            view->selection.end += indoff;
+        } else if (dir == LEFT) {
+            unsigned i = 4;
+            for (; i > 0; i--) {
+                if (' ' == buf_get(buf, off)) {
+                    buf_del(buf, off);
+                    view->selection.end--;
+                } else {
+                    break;
+                }
+            }
+            if (i && '\t' == buf_get(buf, off)) {
+                buf_del(buf, off);
+                view->selection.end--;
+            }
+        }
+        off = buf_byline(buf, off, UP);
+    }
 }
