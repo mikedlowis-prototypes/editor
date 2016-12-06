@@ -82,7 +82,23 @@ static void syncgap(Buf* buf, unsigned off) {
     }
 }
 
+void log_clear(Log** list) {
+    while (*list) {
+        Log* deadite = *list;
+        *list = (*list)->next;
+        if (!deadite->insert)
+            free(deadite->data.del.runes);
+        free(deadite);
+    }
+}
+
 void buf_init(Buf* buf) {
+    /* cleanup old data if there is any */
+    if (buf->bufstart) free(buf->bufstart);
+    if (buf->undo) log_clear(&(buf->undo));
+    if (buf->redo) log_clear(&(buf->redo));
+    
+    /* reset the state to defaults */
     buf->modified    = false;
     buf->expand_tabs = true;
     buf->copy_indent = true;

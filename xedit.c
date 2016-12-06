@@ -73,6 +73,7 @@ static Buf* getbuf(enum RegionId id);
 static View* currview(void);
 static Buf* currbuf(void);
 static enum RegionId getregion(size_t x, size_t y);
+static Sel* getsel(enum RegionId id);
 
 /* Global Data
  *****************************************************************************/
@@ -173,6 +174,7 @@ static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
 /* Main Routine
  *****************************************************************************/
+#ifndef TEST
 int main(int argc, char** argv) {
     /* load the buffer views */
     view_init(getview(TAGS), NULL);
@@ -186,6 +188,7 @@ int main(int argc, char** argv) {
     x11_loop();
     return 0;
 }
+#endif
 
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     enum RegionId id = getregion(x, y);
@@ -245,6 +248,7 @@ static void key_handler(int mods, Rune key) {
 
 /* Drawing Routines
  *****************************************************************************/
+#ifndef TEST
 static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
     XGlyphSpec specs[rlen];
     while (rlen) {
@@ -364,6 +368,7 @@ static void redraw(int width, int height) {
     draw_region(TAGS);
     draw_region(EDIT);
 }
+#endif
 
 /* UI Callbacks
  *****************************************************************************/
@@ -601,7 +606,10 @@ static void cmd_exec(char* cmd) {
     /* execute the command */
     char *input = NULL, *output = NULL, *error = NULL;
     enum RegionId dest = EDIT;
+    // if (0 == view_selsz(getview(EDIT)))
+    //        view_selset(getview(EDIT), &(Sel){ .beg = 0, .end = buf_end(getbuf(EDIT)) });
     input = view_getstr(getview(EDIT), NULL);
+
     if (op == '!') {
         cmdrun(ShellCmd, NULL);
     } else if (op == '>') {
@@ -705,4 +713,8 @@ static enum RegionId getregion(size_t x, size_t y) {
             return (enum RegionId)i;
     }
     return NREGIONS;
+}
+
+static Sel* getsel(enum RegionId id) {
+    return &(getview(id)->selection);
 }

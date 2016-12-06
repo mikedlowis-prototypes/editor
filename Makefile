@@ -11,17 +11,19 @@ LIBEDIT_OBJS =         \
 LIBX_OBJS = \
 	libx/x11.o
 
-TEST_OBJS =     \
-	unittests.o \
-	tests/buf.o \
-	tests/utf8.o
+TEST_OBJS =      \
+	unittests.o  \
+	tests/buf.o  \
+	tests/utf8.o \
+	tests/xedit.o
+
 
 include config.mk
 
 all: xedit xpick
 
 clean:
-	$(RM) *.o lib*/*.o test/*.o *.a xpick xedit unittests
+	$(RM) *.o lib*/*.o tests/*.o *.a xpick xedit unittests
 
 install: all
 	mkdir -p $(PREFIX)/bin

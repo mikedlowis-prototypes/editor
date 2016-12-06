@@ -177,7 +177,11 @@ static size_t getoffset(View* view, size_t row, size_t col) {
 }
 
 void view_init(View* view, char* file) {
-    memset(view, 0, sizeof(View));
+    if (view->nrows) {
+        for (size_t i = 0; i < view->nrows; i++)
+            free(view->rows[i]);
+        free(view->rows);
+    }
     buf_init(&(view->buffer));
     if (file) {
         view->selection.end = buf_load(&(view->buffer), file);
