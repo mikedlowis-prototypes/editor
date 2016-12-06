@@ -28,6 +28,8 @@ static void delete(void);
 static void del_to_bol(void);
 static void del_to_bow(void);
 static void backspace(void);
+static void cursor_bol(void);
+static void cursor_eol(void);
 static void cursor_home(void);
 static void cursor_end(void);
 static void cursor_up(void);
@@ -124,8 +126,8 @@ static KeyBinding Bindings[] = {
     //{ ModCtrl, 'k', del_to_eol  },
     { ModCtrl, 'w', del_to_bow  },
     { ModCtrl, 'h', backspace   },
-    { ModCtrl, 'a', cursor_home },
-    { ModCtrl, 'e', cursor_end  },
+    { ModCtrl, 'a', cursor_bol  },
+    { ModCtrl, 'e', cursor_eol  },
 
     /* Standard Text Editing Shortcuts */
     { ModCtrl, 's', save  },
@@ -393,6 +395,14 @@ static void del_to_bow(void) {
 static void backspace(void) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(currview(), LEFT, byword);
+}
+
+static void cursor_bol(void) {
+    view_bol(currview(), false);
+}
+
+static void cursor_eol(void) {
+    view_eol(currview(), false);
 }
 
 static void cursor_home(void) {
