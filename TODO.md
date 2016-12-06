@@ -1,6 +1,5 @@
 # Implementation Tweaks and Bug Fixes
 
-* Home key should toggle between beginning of line and beginning of non-ws data
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag

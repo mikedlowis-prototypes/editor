@@ -430,10 +430,19 @@ void view_delete(View* view, int dir, bool byword) {
 }
 
 void view_bol(View* view, bool extsel) {
-    view->selection.end = buf_bol(&(view->buffer), view->selection.end);
+    /* determine whether we are jumping to start of content or line */
+    Buf* buf = &(view->buffer);
+    unsigned bol = buf_bol(buf, view->selection.end);
+    unsigned boi = bol;
+    for (; ' ' == buf_get(buf, boi) || '\t' == buf_get(buf, boi); boi++);
+    unsigned pos = view->selection.end;
+    pos = (pos == bol || pos > boi ? boi : bol);
+
+    /* set the new cursor position */
+    view->selection.end = pos;
     if (!extsel)
         view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->selection.col = buf_getcol(buf, view->selection.end);
     view->sync_needed = true;
 }
 
