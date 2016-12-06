@@ -555,3 +555,32 @@ void view_setln(View* view, size_t line) {
     view->sync_needed   = true;
     view->sync_center   = true;
 }
+
+void view_indent(View* view, int dir) {
+    Buf* buf = &(view->buffer);
+    unsigned indoff = (buf->expand_tabs ? TabWidth : 1);
+    view->selection.beg = buf_bol(buf, view->selection.beg);
+    view->selection.end = buf_eol(buf, view->selection.end);
+    unsigned off = buf_bol(buf, view->selection.end);
+    while (off >= view->selection.beg) {
+        if (dir == RIGHT) {
+            buf_ins(buf, true, off, '\t');
+            view->selection.end += indoff;
+        } else if (dir == LEFT) {
+            unsigned i = 4;
+            for (; i > 0; i--) {
+                if (' ' == buf_get(buf, off)) {
+                    buf_del(buf, off);
+                    view->selection.end--;
+                } else {
+                    break;
+                }
+            }
+            if (i && '\t' == buf_get(buf, off)) {
+                buf_del(buf, off);
+                view->selection.end--;
+            }
+        }
+        off = buf_byline(buf, off, UP);
+    }
+}

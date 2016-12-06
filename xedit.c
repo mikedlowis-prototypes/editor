@@ -53,6 +53,8 @@ static void pick_ctag(void);
 static void goto_ctag(void);
 static void tabs(void);
 static void indent(void);
+static void del_indent(void);
+static void add_indent(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -73,6 +75,8 @@ static Buf* getbuf(enum RegionId id);
 static View* currview(void);
 static Buf* currbuf(void);
 static enum RegionId getregion(size_t x, size_t y);
+static Sel* getsel(enum RegionId id);
+static Sel* currsel(void);
 
 /* Global Data
  *****************************************************************************/
@@ -130,6 +134,10 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'x', cut   },
     { ModCtrl, 'c', copy  },
     { ModCtrl, 'v', paste },
+    
+    /* Block Indent */
+    { ModCtrl, '[', del_indent },
+    { ModCtrl, ']', add_indent },
 
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up       },
@@ -570,6 +578,14 @@ static void indent(void) {
     getbuf(TAGS)->copy_indent = enabled;
 }
 
+static void del_indent(void) {
+    view_indent(currview(), LEFT);
+}
+
+static void add_indent(void) {
+    view_indent(currview(), RIGHT);
+}
+
 /* Tag/Cmd Execution
  *****************************************************************************/
 static Tag* tag_lookup(char* cmd) {
@@ -705,4 +721,12 @@ static enum RegionId getregion(size_t x, size_t y) {
             return (enum RegionId)i;
     }
     return NREGIONS;
+}
+
+static Sel* getsel(enum RegionId id) {
+    return &(getview(id)->selection);
+}
+
+static Sel* currsel(void) {
+    return getsel(Focused);
 }
