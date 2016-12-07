@@ -406,7 +406,7 @@ unsigned buf_byword(Buf* buf, unsigned off, int count) {
     } else {
         for (; off < end && risword(buf_get(buf, off+1)); off++);
         for (; off < end && !risword(buf_get(buf, off+1)); off++);
-        off++;
+        if (off < buf_end(buf)) off++;
     }
     return off;
 }
