@@ -373,4 +373,27 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->beg == 2);
         CHECK(getsel(EDIT)->end == 2);
     }
+    
+    /* Key Handling - Normal Input
+     *************************************************************************/
+    TEST(input not matching a shortcut should be inserted as text) {
+        setup_view(EDIT, "", 0);
+        send_keys(ModNone, 'e');
+        CHECK(getsel(EDIT)->beg == 1);
+        CHECK(getsel(EDIT)->end == 1);
+    }
+    
+    /* Key Handling - Implementation Specific
+     *************************************************************************/
+    TEST(ctrl+t should switch focus to EDIT view) {
+        Focused = TAGS;
+        send_keys(ModCtrl, 't');
+        CHECK(Focused == EDIT);
+    }
+    
+    TEST(ctrl+t should switch focus to TAGs view) {
+        Focused = EDIT;
+        send_keys(ModCtrl, 't');
+        CHECK(Focused == TAGS);
+    }
 }
