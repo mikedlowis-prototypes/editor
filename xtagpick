@@ -21,7 +21,7 @@ BEGIN { FS = "[\t]+" }
 ($1 == TAG) {
     matchstr = $3
     sub(/^\//, "\"", matchstr)
-    sub(/\$\/;"$/, "\"", matchstr)
+    sub(/\$?\/;"$/, "\"", matchstr)
     gsub(/\*/, "\\*", matchstr)
     print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
 }
