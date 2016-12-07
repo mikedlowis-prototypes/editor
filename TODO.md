@@ -13,6 +13,7 @@
 * Implement fuzzy file/buffer/tag picker
 * check for file changes when window regains focus
 * check for file changes on save
+* backspace should delete indent if preceded by whitespace
 
 # Auxillary Programs
 

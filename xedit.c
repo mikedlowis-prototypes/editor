@@ -142,10 +142,10 @@ static KeyBinding Bindings[] = {
     { ModCtrl, ']', add_indent },
 
     /* Common Special Keys */
-    { ModNone, KEY_PGUP,      page_up       },
-    { ModNone, KEY_PGDN,      page_dn       },
-    { ModAny,  KEY_DELETE,    delete        },
-    { ModAny,  KEY_BACKSPACE, backspace     },
+    { ModNone, KEY_PGUP,      page_up   },
+    { ModNone, KEY_PGDN,      page_dn   },
+    { ModAny,  KEY_DELETE,    delete    },
+    { ModAny,  KEY_BACKSPACE, backspace },
 
     /* Cursor Movements */
     { ModAny, KEY_HOME,  cursor_home  },
@@ -183,6 +183,7 @@ static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
 /* Main Routine
  *****************************************************************************/
+#ifndef TEST
 int main(int argc, char** argv) {
     /* load the buffer views */
     view_init(getview(TAGS), NULL);
@@ -196,6 +197,7 @@ int main(int argc, char** argv) {
     x11_loop();
     return 0;
 }
+#endif
 
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     enum RegionId id = getregion(x, y);
@@ -255,6 +257,7 @@ static void key_handler(int mods, Rune key) {
 
 /* Drawing Routines
  *****************************************************************************/
+#ifndef TEST
 static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
     XGlyphSpec specs[rlen];
     while (rlen) {
@@ -374,6 +377,7 @@ static void redraw(int width, int height) {
     draw_region(TAGS);
     draw_region(EDIT);
 }
+#endif
 
 /* UI Callbacks
  *****************************************************************************/
@@ -627,7 +631,10 @@ static void cmd_exec(char* cmd) {
     /* execute the command */
     char *input = NULL, *output = NULL, *error = NULL;
     enum RegionId dest = EDIT;
+    // if (0 == view_selsz(getview(EDIT)))
+    //        view_selset(getview(EDIT), &(Sel){ .beg = 0, .end = buf_end(getbuf(EDIT)) });
     input = view_getstr(getview(EDIT), NULL);
+
     if (op == '!') {
         cmdrun(ShellCmd, NULL);
     } else if (op == '>') {
@@ -740,3 +747,4 @@ static Sel* getsel(enum RegionId id) {
 static Sel* currsel(void) {
     return getsel(Focused);
 }
+
