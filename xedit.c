@@ -26,6 +26,7 @@ static void redraw(int width, int height);
 // UI Callbacks
 static void delete(void);
 static void del_to_bol(void);
+static void del_to_eol(void);
 static void del_to_bow(void);
 static void backspace(void);
 static void cursor_bol(void);
@@ -116,14 +117,17 @@ void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, s
 };
 
 static KeyBinding Bindings[] = {
-    /* Function Keys */
-    //{ KEY_CTRL_F1,    welcome     },
-    //{ KEY_CTRL_F2,    ctags_scan  },
-    //{ KEY_CTRL_F11,   fullscreen  },
-
+    /* Cursor Movements */
+    { ModAny, KEY_HOME,  cursor_home  },
+    { ModAny, KEY_END,   cursor_end   },
+    { ModAny, KEY_UP,    cursor_up    },
+    { ModAny, KEY_DOWN,  cursor_dn    },
+    { ModAny, KEY_LEFT,  cursor_left  },
+    { ModAny, KEY_RIGHT, cursor_right },
+    
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
-    //{ ModCtrl, 'k', del_to_eol  },
+    { ModCtrl, 'k', del_to_eol  },
     { ModCtrl, 'w', del_to_bow  },
     { ModCtrl, 'h', backspace   },
     { ModCtrl, 'a', cursor_bol  },
@@ -146,14 +150,6 @@ static KeyBinding Bindings[] = {
     { ModNone, KEY_PGDN,      page_dn   },
     { ModAny,  KEY_DELETE,    delete    },
     { ModAny,  KEY_BACKSPACE, backspace },
-
-    /* Cursor Movements */
-    { ModAny, KEY_HOME,  cursor_home  },
-    { ModAny, KEY_END,   cursor_end   },
-    { ModAny, KEY_UP,    cursor_up    },
-    { ModAny, KEY_DOWN,  cursor_dn    },
-    { ModAny, KEY_LEFT,  cursor_left  },
-    { ModAny, KEY_RIGHT, cursor_right },
 
     /* Implementation Specific */
     { ModNone, KEY_ESCAPE, select_prev  },
@@ -388,12 +384,20 @@ static void delete(void) {
 
 static void del_to_bol(void) {
     view_bol(currview(), true);
-    delete();
+    if (view_selsize(currview()) > 0) 
+        delete();
+}
+
+static void del_to_eol(void) {
+    view_eol(currview(), true);
+    if (view_selsize(currview()) > 0) 
+        delete();
 }
 
 static void del_to_bow(void) {
     view_byword(currview(), LEFT, true);
-    delete();
+    if (view_selsize(currview()) > 0) 
+        delete();
 }
 
 static void backspace(void) {

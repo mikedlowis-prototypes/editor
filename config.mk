@@ -24,5 +24,5 @@ LIBS += -L/usr/X11/lib
 INCS += -I/usr/include/freetype2
 
 # Gcov Coverage
-#CFLAGS  += --coverage
-#LDFLAGS += --coverage
+CFLAGS  += --coverage
+LDFLAGS += --coverage

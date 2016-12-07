@@ -143,6 +143,7 @@ void view_selext(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
 void view_selprev(View* view);
 void view_select(View* view, size_t row, size_t col);
+size_t view_selsize(View* view);
 char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);
 void view_findstr(View* view, char* str);

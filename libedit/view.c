@@ -360,6 +360,10 @@ void view_select(View* view, size_t row, size_t col) {
     view->selection = sel;
 }
 
+size_t view_selsize(View* view) {
+    return num_selected(view->selection);
+}
+
 char* view_fetch(View* view, size_t row, size_t col) {
     char* str = NULL;
     size_t off = getoffset(view, row, col);

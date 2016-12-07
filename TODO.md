@@ -1,5 +1,6 @@
 # Implementation Tweaks and Bug Fixes
 
+* investigate weird behavior when editing CRLF files and copy-pasting
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
@@ -14,6 +15,10 @@
 * check for file changes when window regains focus
 * check for file changes on save
 * backspace should delete indent if preceded by whitespace
+* indenting with a reverse selection  expands the selection the wrong way
+* add command line flags to toggle options (Tabs, Indent, etc..)
+* shift+click to extend selection
+* drag with middle and right mouse buttons causes infinite loops
 
 # Auxillary Programs
 
