@@ -142,10 +142,10 @@ static KeyBinding Bindings[] = {
     { ModCtrl, ']', add_indent },
 
     /* Common Special Keys */
-    { ModNone, KEY_PGUP,      page_up       },
-    { ModNone, KEY_PGDN,      page_dn       },
-    { ModAny,  KEY_DELETE,    delete        },
-    { ModAny,  KEY_BACKSPACE, backspace     },
+    { ModNone, KEY_PGUP,      page_up   },
+    { ModNone, KEY_PGDN,      page_dn   },
+    { ModAny,  KEY_DELETE,    delete    },
+    { ModAny,  KEY_BACKSPACE, backspace },
 
     /* Cursor Movements */
     { ModAny, KEY_HOME,  cursor_home  },

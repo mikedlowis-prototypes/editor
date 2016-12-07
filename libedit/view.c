@@ -183,6 +183,7 @@ void view_init(View* view, char* file) {
         free(view->rows);
     }
     buf_init(&(view->buffer));
+    view->selection = (Sel){ 0 };
     if (file) {
         view->selection.end = buf_load(&(view->buffer), file);
         view->selection.beg = view->selection.end;
