@@ -525,8 +525,8 @@ char* view_getstr(View* view, Sel* range) {
         Rune rune = buf_get(buf, sel.beg);
         if (rune == RUNE_CRLF) {
             str = realloc(str, len + 2);
-            str[len + 1] = '\r';
-            str[len + 2] = '\n';
+            str[len + 0] = '\r';
+            str[len + 1] = '\n';
             len += 2;
         } else {
             size_t n = utf8encode(utf, rune);
@@ -580,6 +580,7 @@ void view_indent(View* view, int dir) {
     view->selection.beg = buf_bol(buf, view->selection.beg);
     view->selection.end = buf_eol(buf, view->selection.end);
     unsigned off = buf_bol(buf, view->selection.end);
+    if (num_selected(view->selection) == 0) return;
     while (off >= view->selection.beg) {
         if (dir == RIGHT) {
             buf_ins(buf, true, off, '\t');

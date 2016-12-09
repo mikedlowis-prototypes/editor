@@ -158,12 +158,18 @@ static void log_delete(Log** list, unsigned off, Rune* r, size_t len) {
     }
 }
 
-static void insert(Buf* buf, unsigned off, Rune rune) {
+static unsigned insert(Buf* buf, unsigned off, Rune rune) {
+    unsigned rcount = 1;
     syncgap(buf, off);
-    if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r')
+    if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
+        rcount = 0;
         *(buf->gapstart-1) = RUNE_CRLF;
-    else
+    } else if (buf->crlf && rune == '\n') {
+        *(buf->gapstart++) = RUNE_CRLF;
+    } else {
         *(buf->gapstart++) = rune;
+    }
+    return rcount;
 }
 
 static void clear_redo(Buf* buf) {
@@ -189,10 +195,11 @@ unsigned buf_ins(Buf* buf, bool fmt, unsigned off, Rune rune) {
     if (fmt && buf->expand_tabs && rune == '\t') {
         size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
         log_insert(&(buf->undo), off, off+n);
-        for(; n > 0; n--) insert(buf, off++, ' ');
+        for(; n > 0; n--) off += insert(buf, off, ' ');
     } else {
-        log_insert(&(buf->undo), off, off+1);
-        insert(buf, off++, rune);
+        size_t n = insert(buf, off, rune);
+        log_insert(&(buf->undo), off, off+n);
+        off += n;
     }
     if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
         unsigned indent = getindent(buf, off-1);
@@ -238,9 +245,10 @@ unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
     } else {
         newlog->insert = true;
         newlog->data.ins.beg = log->data.del.off;
-        newlog->data.ins.end = log->data.del.off + log->data.del.len;
+        newlog->data.ins.end = newlog->data.ins.beg;
+        //newlog->data.ins.end = log->data.del.off + log->data.del.len;
         for (size_t i = log->data.del.len; i > 0; i--) {
-            insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
+            newlog->data.ins.end += insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
         }
         pos = newlog->data.ins.end;
     }

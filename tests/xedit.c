@@ -19,6 +19,15 @@ void send_keys(int mods, Rune key) {
     key_handler(mods, key);
 }
 
+bool verify_text(enum RegionId id, char* text) {
+    Sel sel = { .beg = 0, .end = buf_end(getbuf(id)) };
+    char* buftext = view_getstr(getview(id), &sel);
+    bool result = (0 == strcmp(buftext, text));
+    printf("'%s'\n", buftext);
+    free(buftext);
+    return result;
+}
+
 /* Stubbed Functions
  *****************************************************************************/
 bool x11_keymodsset(int mask) {
@@ -40,6 +49,15 @@ static void redraw(int width, int height) {
 /* Unit Tests
  *****************************************************************************/
 TEST_SUITE(XeditTests) {
+    /* Key Handling - Normal Input
+     *************************************************************************/
+    TEST(input not matching a shortcut should be inserted as text) {
+        setup_view(EDIT, "", 0);
+        send_keys(ModNone, 'e');
+        CHECK(getsel(EDIT)->beg == 1);
+        CHECK(getsel(EDIT)->end == 1);
+    }
+    
     /* Key Handling - Cursor Movement - Basic
      *************************************************************************/
     TEST(left should do nothing for empty buffer) {
@@ -245,7 +263,7 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 2);
     }
     
-    /* Key Handling - Unix Standard Shortcuts
+    /* Key Handling - Unix Editing Shortcuts
      *************************************************************************/
     TEST(ctrl+u should do nothing for empty buffer) {
         setup_view(EDIT, "", 0);
@@ -374,14 +392,65 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 2);
     }
     
-    /* Key Handling - Normal Input
+    /* Key Handling - Standard Text Editing Shortcuts
      *************************************************************************/
-    TEST(input not matching a shortcut should be inserted as text) {
-        setup_view(EDIT, "", 0);
-        send_keys(ModNone, 'e');
-        CHECK(getsel(EDIT)->beg == 1);
-        CHECK(getsel(EDIT)->end == 1);
+    TEST(cut and paste should delete selection and transfer it to+from the system clipboard) {
+        setup_view(EDIT, "foo\nbar\nbaz\n", 0);
+        CHECK(RUNE_CRLF == buf_get(getbuf(EDIT), 3));
+        getview(EDIT)->selection = (Sel){ 0, 8, 0 };
+        send_keys(ModCtrl, 'x');
+        getview(EDIT)->selection = (Sel){ 4, 4, 0 };
+        send_keys(ModCtrl, 'v');
+        CHECK(getsel(EDIT)->beg == 12);
+        CHECK(getsel(EDIT)->end == 12);
+        CHECK(verify_text(EDIT, "baz\r\nfoo\r\nbar\r\n"));
     }
+    
+    TEST(copy and paste should copy selection and transfer it to+from the system clipboard) {
+        getbuf(EDIT)->crlf = 1;
+        setup_view(EDIT, "foo\nbar\nbaz\n", 0);
+        CHECK(RUNE_CRLF == buf_get(getbuf(EDIT), 3));
+        getview(EDIT)->selection = (Sel){ 0, 8, 0 };
+        send_keys(ModCtrl, 'c');
+        getview(EDIT)->selection = (Sel){ 12, 12, 0 };
+        send_keys(ModCtrl, 'v');
+        CHECK(getsel(EDIT)->beg == 20);
+        CHECK(getsel(EDIT)->end == 20);
+        CHECK(verify_text(EDIT, "foo\r\nbar\r\nbaz\r\nfoo\r\nbar\r\n"));
+    }
+    
+    /* Key Handling - Block Indent
+     *************************************************************************/
+    TEST(ctrl+[ should do nothing on empty buffer) {
+        setup_view(EDIT, "", 0);
+        send_keys(ModCtrl, '[');
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 0);
+    }
+    
+    //TEST(ctrl+[ should do nothing on empty buffer) {
+    //    setup_view(EDIT, "a", 0);
+    //    send_keys(ModCtrl, '[');
+    //    CHECK(getsel(EDIT)->beg == 0);
+    //    CHECK(getsel(EDIT)->end == 0);
+    //}
+    
+    TEST(ctrl+] should do nothing on empty buffer) {
+        setup_view(EDIT, "", 0);
+        send_keys(ModCtrl, ']');
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 0);
+    }
+    
+    //TEST(ctrl+] should indent the current line) {
+    //    setup_view(EDIT, "a", 0);
+    //    send_keys(ModCtrl, ']');
+    //    CHECK(getsel(EDIT)->beg == 0);
+    //    CHECK(getsel(EDIT)->end == 0);
+    //}
+    
+    /* Key Handling - Special Keys
+     *************************************************************************/
     
     /* Key Handling - Implementation Specific
      *************************************************************************/

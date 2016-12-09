@@ -5,21 +5,9 @@
 
 static Buf TestBuf;
 
-static void buf_clr(Buf* buf) {
-    while (buf->undo) {
-        Log* deadite = buf->undo;
-        buf->undo = deadite->next;
-        if (!deadite->insert)
-            free(deadite->data.del.runes);
-        free(deadite);
-    }
-    free(buf->bufstart);
-    buf_init(buf);
-}
-
 static void set_buffer_text(char* str) {
     int i = 0;
-    buf_clr(&TestBuf);
+    buf_init(&TestBuf);
     TestBuf.crlf = 1;
     for (Rune* curr = TestBuf.bufstart; curr < TestBuf.bufend; curr++)
         *curr = '-';
@@ -36,7 +24,6 @@ static bool buf_text_eq(char* str) {
 }
 
 TEST_SUITE(BufferTests) {
-#if 0
     /* Initializing
      *************************************************************************/
     /* Loading
@@ -48,27 +35,27 @@ TEST_SUITE(BufferTests) {
     /* Insertions
      *************************************************************************/
     TEST(buf_ins should insert at 0 in empty buf) {
-        buf_clr(&TestBuf);
+        buf_init(&TestBuf);
         buf_ins(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("a"));
     }
 
     TEST(buf_ins should insert at 0) {
-        buf_clr(&TestBuf);
+        buf_init(&TestBuf);
         buf_ins(&TestBuf, false, 0, 'b');
         buf_ins(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("ab"));
     }
 
     TEST(buf_ins should insert at 1) {
-        buf_clr(&TestBuf);
+        buf_init(&TestBuf);
         buf_ins(&TestBuf, false, 0, 'a');
         buf_ins(&TestBuf, false, 1, 'b');
         CHECK(buf_text_eq("ab"));
     }
 
     TEST(buf_ins should insert at 1) {
-        buf_clr(&TestBuf);
+        buf_init(&TestBuf);
         buf_ins(&TestBuf, false, 0, 'a');
         buf_ins(&TestBuf, false, 1, 'c');
         buf_ins(&TestBuf, false, 1, 'b');
@@ -389,5 +376,4 @@ TEST_SUITE(BufferTests) {
         set_buffer_text("abc\n\tdef");
         CHECK(8 == buf_setcol(&TestBuf, 4, 100));
     }
-#endif
 }
