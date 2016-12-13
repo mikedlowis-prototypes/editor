@@ -4,6 +4,10 @@
 #include <edit.h>
 #include <ctype.h>
 
+#ifdef TEST
+#define exit mockexit
+#endif
+
 enum RegionId {
     STATUS   = 0,
     TAGS     = 1,
@@ -474,11 +478,12 @@ static void change_focus(void) {
 static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
-    if (!getbuf(EDIT)->modified || (now-before) <= 250)
+    if (!getbuf(EDIT)->modified || (now-before) <= 250) {
         exit(0);
-    else
+    } else {
         view_append(getview(TAGS),
-            "File is modified. Double click Quit tag or press Ctrl+Q twice to discard changes.");
+            "File is modified. Repeat action twice in < 250ms to quit.");
+    }
     before = now;
 }
 

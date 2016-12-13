@@ -1,7 +1,17 @@
 #include <atf.h>
-#include "../xedit.c"
+#include <time.h>
 
+// Test Globals
 int Mods = 0;
+int ExitCode = 0;
+
+// fake out the exit routine
+void mockexit(int code) {
+    ExitCode = code;
+}
+
+// Inculd the source file so we can access everything 
+#include "../xedit.c"
 
 /* Helper Functions
  *****************************************************************************/
@@ -22,8 +32,12 @@ void send_keys(int mods, Rune key) {
 bool verify_text(enum RegionId id, char* text) {
     Sel sel = { .beg = 0, .end = buf_end(getbuf(id)) };
     char* buftext = view_getstr(getview(id), &sel);
-    bool result = (0 == strcmp(buftext, text));
-    printf("'%s'\n", buftext);
+    //printf("buftext: '%s'\n", buftext);
+    bool result;
+    if (buftext == NULL)
+        result = (*text == '\0');
+    else
+        result = (0 == strcmp(buftext, text));
     free(buftext);
     return result;
 }
@@ -57,7 +71,25 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->beg == 1);
         CHECK(getsel(EDIT)->end == 1);
     }
+
+    TEST(input \n chould result in RUNE_CRLF if in crlf mode) {
+        setup_view(EDIT, "", 0);
+        getbuf(EDIT)->crlf = 1;
+        send_keys(ModNone, '\n');
+        CHECK(getsel(EDIT)->beg == 1);
+        CHECK(getsel(EDIT)->end == 1);
+        CHECK(RUNE_CRLF == buf_get(getbuf(EDIT), 0));
+    }
     
+    TEST(input \n chould result in \n if not in crlf mode) {
+        setup_view(EDIT, "", 0);
+        getbuf(EDIT)->crlf = 0;
+        send_keys(ModNone, '\n');
+        CHECK(getsel(EDIT)->beg == 1);
+        CHECK(getsel(EDIT)->end == 1);
+        CHECK('\n' == buf_get(getbuf(EDIT), 0));
+    }
+       
     /* Key Handling - Cursor Movement - Basic
      *************************************************************************/
     TEST(left should do nothing for empty buffer) {
@@ -396,7 +428,6 @@ TEST_SUITE(XeditTests) {
      *************************************************************************/
     TEST(cut and paste should delete selection and transfer it to+from the system clipboard) {
         setup_view(EDIT, "foo\nbar\nbaz\n", 0);
-        CHECK(RUNE_CRLF == buf_get(getbuf(EDIT), 3));
         getview(EDIT)->selection = (Sel){ 0, 8, 0 };
         send_keys(ModCtrl, 'x');
         getview(EDIT)->selection = (Sel){ 4, 4, 0 };
@@ -409,7 +440,6 @@ TEST_SUITE(XeditTests) {
     TEST(copy and paste should copy selection and transfer it to+from the system clipboard) {
         getbuf(EDIT)->crlf = 1;
         setup_view(EDIT, "foo\nbar\nbaz\n", 0);
-        CHECK(RUNE_CRLF == buf_get(getbuf(EDIT), 3));
         getview(EDIT)->selection = (Sel){ 0, 8, 0 };
         send_keys(ModCtrl, 'c');
         getview(EDIT)->selection = (Sel){ 12, 12, 0 };
@@ -449,7 +479,7 @@ TEST_SUITE(XeditTests) {
     //    CHECK(getsel(EDIT)->end == 0);
     //}
     
-    /* Key Handling - Special Keys
+    /* Key Handling - Special 
      *************************************************************************/
     
     /* Key Handling - Implementation Specific
@@ -464,5 +494,200 @@ TEST_SUITE(XeditTests) {
         Focused = EDIT;
         send_keys(ModCtrl, 't');
         CHECK(Focused == TAGS);
+    }
+    
+    /* Mouse Input Handling
+     *************************************************************************/
+    
+    /* Command Execution
+     *************************************************************************/
+    TEST(Commands starting with : should be executed as sed scripts) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
+        setup_view(TAGS, ":s/foo/bar/", 0);
+        getview(TAGS)->selection = (Sel){ .beg = 0, .end = 11 };
+        send_keys(ModCtrl, 'd');
+        CHECK(verify_text(EDIT, "bar"));        
+    }
+    
+    TEST(Commands starting with | should be take selection as input and replace it with output) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
+        setup_view(TAGS, "|sed -e 's/foo/bar/'", 0);
+        getview(TAGS)->selection = (Sel){ .beg = 0, .end = 20 };
+        send_keys(ModCtrl, 'd');
+        CHECK(verify_text(EDIT, "bar"));        
+    }
+    
+    TEST(Commands starting with ! should execute in the background with no input or output) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
+        setup_view(TAGS, "!ls", 0);
+        getview(TAGS)->selection = (Sel){ .beg = 0, .end = 3 };
+        send_keys(ModCtrl, 'd');
+        CHECK(verify_text(EDIT, "foo"));        
+    }
+
+#if 0
+    TEST(Commands starting with > should execute in the background with selection as input) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
+        setup_view(TAGS, ">cat", 0);
+        getview(TAGS)->selection = (Sel){ .beg = 0, .end = 4 };
+        send_keys(ModCtrl, 'd');
+        CHECK(verify_text(EDIT, "foo"));        
+    }
+#endif
+
+    TEST(Commands starting with < should replace selection with output) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
+        setup_view(TAGS, "<echo bar", 0);
+        getview(TAGS)->selection = (Sel){ .beg = 0, .end = 9 };
+        send_keys(ModCtrl, 'd');
+        CHECK(verify_text(EDIT, "bar\r\n"));        
+    }
+    
+    TEST(Commands not starting with a sigil should replace themselves with their output) {
+        setup_view(EDIT, "echo foo", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = 8 };
+        send_keys(ModCtrl, 'd');
+        CHECK(verify_text(EDIT, "foo\r\n"));        
+    }
+    
+    /* Tag Handling
+     *************************************************************************/
+    TEST(Quit should  quit immediately if buffer is unmodified) {
+        setup_view(TAGS, "", 0);
+        setup_view(EDIT, "", 0);
+        getbuf(EDIT)->modified = false;
+        ExitCode = 42;
+        exec("Quit");
+        CHECK(ExitCode == 0);
+        CHECK(verify_text(TAGS, ""));
+    }
+    
+    TEST(Quit should display error message when quit called with unsaved changes) {
+        setup_view(TAGS, "", 0);
+        setup_view(EDIT, "", 0);
+        getbuf(EDIT)->modified = true;
+        ExitCode = 42;
+        usleep(251 * 1000);
+        exec("Quit");
+        CHECK(ExitCode == 42);
+        CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
+    }
+    
+    TEST(Quit should discard changes if quit executed twice in less than 250 ms) {
+        setup_view(TAGS, "", 0);
+        setup_view(EDIT, "", 0);
+        getbuf(EDIT)->modified = true;
+        ExitCode = 42;
+        usleep(251 * 1000);
+        exec("Quit");
+        CHECK(ExitCode == 42);
+        CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
+        usleep(249 * 1000);
+        exec("Quit");
+        CHECK(ExitCode == 0);
+        CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
+    }
+
+    
+    TEST(Cut and Paste tags should move selection to new location) {
+        setup_view(EDIT, "foo\nbar\nbaz\n", 0);
+        getview(EDIT)->selection = (Sel){ 0, 8, 0 };
+        exec("Cut");
+        getview(EDIT)->selection = (Sel){ 4, 4, 0 };
+        exec("Paste");
+        CHECK(getsel(EDIT)->beg == 12);
+        CHECK(getsel(EDIT)->end == 12);
+        CHECK(verify_text(EDIT, "baz\r\nfoo\r\nbar\r\n"));
+    }
+    
+    TEST(Copy and Paste tags should copy selection to new location) {
+        setup_view(EDIT, "foo\nbar\nbaz\n", 0);
+        getview(EDIT)->selection = (Sel){ 0, 8, 0 };
+        exec("Copy");
+        getview(EDIT)->selection = (Sel){ 12, 12, 0 };
+        exec("Paste");
+        CHECK(getsel(EDIT)->beg == 20);
+        CHECK(getsel(EDIT)->end == 20);
+        CHECK(verify_text(EDIT, "foo\r\nbar\r\nbaz\r\nfoo\r\nbar\r\n"));
+    }
+    
+    TEST(Undo+Redo should undo+redo the previous insert) {
+        setup_view(EDIT, "foo", 0);
+        exec("Undo");
+        CHECK(verify_text(EDIT, ""));
+        exec("Redo");
+        CHECK(verify_text(EDIT, "foo"));
+    }
+    
+    TEST(Undo+Redo should undo+redo the previous delete) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ 0, 3, 0 };
+        send_keys(ModNone, KEY_DELETE);
+        exec("Undo");
+        CHECK(verify_text(EDIT, "foo"));
+        exec("Redo");
+        CHECK(verify_text(EDIT, ""));
+    }
+    
+    TEST(Find should find next occurrence of selected text in EDIT view) {
+    }
+    
+    TEST(Find should find next occurrence of selected text in TAGS view) {
+    }
+    
+    TEST(Find should find next occurrence of selected text after selected tag) {
+    }
+
+#if 0    
+    TEST(Find should do nothing if nothing selected) {
+        setup_view(TAGS, "Find", 0);
+        getview(TAGS)->selection = (Sel){ 0, 4, 0 };
+        send_keys(ModCtrl, 'f');
+    }
+#endif
+    
+    TEST(Tabs should set indent style to tabs) {
+        setup_view(TAGS, "Tabs", 0);
+        getview(TAGS)->selection = (Sel){ 0, 4, 0 };
+        getbuf(EDIT)->expand_tabs = true;
+        getbuf(TAGS)->expand_tabs = true;
+        send_keys(ModCtrl, 'd');
+        CHECK(getbuf(EDIT)->expand_tabs == false);
+        CHECK(getbuf(TAGS)->expand_tabs == false);
+    }
+    
+    TEST(Tabs should set indent style to spaces) {
+        setup_view(TAGS, "Tabs", 0);
+        getview(TAGS)->selection = (Sel){ 0, 4, 0 };
+        getbuf(EDIT)->expand_tabs = false;
+        getbuf(TAGS)->expand_tabs = false;
+        send_keys(ModCtrl, 'd');
+        CHECK(getbuf(EDIT)->expand_tabs == true);
+        CHECK(getbuf(TAGS)->expand_tabs == true);
+    }
+    
+    TEST(Indent should disable copyindent) {
+        setup_view(TAGS, "Indent", 0);
+        getview(TAGS)->selection = (Sel){ 0, 6, 0 };
+        getbuf(EDIT)->copy_indent = true;
+        getbuf(TAGS)->copy_indent = true;
+        send_keys(ModCtrl, 'd');
+        CHECK(getbuf(EDIT)->copy_indent == false);
+        CHECK(getbuf(TAGS)->copy_indent == false);
+    }
+    
+    TEST(Indent should enable copyindent) {
+        setup_view(TAGS, "Indent", 0);
+        getview(TAGS)->selection = (Sel){ 0, 6, 0 };
+        getbuf(EDIT)->copy_indent = false;
+        getbuf(TAGS)->copy_indent = false;
+        send_keys(ModCtrl, 'd');
+        CHECK(getbuf(EDIT)->copy_indent == true);
+        CHECK(getbuf(TAGS)->copy_indent == true);
     }
 }
