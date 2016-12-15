@@ -395,7 +395,7 @@ void view_find(View* view, size_t row, size_t col) {
         }
         view->selection = sel;
         view->sync_needed = true;
-        view->sync_center   = true;
+        view->sync_center = true;
     }
 }
 

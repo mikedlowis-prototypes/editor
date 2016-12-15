@@ -424,6 +424,21 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 2);
     }
     
+    TEST(esc should select previously inserted text) {
+        setup_view(EDIT, "foo", 0);
+        send_keys(ModNone, KEY_ESCAPE);
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 3);
+    }
+    
+    TEST(esc should select nothing if no previous insert) {
+        setup_view(EDIT, "foob", 4);
+        send_keys(ModNone, KEY_BACKSPACE);
+        send_keys(ModNone, KEY_ESCAPE);
+        CHECK(getsel(EDIT)->beg == 3);
+        CHECK(getsel(EDIT)->end == 3);
+    }
+    
     /* Key Handling - Standard Text Editing Shortcuts
      *************************************************************************/
     TEST(cut and paste should delete selection and transfer it to+from the system clipboard) {
@@ -481,6 +496,71 @@ TEST_SUITE(XeditTests) {
     
     /* Key Handling - Special 
      *************************************************************************/
+    TEST(backspace should do nothing on empty buffer) {
+        setup_view(EDIT, "", 0);
+        send_keys(ModNone, KEY_BACKSPACE);
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 0);
+        CHECK(verify_text(EDIT, ""));
+    }
+
+    TEST(backspace should do nothing at beginning of buffer) {
+        setup_view(EDIT, "abc", 0);
+        send_keys(ModNone, KEY_BACKSPACE);
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 0);
+        CHECK(verify_text(EDIT, "abc"));
+    }
+    
+    TEST(backspace should delete previous character) {
+        setup_view(EDIT, "abc", 1);
+        send_keys(ModNone, KEY_BACKSPACE);
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 0);
+        CHECK(verify_text(EDIT, "bc"));
+    }
+    
+    TEST(backspace should delete selection) {
+        setup_view(EDIT, "abcde", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 1, .end = 4 };
+        send_keys(ModNone, KEY_BACKSPACE);
+        CHECK(getsel(EDIT)->beg == 1);
+        CHECK(getsel(EDIT)->end == 1);
+        CHECK(verify_text(EDIT, "ae"));
+    }
+    
+    TEST(delete should do nothing on empty buffer) {
+        setup_view(EDIT, "", 0);
+        send_keys(ModNone, KEY_DELETE);
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 0);
+        CHECK(verify_text(EDIT, ""));
+    }
+
+    TEST(delete should do nothing at end of buffer) {
+        setup_view(EDIT, "abc", 3);
+        send_keys(ModNone, KEY_DELETE);
+        CHECK(getsel(EDIT)->beg == 3);
+        CHECK(getsel(EDIT)->end == 3);
+        CHECK(verify_text(EDIT, "abc"));
+    }
+    
+    TEST(delete should delete next character) {
+        setup_view(EDIT, "abc", 2);
+        send_keys(ModNone, KEY_DELETE);
+        CHECK(getsel(EDIT)->beg == 2);
+        CHECK(getsel(EDIT)->end == 2);
+        CHECK(verify_text(EDIT, "ab"));
+    }
+    
+    TEST(delete should delete selection) {
+        setup_view(EDIT, "abcde", 0);
+        getview(EDIT)->selection = (Sel){ .beg = 1, .end = 4 };
+        send_keys(ModNone, KEY_DELETE);
+        CHECK(getsel(EDIT)->beg == 1);
+        CHECK(getsel(EDIT)->end == 1);
+        CHECK(verify_text(EDIT, "ae"));
+    }
     
     /* Key Handling - Implementation Specific
      *************************************************************************/
@@ -496,6 +576,32 @@ TEST_SUITE(XeditTests) {
         CHECK(Focused == TAGS);
     }
     
+    TEST(ctrl+q should quit) {
+        setup_view(TAGS, "", 0);
+        setup_view(EDIT, "", 0);
+        getbuf(EDIT)->modified = false;
+        ExitCode = 42;
+        send_keys(ModCtrl, 'q');
+        CHECK(ExitCode == 0);
+        CHECK(verify_text(TAGS, ""));
+    }
+    
+    TEST(ctrl+f should find next occurrence of selected text) {
+        setup_view(EDIT, "foobarfoo", 0);
+        getview(EDIT)->selection = (Sel){ 0, 3, 0 };
+        send_keys(ModCtrl, 'f');
+        CHECK(getview(EDIT)->selection.beg == 6);
+        CHECK(getview(EDIT)->selection.end == 9);
+    }
+    
+    TEST(ctrl+f should wrap around to beginning of buffer) {
+        setup_view(EDIT, "foobarbazfoo", 0);
+        getview(EDIT)->selection = (Sel){ 9, 12, 0 };
+        send_keys(ModCtrl, 'f');
+        CHECK(getview(EDIT)->selection.beg == 0);
+        CHECK(getview(EDIT)->selection.end == 3);
+    }
+    
     /* Mouse Input Handling
      *************************************************************************/
     
@@ -507,7 +613,11 @@ TEST_SUITE(XeditTests) {
         setup_view(TAGS, ":s/foo/bar/", 0);
         getview(TAGS)->selection = (Sel){ .beg = 0, .end = 11 };
         send_keys(ModCtrl, 'd');
-        CHECK(verify_text(EDIT, "bar"));        
+        #ifdef __MACH__
+        CHECK(verify_text(EDIT, "bar\r\n"));
+        #else
+        CHECK(verify_text(EDIT, "bar"));
+        #endif
     }
     
     TEST(Commands starting with | should be take selection as input and replace it with output) {
@@ -516,7 +626,11 @@ TEST_SUITE(XeditTests) {
         setup_view(TAGS, "|sed -e 's/foo/bar/'", 0);
         getview(TAGS)->selection = (Sel){ .beg = 0, .end = 20 };
         send_keys(ModCtrl, 'd');
-        CHECK(verify_text(EDIT, "bar"));        
+        #ifdef __MACH__
+        CHECK(verify_text(EDIT, "bar\r\n"));
+        #else
+        CHECK(verify_text(EDIT, "bar"));
+        #endif
     }
     
     TEST(Commands starting with ! should execute in the background with no input or output) {
@@ -587,12 +701,28 @@ TEST_SUITE(XeditTests) {
         exec("Quit");
         CHECK(ExitCode == 42);
         CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
-        usleep(249 * 1000);
         exec("Quit");
         CHECK(ExitCode == 0);
         CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
     }
-
+    
+    TEST(Save should save changes to disk with crlf line endings) {
+        setup_view(TAGS, "", 0);
+        view_init(getview(EDIT), "docs/crlf.txt");
+        CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
+        exec("Save");
+        view_init(getview(EDIT), "docs/crlf.txt");
+        CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
+    }
+    
+    TEST(Save should save changes to disk with lf line endings) {
+        setup_view(TAGS, "", 0);
+        view_init(getview(EDIT), "docs/lf.txt");
+        CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
+        exec("Save");
+        view_init(getview(EDIT), "docs/lf.txt");
+        CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
+    }
     
     TEST(Cut and Paste tags should move selection to new location) {
         setup_view(EDIT, "foo\nbar\nbaz\n", 0);
@@ -634,13 +764,61 @@ TEST_SUITE(XeditTests) {
         CHECK(verify_text(EDIT, ""));
     }
     
-    TEST(Find should find next occurrence of selected text in EDIT view) {
+    TEST(Undo+Redo should undo+redo the previous delete with two non-contiguous deletes logged) {
+        setup_view(EDIT, "foobarbaz", 0);
+        getview(EDIT)->selection = (Sel){ 0, 3, 0 };
+        send_keys(ModNone, KEY_DELETE);
+        getview(EDIT)->selection = (Sel){ 3, 6, 0 };
+        send_keys(ModNone, KEY_DELETE);
+        CHECK(verify_text(EDIT, "bar"));
+        exec("Undo");
+        CHECK(verify_text(EDIT, "barbaz"));
+        exec("Redo");
+        CHECK(verify_text(EDIT, "bar"));
     }
     
-    TEST(Find should find next occurrence of selected text in TAGS view) {
+    TEST(Undo+Redo should undo+redo the previous delete performed with backspace) {
+        setup_view(EDIT, "foo", 0);
+        getview(EDIT)->selection = (Sel){ 3, 3, 0 };
+        for(int i = 0; i < 3; i++)
+            send_keys(ModNone, KEY_BACKSPACE);
+        CHECK(verify_text(EDIT, ""));
+        exec("Undo");
+        CHECK(verify_text(EDIT, "foo"));
+        exec("Redo");
+        CHECK(verify_text(EDIT, ""));
+    }
+
+    TEST(Find should find next occurrence of text selected in EDIT view) {
+        setup_view(EDIT, "foobarfoo", 0);
+        getview(EDIT)->selection = (Sel){ 0, 3, 0 };
+        exec("Find");
+        CHECK(getview(EDIT)->selection.beg == 6);
+        CHECK(getview(EDIT)->selection.end == 9);
     }
     
-    TEST(Find should find next occurrence of selected text after selected tag) {
+    TEST(Find should find wrap around to beginning of EDIT buffer) {
+        setup_view(EDIT, "foobarbazfoo", 0);
+        getview(EDIT)->selection = (Sel){ 9, 12, 0 };
+        exec("Find");
+        CHECK(getview(EDIT)->selection.beg == 0);
+        CHECK(getview(EDIT)->selection.end == 3);
+    }
+    
+    TEST(Find should find next occurrence of text selected in TAGS view) {
+        setup_view(TAGS, "foo", 0);
+        getview(TAGS)->selection = (Sel){ 0, 3, 0 };
+        setup_view(EDIT, "barfoo", 0);
+        exec("Find");
+        CHECK(getview(EDIT)->selection.beg == 3);
+        CHECK(getview(EDIT)->selection.end == 6);
+    }
+    
+    TEST(Find should find next occurrence of text selected after tag) {
+        setup_view(EDIT, "barfoo", 0);
+        exec("Find foo");
+        CHECK(getview(EDIT)->selection.beg == 3);
+        CHECK(getview(EDIT)->selection.end == 6);
     }
 
 #if 0    

@@ -331,8 +331,8 @@ static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, un
 
 void buf_find(Buf* buf, size_t* beg, size_t* end) {
     unsigned dbeg = *beg, dend = *end;
-    unsigned mbeg = dend+1, mend = mbeg + (dend-dbeg);
-    while (mend != dbeg) {
+    unsigned mbeg = dbeg+1, mend = dend+1;
+    while (true) {
         if ((buf_get(buf, mbeg)   == buf_get(buf, dbeg)) &&
             (buf_get(buf, mend-1) == buf_get(buf, dend-1)) &&
             (0 == range_match(buf,dbeg,dend,mbeg,mend)))
@@ -342,7 +342,7 @@ void buf_find(Buf* buf, size_t* beg, size_t* end) {
             break;
         }
         mbeg++, mend++;
-        if (mend >= buf_end(buf)) {
+        if (mend > buf_end(buf)) {
             unsigned n = mend-mbeg;
             mbeg = 0, mend = n;
         }
@@ -385,8 +385,7 @@ void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
     Rune* runes = charstorunes(str);
     size_t rlen = runelen(runes);
     unsigned start = *beg, mbeg = start+1, mend = mbeg + rlen;
-
-    while (mbeg != start) {
+    while (true) {
         if ((buf_get(buf, mbeg) == runes[0]) &&
             (buf_get(buf, mend-1) == runes[rlen-1]) &&
             (0 == rune_match(buf, mbeg, mend, runes)))
@@ -396,10 +395,9 @@ void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
             break;
         }
         mbeg++, mend++;
-        if (mend >= buf_end(buf))
+        if (mend > buf_end(buf))
             mbeg = 0, mend = rlen;
     }
-
     free(runes);
 }
 
