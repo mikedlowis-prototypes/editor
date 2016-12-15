@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+static uint NumChildren = 0;
+
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
@@ -51,10 +53,9 @@ static int execute(char** cmd, Process* proc) {
     return proc->pid;
 }
 
-static void detach(Process* proc) {
-    close(proc->in);
-    close(proc->out);
-    close(proc->err);
+void cmdreap(void) {
+    while(NumChildren && (waitpid(-1, NULL, WNOHANG) > 0))
+        NumChildren--;
 }
 
 int cmdrun(char** cmd, char** err) {
@@ -63,8 +64,11 @@ int cmdrun(char** cmd, char** err) {
         perror("failed to execute");
         return -1;
     }
+    NumChildren++;
     if (err) *err = fdgets(proc.err);
-    detach(&proc);
+    close(proc.in);
+    close(proc.out);
+    close(proc.err);
     return proc.pid;
 }
 
@@ -74,9 +78,11 @@ char* cmdread(char** cmd, char** err) {
         perror("failed to execute");
         return NULL;
     }
+    close(proc.in);
     char* str = fdgets(proc.out);
+    close(proc.out);
     if (err) *err = fdgets(proc.err);
-    detach(&proc);
+    close(proc.err);
     waitpid(proc.pid, NULL, 0);
     return str;
 }
@@ -91,8 +97,10 @@ void cmdwrite(char** cmd, char* text, char** err) {
         perror("failed to write");
         return;
     }
+    close(proc.in);
     if (err) *err = fdgets(proc.err);
-    detach(&proc);
+    close(proc.err);
+    close(proc.out);
     waitpid(proc.pid, NULL, 0);
 }
 
@@ -108,8 +116,9 @@ char* cmdwriteread(char** cmd, char* text, char** err) {
     }
     close(proc.in);
     char* str = fdgets(proc.out);
+    close(proc.out);
     if (err) *err = fdgets(proc.err);
-    detach(&proc);
+    close(proc.err);
     waitpid(proc.pid, NULL, 0);
     return str;
 }

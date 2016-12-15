@@ -166,6 +166,7 @@ void view_indent(View* view, int dir);
 
 /* Command Executions
  *****************************************************************************/
+void cmdreap(void);
 int cmdrun(char** cmd, char** err);
 char* cmdread(char** cmd, char** err);
 void cmdwrite(char** cmd, char* text, char** err);

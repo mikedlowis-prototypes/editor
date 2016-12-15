@@ -376,6 +376,7 @@ static void redraw(int width, int height) {
     draw_status(CLR_BASE1, (width - 4) / x11_font_width(Font));
     draw_region(TAGS);
     draw_region(EDIT);
+    cmdreap(); // cleanup any zombie child processes
 }
 #endif
 
