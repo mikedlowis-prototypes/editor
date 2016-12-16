@@ -244,7 +244,7 @@ enum {
 #define FONTNAME "Liberation Mono:size=10:antialias=true:autohint=true"
 #endif
 #define DEFAULT_COLORSCHEME DARK
-#define DEFAULT_CRLF 1
+#define DEFAULT_CRLF 0
 #define DEFAULT_CHARSET UTF_8
 #define COLOR_PALETTE \
     {                 \
