@@ -62,6 +62,7 @@ static void tabs(void);
 static void indent(void);
 static void del_indent(void);
 static void add_indent(void);
+static void eol_mode(void);
 static void debug_dump(void);
 
 // Tag/Cmd Execution
@@ -100,17 +101,18 @@ static XConfig Config = {
 };
 
 Tag Builtins[] = {
-    { .tag = "Quit",   .action.noarg = quit   },
-    { .tag = "Save",   .action.noarg = save   },
-    { .tag = "Cut",    .action.noarg = cut    },
-    { .tag = "Copy",   .action.noarg = copy   },
-    { .tag = "Paste",  .action.noarg = paste  },
-    { .tag = "Undo",   .action.noarg = undo   },
-    { .tag = "Redo",   .action.noarg = redo   },
-    { .tag = "Find",   .action.arg   = find   },
-    { .tag = "Tabs",   .action.noarg = tabs   },
-    { .tag = "Indent", .action.noarg = indent },
-    { .tag = NULL,     .action.noarg = NULL   }
+    { .tag = "Quit",   .action.noarg = quit     },
+    { .tag = "Save",   .action.noarg = save     },
+    { .tag = "Cut",    .action.noarg = cut      },
+    { .tag = "Copy",   .action.noarg = copy     },
+    { .tag = "Paste",  .action.noarg = paste    },
+    { .tag = "Undo",   .action.noarg = undo     },
+    { .tag = "Redo",   .action.noarg = redo     },
+    { .tag = "Find",   .action.arg   = find     },
+    { .tag = "Tabs",   .action.noarg = tabs     },
+    { .tag = "Indent", .action.noarg = indent   },
+    { .tag = "Eol",    .action.noarg = eol_mode },
+    { .tag = NULL,     .action.noarg = NULL     }
 };
 
 void (*MouseActs[MOUSE_BTN_COUNT])(enum RegionId id, size_t count, size_t row, size_t col) = {
@@ -610,6 +612,14 @@ static void del_indent(void) {
 
 static void add_indent(void) {
     view_indent(currview(), RIGHT);
+}
+
+static void eol_mode(void) {
+    int crlf = getbuf(EDIT)->crlf;
+    printf("%d %d\n", crlf, !crlf);
+    getbuf(EDIT)->crlf = !crlf;
+    getbuf(TAGS)->crlf = !crlf;
+    exec(crlf ? "|dos2unix" : "|unix2dos");
 }
 
 #if 0
