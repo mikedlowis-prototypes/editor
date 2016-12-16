@@ -387,7 +387,7 @@ void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
     Rune* runes = charstorunes(str);
     size_t rlen = runelen(runes);
     unsigned start = *beg, mbeg = start+1, mend = mbeg + rlen;
-    while (true) {
+    while (mbeg != start) {
         if ((buf_get(buf, mbeg) == runes[0]) &&
             (buf_get(buf, mend-1) == runes[rlen-1]) &&
             (0 == rune_match(buf, mbeg, mend, runes)))
