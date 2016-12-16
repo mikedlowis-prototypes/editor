@@ -160,7 +160,7 @@ static size_t getoffset(View* view, size_t row, size_t col) {
     Row* scrrow = view_getrow(view, row);
     if (!scrrow) return SIZE_MAX;
     size_t pos = scrrow->off;
-    if (col > scrrow->len) {
+    if (col >= scrrow->len) {
         pos = (scrrow->off + scrrow->rlen - 1);
     } else {
         /* multi column runes are followed by \0 slots so if we clicked on a \0

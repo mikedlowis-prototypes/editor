@@ -1,6 +1,5 @@
 # Implementation Tweaks and Bug Fixes
 
-* investigate weird behavior when editing CRLF files and copy-pasting
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
@@ -9,7 +8,6 @@
 * block selection should handle brace-balancing
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
-* track down double click bug for selecting whole line
 * Implement minimal regex search (per Kernighan article)
 * Implement fuzzy file/buffer/tag picker
 * check for file changes when window regains focus
