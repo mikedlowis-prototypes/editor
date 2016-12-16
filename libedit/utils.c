@@ -50,7 +50,8 @@ void funmap(FMap file) {
 
 bool risword(Rune r) {
     return (r < 127 && (isalnum(r) || r == '_' || r == ':' || r == '!' || 
-                          r == '|' || r == '>' || r == '<'));
+                          r == '|' || r == '>' || r == '<' || r == '/' ||
+                          r == '.'));
 }
 
 bool risblank(Rune r) {
