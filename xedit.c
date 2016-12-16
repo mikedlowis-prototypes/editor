@@ -62,6 +62,7 @@ static void tabs(void);
 static void indent(void);
 static void del_indent(void);
 static void add_indent(void);
+static void debug_dump(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -157,6 +158,7 @@ static KeyBinding Bindings[] = {
 
     /* Implementation Specific */
     { ModNone, KEY_ESCAPE, select_prev  },
+    //{ ModCtrl, KEY_ESCAPE, debug_dump   },
     { ModCtrl, 't',        change_focus },
     { ModCtrl, 'q',        quit         },
     { ModCtrl, 'f',        search       },
@@ -610,6 +612,40 @@ static void add_indent(void) {
     view_indent(currview(), RIGHT);
 }
 
+#if 0
+static void dump_log(Log* log) {
+    for (; log != NULL; log = log->next) {
+        if (log->insert) {
+            printf("    INS %d %lu %lu\n", 
+                log->locked, log->data.ins.beg, log->data.ins.end);
+        } else {
+            printf("    DEL %d %lu %lu ''\n",
+                log->locked, log->data.del.off, log->data.del.len);
+        }
+    }
+}
+
+static void debug_dump(void) {
+    Buf* buf = currbuf();
+    Log* log;
+    printf("path:     '%s'\n", buf->path);
+    printf("charset:  %d\n", buf->charset);
+    printf("crlf:     %d\n", buf->crlf);
+    printf("bufsize:  %lu\n", buf->bufsize);
+    printf("modified: %d\n", buf->modified);
+    printf("tab_mode: %d\n", buf->expand_tabs);
+    printf("indent:   %d\n", buf->copy_indent);
+    printf("bufstart: %p\n", (void*)buf->bufstart);
+    printf("bufend:   %p\n", (void*)buf->bufend);
+    printf("gapstart: %p\n", (void*)buf->gapstart);
+    printf("gapend:   %p\n", (void*)buf->gapend);
+    printf("undo:\n");
+    dump_log(buf->undo);
+    printf("redo:\n");
+    dump_log(buf->redo);
+}
+#endif
+
 /* Tag/Cmd Execution
  *****************************************************************************/
 static Tag* tag_lookup(char* cmd) {
@@ -641,8 +677,8 @@ static void cmd_exec(char* cmd) {
     /* execute the command */
     char *input = NULL, *output = NULL, *error = NULL;
     enum RegionId dest = EDIT;
-    // if (0 == view_selsz(getview(EDIT)))
-    //        view_selset(getview(EDIT), &(Sel){ .beg = 0, .end = buf_end(getbuf(EDIT)) });
+    if (0 == view_selsize(getview(EDIT)))
+        getview(EDIT)->selection = (Sel){ .beg = 0, .end = buf_end(getbuf(EDIT)) };
     input = view_getstr(getview(EDIT), NULL);
 
     if (op == '!') {

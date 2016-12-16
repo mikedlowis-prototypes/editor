@@ -198,8 +198,10 @@ unsigned buf_ins(Buf* buf, bool fmt, unsigned off, Rune rune) {
         for(; n > 0; n--) off += insert(buf, off, ' ');
     } else {
         size_t n = insert(buf, off, rune);
-        log_insert(&(buf->undo), off, off+n);
-        off += n;
+        if (n > 0) {
+            log_insert(&(buf->undo), off, off+n);
+            off += n;
+        }
     }
     if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
         unsigned indent = getindent(buf, off-1);
