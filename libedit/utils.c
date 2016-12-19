@@ -48,16 +48,6 @@ void funmap(FMap file) {
         munmap(file.buf, file.len);
 }
 
-bool risword(Rune r) {
-    return (r < 127 && (isalnum(r) || r == '_' || r == ':' || r == '!' || 
-                          r == '|' || r == '>' || r == '<' || r == '/' ||
-                          r == '.'));
-}
-
-bool risblank(Rune r) {
-    return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
-}
-
 char* stringdup(const char* s) {
     char* ns = (char*)malloc(strlen(s) + 1);
     strcpy(ns,s);
@@ -80,3 +70,4 @@ char* fdgets(int fd) {
 char* chomp(char* in) {
     return strtok(in, "\r\n");
 }
+

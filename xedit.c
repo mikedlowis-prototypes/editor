@@ -160,7 +160,7 @@ static KeyBinding Bindings[] = {
 
     /* Implementation Specific */
     { ModNone, KEY_ESCAPE, select_prev  },
-    //{ ModCtrl, KEY_ESCAPE, debug_dump   },
+    { ModCtrl, KEY_ESCAPE, debug_dump   },
     { ModCtrl, 't',        change_focus },
     { ModCtrl, 'q',        quit         },
     { ModCtrl, 'f',        search       },
@@ -622,15 +622,14 @@ static void eol_mode(void) {
     exec(crlf ? "|dos2unix" : "|unix2dos");
 }
 
-#if 0
 static void dump_log(Log* log) {
     for (; log != NULL; log = log->next) {
         if (log->insert) {
             printf("    INS %d %lu %lu\n", 
-                log->locked, log->data.ins.beg, log->data.ins.end);
+                log->transid, log->data.ins.beg, log->data.ins.end);
         } else {
-            printf("    DEL %d %lu %lu ''\n",
-                log->locked, log->data.del.off, log->data.del.len);
+            printf("    DEL %d %lu %lu\n",
+                log->transid, log->data.del.off, log->data.del.len);
         }
     }
 }
@@ -654,7 +653,6 @@ static void debug_dump(void) {
     printf("redo:\n");
     dump_log(buf->redo);
 }
-#endif
 
 /* Tag/Cmd Execution
  *****************************************************************************/

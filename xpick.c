@@ -181,13 +181,13 @@ static void keyboard_input(int mods, uint32_t key) {
             break;
         case '\b':
             if (Pos > 0)
-                buf_del(&Query, --Pos);
+                buf_delete(&Query, --Pos, Pos);
             break;
         case RUNE_ERR:
             break;
         default:
             ChoiceIdx = 0;
-            buf_ins(&Query, false, Pos++, key);
+            buf_insert(&Query, false, Pos++, key);
             break;
     }
     score();

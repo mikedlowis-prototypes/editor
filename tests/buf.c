@@ -12,7 +12,7 @@ static void set_buffer_text(char* str) {
     for (Rune* curr = TestBuf.bufstart; curr < TestBuf.bufend; curr++)
         *curr = '-';
     while (*str)
-        buf_ins(&TestBuf, false, i++, (Rune)*str++);
+        buf_insert(&TestBuf, false, i++, (Rune)*str++);
 }
 
 static bool buf_text_eq(char* str) {
@@ -34,41 +34,41 @@ TEST_SUITE(BufferTests) {
      *************************************************************************/
     /* Insertions
      *************************************************************************/
-    TEST(buf_ins should insert at 0 in empty buf) {
+    TEST(buf_insert should insert at 0 in empty buf) {
         buf_init(&TestBuf);
-        buf_ins(&TestBuf, false, 0, 'a');
+        buf_insert(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("a"));
     }
 
-    TEST(buf_ins should insert at 0) {
+    TEST(buf_insert should insert at 0) {
         buf_init(&TestBuf);
-        buf_ins(&TestBuf, false, 0, 'b');
-        buf_ins(&TestBuf, false, 0, 'a');
+        buf_insert(&TestBuf, false, 0, 'b');
+        buf_insert(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("ab"));
     }
 
-    TEST(buf_ins should insert at 1) {
+    TEST(buf_insert should insert at 1) {
         buf_init(&TestBuf);
-        buf_ins(&TestBuf, false, 0, 'a');
-        buf_ins(&TestBuf, false, 1, 'b');
+        buf_insert(&TestBuf, false, 0, 'a');
+        buf_insert(&TestBuf, false, 1, 'b');
         CHECK(buf_text_eq("ab"));
     }
 
-    TEST(buf_ins should insert at 1) {
+    TEST(buf_insert should insert at 1) {
         buf_init(&TestBuf);
-        buf_ins(&TestBuf, false, 0, 'a');
-        buf_ins(&TestBuf, false, 1, 'c');
-        buf_ins(&TestBuf, false, 1, 'b');
+        buf_insert(&TestBuf, false, 0, 'a');
+        buf_insert(&TestBuf, false, 1, 'c');
+        buf_insert(&TestBuf, false, 1, 'b');
         CHECK(buf_text_eq("abc"));
     }
 
-    TEST(buf_ins should sentence in larger text) {
+    TEST(buf_insert should sentence in larger text) {
         set_buffer_text(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
         );
 
-        buf_ins(&TestBuf, false, 5, ' ');
-        buf_ins(&TestBuf, false, 6, 'a');
+        buf_insert(&TestBuf, false, 5, ' ');
+        buf_insert(&TestBuf, false, 6, 'a');
 
         CHECK(buf_text_eq(
             "Lorem a ipsum dolor sit amet, consectetur adipiscing elit."
@@ -89,13 +89,13 @@ TEST_SUITE(BufferTests) {
 
     TEST(buf_get should indexed character before the gap) {
         set_buffer_text("ac");
-        buf_ins(&TestBuf, false, 1, 'b');
+        buf_insert(&TestBuf, false, 1, 'b');
         CHECK('a' == buf_get(&TestBuf, 0));
     }
 
     TEST(buf_get should indexed character after the gap) {
         set_buffer_text("ac");
-        buf_ins(&TestBuf, false, 1, 'b');
+        buf_insert(&TestBuf, false, 1, 'b');
         CHECK('c' == buf_get(&TestBuf, 2));
     }
 

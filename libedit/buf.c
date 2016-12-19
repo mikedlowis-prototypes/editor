@@ -3,6 +3,212 @@
 #include <edit.h>
 #include <ctype.h>
 
+static void buf_resize(Buf* buf, size_t sz);
+
+static void log_clear(Log** list) {
+    while (*list) {
+        Log* deadite = *list;
+        *list = (*list)->next;
+        if (!deadite->insert)
+            free(deadite->data.del.runes);
+        free(deadite);
+    }
+}
+
+static void log_insert(Buf* buf, Log** list, unsigned beg, unsigned end) {
+    Log* log = *list;
+    bool locked = (!log || log->transid != buf->transid);
+    if (locked || !log->insert || (end != log->data.ins.end+1)) {
+        buf_loglock(buf);
+        Log* newlog  = (Log*)calloc(sizeof(Log), 1);
+        newlog->transid = buf->transid;
+        newlog->insert = true;
+        newlog->data.ins.beg = beg;
+        newlog->data.ins.end = end;
+        newlog->next = *list;
+        *list = newlog;
+    } else if (beg < log->data.ins.beg) {
+        log->data.ins.beg--;
+    } else {
+        log->data.ins.end++;
+    }
+}
+
+static void log_delete(Buf* buf, Log** list, unsigned off, Rune* r, size_t len) {
+    Log* log = *list;
+    bool locked = (!log || log->transid != buf->transid);
+    if (locked || log->insert || ((off != log->data.del.off) && (off+1 != log->data.del.off))) {
+        buf_loglock(buf);
+        Log* newlog = (Log*)calloc(sizeof(Log), 1);
+        newlog->transid = buf->transid;
+        newlog->insert = false;
+        newlog->data.del.off = off;
+        newlog->data.del.len = len;
+        newlog->data.del.runes = (Rune*)malloc(sizeof(Rune) * len);
+        for (size_t i = 0; i < len; i++)
+            newlog->data.del.runes[i] = r[i];
+        newlog->next = *list;
+        *list = newlog;
+    } else if (off == log->data.del.off) {
+        log->data.del.len++;
+        log->data.del.runes = (Rune*)realloc(log->data.del.runes, sizeof(Rune) * log->data.del.len);
+        log->data.del.runes[log->data.del.len-1] = *r;
+    } else {
+        size_t bytes = sizeof(Rune) * log->data.del.len;
+        log->data.del.len++;
+        log->data.del.off--;
+        log->data.del.runes = (Rune*)realloc(log->data.del.runes, bytes + sizeof(Rune));
+        memmove(log->data.del.runes+1, log->data.del.runes, bytes);
+        log->data.del.runes[0] = *r;
+    }
+}
+
+static void syncgap(Buf* buf, unsigned off) {
+    assert(off <= buf_end(buf));
+    /* If the buffer is full, resize it before syncing */
+    if (0 == (buf->gapend - buf->gapstart))
+        buf_resize(buf, buf->bufsize << 1);
+    /* Move the gap to the desired offset */
+    Rune* newpos = (buf->bufstart + off);
+    if (newpos < buf->gapstart) {
+        while (newpos < buf->gapstart)
+            *(--buf->gapend) = *(--buf->gapstart);
+    } else {
+        while (newpos > buf->gapstart)
+            *(buf->gapstart++) = *(buf->gapend++);
+    }
+}
+
+static void buf_resize(Buf* buf, size_t sz) {
+    /* allocate the new buffer and gap */
+    Buf copy = *buf;
+    copy.bufsize  = sz;
+    copy.bufstart = (Rune*)malloc(copy.bufsize * sizeof(Rune));
+    copy.bufend   = copy.bufstart + copy.bufsize;
+    copy.gapstart = copy.bufstart;
+    copy.gapend   = copy.bufend;
+    /* copy the data from the old buffer to the new one */
+    for (Rune* curr = buf->bufstart; curr < buf->gapstart; curr++)
+        *(copy.gapstart++) = *(curr);
+    for (Rune* curr = buf->gapend; curr < buf->bufend; curr++)
+        *(copy.gapstart++) = *(curr);
+    /* free the buffer and commit the changes */
+    free(buf->bufstart);
+    *buf = copy;
+}
+
+static void clear_redo(Buf* buf) {
+    Log* log = buf->redo;
+    while (log) {
+        Log* deadite = log;
+        log = deadite->next;
+        if (!deadite->insert)
+            free(deadite->data.del.runes);
+        free(deadite);
+    }
+    buf->redo = NULL;
+}
+
+static unsigned getindent(Buf* buf, unsigned off) {
+    off = buf_bol(buf, off);
+    for (; off < buf_end(buf) && (' ' == buf_get(buf, off) || '\t' == buf_get(buf, off)); off++);
+    return buf_getcol(buf, off) / TabWidth;
+}
+
+static void delete(Buf* buf, unsigned off) {
+    syncgap(buf, off);
+    buf->gapend++;
+}
+
+static unsigned insert(Buf* buf, unsigned off, Rune rune) {
+    unsigned rcount = 1;
+    syncgap(buf, off);
+    if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
+        rcount = 0;
+        *(buf->gapstart-1) = RUNE_CRLF;
+    } else if (buf->crlf && rune == '\n') {
+        *(buf->gapstart++) = RUNE_CRLF;
+    } else {
+        *(buf->gapstart++) = rune;
+    }
+    return rcount;
+}
+
+static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend) {
+    unsigned n1 = dend-dbeg, n2 = mend-mbeg;
+    if (n1 != n2) return n1-n2;
+    for (; n1 > 0; n1--, dbeg++, mbeg++) {
+        int cmp = buf_get(buf, dbeg) - buf_get(buf, mbeg);
+        if (cmp != 0) return cmp;
+    }
+    return 0;
+}
+
+static int rune_match(Buf* buf, unsigned mbeg, unsigned mend, Rune* runes) {
+    for (; *runes; runes++, mbeg++) {
+        int cmp = *runes - buf_get(buf, mbeg);
+        if (cmp != 0) return cmp;
+    }
+    return 0;
+}
+
+static unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
+    /* pop the last action */
+    Log* log = *from;
+    if (!log) return pos;
+    *from = log->next;
+    /* invert the log type and move it to the destination */
+    Log* newlog = (Log*)calloc(sizeof(Log), 1);
+    newlog->transid = log->transid;
+    if (log->insert) {
+        newlog->insert = false;
+        size_t n = (log->data.ins.end - log->data.ins.beg);
+        newlog->data.del.off   = log->data.ins.beg;
+        newlog->data.del.len   = n;
+        newlog->data.del.runes = (Rune*)malloc(n * sizeof(Rune));
+        for (size_t i = 0; i < n; i++) {
+            newlog->data.del.runes[i] = buf_get(buf, log->data.ins.beg);
+            delete(buf, log->data.ins.beg);
+        }
+        pos = newlog->data.del.off;
+    } else {
+        newlog->insert = true;
+        newlog->data.ins.beg = log->data.del.off;
+        newlog->data.ins.end = newlog->data.ins.beg;
+        //newlog->data.ins.end = log->data.del.off + log->data.del.len;
+        for (size_t i = log->data.del.len; i > 0; i--) {
+            newlog->data.ins.end += insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
+        }
+        pos = newlog->data.ins.end;
+    }
+    newlog->next = *to;
+    *to = newlog;
+    return pos;
+}
+
+/*****************************************************************************/
+
+void buf_init(Buf* buf) {
+    /* cleanup old data if there is any */
+    if (buf->bufstart) free(buf->bufstart);
+    if (buf->undo) log_clear(&(buf->undo));
+    if (buf->redo) log_clear(&(buf->redo));
+    
+    /* reset the state to defaults */
+    buf->modified    = false;
+    buf->expand_tabs = true;
+    buf->copy_indent = true;
+    buf->charset     = DEFAULT_CHARSET;
+    buf->crlf        = DEFAULT_CRLF;
+    buf->bufsize     = BufSize;
+    buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
+    buf->bufend      = buf->bufstart + buf->bufsize;
+    buf->gapstart    = buf->bufstart;
+    buf->gapend      = buf->bufend;
+    buf->undo        = NULL;
+    buf->redo        = NULL;
+}
+
 unsigned buf_load(Buf* buf, char* path) {
     if (path && path[0] == '.' && path[1] == '/')
         path += 2;
@@ -14,7 +220,7 @@ unsigned buf_load(Buf* buf, char* path) {
         buf->charset = UTF_8;
         Rune r;
         while (RUNE_EOF != (r = fgetrune(stdin)))
-            buf_ins(buf, false, buf_end(buf), r);
+            buf_insert(buf, false, buf_end(buf), r);
     } else {
         FMap file = fmap(buf->path);
         buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
@@ -48,231 +254,7 @@ void buf_save(Buf* buf) {
     buf->modified = false;
 }
 
-void buf_resize(Buf* buf, size_t sz) {
-    /* allocate the new buffer and gap */
-    Buf copy = *buf;
-    copy.bufsize  = sz;
-    copy.bufstart = (Rune*)malloc(copy.bufsize * sizeof(Rune));
-    copy.bufend   = copy.bufstart + copy.bufsize;
-    copy.gapstart = copy.bufstart;
-    copy.gapend   = copy.bufend;
-    /* copy the data from the old buffer to the new one */
-    for (Rune* curr = buf->bufstart; curr < buf->gapstart; curr++)
-        *(copy.gapstart++) = *(curr);
-    for (Rune* curr = buf->gapend; curr < buf->bufend; curr++)
-        *(copy.gapstart++) = *(curr);
-    /* free the buffer and commit the changes */
-    free(buf->bufstart);
-    *buf = copy;
-}
-
-static void syncgap(Buf* buf, unsigned off) {
-    assert(off <= buf_end(buf));
-    /* If the buffer is full, resize it before syncing */
-    if (0 == (buf->gapend - buf->gapstart))
-        buf_resize(buf, buf->bufsize << 1);
-    /* Move the gap to the desired offset */
-    Rune* newpos = (buf->bufstart + off);
-    if (newpos < buf->gapstart) {
-        while (newpos < buf->gapstart)
-            *(--buf->gapend) = *(--buf->gapstart);
-    } else {
-        while (newpos > buf->gapstart)
-            *(buf->gapstart++) = *(buf->gapend++);
-    }
-}
-
-void log_clear(Log** list) {
-    while (*list) {
-        Log* deadite = *list;
-        *list = (*list)->next;
-        if (!deadite->insert)
-            free(deadite->data.del.runes);
-        free(deadite);
-    }
-}
-
-void buf_init(Buf* buf) {
-    /* cleanup old data if there is any */
-    if (buf->bufstart) free(buf->bufstart);
-    if (buf->undo) log_clear(&(buf->undo));
-    if (buf->redo) log_clear(&(buf->redo));
-    
-    /* reset the state to defaults */
-    buf->modified    = false;
-    buf->expand_tabs = true;
-    buf->copy_indent = true;
-    buf->charset     = DEFAULT_CHARSET;
-    buf->crlf        = DEFAULT_CRLF;
-    buf->bufsize     = BufSize;
-    buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
-    buf->bufend      = buf->bufstart + buf->bufsize;
-    buf->gapstart    = buf->bufstart;
-    buf->gapend      = buf->bufend;
-    buf->undo        = NULL;
-    buf->redo        = NULL;
-}
-
-static void log_insert(Log** list, unsigned beg, unsigned end) {
-    Log* log = *list;
-    if (!log || log->locked || !log->insert || (end != log->data.ins.end+1)) {
-        Log* newlog  = (Log*)calloc(sizeof(Log), 1);
-        newlog->insert = true;
-        newlog->data.ins.beg = beg;
-        newlog->data.ins.end = end;
-        newlog->next = *list;
-        if (log) log->locked = true;
-        *list = newlog;
-    } else if (beg <= log->data.ins.beg) {
-        log->data.ins.beg--;
-    } else {
-        log->data.ins.end++;
-    }
-}
-
-static void log_delete(Log** list, unsigned off, Rune* r, size_t len) {
-    Log* log = *list;
-    if (!log || log->locked || log->insert ||
-        ((off != log->data.del.off) && (off+1 != log->data.del.off))) {
-        Log* newlog = (Log*)calloc(sizeof(Log), 1);
-        newlog->insert = false;
-        newlog->data.del.off = off;
-        newlog->data.del.len = len;
-        newlog->data.del.runes = (Rune*)malloc(sizeof(Rune) * len);
-        for (size_t i = 0; i < len; i++)
-            newlog->data.del.runes[i] = r[i];
-        newlog->next = *list;
-        if (log) log->locked = true;
-        *list = newlog;
-    } else if (off == log->data.del.off) {
-        log->data.del.len++;
-        log->data.del.runes = (Rune*)realloc(log->data.del.runes, sizeof(Rune) * log->data.del.len);
-        log->data.del.runes[log->data.del.len-1] = *r;
-    } else {
-        size_t bytes = sizeof(Rune) * log->data.del.len;
-        log->data.del.len++;
-        log->data.del.off--;
-        log->data.del.runes = (Rune*)realloc(log->data.del.runes, bytes + sizeof(Rune));
-        memmove(log->data.del.runes+1, log->data.del.runes, bytes);
-        log->data.del.runes[0] = *r;
-    }
-}
-
-static unsigned insert(Buf* buf, unsigned off, Rune rune) {
-    unsigned rcount = 1;
-    syncgap(buf, off);
-    if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
-        rcount = 0;
-        *(buf->gapstart-1) = RUNE_CRLF;
-    } else if (buf->crlf && rune == '\n') {
-        *(buf->gapstart++) = RUNE_CRLF;
-    } else {
-        *(buf->gapstart++) = rune;
-    }
-    return rcount;
-}
-
-static void clear_redo(Buf* buf) {
-    Log* log = buf->redo;
-    while (log) {
-        Log* deadite = log;
-        log = deadite->next;
-        if (!deadite->insert)
-            free(deadite->data.del.runes);
-        free(deadite);
-    }
-    buf->redo = NULL;
-}
-
-static unsigned getindent(Buf* buf, unsigned off) {
-    off = buf_bol(buf, off);
-    for (; off < buf_end(buf) && (' ' == buf_get(buf, off) || '\t' == buf_get(buf, off)); off++);
-    return buf_getcol(buf, off) / TabWidth;
-}
-
-unsigned buf_ins(Buf* buf, bool fmt, unsigned off, Rune rune) {
-    buf->modified = true;
-    if (fmt && buf->expand_tabs && rune == '\t') {
-        size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
-        log_insert(&(buf->undo), off, off+n);
-        for(; n > 0; n--) off += insert(buf, off, ' ');
-    } else {
-        size_t n = insert(buf, off, rune);
-        if (n > 0) {
-            log_insert(&(buf->undo), off, off+n);
-            off += n;
-        }
-    }
-    if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
-        unsigned indent = getindent(buf, off-1);
-        for (; indent > 0; indent--)
-            off = buf_ins(buf, indent, off, '\t');
-    }
-    clear_redo(buf);
-    return off;
-}
-
-static void delete(Buf* buf, unsigned off) {
-    syncgap(buf, off);
-    buf->gapend++;
-}
-
-void buf_del(Buf* buf, unsigned off) {
-    buf->modified = true;
-    Rune r = buf_get(buf, off);
-    log_delete(&(buf->undo), off, &r, 1);
-    clear_redo(buf);
-    delete(buf, off);
-}
-
-unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
-    /* pop the last action */
-    Log* log = *from;
-    if (!log) return pos;
-    *from = log->next;
-    /* invert the log type and move it to the destination */
-    Log* newlog = (Log*)calloc(sizeof(Log), 1);
-    newlog->locked = true;
-    if (log->insert) {
-        newlog->insert = false;
-        size_t n = (log->data.ins.end - log->data.ins.beg);
-        newlog->data.del.off   = log->data.ins.beg;
-        newlog->data.del.len   = n;
-        newlog->data.del.runes = (Rune*)malloc(n * sizeof(Rune));
-        for (size_t i = 0; i < n; i++) {
-            newlog->data.del.runes[i] = buf_get(buf, log->data.ins.beg);
-            delete(buf, log->data.ins.beg);
-        }
-        pos = newlog->data.del.off;
-    } else {
-        newlog->insert = true;
-        newlog->data.ins.beg = log->data.del.off;
-        newlog->data.ins.end = newlog->data.ins.beg;
-        //newlog->data.ins.end = log->data.del.off + log->data.del.len;
-        for (size_t i = log->data.del.len; i > 0; i--) {
-            newlog->data.ins.end += insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
-        }
-        pos = newlog->data.ins.end;
-    }
-    newlog->next = *to;
-    *to = newlog;
-    return pos;
-}
-
-unsigned buf_undo(Buf* buf, unsigned pos) {
-    return swaplog(buf, &(buf->undo), &(buf->redo), pos);
-}
-
-unsigned buf_redo(Buf* buf, unsigned pos) {
-    return swaplog(buf, &(buf->redo), &(buf->undo), pos);
-}
-
-unsigned buf_setln(Buf* buf, unsigned line) {
-    unsigned off = 0;
-    while (line > 1 && off < buf_end(buf))
-        line--, off = buf_byline(buf, off, DOWN);
-    return off;
-}
+/*****************************************************************************/
 
 Rune buf_get(Buf* buf, unsigned off) {
     if (off >= buf_end(buf)) return (Rune)'\n';
@@ -282,6 +264,90 @@ Rune buf_get(Buf* buf, unsigned off) {
     else
         return *(buf->gapend + (off - bsz));
 }
+
+unsigned buf_end(Buf* buf) {
+    size_t bufsz = buf->bufend - buf->bufstart;
+    size_t gapsz = buf->gapend - buf->gapstart;
+    return (bufsz - gapsz);
+}
+
+/*****************************************************************************/
+
+unsigned buf_insert(Buf* buf, bool fmt, unsigned off, Rune rune) {
+    buf->modified = true;
+    if (fmt && buf->expand_tabs && rune == '\t') {
+        size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
+        log_insert(buf, &(buf->undo), off, off+n);
+        for(; n > 0; n--) off += insert(buf, off, ' ');
+    } else {
+        size_t n = insert(buf, off, rune);
+        if (n > 0) {
+            log_insert(buf, &(buf->undo), off, off+n);
+            off += n;
+        }
+    }
+    if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
+        unsigned indent = getindent(buf, off-1);
+        for (; indent > 0; indent--)
+            off = buf_insert(buf, indent, off, '\t');
+    }
+    clear_redo(buf);
+    return off;
+}
+
+unsigned buf_delete(Buf* buf, unsigned beg, unsigned end) {
+    buf->modified = true;
+    clear_redo(buf);
+    for (unsigned i = end-beg; i > 0; i--) {
+        Rune r = buf_get(buf, beg);
+        log_delete(buf, &(buf->undo), beg, &r, 1);
+        delete(buf, beg);
+    }
+    return beg;
+}
+
+unsigned buf_change(Buf* buf, unsigned beg, unsigned end) {
+    /* delete the range first */
+    unsigned off = buf_delete(buf, beg, end);
+    /* now create a new insert item of length 0 witht he same transaction id as 
+       the delete. This will cause subsequent inserts to be coalesced into the 
+       same transaction */
+    Log* dellog = buf->undo; 
+    Log* inslog = (Log*)calloc(sizeof(Log), 1);
+    inslog->transid = dellog->transid;
+    inslog->insert = true;
+    inslog->data.ins.beg = beg;
+    inslog->data.ins.end = beg;
+    inslog->next = dellog;
+    buf->undo = inslog;
+    return off;
+}
+
+/*****************************************************************************/
+
+unsigned buf_undo(Buf* buf, unsigned pos) {
+    if (!buf->undo) return pos;
+    uint transid = buf->undo->transid;
+    while (buf->undo && (buf->undo->transid == transid))
+        pos = swaplog(buf, &(buf->undo), &(buf->redo), pos);
+    return pos;
+}
+
+unsigned buf_redo(Buf* buf, unsigned pos) {
+    if (!buf->redo) return pos;
+    uint transid = buf->redo->transid;
+    while (buf->redo && (buf->redo->transid == transid))
+        pos = swaplog(buf, &(buf->redo), &(buf->undo), pos);
+    return pos;
+}
+
+void buf_loglock(Buf* buf) {
+    Log* log = buf->undo;
+    if (log && log->transid == buf->transid)
+        buf->transid++;
+}
+
+/*****************************************************************************/
 
 bool buf_iseol(Buf* buf, unsigned off) {
     Rune r = buf_get(buf, off);
@@ -321,93 +387,7 @@ unsigned buf_rscan(Buf* buf, unsigned pos, Rune r) {
     return (buf_get(buf, off) == r ? off : pos);
 }
 
-static int range_match(Buf* buf, unsigned dbeg, unsigned dend, unsigned mbeg, unsigned mend) {
-    unsigned n1 = dend-dbeg, n2 = mend-mbeg;
-    if (n1 != n2) return n1-n2;
-    for (; n1 > 0; n1--, dbeg++, mbeg++) {
-        int cmp = buf_get(buf, dbeg) - buf_get(buf, mbeg);
-        if (cmp != 0) return cmp;
-    }
-    return 0;
-}
-
-void buf_find(Buf* buf, size_t* beg, size_t* end) {
-    unsigned dbeg = *beg, dend = *end;
-    unsigned mbeg = dbeg+1, mend = dend+1;
-    while (true) {
-        if ((buf_get(buf, mbeg)   == buf_get(buf, dbeg)) &&
-            (buf_get(buf, mend-1) == buf_get(buf, dend-1)) &&
-            (0 == range_match(buf,dbeg,dend,mbeg,mend)))
-        {
-            *beg = mbeg;
-            *end = mend;
-            break;
-        }
-        mbeg++, mend++;
-        if (mend > buf_end(buf)) {
-            unsigned n = mend-mbeg;
-            mbeg = 0, mend = n;
-        }
-    }
-}
-
-static Rune* charstorunes(char* str) {
-    size_t len = 0;
-    Rune* runes = NULL;
-    while (str && *str) {
-        Rune rune = 0;
-        size_t length = 0;
-        while (!utf8decode(&rune, &length, *str++));
-        runes = realloc(runes, (len + 1) * sizeof(Rune));
-        runes[len++] = rune;
-    }
-    if (runes) {
-        runes = realloc(runes, (len + 1) * sizeof(Rune));
-        runes[len++] = '\0';
-    }
-    return runes;
-}
-
-static size_t runelen(Rune* runes) {
-    size_t len = 0;
-    for (; runes[len]; len++);
-    return len;
-}
-
-static int rune_match(Buf* buf, unsigned mbeg, unsigned mend, Rune* runes) {
-    for (; *runes; runes++, mbeg++) {
-        int cmp = *runes - buf_get(buf, mbeg);
-        if (cmp != 0) return cmp;
-    }
-    return 0;
-}
-
-void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
-    if (!str) return;
-    Rune* runes = charstorunes(str);
-    size_t rlen = runelen(runes);
-    unsigned start = *beg, mbeg = start+1, mend = mbeg + rlen;
-    while (mbeg != start) {
-        if ((buf_get(buf, mbeg) == runes[0]) &&
-            (buf_get(buf, mend-1) == runes[rlen-1]) &&
-            (0 == rune_match(buf, mbeg, mend, runes)))
-        {
-            *beg = mbeg;
-            *end = mend;
-            break;
-        }
-        mbeg++, mend++;
-        if (mend > buf_end(buf))
-            mbeg = 0, mend = rlen;
-    }
-    free(runes);
-}
-
-unsigned buf_end(Buf* buf) {
-    size_t bufsz = buf->bufend - buf->bufstart;
-    size_t gapsz = buf->gapend - buf->gapstart;
-    return (bufsz - gapsz);
-}
+/*****************************************************************************/
 
 unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
     int move = (count < 0 ? -1 : 1);
@@ -451,6 +431,58 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count) {
     return pos;
 }
 
+/*****************************************************************************/
+
+void buf_find(Buf* buf, size_t* beg, size_t* end) {
+    unsigned dbeg = *beg, dend = *end;
+    unsigned mbeg = dbeg+1, mend = dend+1;
+    while (true) {
+        if ((buf_get(buf, mbeg)   == buf_get(buf, dbeg)) &&
+            (buf_get(buf, mend-1) == buf_get(buf, dend-1)) &&
+            (0 == range_match(buf,dbeg,dend,mbeg,mend)))
+        {
+            *beg = mbeg;
+            *end = mend;
+            break;
+        }
+        mbeg++, mend++;
+        if (mend > buf_end(buf)) {
+            unsigned n = mend-mbeg;
+            mbeg = 0, mend = n;
+        }
+    }
+}
+
+void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
+    if (!str) return;
+    Rune* runes = charstorunes(str);
+    size_t rlen = rstrlen(runes);
+    unsigned start = *beg, mbeg = start+1, mend = mbeg + rlen;
+    while (mbeg != start) {
+        if ((buf_get(buf, mbeg) == runes[0]) &&
+            (buf_get(buf, mend-1) == runes[rlen-1]) &&
+            (0 == rune_match(buf, mbeg, mend, runes)))
+        {
+            *beg = mbeg;
+            *end = mend;
+            break;
+        }
+        mbeg++, mend++;
+        if (mend > buf_end(buf))
+            mbeg = 0, mend = rlen;
+    }
+    free(runes);
+}
+
+/*****************************************************************************/
+
+unsigned buf_setln(Buf* buf, unsigned line) {
+    unsigned off = 0;
+    while (line > 1 && off < buf_end(buf))
+        line--, off = buf_byline(buf, off, DOWN);
+    return off;
+}
+
 unsigned buf_getcol(Buf* buf, unsigned pos) {
     unsigned curr = buf_bol(buf, pos);
     unsigned col = 0;
@@ -485,9 +517,4 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
         *beg = log->data.ins.beg;
         *end = log->data.ins.end;
     }
-}
-
-void buf_loglock(Buf* buf) {
-    if (buf->undo)
-        buf->undo->locked = true;
 }

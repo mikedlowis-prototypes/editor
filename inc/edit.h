@@ -8,8 +8,6 @@ typedef struct {
 FMap fmap(char* path);
 void funmap(FMap file);
 uint64_t getmillis(void);
-bool risword(Rune r);
-bool risblank(Rune r);
 char* stringdup(const char* str);
 char* fdgets(int fd);
 char* chomp(char* in);
@@ -18,8 +16,8 @@ char* chomp(char* in);
  *****************************************************************************/
 typedef struct Log {
     struct Log* next;   /* pointer to next operation in the stack */
-    bool locked;        /* whether new operations can be coalesced or not */
     bool insert;        /* whether this operation was an insert or delete */
+    uint transid;       /* transaction id used to group related edits together */
     union {
         struct {
             size_t beg; /* offset in the file where insertion started */
@@ -47,6 +45,7 @@ typedef struct buf {
     bool modified;    /* tracks whether the buffer has been modified */
     bool expand_tabs; /* tracks current mode */
     bool copy_indent; /* copy the indent level from the previous line on new lines */
+    uint transid;     /* tracks the last used transaction id for log entries */
 } Buf;
 
 typedef struct {
@@ -55,15 +54,21 @@ typedef struct {
     size_t col;
 } Sel;
 
+void buf_init(Buf* buf);
 unsigned buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
-void buf_init(Buf* buf);
-unsigned buf_ins(Buf* buf, bool indent, unsigned off, Rune rune);
-void buf_del(Buf* buf, unsigned pos);
+
+Rune buf_get(Buf* buf, unsigned pos);
+unsigned buf_end(Buf* buf);
+
+unsigned buf_insert(Buf* buf, bool indent, unsigned off, Rune rune);
+unsigned buf_delete(Buf* buf, unsigned beg, unsigned end);
+unsigned buf_change(Buf* buf, unsigned beg, unsigned end);
+
 unsigned buf_undo(Buf* buf, unsigned pos);
 unsigned buf_redo(Buf* buf, unsigned pos);
-unsigned buf_setln(Buf* buf, unsigned line);
-Rune buf_get(Buf* buf, unsigned pos);
+void buf_loglock(Buf* buf);
+
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);
@@ -71,16 +76,18 @@ unsigned buf_bow(Buf* buf, unsigned pos);
 unsigned buf_eow(Buf* buf, unsigned pos);
 unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
 unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
-void buf_find(Buf* buf, size_t* beg, size_t* end);
-void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end);
-unsigned buf_end(Buf* buf);
+
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byword(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
+
+void buf_find(Buf* buf, size_t* beg, size_t* end);
+void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end);
+
+unsigned buf_setln(Buf* buf, unsigned line);
 unsigned buf_getcol(Buf* buf, unsigned pos);
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
 void buf_lastins(Buf* buf, size_t* beg, size_t* end);
-void buf_loglock(Buf* buf);
 
 /* Charset Handling
  *****************************************************************************/

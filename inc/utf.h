@@ -15,3 +15,7 @@ bool utf8decode(Rune* rune, size_t* length, int byte);
 Rune fgetrune(FILE* f);
 void fputrune(Rune rune, FILE* f);
 int runewidth(unsigned col, Rune r);
+size_t rstrlen(Rune* runes);
+Rune* charstorunes(char* str);
+bool risword(Rune r);
+bool risblank(Rune r);

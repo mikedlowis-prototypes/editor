@@ -411,9 +411,13 @@ void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && rune < 0x20)
         return;
-    if (num_selected(view->selection))
-        view_delete(view, RIGHT, false);
-    view->selection.end = buf_ins(&(view->buffer), indent, view->selection.end, rune);
+    if (num_selected(view->selection)) {
+        Sel sel = view->selection;
+        selswap(&sel);
+        sel.beg = sel.end = buf_change(&(view->buffer), sel.beg, sel.end);
+        view->selection = sel;
+    }
+    view->selection.end = buf_insert(&(view->buffer), indent, view->selection.end, rune);
     view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed   = true;
@@ -423,17 +427,15 @@ void view_delete(View* view, int dir, bool byword) {
     Sel sel = view->selection;
     selswap(&sel);
     size_t num = num_selected(sel);
-    if (num != 0) {
-        for (size_t i = 0; i < num; i++)
-            buf_del(&(view->buffer), sel.beg);
-        sel.end = sel.beg;
-    } else {
-        if ((dir == LEFT) && (sel.end > 0))
-            buf_del(&(view->buffer), --sel.end);
-        else if ((dir == RIGHT) && (sel.end < buf_end(&(view->buffer))))
-            buf_del(&(view->buffer), sel.end);
-    }
-    view->selection.beg = view->selection.end = sel.end;
+    if (num != 0)
+        sel.end = buf_delete(&(view->buffer), sel.beg, sel.end);
+    else if ((dir == LEFT) && (sel.end > 0))
+        sel.end = buf_delete(&(view->buffer), --sel.end, sel.end);
+    else if ((dir == RIGHT) && (sel.end < buf_end(&(view->buffer))))
+        sel.end = buf_delete(&(view->buffer), sel.end, sel.end+1);
+    sel.beg = sel.end;
+    /* update the selection */
+    view->selection = sel;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
@@ -507,7 +509,7 @@ void view_append(View* view, char* str) {
     if (view->selection.end != end)
         view->selection = (Sel){ .beg = end, .end = end };
     if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
-        buf_ins(&(view->buffer), false, view->selection.end++, '\n');
+        buf_insert(&(view->buffer), false, view->selection.end++, '\n');
         view->selection.beg++;
     }
     view_putstr(view, str);
@@ -583,20 +585,20 @@ void view_indent(View* view, int dir) {
     if (num_selected(view->selection) == 0) return;
     while (off >= view->selection.beg) {
         if (dir == RIGHT) {
-            buf_ins(buf, true, off, '\t');
+            buf_insert(buf, true, off, '\t');
             view->selection.end += indoff;
         } else if (dir == LEFT) {
             unsigned i = 4;
             for (; i > 0; i--) {
                 if (' ' == buf_get(buf, off)) {
-                    buf_del(buf, off);
+                    buf_delete(buf, off, off+1);
                     view->selection.end--;
                 } else {
                     break;
                 }
             }
             if (i && '\t' == buf_get(buf, off)) {
-                buf_del(buf, off);
+                buf_delete(buf, off, off+1);
                 view->selection.end--;
             }
         }

@@ -3,6 +3,7 @@
 #include <edit.h>
 #define __USE_XOPEN
 #include <wchar.h>
+#include <ctype.h>
 
 const uint8_t UTF8_SeqBits[] = { 0x00u, 0x80u, 0xC0u, 0xE0u, 0xF0u, 0xF8u, 0xFCu, 0xFEu };
 const uint8_t UTF8_SeqMask[] = { 0x00u, 0xFFu, 0x1Fu, 0x0Fu, 0x07u, 0x03u, 0x01u, 0x00u };
@@ -91,7 +92,7 @@ void utf8load(Buf* buf, FMap file) {
         Rune r = 0;
         size_t len = 0;
         while (!utf8decode(&r, &len, file.buf[i++]));
-        buf_ins(buf, false, buf_end(buf), r);
+        buf_insert(buf, false, buf_end(buf), r);
     }
 }
 
@@ -113,5 +114,38 @@ int runewidth(unsigned col, Rune r) {
     int width = wcwidth(r);
     if (width < 0) width = 1;
     return width;
+}
+
+size_t rstrlen(Rune* runes) {
+    size_t len = 0;
+    for (; runes[len]; len++);
+    return len;
+}
+
+Rune* charstorunes(char* str) {
+    size_t len = 0;
+    Rune* runes = NULL;
+    while (str && *str) {
+        Rune rune = 0;
+        size_t length = 0;
+        while (!utf8decode(&rune, &length, *str++));
+        runes = realloc(runes, (len + 1) * sizeof(Rune));
+        runes[len++] = rune;
+    }
+    if (runes) {
+        runes = realloc(runes, (len + 1) * sizeof(Rune));
+        runes[len++] = '\0';
+    }
+    return runes;
+}
+
+bool risword(Rune r) {
+    return (r < 127 && (isalnum(r) || r == '_' || r == ':' || r == '!' || 
+                          r == '|' || r == '>' || r == '<' || r == '/' ||
+                          r == '.'));
+}
+
+bool risblank(Rune r) {
+    return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
 }
 
