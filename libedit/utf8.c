@@ -140,9 +140,19 @@ Rune* charstorunes(char* str) {
 }
 
 bool risword(Rune r) {
-    return (r < 127 && (isalnum(r) || r == '_' || r == ':' || r == '!' || 
-                          r == '|' || r == '>' || r == '<' || r == '/' ||
-                          r == '.'));
+    return (r < 127 && (isalnum(r) || r == '_'));
+}
+
+bool rissigil(Rune r) {
+    return (r == ':' || r == '!' || r == '|' || r == '>' || r == '<');
+}
+
+bool risfile(Rune r) {
+    return (risword(r) || r == '/' || r == '.');
+}
+
+bool riscmd(Rune r) {
+    return (risword(r) || rissigil(r));
 }
 
 bool risblank(Rune r) {

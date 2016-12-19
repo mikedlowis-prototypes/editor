@@ -18,4 +18,7 @@ int runewidth(unsigned col, Rune r);
 size_t rstrlen(Rune* runes);
 Rune* charstorunes(char* str);
 bool risword(Rune r);
+bool rissigil(Rune r);
+bool risfile(Rune r);
+bool riscmd(Rune r);
 bool risblank(Rune r);
