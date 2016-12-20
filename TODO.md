@@ -1,5 +1,6 @@
 # Implementation Tweaks and Bug Fixes
 
+* Indent on first line of buffer causes infinite loop
 * block selection should handle brace-balancing
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
@@ -11,6 +12,7 @@
 
 Nice to haves: 
 
+* focus should follow mouse between regions
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add a tools dir to namespace utility scripts only useful inside the editor
 * shift+click to extend selection

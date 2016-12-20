@@ -109,12 +109,6 @@ static void clear_redo(Buf* buf) {
     buf->redo = NULL;
 }
 
-static unsigned getindent(Buf* buf, unsigned off) {
-    off = buf_bol(buf, off);
-    for (; off < buf_end(buf) && (' ' == buf_get(buf, off) || '\t' == buf_get(buf, off)); off++);
-    return buf_getcol(buf, off) / TabWidth;
-}
-
 static void delete(Buf* buf, unsigned off) {
     syncgap(buf, off);
     buf->gapend++;
@@ -287,9 +281,10 @@ unsigned buf_insert(Buf* buf, bool fmt, unsigned off, Rune rune) {
         }
     }
     if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
-        unsigned indent = getindent(buf, off-1);
-        for (; indent > 0; indent--)
-            off = buf_insert(buf, indent, off, '\t');
+        unsigned beg = buf_bol(buf, off-1), end = beg;
+        for (; end < buf_end(buf) && (' ' == buf_get(buf, end) || '\t' == buf_get(buf, end)); end++);
+        for (; beg < end; beg++)
+            off = buf_insert(buf, true, off, buf_get(buf, beg));
     }
     clear_redo(buf);
     return off;
