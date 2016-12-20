@@ -124,7 +124,7 @@ static unsigned scroll_dn(View* view) {
 
 static void sync_center(View* view, size_t csr) {
     /* determine the screenline containing the cursor */
-    size_t scrln = 0; 
+    size_t scrln = 0;
     for (; scrln < view->nrows; scrln++) {
         unsigned first = view->rows[scrln]->off;
         unsigned last  = first + view->rows[scrln]->rlen - 1;
@@ -430,7 +430,7 @@ void view_delete(View* view, int dir, bool byword) {
     if (num != 0)
         sel.end = buf_delete(&(view->buffer), sel.beg, sel.end);
     else if ((dir == LEFT) && (sel.end > 0))
-        sel.end = buf_delete(&(view->buffer), --sel.end, sel.end);
+        sel.end = buf_delete(&(view->buffer), sel.end-1, sel.end);
     else if ((dir == RIGHT) && (sel.end < buf_end(&(view->buffer))))
         sel.end = buf_delete(&(view->buffer), sel.end, sel.end+1);
     sel.beg = sel.end;

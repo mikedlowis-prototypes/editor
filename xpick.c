@@ -180,8 +180,9 @@ static void keyboard_input(int mods, uint32_t key) {
             x11_deinit();
             break;
         case '\b':
-            if (Pos > 0)
-                buf_delete(&Query, --Pos, Pos);
+            if (Pos > 0) {
+                Pos = buf_delete(&Query, Pos-1, Pos);
+            }
             break;
         case RUNE_ERR:
             break;

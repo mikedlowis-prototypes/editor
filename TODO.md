@@ -37,10 +37,6 @@ Need to reproduce:
 
 * Display line location and num lines in status
 
-# Command Language
-
-* Implement a Sam/Acme-like command language
-
 # Maybe Someday Features
 
 * Implement fuse file-system backend?
