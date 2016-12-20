@@ -64,6 +64,7 @@ static void del_indent(void);
 static void add_indent(void);
 static void eol_mode(void);
 static void debug_dump(void);
+static void new_win(void);
 
 // Tag/Cmd Execution
 static Tag* tag_lookup(char* cmd);
@@ -168,6 +169,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'o',        open_file    },
     { ModCtrl, 'p',        pick_ctag    },
     { ModCtrl, 'g',        goto_ctag    },
+    { ModCtrl, 'n',        new_win      },
 };
 
 /* External Commands
@@ -652,6 +654,10 @@ static void debug_dump(void) {
     dump_log(buf->undo);
     printf("redo:\n");
     dump_log(buf->redo);
+}
+
+static void new_win(void) {
+    cmd_exec("!edit");
 }
 
 /* Tag/Cmd Execution
