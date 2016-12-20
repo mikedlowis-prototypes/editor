@@ -1,22 +1,28 @@
 # Implementation Tweaks and Bug Fixes
 
-* Expand tabs setting should be disabled if opened file contains tabs
+* block selection should handle brace-balancing
 * Add tag for ctags lookup and line number jump
 * add a shortcut to autocomplete ctag
-* Add a tools dir to namespace utility scripts only useful inside the editor
-* off by one error on scrolling up with wrapped lines
-* block selection should handle brace-balancing
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
-* Implement minimal regex search (per Kernighan article)
-* Implement fuzzy file/buffer/tag picker
-* check for file changes when window regains focus
 * check for file changes on save
 * backspace should delete indent if preceded by whitespace
-* indenting with a reverse selection  expands the selection the wrong way
-* add command line flags to toggle options (Tabs, Indent, etc..)
+* context sensitive selection of words, commands, line numbers, or filenames.
+
+Nice to haves: 
+
+* Expand tabs setting should be disabled if opened file contains tabs
+* Add a tools dir to namespace utility scripts only useful inside the editor
 * shift+click to extend selection
+
+Need to reproduce:
+
 * drag with middle and right mouse buttons causes infinite loops
+* off by one error on scrolling up with wrapped lines
+* Implement minimal regex search (per Kernighan article)
+* check for file changes when window regains focus
+* add command line flags to toggle options (Tabs, Indent, etc..)
+* implement command diffing logic to optimize the undo/redo log
 
 # Auxillary Programs
 

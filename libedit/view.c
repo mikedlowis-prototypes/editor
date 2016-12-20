@@ -579,6 +579,7 @@ void view_setln(View* view, size_t line) {
 void view_indent(View* view, int dir) {
     Buf* buf = &(view->buffer);
     unsigned indoff = (buf->expand_tabs ? TabWidth : 1);
+    selswap(&(view->selection));
     view->selection.beg = buf_bol(buf, view->selection.beg);
     view->selection.end = buf_eol(buf, view->selection.end);
     unsigned off = buf_bol(buf, view->selection.end);
