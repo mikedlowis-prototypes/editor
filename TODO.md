@@ -3,6 +3,7 @@
 * Indent on first line of buffer causes infinite loop
 * block selection should handle brace-balancing
 * Add tag for ctags lookup and line number jump
+* Add a SaveAs tag that takes an argument for the filename to save as
 * add a shortcut to autocomplete ctag
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
@@ -12,6 +13,7 @@
 
 Nice to haves: 
 
+* Undo/Redo should set selection to inserted text.
 * focus should follow mouse between regions
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add a tools dir to namespace utility scripts only useful inside the editor

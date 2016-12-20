@@ -685,7 +685,7 @@ static void cmd_exec(char* cmd) {
     /* execute the command */
     char *input = NULL, *output = NULL, *error = NULL;
     enum RegionId dest = EDIT;
-    if (0 == view_selsize(getview(EDIT)))
+    if (op && op != '<' && 0 == view_selsize(getview(EDIT)))
         getview(EDIT)->selection = (Sel){ .beg = 0, .end = buf_end(getbuf(EDIT)) };
     input = view_getstr(getview(EDIT), NULL);
 
