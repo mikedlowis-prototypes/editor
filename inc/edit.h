@@ -65,8 +65,8 @@ unsigned buf_insert(Buf* buf, bool indent, unsigned off, Rune rune);
 unsigned buf_delete(Buf* buf, unsigned beg, unsigned end);
 unsigned buf_change(Buf* buf, unsigned beg, unsigned end);
 
-unsigned buf_undo(Buf* buf, unsigned pos);
-unsigned buf_redo(Buf* buf, unsigned pos);
+void buf_undo(Buf* buf, Sel* sel);
+void buf_redo(Buf* buf, Sel* sel);
 void buf_loglock(Buf* buf);
 
 bool buf_iseol(Buf* buf, unsigned pos);

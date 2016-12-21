@@ -146,15 +146,16 @@ static int rune_match(Buf* buf, unsigned mbeg, unsigned mend, Rune* runes) {
     return 0;
 }
 
-static unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
+static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
     /* pop the last action */
     Log* log = *from;
-    if (!log) return pos;
+    if (!log) return;
     *from = log->next;
     /* invert the log type and move it to the destination */
     Log* newlog = (Log*)calloc(sizeof(Log), 1);
     newlog->transid = log->transid;
     if (log->insert) {
+        sel->beg = sel->end = log->data.ins.beg;
         newlog->insert = false;
         size_t n = (log->data.ins.end - log->data.ins.beg);
         newlog->data.del.off   = log->data.ins.beg;
@@ -164,20 +165,17 @@ static unsigned swaplog(Buf* buf, Log** from, Log** to, unsigned pos) {
             newlog->data.del.runes[i] = buf_get(buf, log->data.ins.beg);
             delete(buf, log->data.ins.beg);
         }
-        pos = newlog->data.del.off;
     } else {
         newlog->insert = true;
-        newlog->data.ins.beg = log->data.del.off;
+        sel->beg = newlog->data.ins.beg = log->data.del.off;
         newlog->data.ins.end = newlog->data.ins.beg;
-        //newlog->data.ins.end = log->data.del.off + log->data.del.len;
         for (size_t i = log->data.del.len; i > 0; i--) {
             newlog->data.ins.end += insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
         }
-        pos = newlog->data.ins.end;
+        sel->end = newlog->data.ins.end;
     }
     newlog->next = *to;
     *to = newlog;
-    return pos;
 }
 
 /*****************************************************************************/
@@ -320,20 +318,18 @@ unsigned buf_change(Buf* buf, unsigned beg, unsigned end) {
 
 /*****************************************************************************/
 
-unsigned buf_undo(Buf* buf, unsigned pos) {
-    if (!buf->undo) return pos;
+void buf_undo(Buf* buf, Sel* sel) {
+    if (!buf->undo) return;
     uint transid = buf->undo->transid;
     while (buf->undo && (buf->undo->transid == transid))
-        pos = swaplog(buf, &(buf->undo), &(buf->redo), pos);
-    return pos;
+        swaplog(buf, &(buf->undo), &(buf->redo), sel);
 }
 
-unsigned buf_redo(Buf* buf, unsigned pos) {
-    if (!buf->redo) return pos;
+void buf_redo(Buf* buf, Sel* sel) {
+    if (!buf->redo) return;
     uint transid = buf->redo->transid;
     while (buf->redo && (buf->redo->transid == transid))
-        pos = swaplog(buf, &(buf->redo), &(buf->undo), pos);
-    return pos;
+        swaplog(buf, &(buf->redo), &(buf->undo), sel);
 }
 
 void buf_loglock(Buf* buf) {

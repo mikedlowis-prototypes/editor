@@ -618,7 +618,6 @@ static void add_indent(void) {
 
 static void eol_mode(void) {
     int crlf = getbuf(EDIT)->crlf;
-    printf("%d %d\n", crlf, !crlf);
     getbuf(EDIT)->crlf = !crlf;
     getbuf(TAGS)->crlf = !crlf;
     exec(crlf ? "|dos2unix" : "|unix2dos");

@@ -13,20 +13,18 @@
 
 Nice to haves: 
 
-* Undo/Redo should set selection to inserted text.
 * focus should follow mouse between regions
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add a tools dir to namespace utility scripts only useful inside the editor
 * shift+click to extend selection
+* implement command diffing logic to optimize the undo/redo log
+* add command line flags to toggle options (Tabs, Indent, etc..)
+* check for file changes when window regains focus
 
 Need to reproduce:
 
 * drag with middle and right mouse buttons causes infinite loops
 * off by one error on scrolling up with wrapped lines
-* Implement minimal regex search (per Kernighan article)
-* check for file changes when window regains focus
-* add command line flags to toggle options (Tabs, Indent, etc..)
-* implement command diffing logic to optimize the undo/redo log
 
 # Auxillary Programs
 
