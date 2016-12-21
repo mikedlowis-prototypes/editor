@@ -2,10 +2,13 @@
 
 Up Next:
 
+* Tag line count should account for wrapped lines
 * Middle click on nothing quits the editor
 * Indent/Unindent on first line of buffer causes infinite loop
 * block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.
+* ctrl+f should move the pointer to the match
+* ctrl+shift+f should find next occurence of previous search term
 * check for file changes on save
 * check for file changes when window regains focus
 
