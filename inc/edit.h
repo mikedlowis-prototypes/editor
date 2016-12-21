@@ -68,6 +68,7 @@ unsigned buf_change(Buf* buf, unsigned beg, unsigned end);
 void buf_undo(Buf* buf, Sel* sel);
 void buf_redo(Buf* buf, Sel* sel);
 void buf_loglock(Buf* buf);
+void buf_logclear(Buf* buf);
 
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);

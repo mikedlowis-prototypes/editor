@@ -1,25 +1,24 @@
 # Implementation Tweaks and Bug Fixes
 
-* Indent on first line of buffer causes infinite loop
+* Should not be able to undo initial tag line text insertion
 * block selection should handle brace-balancing
-* Add a GoTo tag for ctags lookup and line number jump
+* Indent on first line of buffer causes infinite loop
 * Add a SaveAs tag that takes an argument for the filename to save as
+* Add a GoTo tag for ctags lookup and line number jump
 * Add a ctrl+space shortcut to autocomplete ctag
 * Use select to check for error strings in exec.c
-* Should not be able to undo initial tag line text insertion
 * check for file changes on save
-* backspace should delete indent if preceded by whitespace
 * context sensitive selection of words, commands, line numbers, or filenames.
 
 Nice to haves: 
 
-* focus should follow mouse between regions
 * Expand tabs setting should be disabled if opened file contains tabs
 * Add a tools dir to namespace utility scripts only useful inside the editor
 * shift+click to extend selection
 * implement command diffing logic to optimize the undo/redo log
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * check for file changes when window regains focus
+* backspace should delete indent if preceded by whitespace
 
 Need to reproduce:
 

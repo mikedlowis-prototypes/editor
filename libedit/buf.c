@@ -97,18 +97,6 @@ static void buf_resize(Buf* buf, size_t sz) {
     *buf = copy;
 }
 
-static void clear_redo(Buf* buf) {
-    Log* log = buf->redo;
-    while (log) {
-        Log* deadite = log;
-        log = deadite->next;
-        if (!deadite->insert)
-            free(deadite->data.del.runes);
-        free(deadite);
-    }
-    buf->redo = NULL;
-}
-
 static void delete(Buf* buf, unsigned off) {
     syncgap(buf, off);
     buf->gapend++;
@@ -183,8 +171,7 @@ static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
 void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
     if (buf->bufstart) free(buf->bufstart);
-    if (buf->undo) log_clear(&(buf->undo));
-    if (buf->redo) log_clear(&(buf->redo));
+    buf_logclear(buf);
     
     /* reset the state to defaults */
     buf->modified    = false;
@@ -284,13 +271,13 @@ unsigned buf_insert(Buf* buf, bool fmt, unsigned off, Rune rune) {
         for (; beg < end; beg++)
             off = buf_insert(buf, true, off, buf_get(buf, beg));
     }
-    clear_redo(buf);
+    log_clear(&(buf->redo));
     return off;
 }
 
 unsigned buf_delete(Buf* buf, unsigned beg, unsigned end) {
     buf->modified = true;
-    clear_redo(buf);
+    log_clear(&(buf->redo));
     for (unsigned i = end-beg; i > 0; i--) {
         Rune r = buf_get(buf, beg);
         log_delete(buf, &(buf->undo), beg, &r, 1);
@@ -336,6 +323,11 @@ void buf_loglock(Buf* buf) {
     Log* log = buf->undo;
     if (log && log->transid == buf->transid)
         buf->transid++;
+}
+
+void buf_logclear(Buf* buf) {
+    log_clear(&(buf->redo));
+    log_clear(&(buf->undo));
 }
 
 /*****************************************************************************/

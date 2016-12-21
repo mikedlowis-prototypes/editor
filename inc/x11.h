@@ -11,7 +11,7 @@ typedef enum {
     MOUSE_BTN_WHEELUP   = 3,
     MOUSE_BTN_WHEELDOWN = 4,
     MOUSE_BTN_NONE      = 5,
-    MOUSE_BTN_COUNT     = 5
+    MOUSE_BTN_COUNT     = 6
 } MouseBtn;
 
 typedef struct {

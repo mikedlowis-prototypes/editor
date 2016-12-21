@@ -194,6 +194,7 @@ int main(int argc, char** argv) {
     /* load the buffer views */
     view_init(getview(TAGS), NULL);
     view_putstr(getview(TAGS), DEFAULT_TAGS);
+    buf_logclear(getbuf(TAGS));
     view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
     /* initialize the display engine */
     x11_init(&Config);
@@ -213,15 +214,12 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     size_t col = (x-Regions[id].x) / x11_font_width(Font);
     if (act == MOUSE_ACT_MOVE) {
         if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
-            view_setcursor(getview(id), row, col);
-            MouseBtns[MOUSE_BTN_LEFT].pressed = false;
-            MouseBtns[MOUSE_BTN_LEFT].count = 0;
-        } else if (MouseBtns[MOUSE_BTN_LEFT].region < id) {
-            //view_scroll(getview(MouseBtns[MOUSE_BTN_LEFT].region), +1);
-        } else if (MouseBtns[MOUSE_BTN_LEFT].region > id) {
-            //view_scroll(getview(MouseBtns[MOUSE_BTN_LEFT].region), -1);
-        } else {
-            view_selext(getview(id), row, col);
+            if (MouseBtns[MOUSE_BTN_LEFT].count == 1) {
+                view_setcursor(getview(id), row, col);
+                MouseBtns[MOUSE_BTN_LEFT].count = 0;
+            } else {
+                view_selext(getview(id), row, col);
+            }
         }
     } else {
         MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);
