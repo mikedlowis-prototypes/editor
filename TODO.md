@@ -2,9 +2,9 @@
 
 * Indent on first line of buffer causes infinite loop
 * block selection should handle brace-balancing
-* Add tag for ctags lookup and line number jump
+* Add a GoTo tag for ctags lookup and line number jump
 * Add a SaveAs tag that takes an argument for the filename to save as
-* add a shortcut to autocomplete ctag
+* Add a ctrl+space shortcut to autocomplete ctag
 * Use select to check for error strings in exec.c
 * Should not be able to undo initial tag line text insertion
 * check for file changes on save
