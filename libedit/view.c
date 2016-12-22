@@ -345,10 +345,14 @@ void view_selword(View* view, size_t row, size_t col) {
 }
 
 void view_selprev(View* view) {
-    buf_loglock(&(view->buffer));
-    Sel sel = view->selection;
-    buf_lastins(&(view->buffer), &sel.beg, &sel.end);
-    view->selection = sel;
+    if (!num_selected(view->selection)) {
+        buf_loglock(&(view->buffer));
+        Sel sel = view->selection;
+        buf_lastins(&(view->buffer), &sel.beg, &sel.end);
+        view->selection = sel;
+    } else {
+        view->selection.beg = view->selection.end;
+    }
 }
 
 void view_select(View* view, size_t row, size_t col) {
