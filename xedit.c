@@ -98,6 +98,7 @@ static XConfig Config = {
     .redraw       = redraw,
     .handle_key   = key_handler,
     .handle_mouse = mouse_handler,
+    .shutdown     = quit,
     .palette      = COLOR_PALETTE
 };
 
@@ -485,7 +486,7 @@ static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
     if (!getbuf(EDIT)->modified || (now-before) <= 250) {
-        exit(0);
+        x11_deinit();
     } else {
         view_append(getview(TAGS),
             "File is modified. Repeat action twice in < 250ms to quit.");

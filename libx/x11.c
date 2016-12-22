@@ -99,6 +99,12 @@ void x11_window(char* name, int width, int height) {
         X.height,
         0, X.depth,
         Config->palette[0]);
+    
+    /* register interest in the delete window message */
+    Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(X.display, X.window, &wmDeleteMessage, 1);
+    
+    /* setup window attributes and events */
     XSetWindowAttributes swa;
     swa.backing_store = WhenMapped;
     swa.bit_gravity = NorthWestGravity;
@@ -113,12 +119,15 @@ void x11_window(char* name, int width, int height) {
         | KeyPressMask
         | ExposureMask
         | FocusChangeMask);
+    
     /* set input methods */
     if ((X.xim = XOpenIM(X.display, 0, 0, 0)))
         X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.window, XNFocusWindow, X.window, NULL);
+    
     /* initialize pixmap and drawing context */
     X.pixmap = XCreatePixmap(X.display, X.window, width, height, X.depth);
     X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
+    
     /* initialize the graphics context */
     XGCValues gcv;
     gcv.foreground = WhitePixel(X.display, X.screen);
@@ -262,7 +271,7 @@ void x11_loop(void) {
         XPeekEvent(X.display,&e);
         while (XPending(X.display)) {
             XNextEvent(X.display, &e);
-            if (!XFilterEvent(&e, None))
+            if (!XFilterEvent(&e, None)) {
                 switch (e.type) {
                     case FocusIn:       if (X.xic) XSetICFocus(X.xic);   break;
                     case FocusOut:      if (X.xic) XUnsetICFocus(X.xic); break;
@@ -270,6 +279,12 @@ void x11_loop(void) {
                     case ButtonRelease: handle_mouse(&e);                break;
                     case ButtonPress:   handle_mouse(&e);                break;
                     case MotionNotify:  handle_mouse(&e);                break;
+                    case ClientMessage: {
+                            Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
+                            if (e.xclient.data.l[0] == wmDeleteMessage)
+                                Config->shutdown();
+                        }
+                        break;
                     case ConfigureNotify: // Resize the window
                         if (e.xconfigure.width != X.width || e.xconfigure.height != X.height) {
                             X.width  = e.xconfigure.width;
@@ -279,6 +294,7 @@ void x11_loop(void) {
                         }
                         break;
                 }
+            }
         }
         if (Running) {
             /* redraw the window */

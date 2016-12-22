@@ -66,6 +66,10 @@ static void redraw(int width, int height) {
     /* do nothing for unit testing */
 }
 
+void x11_deinit(void) {
+    mockexit(0);
+}
+
 /* Unit Tests
  *****************************************************************************/
 TEST_SUITE(XeditTests) {

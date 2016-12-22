@@ -14,7 +14,6 @@ Up Next:
 The Rest: 
 
 * Auto-save on focus change or quit
-* Implement EWMH hooks to prevent window manager killing client with modifications
 * Implement X Selection protocol for handling clipboard and primary selections
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as

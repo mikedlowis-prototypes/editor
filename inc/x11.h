@@ -18,6 +18,7 @@ typedef struct {
     void (*redraw)(int width, int height);
     void (*handle_key)(int mods, uint32_t rune);
     void (*handle_mouse)(MouseAct act, MouseBtn btn, int x, int y);
+    void (*shutdown)(void);
     uint32_t palette[16];
 } XConfig;
 
