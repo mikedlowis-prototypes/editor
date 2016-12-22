@@ -235,7 +235,8 @@ static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
                 MouseBtns[btn].count = 1;
         } else if (MouseBtns[btn].count > 0) {
             /* execute the action on button release */
-            MouseActs[btn](id, MouseBtns[btn].count, row, col);
+            if (MouseActs[btn])
+                MouseActs[btn](id, MouseBtns[btn].count, row, col);
         }
     }
 }
