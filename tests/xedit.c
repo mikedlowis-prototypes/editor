@@ -483,12 +483,12 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 0);
     }
     
-    //TEST(ctrl+[ should do nothing on empty buffer) {
-    //    setup_view(EDIT, "a", CRLF, 0);
-    //    send_keys(ModCtrl, '[');
-    //    CHECK(getsel(EDIT)->beg == 0);
-    //    CHECK(getsel(EDIT)->end == 0);
-    //}
+    TEST(ctrl+[ should do nothing at beginning of buffer) {
+        setup_view(EDIT, "a", CRLF, 0);
+        send_keys(ModCtrl, '[');
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 1);
+    }
     
     TEST(ctrl+] should do nothing on empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
@@ -497,12 +497,13 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 0);
     }
     
-    //TEST(ctrl+] should indent the current line) {
-    //    setup_view(EDIT, "a", CRLF, 0);
-    //    send_keys(ModCtrl, ']');
-    //    CHECK(getsel(EDIT)->beg == 0);
-    //    CHECK(getsel(EDIT)->end == 0);
-    //}
+    TEST(ctrl+] should indent the first line) {
+        setup_view(EDIT, "a", CRLF, 0);
+        send_keys(ModCtrl, ']');
+        CHECK(getsel(EDIT)->beg == 0);
+        CHECK(getsel(EDIT)->end == 5);
+        CHECK(verify_text(EDIT, "    a"));
+    }
     
     /* Key Handling - Special 
      *************************************************************************/

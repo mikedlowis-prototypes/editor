@@ -588,7 +588,8 @@ void view_indent(View* view, int dir) {
     view->selection.end = buf_eol(buf, view->selection.end);
     unsigned off = buf_bol(buf, view->selection.end);
     if (num_selected(view->selection) == 0) return;
-    while (off >= view->selection.beg) {
+    
+    do {
         if (dir == RIGHT) {
             buf_insert(buf, true, off, '\t');
             view->selection.end += indoff;
@@ -608,5 +609,6 @@ void view_indent(View* view, int dir) {
             }
         }
         off = buf_byline(buf, off, UP);
-    }
+        
+   } while (off && off >= view->selection.beg);
 }
