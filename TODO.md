@@ -3,7 +3,6 @@
 Up Next:
 
 * Tag line count should account for wrapped lines
-* Middle click on nothing quits the editor
 * Indent/Unindent on first line of buffer causes infinite loop
 * block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.

@@ -721,6 +721,7 @@ static void cmd_exec(char* cmd) {
 static void exec(char* cmd) {
     /* skip leading space */
     for (; *cmd && isspace(*cmd); cmd++);
+    if (!*cmd) return;
     /* see if it matches a builtin tag */
     Tag* tag = tag_lookup(cmd);
     if (tag) {
