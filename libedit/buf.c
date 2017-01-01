@@ -2,6 +2,7 @@
 #include <utf.h>
 #include <edit.h>
 #include <ctype.h>
+#include <unistd.h>
 
 static void buf_resize(Buf* buf, size_t sz);
 
@@ -189,32 +190,33 @@ void buf_init(Buf* buf) {
 }
 
 unsigned buf_load(Buf* buf, char* path) {
+    /* process the file path and address */
     if (path && path[0] == '.' && path[1] == '/')
         path += 2;
     unsigned off = 0;
     buf->path = stringdup(path);
     char* addr = strrchr(buf->path, ':');
     if (addr) *addr = '\0', addr++;
-    if (!strcmp(buf->path,"-")) {
-        buf->charset = UTF_8;
+    
+    /* load the file and determine the character set */
+    FMap file = mmap_readonly(buf->path);
+    buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
+    if (buf->charset > UTF_8)
+        die("Unsupported character set");
+    
+    /* read the file contents into the buffer */
+    for (size_t i = 0; i < file.len;) {
         Rune r;
-        while (RUNE_EOF != (r = fgetrune(stdin)))
-            buf_insert(buf, false, buf_end(buf), r);
-    } else {
-        FMap file = fmap(buf->path);
-        buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
-        /* load the file contents if it has any */
-        if (buf->charset > UTF_8) {
-            die("Unsupported character set");
-        } else if (buf->charset == BINARY) {
-            binload(buf, file);
+        if (buf->charset == BINARY) {
+            r = file.buf[i++];
         } else {
-            utf8load(buf, file);
+            size_t len = 0;
+            while (!utf8decode(&r, &len, file.buf[i++]));
         }
-        funmap(file);
-        if (addr)
-            off = buf_setln(buf, strtoul(addr, NULL, 0));
+        buf_insert(buf, false, buf_end(buf), r);
     }
+    
+    /* reset buffer state */
     buf->modified = false;
     free(buf->undo);
     buf->undo = NULL;
@@ -222,14 +224,22 @@ unsigned buf_load(Buf* buf, char* path) {
 }
 
 void buf_save(Buf* buf) {
+    size_t wrlen = 0;
     if (!buf->path) return;
-    FILE* file = fopen(buf->path, "wb");
-    if (!file) return;
-    if (buf->charset == BINARY)
-        binsave(buf, file);
-    else
-        utf8save(buf, file);
-    fclose(file);
+    FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
+    for (unsigned i = 0, end = buf_end(buf); i < end; i++) {
+        Rune r = buf_get(buf, i);
+        if (r == RUNE_CRLF) {
+            file.buf[wrlen++] = '\r';
+            file.buf[wrlen++] = '\n';
+        } else if (buf->charset == BINARY) {
+            file.buf[wrlen++] = (char)r;
+        } else {
+            wrlen += utf8encode((char*)&(file.buf[wrlen]), r);
+        }
+    }
+    mmap_close(file);
+    truncate(buf->path, wrlen);
     buf->modified = false;
 }
 

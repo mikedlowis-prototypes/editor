@@ -46,21 +46,3 @@ int charset(const uint8_t* buf, size_t len, int* crlf) {
     *crlf = (crs == lfs);
     return type;
 }
-
-void binload(Buf* buf, FMap file) {
-    for (size_t i = 0; i < file.len; i++)
-        buf_insert(buf, false, buf_end(buf), file.buf[i]);
-}
-
-void binsave(Buf* buf, FILE* file) {
-    unsigned end = buf_end(buf);
-    for (unsigned i = 0; i < end; i++) {
-        Rune r = buf_get(buf, i);
-        if (r == RUNE_CRLF) {
-            fputc('\r', file);
-            fputc('\n', file);
-        } else {
-            fputc((int)r, file);
-        }
-    }
-}

@@ -10,6 +10,14 @@
 #include <time.h>
 #include <sys/time.h>
 
+static size_t pagealign(size_t sz) {
+    size_t pgsize  = sysconf(_SC_PAGE_SIZE);
+    size_t alignmask = pgsize - 1;
+    if (sz & alignmask)
+        sz += pgsize - (sz & alignmask);
+    return sz;
+}
+
 uint64_t getmillis(void) {
     struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
@@ -28,22 +36,36 @@ void die(const char* msgfmt, ...) {
     exit(EXIT_FAILURE);
 }
 
-FMap fmap(char* path) {
-    int fd;
+FMap mmap_readonly(char* path) {
     FMap file = { .buf = NULL, .len = 0 };
+    int fd;
     struct stat sb;
     if (((fd = open(path, O_RDONLY, 0)) < 0) ||
         (fstat(fd, &sb) < 0) ||
         (sb.st_size == 0))
         return file;
-    file.buf = (uint8_t*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    file.buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     file.len = sb.st_size;
     if (file.buf == MAP_FAILED)
         die("memory mapping of file failed");
+    close(fd);
     return file;
 }
 
-void funmap(FMap file) {
+FMap mmap_readwrite(char* path, size_t sz) {
+    FMap file = { .buf = NULL, .len = 0 };
+    int fd = open(path, O_CREAT|O_RDWR, 0644);
+    if (fd < 0) die("could not open/create file");
+    ftruncate(fd, sz);
+    file.buf = mmap(NULL, pagealign(sz), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    file.len = sz;
+    if (file.buf == MAP_FAILED)
+        die("memory mapping of file failed");
+    close(fd);
+    return file;
+}
+
+void mmap_close(FMap file) {
     if (file.buf)
         munmap(file.buf, file.len);
 }

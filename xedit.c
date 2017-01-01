@@ -749,9 +749,15 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
     if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
         cut();
     } else {
+    #if 0
+        char* str = view_selcmd(getview(id), row, col);
+        if (str) exec(str);
+        free(str);
+    #else
         char* str = view_fetch(getview(id), row, col);
         if (str) exec(str);
         free(str);
+    #endif
     }
 }
 

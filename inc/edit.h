@@ -5,8 +5,9 @@ typedef struct {
     size_t len;   /* length of the buffer */
 } FMap;
 
-FMap fmap(char* path);
-void funmap(FMap file);
+FMap mmap_readonly(char* path);
+FMap mmap_readwrite(char* path, size_t sz);
+void mmap_close(FMap file);
 uint64_t getmillis(void);
 char* stringdup(const char* str);
 char* fdgets(int fd);
@@ -146,12 +147,7 @@ Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
-void view_setcursor(View* view, size_t row, size_t col);
-void view_selext(View* view, size_t row, size_t col);
-void view_selword(View* view, size_t row, size_t col);
-void view_selprev(View* view);
-void view_select(View* view, size_t row, size_t col);
-size_t view_selsize(View* view);
+
 char* view_fetch(View* view, size_t row, size_t col);
 void view_find(View* view, size_t row, size_t col);
 void view_findstr(View* view, char* str);
@@ -171,6 +167,13 @@ void view_scroll(View* view, int move);
 void view_scrollpage(View* view, int move);
 void view_setln(View* view, size_t line);
 void view_indent(View* view, int dir);
+
+size_t view_selsize(View* view);
+void view_selprev(View* view);
+void view_setcursor(View* view, size_t row, size_t col);
+void view_selextend(View* view, size_t row, size_t col);
+void view_selword(View* view, size_t row, size_t col);
+void view_select(View* view, size_t row, size_t col);
 
 /* Command Executions
  *****************************************************************************/

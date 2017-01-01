@@ -74,41 +74,6 @@ bool utf8decode(Rune* rune, size_t* length, int byte) {
     return ((*length == 0) || (*rune == RUNE_ERR));
 }
 
-Rune fgetrune(FILE* f) {
-    Rune rune = 0;
-    size_t length = 0;
-    while (!utf8decode(&rune, &length, fgetc(f)));
-    return rune;
-}
-
-void fputrune(Rune rune, FILE* f) {
-    char utf[UTF_MAX] = {0};
-    size_t n = utf8encode(utf, rune);
-    fwrite(utf, 1, n, f);
-}
-
-void utf8load(Buf* buf, FMap file) {
-    for (size_t i = 0; i < file.len;) {
-        Rune r = 0;
-        size_t len = 0;
-        while (!utf8decode(&r, &len, file.buf[i++]));
-        buf_insert(buf, false, buf_end(buf), r);
-    }
-}
-
-void utf8save(Buf* buf, FILE* file) {
-    unsigned end = buf_end(buf);
-    for (unsigned i = 0; i < end; i++) {
-        Rune r = buf_get(buf, i);
-        if (r == RUNE_CRLF) {
-            fputrune('\r', file);
-            fputrune('\n', file);
-        } else {
-            fputrune(r, file);
-        }
-    }
-}
-
 int runewidth(unsigned col, Rune r) {
     if (r == '\t') return (TabWidth - (col % TabWidth));
     int width = wcwidth(r);
@@ -158,4 +123,3 @@ bool riscmd(Rune r) {
 bool risblank(Rune r) {
     return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
 }
-

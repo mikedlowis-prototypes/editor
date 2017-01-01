@@ -1,2 +1,4 @@
 #!/bin/sh
-(nohup man -P cat "$@" | fmt | xedit -) &> /dev/null &
+file=$(mktemp)
+man -P cat "$@" | fmt > "$file"
+(nohup xedit "$file" && rm -f "$file") &> /dev/null &
