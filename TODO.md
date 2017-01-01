@@ -18,7 +18,6 @@ The Rest:
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump
 * Use select to check for error strings in exec.c
-* Expand tabs setting should be disabled if opened file contains tabs
 * Add a tools dir to namespace utility scripts only useful inside the editor
 * shift+click to extend selection
 * implement command diffing logic to optimize the undo/redo log

@@ -102,7 +102,7 @@ enum {
     UTF_32LE,   /* UTF-32 encoding, little-endian */
 };
 
-int charset(const uint8_t* buf, size_t len, int* crlf);
+void filetype(Buf* buf, FMap file);
 void utf8load(Buf* buf, FMap file);
 void utf8save(Buf* buf, FILE* file);
 void binload(Buf* buf, FMap file);

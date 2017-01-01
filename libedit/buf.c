@@ -200,7 +200,7 @@ unsigned buf_load(Buf* buf, char* path) {
     
     /* load the file and determine the character set */
     FMap file = mmap_readonly(buf->path);
-    buf->charset = (file.buf ? charset(file.buf, file.len, &buf->crlf) : UTF_8);
+    filetype(buf, file);
     if (buf->charset > UTF_8)
         die("Unsupported character set");
     
@@ -218,8 +218,7 @@ unsigned buf_load(Buf* buf, char* path) {
     
     /* reset buffer state */
     buf->modified = false;
-    free(buf->undo);
-    buf->undo = NULL;
+    buf_logclear(buf);
     return off;
 }
 
