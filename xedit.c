@@ -738,12 +738,16 @@ static void exec(char* cmd) {
 /* Mouse Handling
  *****************************************************************************/
 static void mouse_left(enum RegionId id, size_t count, size_t row, size_t col) {
-    if (count == 1)
-        view_setcursor(getview(id), row, col);
-    else if (count == 2)
+    if (count == 1) {
+        if (x11_keymodsset(ModShift))
+            view_selext(getview(id), row, col);
+        else
+            view_setcursor(getview(id), row, col);
+    } else if (count == 2) {
         view_select(getview(id), row, col);
-    else if (count == 3)
+    } else if (count == 3) {
         view_selword(getview(id), row, col);
+    }
 }
 
 static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col) {

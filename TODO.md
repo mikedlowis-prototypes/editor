@@ -17,7 +17,6 @@ The Rest:
 * Add a GoTo tag for ctags lookup and line number jump
 * Use select to check for error strings in exec.c
 * Add a tools dir to namespace utility scripts only useful inside the editor
-* shift+click to extend selection
 * implement command diffing logic to optimize the undo/redo log
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * backspace should delete indent if preceded by whitespace
