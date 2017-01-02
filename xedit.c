@@ -533,6 +533,7 @@ static void search(void) {
     char* str = view_getctx(currview());
     view_findstr(getview(EDIT), str);
     free(str);
+    Regions[EDIT].warp_ptr = true;
 }
 
 static void execute(void) {

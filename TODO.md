@@ -5,7 +5,6 @@ Up Next:
 * Tag line count should account for wrapped lines
 * block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.
-* ctrl+f should move the pointer to the match
 * ctrl+shift+f should find next occurence of previous search term
 * check for file changes on save
 * check for file changes when window regains focus
