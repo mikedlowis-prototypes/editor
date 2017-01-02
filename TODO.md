@@ -12,7 +12,6 @@ Up Next:
 
 The Rest: 
 
-* Auto-save on focus change or quit
 * Implement X Selection protocol for handling clipboard and primary selections
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
@@ -25,6 +24,7 @@ The Rest:
 * backspace should delete indent if preceded by whitespace
 * Add a ctrl+space shortcut to autocomplete ctag
 * off by one error on scrolling up with wrapped lines
+* Auto-save on focus change or quit
 
 # Auxillary Programs
 

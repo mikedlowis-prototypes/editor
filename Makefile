@@ -2,7 +2,7 @@ INCS = -Iinc/
 
 LIBEDIT_OBJS =         \
 	libedit/buf.o      \
-	libedit/charset.o  \
+	libedit/filetype.o \
 	libedit/utf8.o     \
 	libedit/utils.o    \
 	libedit/exec.o     \
@@ -16,7 +16,6 @@ TEST_OBJS =      \
 	tests/buf.o  \
 	tests/utf8.o \
 	tests/xedit.o
-
 
 include config.mk
 
