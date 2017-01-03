@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
