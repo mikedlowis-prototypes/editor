@@ -49,6 +49,8 @@ static void quit(void);
 static void save(void);
 static void undo(void);
 static void redo(void);
+static void tag_undo(void);
+static void tag_redo(void);
 static void cut(void);
 static void copy(void);
 static void paste(void);
@@ -108,8 +110,8 @@ Tag Builtins[] = {
     { .tag = "Cut",    .action.noarg = cut      },
     { .tag = "Copy",   .action.noarg = copy     },
     { .tag = "Paste",  .action.noarg = paste    },
-    { .tag = "Undo",   .action.noarg = undo     },
-    { .tag = "Redo",   .action.noarg = redo     },
+    { .tag = "Undo",   .action.noarg = tag_undo },
+    { .tag = "Redo",   .action.noarg = tag_redo },
     { .tag = "Find",   .action.arg   = find     },
     { .tag = "Tabs",   .action.noarg = tabs     },
     { .tag = "Indent", .action.noarg = indent   },
@@ -504,6 +506,14 @@ static void undo(void) {
 
 static void redo(void) {
     view_redo(currview());
+}
+
+static void tag_undo(void) {
+    view_undo(getview(EDIT));
+}
+
+static void tag_redo(void) {
+    view_redo(getview(EDIT));
 }
 
 static void cut(void) {
