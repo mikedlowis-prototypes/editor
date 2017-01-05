@@ -708,7 +708,8 @@ static void cmd_exec(char* cmd) {
     if (op == '!') {
         cmdrun(ShellCmd, NULL);
     } else if (op == '>') {
-        cmdwrite(ShellCmd, input, &error);
+        dest = TAGS;
+        output = cmdwriteread(ShellCmd, input, &error);
     } else if (op == '|') {
         output = cmdwriteread(ShellCmd, input, &error);
     } else if (op == ':') {

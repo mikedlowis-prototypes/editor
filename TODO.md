@@ -2,10 +2,12 @@
 
 Up Next:
 
+* invalid memory accesses while viewing docs/waf
 * Tag line count should account for wrapped lines
 * block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.
-* ctrl+shift+f should find next occurence of previous search term
+* ctrl+alt+f should find next occurence of previous search term
+* shift should change direction of search for ctrl+f and right mouse button
 * check for file changes on save
 * check for file changes when window regains focus
 
@@ -15,7 +17,6 @@ The Rest:
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump
-* Use select to check for error strings in exec.c
 * Add a tools dir to namespace utility scripts only useful inside the editor
 * implement command diffing logic to optimize the undo/redo log
 * add command line flags to toggle options (Tabs, Indent, etc..)
@@ -39,5 +40,3 @@ The Rest:
 
 * Implement fuse file-system backend?
 * Spell checker integration
-* Syntax highlighting
-* Implement full featured regex engine
