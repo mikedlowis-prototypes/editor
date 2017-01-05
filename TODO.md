@@ -2,6 +2,7 @@
 
 Up Next:
 
+* Undo/Redo tags should apply to  the edit buffer, ctrl+z + ctrl+y to the current buffer
 * Tag line count should account for wrapped lines
 * block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.

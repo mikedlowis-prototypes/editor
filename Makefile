@@ -1,15 +1,13 @@
 INCS = -Iinc/
 
-LIBEDIT_OBJS =         \
-	libedit/buf.o      \
-	libedit/filetype.o \
-	libedit/utf8.o     \
-	libedit/utils.o    \
-	libedit/exec.o     \
-	libedit/view.o
-
-LIBX_OBJS = \
-	libx/x11.o
+LIBEDIT_OBJS =     \
+	lib/buf.o      \
+	lib/filetype.o \
+	lib/utf8.o     \
+	lib/utils.o    \
+	lib/exec.o     \
+	lib/view.o     \
+	lib/x11.o
 
 TEST_OBJS =      \
 	unittests.o  \
@@ -47,16 +45,13 @@ uninstall:
 test: unittests
 	./unittests
 
-xedit: xedit.o libx.a libedit.a
+xedit: xedit.o libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
 
-xpick: xpick.o libx.a libedit.a
+xpick: xpick.o libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 libedit.a: $(LIBEDIT_OBJS)
-	$(AR) $(ARFLAGS) $@ $^
-
-libx.a: $(LIBX_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 unittests: $(TEST_OBJS) libedit.a
