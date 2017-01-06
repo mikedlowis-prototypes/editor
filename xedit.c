@@ -309,6 +309,7 @@ static void draw_status(int fg, size_t ncols) {
     (status++)->rune = (buf->crlf ? 'C' : 'N');
     (status++)->rune = (buf->expand_tabs ? 'S' : 'T');
     (status++)->rune = (buf->copy_indent ? 'I' : 'i');
+    (status++)->rune = (SearchDir < 0 ? '<' : '>');
     (status++)->rune = (buf->modified ? '*' : ' ');
     (status++)->rune = ' ';
     char* path = (buf->path ? buf->path : "*scratch*");
