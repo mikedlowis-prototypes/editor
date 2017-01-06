@@ -83,8 +83,8 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byword(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
 
-void buf_find(Buf* buf, size_t* beg, size_t* end);
-void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end);
+void buf_find(Buf* buf, int dir, size_t* beg, size_t* end);
+void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
 
 unsigned buf_setln(Buf* buf, unsigned line);
 unsigned buf_getcol(Buf* buf, unsigned pos);
@@ -149,8 +149,8 @@ void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
 
 char* view_fetch(View* view, size_t row, size_t col);
-void view_find(View* view, size_t row, size_t col);
-void view_findstr(View* view, char* str);
+void view_find(View* view, int dir, size_t row, size_t col);
+void view_findstr(View* view, int dir, char* str);
 void view_insert(View* view, bool indent, Rune rune);
 void view_delete(View* view, int dir, bool byword);
 void view_bol(View* view, bool extsel);

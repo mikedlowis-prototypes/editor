@@ -7,7 +7,6 @@ Up Next:
 * block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.
 * ctrl+alt+f should find next occurence of previous search term
-* shift should change direction of search for ctrl+f and right mouse button
 * check for file changes on save
 * check for file changes when window regains focus
 

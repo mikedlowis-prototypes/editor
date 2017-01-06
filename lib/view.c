@@ -384,7 +384,7 @@ char* view_fetch(View* view, size_t row, size_t col) {
     return str;
 }
 
-void view_find(View* view, size_t row, size_t col) {
+void view_find(View* view, int dir, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
         Sel sel = view->selection;
@@ -392,10 +392,10 @@ void view_find(View* view, size_t row, size_t col) {
             view_setcursor(view, row, col);
             sel = view->selection;
             selcontext(view, &sel);
-            buf_find(&(view->buffer), &sel.beg, &sel.end);
+            buf_find(&(view->buffer), dir, &sel.beg, &sel.end);
             sel.end++;
         } else {
-            buf_find(&(view->buffer), &sel.beg, &sel.end);
+            buf_find(&(view->buffer), dir, &sel.beg, &sel.end);
         }
         view->selection = sel;
         view->sync_needed = true;
@@ -403,9 +403,9 @@ void view_find(View* view, size_t row, size_t col) {
     }
 }
 
-void view_findstr(View* view, char* str) {
+void view_findstr(View* view, int dir, char* str) {
     Sel sel = view->selection;
-    buf_findstr(&(view->buffer), str, &sel.beg, &sel.end);
+    buf_findstr(&(view->buffer), dir, str, &sel.beg, &sel.end);
     view->selection = sel;
     view->sync_needed = true;
     view->sync_center   = true;

@@ -92,6 +92,7 @@ static Sel* currsel(void);
 
 /* Global Data
  *****************************************************************************/
+static int SearchDir = DOWN;
 static enum RegionId Focused = EDIT;
 static Region Regions[NREGIONS] = { 0 };
 static ButtonState MouseBtns[MOUSE_BTN_COUNT] = { 0 };
@@ -163,16 +164,17 @@ static KeyBinding Bindings[] = {
     { ModAny,  KEY_BACKSPACE, backspace },
 
     /* Implementation Specific */
-    { ModNone, KEY_ESCAPE, select_prev  },
-    { ModCtrl, KEY_ESCAPE, debug_dump   },
-    { ModCtrl, 't',        change_focus },
-    { ModCtrl, 'q',        quit         },
-    { ModCtrl, 'f',        search       },
-    { ModCtrl, 'd',        execute      },
-    { ModCtrl, 'o',        open_file    },
-    { ModCtrl, 'p',        pick_ctag    },
-    { ModCtrl, 'g',        goto_ctag    },
-    { ModCtrl, 'n',        new_win      },
+    { ModNone,          KEY_ESCAPE, select_prev  },
+    { ModCtrl,          KEY_ESCAPE, debug_dump   },
+    { ModCtrl,          't',        change_focus },
+    { ModCtrl,          'q',        quit         },
+    { ModCtrl,          'f',        search       },
+    { ModCtrl|ModShift, 'f',        search       },
+    { ModCtrl,          'd',        execute      },
+    { ModCtrl,          'o',        open_file    },
+    { ModCtrl,          'p',        pick_ctag    },
+    { ModCtrl,          'g',        goto_ctag    },
+    { ModCtrl,          'n',        new_win      },
 };
 
 /* External Commands
@@ -540,8 +542,9 @@ static void paste(void) {
 }
 
 static void search(void) {
+    SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
     char* str = view_getctx(currview());
-    view_findstr(getview(EDIT), str);
+    view_findstr(getview(EDIT), SearchDir, str);
     free(str);
     Regions[EDIT].warp_ptr = true;
 }
@@ -553,7 +556,8 @@ static void execute(void) {
 }
 
 static void find(char* arg) {
-    view_findstr(getview(EDIT), arg);
+    SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+    view_findstr(getview(EDIT), SearchDir, arg);
 }
 
 static void open_file(void) {
@@ -781,7 +785,8 @@ static void mouse_right(enum RegionId id, size_t count, size_t row, size_t col) 
     if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
         paste();
     } else {
-        view_find(getview(id), row, col);
+        SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+        view_find(getview(id), SearchDir, row, col);
         Regions[id].warp_ptr = true;
     }
 }

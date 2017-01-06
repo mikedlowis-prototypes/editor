@@ -426,31 +426,32 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count) {
 
 /*****************************************************************************/
 
-void buf_find(Buf* buf, size_t* beg, size_t* end) {
+int dir = +1;
+
+void buf_find(Buf* buf, int dir, size_t* beg, size_t* end) {
     unsigned dbeg = *beg, dend = *end;
-    unsigned mbeg = dbeg+1, mend = dend+1;
+    unsigned mbeg = dbeg+dir, mend = dend+dir;
+    unsigned mlen = dend - dbeg;
     while (true) {
         if ((buf_get(buf, mbeg)   == buf_get(buf, dbeg)) &&
             (buf_get(buf, mend-1) == buf_get(buf, dend-1)) &&
-            (0 == range_match(buf,dbeg,dend,mbeg,mend)))
+            (0 == range_match(buf, dbeg, dend, mbeg, mend)))
         {
             *beg = mbeg;
             *end = mend;
             break;
         }
-        mbeg++, mend++;
-        if (mend > buf_end(buf)) {
-            unsigned n = mend-mbeg;
-            mbeg = 0, mend = n;
-        }
+        mbeg += dir, mend += dir;
+        if (mend > buf_end(buf))
+            mbeg = (dir < 0 ? buf_end(buf)-mlen : 0), mend = mbeg+mlen;
     }
 }
 
-void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
+void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end) {
     if (!str) return;
     Rune* runes = charstorunes(str);
     size_t rlen = rstrlen(runes);
-    unsigned start = *beg, mbeg = start+1, mend = mbeg + rlen;
+    unsigned start = *beg, mbeg = start+dir, mend = mbeg + rlen;
     while (mbeg != start) {
         if ((buf_get(buf, mbeg) == runes[0]) &&
             (buf_get(buf, mend-1) == runes[rlen-1]) &&
@@ -460,9 +461,9 @@ void buf_findstr(Buf* buf, char* str, size_t* beg, size_t* end) {
             *end = mend;
             break;
         }
-        mbeg++, mend++;
+        mbeg += dir, mend += dir;
         if (mend > buf_end(buf))
-            mbeg = 0, mend = rlen;
+            mbeg = (dir < 0 ? buf_end(buf)-rlen : 0), mend = mbeg+rlen;
     }
     free(runes);
 }
