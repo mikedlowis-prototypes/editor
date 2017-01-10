@@ -3,6 +3,7 @@
 Up Next:
 
 * context sensitive selection of words, commands, line numbers, or filenames.
+* Implement X Selection protocol for handling clipboard and primary selections
 * Tag line count should account for wrapped lines
 * ctrl+alt+f should find next occurence of previous search term
 * invalid memory accesses while viewing docs/waf
@@ -11,7 +12,6 @@ Up Next:
 
 The Rest: 
 
-* Implement X Selection protocol for handling clipboard and primary selections
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump

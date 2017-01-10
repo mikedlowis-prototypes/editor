@@ -31,13 +31,15 @@
 # Debug files
 *.dSYM/
 *.d
-edit
-unittests
-project.vim
-tags
+
+# Coverage data
 *.gcno
 *.gcda
 *.gcov
+
+# Project specific files
+unittests
+tags
 xedit
 xpick
 DELETEME

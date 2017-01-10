@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Add the editing tools directory to your PATH var so its contents may be used
+# while editing.
+export PATH="$HOME/.config/edit/tools:$PATH"
+
+# Now figure out the correct editor to execute
+if [ -z "$DISPLAY" ]; then
+    if [ -z "$EDITOR" ]; then
+        vim "$@"
+    else
+        "$EDITOR" "$@"
+    fi
+elif [ 0 -eq $# ]; then
+    (nohup xedit > /dev/null 2>&1) &
+else
+    for f in "$@"; do
+        (nohup xedit "$f" > /dev/null 2>&1) &
+    done
+fi
