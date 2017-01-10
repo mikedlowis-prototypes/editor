@@ -319,17 +319,11 @@ static void selcontext(View* view, Sel* sel) {
         sel->beg = buf_bow(buf, sel->end);
         sel->end = buf_eow(buf, sel->end++);
     } else if (r == '(' || r == ')') {
-        sel->beg = buf_lscan(buf, sel->end,   '(');
-        sel->end = buf_rscan(buf, sel->end++, ')');
-        sel->beg++, sel->end--;
+        buf_getblock(buf, '(', ')', sel);
     } else if (r == '[' || r == ']') {
-        sel->beg = buf_lscan(buf, sel->end,   '[');
-        sel->end = buf_rscan(buf, sel->end++, ']');
-        sel->beg++, sel->end--;
+        buf_getblock(buf, '[', ']', sel);
     } else if (r == '{' || r == '}') {
-        sel->beg = buf_lscan(buf, sel->end,   '{');
-        sel->end = buf_rscan(buf, sel->end++, '}');
-        sel->beg++, sel->end--;
+        buf_getblock(buf, '{', '}', sel);
     } else {
         selbigword(view, sel);
     }

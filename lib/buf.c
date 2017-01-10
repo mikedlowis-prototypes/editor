@@ -380,6 +380,39 @@ unsigned buf_rscan(Buf* buf, unsigned pos, Rune r) {
     return (buf_get(buf, off) == r ? off : pos);
 }
 
+void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
+    int balance = 0, dir;
+    unsigned beg = sel->end, end = sel->end, off;
+    
+    /* figure out which end of the block we're starting at */
+    if (buf_get(buf, end) == first)
+        dir = +1, balance++, beg = end++;
+    else if (buf_get(buf, end) == last)
+        dir = -1, balance--, beg = end--;
+    else
+        return;
+    
+    /* scan for a blanced set of braces */
+    while (true) {
+        if (buf_get(buf, end) == first)
+            balance++;
+        else if (buf_get(buf, end) == last)
+            balance--;
+        
+        if (balance == 0 || end >= buf_end(buf) || end == 0)
+            break;
+        else
+            end += dir;
+    }
+    
+    /* bail if we failed to find a block */
+    if (balance != 0) return;
+    
+    /* update the passed in selection */
+    if (end > beg) beg++, end--;
+    sel->beg = beg, sel->end = end;
+}
+
 /*****************************************************************************/
 
 unsigned buf_byrune(Buf* buf, unsigned pos, int count) {

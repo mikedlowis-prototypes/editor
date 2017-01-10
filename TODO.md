@@ -2,11 +2,10 @@
 
 Up Next:
 
-* invalid memory accesses while viewing docs/waf
-* Tag line count should account for wrapped lines
-* block selection should handle brace-balancing
 * context sensitive selection of words, commands, line numbers, or filenames.
+* Tag line count should account for wrapped lines
 * ctrl+alt+f should find next occurence of previous search term
+* invalid memory accesses while viewing docs/waf
 * check for file changes on save
 * check for file changes when window regains focus
 
@@ -19,10 +18,8 @@ The Rest:
 * Add a tools dir to namespace utility scripts only useful inside the editor
 * implement command diffing logic to optimize the undo/redo log
 * add command line flags to toggle options (Tabs, Indent, etc..)
-* backspace should delete indent if preceded by whitespace
 * Add a ctrl+space shortcut to autocomplete ctag
 * off by one error on scrolling up with wrapped lines
-* Auto-save on focus change or quit
 
 # Auxillary Programs
 

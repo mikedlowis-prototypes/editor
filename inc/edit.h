@@ -78,6 +78,7 @@ unsigned buf_bow(Buf* buf, unsigned pos);
 unsigned buf_eow(Buf* buf, unsigned pos);
 unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
 unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
+void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
 
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byword(Buf* buf, unsigned pos, int count);
