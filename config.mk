@@ -7,6 +7,10 @@ PREFIX = $(HOME)
 CC = c99
 CFLAGS = -g -O0 $(INCS)
 
+#CC = gcc
+#CFLAGS  = --std=c99 -Wall -Wextra -Werror $(INCS)
+#CFLAGS += -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers
+
 # Linker Setup
 LD = $(CC)
 LDFLAGS = $(LIBS) -lX11 -lXft -lfontconfig

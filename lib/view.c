@@ -510,8 +510,9 @@ void view_append(View* view, char* str) {
         buf_insert(&(view->buffer), false, view->selection.end++, '\n');
         view->selection.beg++;
     }
+    unsigned beg = view->selection.beg;
     view_putstr(view, str);
-    view_selprev(view);
+    view->selection.beg = beg;
 }
 
 char* view_getstr(View* view, Sel* range) {
@@ -582,7 +583,7 @@ void view_indent(View* view, int dir) {
     view->selection.end = buf_eol(buf, view->selection.end);
     unsigned off = buf_bol(buf, view->selection.end);
     if (num_selected(view->selection) == 0) return;
-    
+
     do {
         if (dir == RIGHT) {
             buf_insert(buf, true, off, '\t');
@@ -603,6 +604,6 @@ void view_indent(View* view, int dir) {
             }
         }
         off = buf_byline(buf, off, UP);
-        
+
    } while (off && off >= view->selection.beg);
 }

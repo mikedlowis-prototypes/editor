@@ -99,7 +99,7 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 1);
         CHECK('\n' == buf_get(getbuf(EDIT), 0));
     }
-       
+
     /* Key Handling - Cursor Movement - Basic
      *************************************************************************/
     TEST(left should do nothing for empty buffer) {
@@ -304,7 +304,7 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->beg == 2);
         CHECK(getsel(EDIT)->end == 2);
     }
-    
+
     /* Key Handling - Unix Editing Shortcuts
      *************************************************************************/
     TEST(ctrl+u should do nothing for empty buffer) {
@@ -441,11 +441,11 @@ TEST_SUITE(XeditTests) {
         CHECK(getsel(EDIT)->end == 3);
     }
     
-    TEST(esc should select nothing if no previous insert) {
+    TEST(esc should select previously edited text) {
         setup_view(EDIT, "foob", CRLF, 4);
         send_keys(ModNone, KEY_BACKSPACE);
         send_keys(ModNone, KEY_ESCAPE);
-        CHECK(getsel(EDIT)->beg == 3);
+        CHECK(getsel(EDIT)->beg == 0);
         CHECK(getsel(EDIT)->end == 3);
     }
     
@@ -716,7 +716,7 @@ TEST_SUITE(XeditTests) {
         CHECK(ExitCode == 0);
         CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
     }
-    
+
     TEST(Save should save changes to disk with crlf line endings) {
         setup_view(TAGS, "", CRLF, 0);
         view_init(getview(EDIT), "docs/crlf.txt");
@@ -734,7 +734,7 @@ TEST_SUITE(XeditTests) {
         view_init(getview(EDIT), "docs/lf.txt");
         CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
     }
-    
+
     TEST(Cut and Paste tags should move selection to new location) {
         setup_view(EDIT, "foo\nbar\nbaz\n", CRLF, 0);
         getview(EDIT)->selection = (Sel){ 0, 8, 0 };
@@ -839,7 +839,7 @@ TEST_SUITE(XeditTests) {
         send_keys(ModCtrl, 'f');
     }
 #endif
-    
+
     TEST(Tabs should set indent style to tabs) {
         setup_view(TAGS, "Tabs", CRLF, 0);
         getview(TAGS)->selection = (Sel){ 0, 4, 0 };

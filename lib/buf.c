@@ -174,7 +174,7 @@ void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
     if (buf->bufstart) free(buf->bufstart);
     buf_logclear(buf);
-    
+
     /* reset the state to defaults */
     buf->modified    = false;
     buf->expand_tabs = true;
@@ -198,13 +198,13 @@ unsigned buf_load(Buf* buf, char* path) {
     buf->path = stringdup(path);
     char* addr = strrchr(buf->path, ':');
     if (addr) *addr = '\0', addr++;
-    
+
     /* load the file and determine the character set */
     FMap file = mmap_readonly(buf->path);
     filetype(buf, file);
     if (buf->charset > UTF_8)
         die("Unsupported character set");
-    
+
     /* read the file contents into the buffer */
     for (size_t i = 0; i < file.len;) {
         Rune r;
@@ -216,7 +216,7 @@ unsigned buf_load(Buf* buf, char* path) {
         }
         buf_insert(buf, false, buf_end(buf), r);
     }
-    
+
     /* reset buffer state */
     buf->modified = false;
     buf_logclear(buf);
@@ -299,10 +299,10 @@ unsigned buf_delete(Buf* buf, unsigned beg, unsigned end) {
 unsigned buf_change(Buf* buf, unsigned beg, unsigned end) {
     /* delete the range first */
     unsigned off = buf_delete(buf, beg, end);
-    /* now create a new insert item of length 0 witht he same transaction id as 
-       the delete. This will cause subsequent inserts to be coalesced into the 
+    /* now create a new insert item of length 0 witht he same transaction id as
+       the delete. This will cause subsequent inserts to be coalesced into the
        same transaction */
-    Log* dellog = buf->undo; 
+    Log* dellog = buf->undo;
     Log* inslog = (Log*)calloc(sizeof(Log), 1);
     inslog->transid = dellog->transid;
     inslog->insert = true;
@@ -383,7 +383,7 @@ unsigned buf_rscan(Buf* buf, unsigned pos, Rune r) {
 void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
     int balance = 0, dir;
     unsigned beg = sel->end, end = sel->end, off;
-    
+
     /* figure out which end of the block we're starting at */
     if (buf_get(buf, end) == first)
         dir = +1, balance++, beg = end++;
@@ -391,23 +391,23 @@ void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
         dir = -1, balance--, beg = end--;
     else
         return;
-    
+
     /* scan for a blanced set of braces */
     while (true) {
         if (buf_get(buf, end) == first)
             balance++;
         else if (buf_get(buf, end) == last)
             balance--;
-        
+
         if (balance == 0 || end >= buf_end(buf) || end == 0)
             break;
         else
             end += dir;
     }
-    
+
     /* bail if we failed to find a block */
     if (balance != 0) return;
-    
+
     /* update the passed in selection */
     if (end > beg) beg++, end--;
     sel->beg = beg, sel->end = end;
@@ -540,8 +540,27 @@ unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col) {
 
 void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
     Log* log = buf->undo;
-    if (log && log->insert) {
-        *beg = log->data.ins.beg;
-        *end = log->data.ins.end;
+    unsigned opbeg = *end, opend = *end;
+    if (log && log->insert)
+        opbeg = log->data.ins.end, opend = log->data.ins.end;
+    
+    unsigned delsize = 0;
+    //printf("start: %u-%u\n", opbeg, opend);
+    for (; log; log = log->next) {
+        if (log->insert) {
+            unsigned ibeg = log->data.ins.beg,
+                     iend = log->data.ins.end - delsize;
+            //printf("ins: %u-%u\n", ibeg, iend);
+            if (iend < ibeg || ibeg > opbeg || iend < opbeg) break;
+            if (ibeg < opbeg && iend > opend) break;
+            opbeg = ibeg, delsize = 0;
+        } else {
+            //printf("del: %u-%u\n", log->data.del.off, log->data.del.off+log->data.del.len);
+            /* bail if the delete doesnt overlap */
+            if(log->data.del.off != opbeg) break;
+            delsize = log->data.del.len;
+        }
     }
+    //printf("finish: %u-%u\n\n", opbeg, opend);
+    *beg = opbeg, *end = opend;
 }

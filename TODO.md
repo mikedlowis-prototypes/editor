@@ -10,29 +10,20 @@ Up Next:
 * check for file changes on save
 * check for file changes when window regains focus
 
-The Rest: 
+The Rest:
 
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump
-* Add a tools dir to namespace utility scripts only useful inside the editor
 * implement command diffing logic to optimize the undo/redo log
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * Add a ctrl+space shortcut to autocomplete ctag
 * off by one error on scrolling up with wrapped lines
+* 100% coverage with unit and unit-integration tests
+* shortcut to repeat previous operation
 
 # Auxillary Programs
 
 * Acme-like window manager
 * Win-like terminal emulator
 * File browser
-* Webkit-based web browser
-
-# Graphical User Interface
-
-* Display line location and num lines in status
-
-# Maybe Someday Features
-
-* Implement fuse file-system backend?
-* Spell checker integration
