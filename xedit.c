@@ -199,6 +199,7 @@ int main(int argc, char** argv) {
     /* load the buffer views */
     view_init(getview(TAGS), NULL);
     view_putstr(getview(TAGS), DEFAULT_TAGS);
+    view_selprev(getview(TAGS)); // clear the selection
     buf_logclear(getbuf(TAGS));
     view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
     /* initialize the display engine */
@@ -728,7 +729,6 @@ static void cmd_exec(char* cmd) {
         view_append(getview(TAGS), chomp(error));
     if (output) {
         view_putstr(getview(dest), output);
-        view_selprev(getview(dest));
         Focused = dest;
     }
     /* cleanup */
@@ -770,15 +770,9 @@ static void mouse_middle(enum RegionId id, size_t count, size_t row, size_t col)
     if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
         cut();
     } else {
-    #if 0
-        char* str = view_selcmd(getview(id), row, col);
+        char* str = view_fetchcmd(getview(id), row, col);
         if (str) exec(str);
         free(str);
-    #else
-        char* str = view_fetch(getview(id), row, col);
-        if (str) exec(str);
-        free(str);
-    #endif
     }
 }
 

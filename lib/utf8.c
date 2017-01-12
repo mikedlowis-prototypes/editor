@@ -123,3 +123,8 @@ bool riscmd(Rune r) {
 bool risblank(Rune r) {
     return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
 }
+
+bool risbigword(Rune r) {
+    return !risblank(r);
+}
+

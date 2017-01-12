@@ -380,6 +380,12 @@ unsigned buf_rscan(Buf* buf, unsigned pos, Rune r) {
     return (buf_get(buf, off) == r ? off : pos);
 }
 
+void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel) {
+    for (; isword(buf_get(buf, sel->beg-1)); sel->beg--);
+    for (; isword(buf_get(buf, sel->end));   sel->end++);
+    sel->end--;
+}
+
 void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
     int balance = 0, dir;
     unsigned beg = sel->end, end = sel->end, off;
@@ -458,8 +464,6 @@ unsigned buf_byline(Buf* buf, unsigned pos, int count) {
 }
 
 /*****************************************************************************/
-
-int dir = +1;
 
 void buf_find(Buf* buf, int dir, size_t* beg, size_t* end) {
     unsigned dbeg = *beg, dend = *end;

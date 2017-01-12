@@ -22,3 +22,5 @@ bool rissigil(Rune r);
 bool risfile(Rune r);
 bool riscmd(Rune r);
 bool risblank(Rune r);
+bool risbigword(Rune r);
+

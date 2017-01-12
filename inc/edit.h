@@ -78,6 +78,8 @@ unsigned buf_bow(Buf* buf, unsigned pos);
 unsigned buf_eow(Buf* buf, unsigned pos);
 unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
 unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
+
+void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel);
 void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
 
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
@@ -149,7 +151,7 @@ void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
 
-char* view_fetch(View* view, size_t row, size_t col);
+char* view_fetchcmd(View* view, size_t row, size_t col);
 void view_find(View* view, int dir, size_t row, size_t col);
 void view_findstr(View* view, int dir, char* str);
 void view_insert(View* view, bool indent, Rune rune);

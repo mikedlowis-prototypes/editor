@@ -136,10 +136,7 @@ static void sync_center(View* view, size_t csr) {
     int move = (scrln - midrow);
     unsigned count = (move < 0 ? -move : move);
     for (; count > 0; count--)
-        if (move < 0)
-            scroll_up(view);
-        else
-            scroll_dn(view);
+        (move < 0 ? scroll_up : scroll_dn)(view);
 }
 
 static void sync_view(View* view, size_t csr) {
@@ -316,8 +313,7 @@ static void selcontext(View* view, Sel* sel) {
         sel->beg = bol;
         sel->end = buf_eol(buf, sel->end);
     } else if (risword(r)) {
-        sel->beg = buf_bow(buf, sel->end);
-        sel->end = buf_eow(buf, sel->end++);
+        buf_getword(buf, risword, sel);
     } else if (r == '(' || r == ')') {
         buf_getblock(buf, '(', ')', sel);
     } else if (r == '[' || r == ']') {
@@ -325,7 +321,7 @@ static void selcontext(View* view, Sel* sel) {
     } else if (r == '{' || r == '}') {
         buf_getblock(buf, '{', '}', sel);
     } else {
-        selbigword(view, sel);
+        buf_getword(buf, risbigword, sel);
     }
 }
 
@@ -333,7 +329,7 @@ void view_selword(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
     view_setcursor(view, row, col);
     Sel sel = view->selection;
-    selbigword(view, &sel);
+    buf_getword(&(view->buffer), risbigword, &(sel));
     sel.end++;
     view->selection = sel;
 }
@@ -362,15 +358,15 @@ size_t view_selsize(View* view) {
     return num_selected(view->selection);
 }
 
-char* view_fetch(View* view, size_t row, size_t col) {
-    char* str = NULL;
+char* view_fetchcmd(View* view, size_t row, size_t col) {
+   char* str = NULL;
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
         Sel sel = { .beg = off, .end = off };
         if (in_selection(view->selection, off)) {
             sel = view->selection;
         } else {
-            selcontext(view, &sel);
+            buf_getword(&(view->buffer), riscmd, &sel);
             sel.end++;
         }
         str = view_getstr(view, &sel);
@@ -402,7 +398,7 @@ void view_findstr(View* view, int dir, char* str) {
     buf_findstr(&(view->buffer), dir, str, &sel.beg, &sel.end);
     view->selection = sel;
     view->sync_needed = true;
-    view->sync_center   = true;
+    view->sync_center = true;
 }
 
 void view_insert(View* view, bool indent, Rune rune) {
@@ -492,6 +488,7 @@ void view_redo(View* view) {
 }
 
 void view_putstr(View* view, char* str) {
+    unsigned beg = view->selection.beg;
     buf_loglock(&(view->buffer));
     while (*str) {
         Rune rune = 0;
@@ -500,6 +497,7 @@ void view_putstr(View* view, char* str) {
         view_insert(view, false, rune);
     }
     buf_loglock(&(view->buffer));
+    view->selection.beg = beg;
 }
 
 void view_append(View* view, char* str) {
