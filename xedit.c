@@ -725,10 +725,12 @@ static void cmd_exec(char* cmd) {
         if (op != '<') dest = Focused;
         output = cmdread(ShellCmd, &error);
     }
+    
     if (error)
         view_append(getview(TAGS), chomp(error));
+    
     if (output) {
-        view_putstr(getview(dest), output);
+        (op == '>' ? view_append : view_putstr)(getview(dest), output);
         Focused = dest;
     }
     /* cleanup */
