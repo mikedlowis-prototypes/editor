@@ -730,7 +730,10 @@ static void cmd_exec(char* cmd) {
         view_append(getview(TAGS), chomp(error));
     
     if (output) {
-        (op == '>' ? view_append : view_putstr)(getview(dest), output);
+        if (op == '>')
+            view_append(getview(dest), chomp(output));
+        else
+            view_putstr(getview(dest), output);
         Focused = dest;
     }
     /* cleanup */
