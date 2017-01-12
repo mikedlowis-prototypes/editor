@@ -2,8 +2,8 @@
 
 Up Next:
 
-* Add keyboard shortcut to highlight the thing under the cursor
 * Implement X Selection protocol for handling clipboard and primary selections
+* Add keyboard shortcut to highlight the thing under the cursor
 * Tag line count should account for wrapped lines
 * ctrl+alt+f should find next occurence of previous search term
 * invalid memory accesses while viewing docs/waf

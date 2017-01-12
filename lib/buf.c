@@ -216,6 +216,10 @@ unsigned buf_load(Buf* buf, char* path) {
         }
         buf_insert(buf, false, buf_end(buf), r);
     }
+    
+    /* jump to address if we got one */
+    if (addr)
+        off = buf_setln(buf, strtoul(addr, NULL, 0));
 
     /* reset buffer state */
     buf->modified = false;
