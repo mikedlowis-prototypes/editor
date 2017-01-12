@@ -457,7 +457,7 @@ TEST_SUITE(XeditTests) {
         send_keys(ModCtrl, 'x');
         getview(EDIT)->selection = (Sel){ 4, 4, 0 };
         send_keys(ModCtrl, 'v');
-        CHECK(getsel(EDIT)->beg == 12);
+        CHECK(getsel(EDIT)->beg == 4);
         CHECK(getsel(EDIT)->end == 12);
         CHECK(verify_text(EDIT, "baz\r\nfoo\r\nbar\r\n"));
     }
@@ -469,7 +469,7 @@ TEST_SUITE(XeditTests) {
         send_keys(ModCtrl, 'c');
         getview(EDIT)->selection = (Sel){ 12, 12, 0 };
         send_keys(ModCtrl, 'v');
-        CHECK(getsel(EDIT)->beg == 20);
+        CHECK(getsel(EDIT)->beg == 12);
         CHECK(getsel(EDIT)->end == 20);
         CHECK(verify_text(EDIT, "foo\r\nbar\r\nbaz\r\nfoo\r\nbar\r\n"));
     }
@@ -741,7 +741,7 @@ TEST_SUITE(XeditTests) {
         exec("Cut");
         getview(EDIT)->selection = (Sel){ 4, 4, 0 };
         exec("Paste");
-        CHECK(getsel(EDIT)->beg == 12);
+        CHECK(getsel(EDIT)->beg == 4);
         CHECK(getsel(EDIT)->end == 12);
         CHECK(verify_text(EDIT, "baz\r\nfoo\r\nbar\r\n"));
     }
@@ -752,7 +752,7 @@ TEST_SUITE(XeditTests) {
         exec("Copy");
         getview(EDIT)->selection = (Sel){ 12, 12, 0 };
         exec("Paste");
-        CHECK(getsel(EDIT)->beg == 20);
+        CHECK(getsel(EDIT)->beg == 12);
         CHECK(getsel(EDIT)->end == 20);
         CHECK(verify_text(EDIT, "foo\r\nbar\r\nbaz\r\nfoo\r\nbar\r\n"));
     }
