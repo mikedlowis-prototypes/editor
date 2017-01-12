@@ -175,6 +175,7 @@ void view_indent(View* view, int dir);
 size_t view_selsize(View* view);
 void view_selprev(View* view);
 void view_setcursor(View* view, size_t row, size_t col);
+void view_selext(View* view, size_t row, size_t col);
 void view_selextend(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);

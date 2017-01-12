@@ -297,14 +297,6 @@ void view_selext(View* view, size_t row, size_t col) {
     }
 }
 
-static void selbigword(View* view, Sel* sel) {
-    Buf* buf = &(view->buffer);
-    size_t mbeg = sel->end, mend = sel->end;
-    for (; !risblank(buf_get(buf, mbeg-1)); mbeg--);
-    for (; !risblank(buf_get(buf, mend));   mend++);
-    sel->beg = mbeg, sel->end = mend-1;
-}
-
 static void selcontext(View* view, Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
@@ -543,8 +535,10 @@ char* view_getstr(View* view, Sel* range) {
 
 char* view_getcmd(View* view) {
     Sel sel = view->selection;
-    buf_getword(&(view->buffer), riscmd, &sel);
-    sel.end++;
+    if (!num_selected(sel)) {
+        buf_getword(&(view->buffer), riscmd, &sel);
+        sel.end++;
+    }
     return view_getstr(view, &sel);
 }
 
