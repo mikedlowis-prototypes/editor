@@ -552,7 +552,7 @@ static void search(void) {
 }
 
 static void execute(void) {
-    char* str = view_getstr(currview(), NULL);
+    char* str = view_getcmd(currview());
     if (str) exec(str);
     free(str);
 }

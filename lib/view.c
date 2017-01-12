@@ -541,6 +541,13 @@ char* view_getstr(View* view, Sel* range) {
     return str;
 }
 
+char* view_getcmd(View* view) {
+    Sel sel = view->selection;
+    buf_getword(&(view->buffer), riscmd, &sel);
+    sel.end++;
+    return view_getstr(view, &sel);
+}
+
 char* view_getctx(View* view) {
     if (0 == num_selected(view->selection)) {
         selcontext(view, &(view->selection));

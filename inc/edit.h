@@ -165,6 +165,7 @@ void view_redo(View* view);
 void view_putstr(View* view, char* str);
 void view_append(View* view, char* str);
 char* view_getstr(View* view, Sel* sel);
+char* view_getcmd(View* view);
 char* view_getctx(View* view);
 void view_scroll(View* view, int move);
 void view_scrollpage(View* view, int move);
