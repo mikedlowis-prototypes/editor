@@ -2,6 +2,7 @@
 
 Up Next:
 
+* Right click in tags region should search edit region
 * Implement X Selection protocol for handling clipboard and primary selections
 * Add keyboard shortcut to highlight the thing under the cursor
 * Tag line count should account for wrapped lines
@@ -9,9 +10,12 @@ Up Next:
 * invalid memory accesses while viewing docs/waf
 * check for file changes on save
 * check for file changes when window regains focus
+* Use $SHELL if defined, fallback on /bin/sh
+* Set ENV to ~/.config/edit/rc if undefined
 
 The Rest:
 
+* Selection bug when selecting text with tabs
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump
@@ -21,6 +25,10 @@ The Rest:
 * off by one error on scrolling up with wrapped lines
 * 100% coverage with unit and unit-integration tests
 * shortcut to repeat previous operation
+
+The Future:
+
+* Run commands in the background and don't block the main thread.
 
 # Auxillary Programs
 

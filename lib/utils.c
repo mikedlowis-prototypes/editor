@@ -90,6 +90,8 @@ char* fdgets(int fd) {
 }
 
 char* chomp(char* in) {
-    return strtok(in, "\r\n");
+    char* pos = strrchr(in, '\n');
+    if (pos) *pos = '\0';
+    return in;
 }
 
