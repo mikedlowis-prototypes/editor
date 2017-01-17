@@ -2,8 +2,8 @@
 
 Up Next:
 
-* Right click in tags region should search edit region
 * Implement X Selection protocol for handling clipboard and primary selections
+* Right click in tags region should search edit region
 * Add keyboard shortcut to highlight the thing under the cursor
 * Tag line count should account for wrapped lines
 * ctrl+alt+f should find next occurence of previous search term

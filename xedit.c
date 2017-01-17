@@ -197,8 +197,9 @@ static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 #ifndef TEST
 int main(int argc, char** argv) {
     /* load the buffer views */
+    char* tags = getenv("EDITTAGS");
     view_init(getview(TAGS), NULL);
-    view_putstr(getview(TAGS), DEFAULT_TAGS);
+    view_putstr(getview(TAGS), (tags ? tags : DEFAULT_TAGS));
     view_selprev(getview(TAGS)); // clear the selection
     buf_logclear(getbuf(TAGS));
     view_init(getview(EDIT), (argc > 1 ? argv[1] : NULL));
