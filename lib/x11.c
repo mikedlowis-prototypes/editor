@@ -6,6 +6,11 @@
 #include <utf.h>
 #include <locale.h>
 
+static struct XSel* selfetch(Atom atom); 
+static void selclear(XEvent* evnt);
+static void selnotify(XEvent* evnt);
+static void selrequest(XEvent* evnt);
+
 #ifndef MAXFONTS
 #define MAXFONTS 16
 #endif
@@ -47,6 +52,16 @@ static struct {
 } X;
 static XConfig* Config;
 static int Mods;
+static Atom SelTarget;
+static struct XSel {
+    char* name;
+    Atom atom;
+    char* text;
+    void (*callback)(char*);
+} Selections[] = {
+    { .name = "PRIMARY" },
+    { .name = "CLIPBOARD" },
+};
 
 static void xftcolor(XftColor* xc, uint32_t c) {
     xc->color.alpha = 0xFF | ((c & 0xFF000000) >> 16);
@@ -76,6 +91,12 @@ void x11_init(XConfig* cfg) {
     X.colormap = wa.colormap;
     X.screen   = DefaultScreen(X.display);
     X.depth    = DefaultDepth(X.display, X.screen);
+    /* initialize selection atoms */
+    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
+        Selections[i].atom = XInternAtom(X.display, Selections[i].name, 0);
+    SelTarget = XInternAtom(X.display, "UTF8_STRING", 0);
+    if (SelTarget == None)
+        SelTarget = XInternAtom(X.display, "STRING", 0);
 }
 
 int x11_keymods(void) {
@@ -273,12 +294,15 @@ void x11_loop(void) {
             XNextEvent(X.display, &e);
             if (!XFilterEvent(&e, None)) {
                 switch (e.type) {
-                    case FocusIn:       if (X.xic) XSetICFocus(X.xic);   break;
-                    case FocusOut:      if (X.xic) XUnsetICFocus(X.xic); break;
-                    case KeyPress:      handle_key(&e);                  break;
-                    case ButtonRelease: handle_mouse(&e);                break;
-                    case ButtonPress:   handle_mouse(&e);                break;
-                    case MotionNotify:  handle_mouse(&e);                break;
+                    case FocusIn:          if (X.xic) XSetICFocus(X.xic);   break;
+                    case FocusOut:         if (X.xic) XUnsetICFocus(X.xic); break;
+                    case KeyPress:         handle_key(&e);                  break;
+                    case ButtonRelease:    handle_mouse(&e);                break;
+                    case ButtonPress:      handle_mouse(&e);                break;
+                    case MotionNotify:     handle_mouse(&e);                break;
+                    case SelectionClear:   selclear(&e);                    break;
+                    case SelectionNotify:  selnotify(&e);                   break;
+                    case SelectionRequest: selrequest(&e);                  break;
                     case ClientMessage: {
                             Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
                             if (e.xclient.data.l[0] == wmDeleteMessage)
@@ -460,4 +484,95 @@ void x11_draw_utf8(XFont fnt, int fg, int bg, int x, int y, char* str) {
 
 void x11_warp_mouse(int x, int y) {
     XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
+}
+
+/* Selection Handling
+ *****************************************************************************/
+
+static char* readprop(Display* disp, Window win, Atom prop) {
+    Atom type;
+    int format;
+    unsigned long nitems, nleft;
+    unsigned char* ret = NULL;
+    int nread = 1024;
+
+    // Read the property in progressively larger chunks until the entire
+    // property has been read (nleft == 0)
+    do {
+        if (ret) XFree(ret);
+        XGetWindowProperty(disp, win, prop, 0, nread, False, AnyPropertyType,
+                           &type, &format, &nitems, &nleft,
+                           &ret);
+        nread *= 2;
+    } while (nleft != 0);
+
+    return (char*)ret;
+}
+
+static struct XSel* selfetch(Atom atom) {
+    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
+        if (atom == Selections[i].atom)
+            return &Selections[i];
+    return NULL;
+}
+
+static void selclear(XEvent* evnt) {
+    struct XSel* sel = selfetch(evnt->xselectionrequest.selection);
+    if (!sel) return;
+    free(sel->text);
+    sel->text = NULL;
+}
+
+static void selnotify(XEvent* evnt) {
+    /* bail if the selection cannot be converted */
+    if (evnt->xselection.property == None)
+        return;
+    struct XSel* sel = selfetch( evnt->xselection.selection );
+    char* propdata = readprop(X.display, X.window, sel->atom);
+    if (evnt->xselection.target == SelTarget) {
+        void(*cbfn)(char*) = sel->callback;
+        sel->callback = NULL;
+        cbfn(propdata);
+    }
+    /* cleanup */
+    if (propdata) XFree(propdata);
+}
+
+static void selrequest(XEvent* evnt) {
+    XEvent s;
+    struct XSel* sel = selfetch( evnt->xselectionrequest.selection );
+    s.xselection.type      = SelectionNotify;
+    s.xselection.property  = evnt->xselectionrequest.property;;
+    s.xselection.requestor = evnt->xselectionrequest.requestor;;
+    s.xselection.selection = evnt->xselectionrequest.selection;;
+    s.xselection.target    = evnt->xselectionrequest.target;;
+    s.xselection.time      = evnt->xselectionrequest.time;;
+    XChangeProperty(X.display, 
+        s.xselection.requestor,
+        s.xselection.property,
+        SelTarget,
+        8, PropModeReplace, (unsigned char*)sel->text, strlen(sel->text));
+    XSendEvent(X.display, evnt->xselectionrequest.requestor, True, 0, &s);
+}
+
+bool x11_getsel(int selid, void(*cbfn)(char*)) {
+    struct XSel* sel = &(Selections[selid]);
+    if (sel->callback) return false;
+    sel->callback = cbfn;    
+    XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
+    XFlush(X.display);
+    return true;
+}
+
+bool x11_setsel(int selid, char* str) {
+    struct XSel* sel = &(Selections[selid]);
+    if (!sel || !str || !*str) {
+        free(str);
+        return false;
+    } else {
+        sel->text = str;
+        XSetSelectionOwner(X.display, sel->atom, X.window, CurrentTime);
+        XFlush(X.display);
+        return true;
+    }
 }

@@ -2,6 +2,7 @@
 
 Up Next:
 
+* Num Lock causes modifier checks to fail in xedit.c
 * Implement X Selection protocol for handling clipboard and primary selections
 * Right click in tags region should search edit region
 * Add keyboard shortcut to highlight the thing under the cursor
@@ -32,6 +33,7 @@ The Future:
 
 # Auxillary Programs
 
-* Acme-like window manager
+* Visual diff tool
 * Win-like terminal emulator
 * File browser
+* Acme-like window manager

@@ -121,6 +121,12 @@ enum {
     ModAny        = ModWindows-1
 };
 
+/* Selection identifiers */
+enum {
+    PRIMARY   = 0,
+    CLIPBOARD = 1
+};
+
 void x11_init(XConfig* cfg);
 void x11_deinit(void);
 int x11_keymods(void);
@@ -141,3 +147,5 @@ void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
 size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
 void x11_draw_glyphs(int fg, int bg, XGlyphSpec* glyphs, size_t nglyphs);
 void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
+bool x11_getsel(int selid, void(*cbfn)(char*));
+bool x11_setsel(int selid, char* str);

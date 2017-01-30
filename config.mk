@@ -4,8 +4,8 @@
 PREFIX = $(HOME)
 
 # Compiler Setup
-CC = c99
-CFLAGS = -g -O0 $(INCS)
+CC = cc
+CFLAGS = --std=c99 -MMD -g -O0 $(INCS)
 
 #CC = gcc
 #CFLAGS  = --std=c99 -Wall -Wextra -Werror $(INCS)

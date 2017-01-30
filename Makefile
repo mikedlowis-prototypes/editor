@@ -55,3 +55,5 @@ libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 unittests: $(TEST_OBJS) libedit.a
+
+-include *.d lib/*.d tests/*.d

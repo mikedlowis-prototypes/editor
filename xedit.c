@@ -181,10 +181,8 @@ static KeyBinding Bindings[] = {
  *****************************************************************************/
 #ifdef __MACH__
 static char* CopyCmd[]  = { "pbcopy", NULL };
-static char* PasteCmd[] = { "pbpaste", NULL };
 #else
 static char* CopyCmd[]  = { "xsel", "-bi", NULL };
-static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
 static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
@@ -523,25 +521,21 @@ static void tag_redo(void) {
 
 static void cut(void) {
     char* str = view_getstr(currview(), NULL);
-    if (str && *str) {
-        cmdwrite(CopyCmd, str, NULL);
-        delete();
-    }
-    free(str);
+    x11_setsel(CLIPBOARD, str);
+    if (str && *str) delete();
 }
 
 static void copy(void) {
     char* str = view_getstr(currview(), NULL);
-    if (str && *str)
-        cmdwrite(CopyCmd, str, NULL);
-    free(str);
+    x11_setsel(CLIPBOARD, str);
+}
+
+static void onpaste(char* text) {
+    view_putstr(currview(), text);
 }
 
 static void paste(void) {
-    char* str = cmdread(PasteCmd, NULL);
-    if (str && *str)
-        view_putstr(currview(), str);
-    free(str);
+    assert(x11_getsel(CLIPBOARD, onpaste));
 }
 
 static void search(void) {

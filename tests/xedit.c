@@ -9,6 +9,8 @@ enum {
 // Test Globals
 int Mods = 0;
 int ExitCode = 0;
+char* PrimaryText = NULL;
+char* ClipboardText = NULL;
 
 // fake out the exit routine
 void mockexit(int code) {
@@ -68,6 +70,22 @@ static void redraw(int width, int height) {
 
 void x11_deinit(void) {
     mockexit(0);
+}
+
+bool x11_getsel(int selid, void(*cbfn)(char*)) {
+    cbfn(selid == PRIMARY ? PrimaryText : ClipboardText);
+    return true;
+}
+
+bool x11_setsel(int selid, char* str) {
+    if (selid == PRIMARY) {
+        free(PrimaryText);
+        PrimaryText = str;
+    } else {
+        free(ClipboardText);
+        ClipboardText = str;
+    }   
+    return true;
 }
 
 /* Unit Tests
