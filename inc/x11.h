@@ -118,7 +118,7 @@ enum {
     ModNumLock    = (1 << 4),
     ModScrollLock = (1 << 5),
     ModWindows    = (1 << 6),
-    ModAny        = ModWindows-1
+    ModAny        = (ModShift|ModCtrl|ModAlt)
 };
 
 void x11_init(XConfig* cfg);
