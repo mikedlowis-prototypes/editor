@@ -542,17 +542,32 @@ static void selrequest(XEvent* evnt) {
     XEvent s;
     struct XSel* sel = selfetch( evnt->xselectionrequest.selection );
     s.xselection.type      = SelectionNotify;
-    s.xselection.property  = evnt->xselectionrequest.property;;
-    s.xselection.requestor = evnt->xselectionrequest.requestor;;
-    s.xselection.selection = evnt->xselectionrequest.selection;;
-    s.xselection.target    = evnt->xselectionrequest.target;;
-    s.xselection.time      = evnt->xselectionrequest.time;;
-    XChangeProperty(X.display, 
-        s.xselection.requestor,
-        s.xselection.property,
-        SelTarget,
-        8, PropModeReplace, (unsigned char*)sel->text, strlen(sel->text));
-    XSendEvent(X.display, evnt->xselectionrequest.requestor, True, 0, &s);
+    s.xselection.property  = evnt->xselectionrequest.property;
+    s.xselection.requestor = evnt->xselectionrequest.requestor;
+    s.xselection.selection = evnt->xselectionrequest.selection;
+    s.xselection.target    = evnt->xselectionrequest.target;
+    s.xselection.time      = evnt->xselectionrequest.time;
+    
+    Atom target    = evnt->xselectionrequest.target;
+    Atom xatargets = XInternAtom(X.display, "TARGETS", 0);
+    Atom xastring  = XInternAtom(X.display, "STRING", 0);
+    if (target == xatargets) {
+        /* respond with the supported type */
+        XChangeProperty(
+            X.display,
+            s.xselection.requestor, 
+            s.xselection.property,
+            XA_ATOM, 32, PropModeReplace,
+            (unsigned char*)&SelTarget, 1);
+    } else if (target == SelTarget || target == xastring) {
+        XChangeProperty(
+            X.display, 
+            s.xselection.requestor,
+            s.xselection.property,
+            SelTarget, 8, PropModeReplace, 
+            (unsigned char*)sel->text, strlen(sel->text));
+    }
+    XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
 }
 
 bool x11_getsel(int selid, void(*cbfn)(char*)) {
