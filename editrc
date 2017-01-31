@@ -1,0 +1,26 @@
+# Tag Lines
+#------------------------------------------------------------------------------
+
+csrc(){ echo -n "Quit Save >lines |bc |uc {>Grep  } Find "; }
+src(){ echo -n "Quit Save >lines |bcmt |ucmt {>Grep  } Find "; }
+ptext(){ echo -n "Quit Save |fmt >words {>Grep  } Find "; }
+
+# setup default tags line
+export EDITTAGS="$(csrc)"
+
+# Tool Functions
+#------------------------------------------------------------------------------
+
+# Regex search
+Grep(){ grep -n "$@"; }
+
+# Word and Line Counts
+words(){ wc -w; }
+lines(){ wc -l; }
+
+# Block Comments for C and Scripting Languages
+bc(){ sed -e 's/^/\/\//'; }
+uc(){ sed -e 's/^\/\///'; }
+bcmt(){ sed -e 's/^/#/'; }
+ucmt(){ sed -e 's/^#//'; }
+
