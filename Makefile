@@ -21,6 +21,7 @@ all: xedit xpick
 
 clean:
 	$(RM) *.o lib*/*.o tests/*.o *.a xpick xedit unittests
+	$(RM) *.d lib*/*.d tests/*.d
 	$(RM) *.gcno lib*/*.gcno tests/*.gcno
 	$(RM) *.gcda lib*/*.gcda tests/*.gcda
 	$(RM) *.gcov lib*/*.gcov tests/*.gcov

@@ -179,6 +179,9 @@ static KeyBinding Bindings[] = {
 
 /* External Commands
  *****************************************************************************/
+/* The shell: Filled in with $SHELL. Used to execute commands */
+static char* ShellCmd[] = { NULL, "-c", NULL, NULL };
+
 #ifdef __MACH__
 static char* CopyCmd[]  = { "pbcopy", NULL };
 static char* PasteCmd[] = { "pbpaste", NULL };
@@ -186,7 +189,6 @@ static char* PasteCmd[] = { "pbpaste", NULL };
 static char* CopyCmd[]  = { "xsel", "-bi", NULL };
 static char* PasteCmd[] = { "xsel", "-bo", NULL };
 #endif
-static char* ShellCmd[] = { "/bin/sh", "-c", NULL, NULL };
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
 static char* PickTagCmd[] = { "xtagpick", "tags", NULL, NULL };
 static char* OpenCmd[] = { "xedit", NULL, NULL };
@@ -196,6 +198,9 @@ static char* SedCmd[] = { "sed", "-e", NULL, NULL };
  *****************************************************************************/
 #ifndef TEST
 int main(int argc, char** argv) {
+    /* setup the shell */
+    ShellCmd[0] = getenv("SHELL");
+    if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     /* load the buffer views */
     char* tags = getenv("EDITTAGS");
     view_init(getview(TAGS), NULL);
