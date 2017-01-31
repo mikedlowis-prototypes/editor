@@ -23,6 +23,7 @@ void mockexit(int code) {
 /* Helper Functions
  *****************************************************************************/
 void setup_view(enum RegionId id, char* text, int crlf, unsigned cursor) {
+    ShellCmd[0] = "/bin/sh";
     Focused = id;
     view_init(getview(id), NULL);
     getbuf(id)->crlf = crlf;

@@ -24,3 +24,6 @@ uc(){ sed -e 's/^\/\///'; }
 bcmt(){ sed -e 's/^/#/'; }
 ucmt(){ sed -e 's/^#//'; }
 
+# Expand tabs to spaces
+etabs(){ sed -e 's/\t/    /g'; }
+

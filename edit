@@ -9,6 +9,11 @@ export PATH="$HOME/.config/edit/tools:$PATH"
 export EDITRCFILE="$HOME/.config/edit/editrc"
 export BASH_ENV="$EDITRCFILE"
 
+# Load the rc file
+if [ -f "$EDITRCFILE" ]; then
+    . "$EDITRCFILE"
+fi
+
 # Now figure out the correct editor to execute
 if [ -z "$DISPLAY" ]; then
     if [ -z "$EDITOR" ]; then
@@ -20,7 +25,6 @@ elif [ 0 -eq $# ]; then
     (nohup xedit > /dev/null 2>&1) &
 else
     for f in "$@"; do
-        [ -f "$EDITRCFILE" ] && . "$EDITRCFILE"
         (nohup xedit "$f" > /dev/null 2>&1) &
     done
 fi
