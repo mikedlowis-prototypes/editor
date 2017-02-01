@@ -27,3 +27,9 @@ ucmt(){ sed -e 's/^#//'; }
 # Expand tabs to spaces
 etabs(){ sed -e 's/\t/    /g'; }
 
+# Add a line number to each line of the file
+lnnum(){ sed -e = | sed -e 'N;s/\n/\t/'; }
+nolnnum(){ sed -e 's/^[0-9]\+\t//'; }
+
+# Trim trailing whitspace
+trim(){ sed -e 's/[\t ]\+$//'; }

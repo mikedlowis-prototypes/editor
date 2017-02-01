@@ -23,7 +23,6 @@ The Rest:
 * shortcut to repeat previous operation
 * implement command diffing logic to optimize the undo/redo log
 
-
 The Future:
 
 * Run commands in the background and don't block the main thread.

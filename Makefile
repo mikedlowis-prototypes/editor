@@ -58,3 +58,4 @@ libedit.a: $(LIBEDIT_OBJS)
 unittests: $(TEST_OBJS) libedit.a
 
 -include *.d lib/*.d tests/*.d
+
