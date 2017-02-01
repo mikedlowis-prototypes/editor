@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Tag Lines
 #------------------------------------------------------------------------------
 
@@ -32,3 +34,7 @@ lnnum(){ nl -nln -ba; }
 
 # Trim trailing whitspace
 trim(){ sed -e 's/[\t ]\+$//'; }
+
+# Hex editing functions
+hex(){ xxd; }
+nohex(){ xxd -r; }
