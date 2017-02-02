@@ -573,6 +573,8 @@ static void selrequest(XEvent* evnt) {
 bool x11_getsel(int selid, void(*cbfn)(char*)) {
     struct XSel* sel = &(Selections[selid]);
     if (sel->callback) return false;
+    if (XGetSelectionOwner(X.display, sel->atom) == None) 
+        return true;
     sel->callback = cbfn;    
     XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
     XFlush(X.display);
