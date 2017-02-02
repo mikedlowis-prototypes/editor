@@ -7,9 +7,7 @@ PREFIX = $(HOME)
 CC = cc
 CFLAGS = --std=c99 -MMD -g -O0 $(INCS)
 
-#CC = gcc
-#CFLAGS  = --std=c99 -Wall -Wextra -Werror $(INCS)
-#CFLAGS += -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers
+#CFLAGS += -Wall -Wextra -Werror
 
 # Linker Setup
 LD = $(CC)

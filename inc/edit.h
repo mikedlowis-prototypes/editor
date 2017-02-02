@@ -231,6 +231,8 @@ typedef struct {
     size_t y;
     size_t height;
     size_t width;
+    size_t csrx;
+    size_t csry;
     bool warp_ptr;
     View view;
 } Region;

@@ -7,7 +7,8 @@ LIBEDIT_OBJS =     \
 	lib/utils.o    \
 	lib/exec.o     \
 	lib/view.o     \
-	lib/x11.o
+	lib/x11.o      \
+	lib/win.o
 
 TEST_OBJS =      \
 	unittests.o  \
@@ -17,10 +18,10 @@ TEST_OBJS =      \
 
 include config.mk
 
-all: xedit xpick
+all: xedit xpick term
 
 clean:
-	$(RM) *.o lib*/*.o tests/*.o *.a xpick xedit unittests
+	$(RM) *.o lib*/*.o tests/*.o *.a xpick xedit term unittests
 	$(RM) *.d lib*/*.d tests/*.d
 	$(RM) *.gcno lib*/*.gcno tests/*.gcno
 	$(RM) *.gcda lib*/*.gcda tests/*.gcda
@@ -50,6 +51,9 @@ xedit: xedit.o libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 xpick: xpick.o libedit.a
+	$(LD) -o $@ $^ $(LDFLAGS)
+	
+term: term.o libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 libedit.a: $(LIBEDIT_OBJS)
