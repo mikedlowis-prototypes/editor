@@ -3,15 +3,18 @@
 # Tag Lines
 #------------------------------------------------------------------------------
 
-csrc(){ echo -n "Quit Save >lines |bc |uc {>Grep  } Find "; }
-src(){ echo -n "Quit Save >lines |bcmt |ucmt {>Grep  } Find "; }
-ptext(){ echo -n "Quit Save |fmt >words {>Grep  } Find "; }
+csrc(){ echo -n "Quit Save !term >lines |bc |uc {>Grep  } Find "; }
+src(){ echo -n "Quit Save !term >lines |bcmt |ucmt {>Grep  } Find "; }
+ptext(){ echo -n "Quit Save !term |fmt >words {>Grep  } Find "; }
 
 # setup default tags line
 export EDITTAGS="$(csrc)"
 
 # Tool Functions
 #------------------------------------------------------------------------------
+
+# Launch a terminal emulator in the same dir as the editor
+term(){ (nohup st)& }
 
 # Regex search
 Grep(){ grep -n "$@"; }
@@ -22,9 +25,9 @@ lines(){ wc -l; }
 
 # Block Comments for C and Scripting Languages
 bc(){ sed -e 's/^/\/\//'; }
-uc(){ sed -e 's/^\/\///'; }
+uc(){ sed -e 's/^\(\s*\)\/\//\1/'; }
 bcmt(){ sed -e 's/^/#/'; }
-ucmt(){ sed -e 's/^#//'; }
+ucmt(){ sed -e 's/^\(\s*\)#/\1/'; }
 
 # Expand tabs to spaces
 etabs(){ sed -e 's/\t/    /g'; }
