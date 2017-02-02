@@ -181,12 +181,6 @@ static KeyBinding Bindings[] = {
  *****************************************************************************/
 /* The shell: Filled in with $SHELL. Used to execute commands */
 static char* ShellCmd[] = { NULL, "-c", NULL, NULL };
-
-#ifdef __MACH__
-static char* CopyCmd[]  = { "pbcopy", NULL };
-#else
-static char* CopyCmd[]  = { "xsel", "-bi", NULL };
-#endif
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
 static char* PickTagCmd[] = { "xtagpick", "tags", NULL, NULL };
 static char* OpenCmd[] = { "xedit", NULL, NULL };
