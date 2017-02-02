@@ -71,6 +71,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
 }
 
 static void reflow(View* view) {
+    if (!view->nrows) return;
     size_t pos = view->rows[0]->off;
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos);
@@ -140,6 +141,7 @@ static void sync_center(View* view, size_t csr) {
 }
 
 static void sync_view(View* view, size_t csr) {
+    if (!view->nrows) return;
     unsigned first = view->rows[0]->off;
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
     while (csr < first)
