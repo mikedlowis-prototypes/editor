@@ -49,10 +49,10 @@ void win_init(char* name) {
     x11_init(&Config);
     Font = x11_font_load(FONTNAME);
     x11_window(name, Width, Height);
-    x11_show();
 }
 
 void win_loop(void) {
+    x11_show();
     x11_loop();
 }
 

@@ -36,6 +36,7 @@ MouseConfig* MouseHandlers[NREGIONS] = {
 void onupdate(void) {
 }
 
+#ifndef TEST
 int main(int argc, char** argv) {
     win_init("term");
     //win_setkeys(&Bindings);
@@ -43,6 +44,7 @@ int main(int argc, char** argv) {
     win_loop();
     return 0;
 }
+#endif
 
 
 

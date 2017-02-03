@@ -5,10 +5,6 @@
 #include <ctype.h>
 #include <win.h>
 
-#ifdef TEST
-#define exit mockexit
-#endif
-
 typedef struct {
     char* tag;
     union {

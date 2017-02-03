@@ -1,6 +1,7 @@
 #define INCLUDE_DEFS
 #include <atf.h>
 #include <time.h>
+#include <setjmp.h>
 
 enum {
     LF = 0, 
@@ -8,18 +9,17 @@ enum {
 };
 
 // Test Globals
-int Mods = 0;
 int ExitCode = 0;
-char* PrimaryText = NULL;
-char* ClipboardText = NULL;
-
-// fake out the exit routine
-void mockexit(int code) {
-    ExitCode = code;
-}
+jmp_buf ExitPad;
 
 // Inculd the source file so we can access everything 
 #include "../xedit.c"
+
+static void initialize(void) {
+    win_init("edit");
+    win_setkeys(Bindings);
+    //win_setmouse(&MouseHandlers);
+}
 
 /* Helper Functions
  *****************************************************************************/
@@ -50,44 +50,6 @@ void mockexit(int code) {
 //        result = (0 == strcmp(buftext, text));
 //    free(buftext);
 //    return result;
-//}
-
-/* Stubbed Functions
- *****************************************************************************/
-//bool x11_keymodsset(int mask) {
-//    return ((Mods & mask) == mask);
-//}
-//
-//size_t x11_font_height(XFont fnt) {
-//    return 10;
-//}
-//
-//size_t x11_font_width(XFont fnt) {
-//    return 10;
-//}
-//
-//static void redraw(int width, int height) {
-//    /* do nothing for unit testing */
-//}
-//
-//void x11_deinit(void) {
-//    mockexit(0);
-//}
-//
-//bool x11_getsel(int selid, void(*cbfn)(char*)) {
-//    cbfn(selid == PRIMARY ? PrimaryText : ClipboardText);
-//    return true;
-//}
-//
-//bool x11_setsel(int selid, char* str) {
-//    if (selid == PRIMARY) {
-//        free(PrimaryText);
-//        PrimaryText = str;
-//    } else {
-//        free(ClipboardText);
-//        ClipboardText = str;
-//    }   
-//    return true;
 //}
 
 /* Unit Tests
@@ -901,7 +863,14 @@ TEST_SUITE(UnitTests) {
 //    }
 }
 
+// fake out the exit routine
+void exit(int code) {
+    ExitCode = code;
+    longjmp(ExitPad, 0);
+}
+
 int main(int argc, char** argv) {
+    initialize();
     atf_init(argc,argv);
     RUN_TEST_SUITE(UnitTests);
     return atf_print_results();

@@ -13,6 +13,7 @@ LIBEDIT_OBJS =     \
 TEST_BINS = \
 	tests/xedit \
 	tests/xpick \
+	tests/term \
 	tests/libedit
 
 include config.mk
@@ -42,7 +43,7 @@ uninstall:
 	rm -f $(PREFIX)/bin/edit
 
 test: $(TEST_BINS)
-	for t in $(TEST_BINS); do ./$$t; done
+	for t in $(TEST_BINS); do ./$$t || exit 1; done
 
 xedit: xedit.o libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
@@ -61,6 +62,7 @@ libedit.a: $(LIBEDIT_OBJS)
 tests/libedit: tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/xedit: tests/xedit.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
+tests/term: tests/term.o libedit.a
 
--include *.d lib/*.d tests/*.d
+-include *.d lib/*.d tests/*.d tests/lib/*.d
 
