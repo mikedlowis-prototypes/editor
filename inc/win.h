@@ -36,7 +36,11 @@ void win_setmouse(MouseConfig* mconfig);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
 Sel* win_sel(WinRegion id);
+bool win_btnpressed(MouseBtn btn);
+WinRegion win_getregion(void);
+void win_setregion(WinRegion id);
 
+void onupdate(void);
 void mouse_left(WinRegion id, size_t count, size_t row, size_t col);
 void mouse_middle(WinRegion id, size_t count, size_t row, size_t col);
 void mouse_right(WinRegion id, size_t count, size_t row, size_t col);

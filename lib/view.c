@@ -71,7 +71,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
 }
 
 static void reflow(View* view) {
-    if (!view->nrows) return;
+    if (!view->rows) return;
     size_t pos = view->rows[0]->off;
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos);

@@ -1,8 +1,8 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
-#include <win.h>
 #include <x11.h>
+#include <win.h>
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
@@ -36,8 +36,7 @@ static ButtonState MouseBtns[MOUSE_BTN_COUNT] = {0};
 KeyBinding* Keys = NULL;
 
 void win_init(char* name) {
-    win_settext(STATUS, "This is a status line");
-    for (int i = 1; i < SCROLL; i++)
+    for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL);
     x11_init(&Config);
     Font = x11_font_load(FONTNAME);
@@ -50,13 +49,29 @@ void win_loop(void) {
 }
 
 void win_settext(WinRegion id, char* text) {
-    view_init(win_view(id), NULL);
-    view_putstr(win_view(id), text);
-    view_selprev(win_view(id)); // clear the selection
+    View* view = win_view(id);
+    view->buffer.gapstart = view->buffer.bufstart;
+    view->buffer.gapend   = view->buffer.bufend;
+    view->selection = (Sel){0,0,0};
+    view_putstr(view, text);
+    view_selprev(view); // clear the selection
+    buf_logclear(&(view->buffer));
 }
 
 void win_setkeys(KeyBinding* bindings) {
     Keys = bindings;
+}
+
+bool win_btnpressed(MouseBtn btn) {
+    return MouseBtns[btn].pressed;
+}
+
+WinRegion win_getregion(void) {
+    return Focused;
+}
+
+void win_setregion(WinRegion id) {
+    Focused = id;
 }
 
 View* win_view(WinRegion id) {
@@ -114,7 +129,7 @@ static void layout(int width, int height) {
 static void onredraw(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-    
+    onupdate(); // Let the user program update the status and such
     /* layout and draw the three text regions */
     layout(width, height);
     for (int i = 0; i < SCROLL; i++) {
@@ -151,7 +166,7 @@ static void oninput(int mods, Rune key) {
     if (key == '\n' && win_view(FOCUSED)->buffer.crlf) key = RUNE_CRLF;
     /* search for a key binding entry */
     uint32_t mkey = tolower(key);
-    for (KeyBinding* bind = Keys; bind && bind->mods; bind++) {
+    for (KeyBinding* bind = Keys; bind && bind->key; bind++) {
         if ((mkey == bind->key) && (bind->mods == ModAny || bind->mods == mods)) {
             bind->action();
             return;
@@ -166,18 +181,19 @@ static void oninput(int mods, Rune key) {
 
 static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
     WinRegion id = getregion(x, y);
-    if (id != TAGS && id != EDIT) return;
-    if (Focused != id) Focused = id;
     size_t row = (y-Regions[id].y) / x11_font_height(Font);
     size_t col = (x-Regions[id].x) / x11_font_width(Font);
     if (act == MOUSE_ACT_MOVE) {
         if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
+            WinRegion selid = MouseBtns[MOUSE_BTN_LEFT].region;
             if (MouseBtns[MOUSE_BTN_LEFT].count == 1) {
-                view_setcursor(win_view(id), row, col);
+                view_setcursor(win_view(selid), row, col);
                 MouseBtns[MOUSE_BTN_LEFT].count = 0;
             } else {
-                view_selext(win_view(id), row, col);
+                view_selext(win_view(selid), row, col);
             }
+        } else if (id == TAGS || id == EDIT) {
+            Focused = id;
         }
     } else {
         MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);
@@ -194,7 +210,7 @@ static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
         } else if (MouseBtns[btn].count > 0) {
             /* execute the action on button release */
             if (MouseActs[btn])
-                MouseActs[btn](id, MouseBtns[btn].count, row, col);
+                MouseActs[btn](MouseBtns[btn].region, MouseBtns[btn].count, row, col);
         }
     }
 }
@@ -247,5 +263,4 @@ static WinRegion getregion(size_t x, size_t y) {
     }
     return NREGIONS;
 }
-
 

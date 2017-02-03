@@ -8,15 +8,15 @@
 /* Mouse Handling
  *****************************************************************************/
 void mouse_left(WinRegion id, size_t count, size_t row, size_t col) {
-    
+
 }
 
 void mouse_middle(WinRegion id, size_t count, size_t row, size_t col) {
-    
+
 }
 
 void mouse_right(WinRegion id, size_t count, size_t row, size_t col) {
-    
+
 }
 
 MouseConfig* MouseHandlers[NREGIONS] = {
@@ -32,6 +32,10 @@ MouseConfig* MouseHandlers[NREGIONS] = {
 
 /* Main Routine
  *****************************************************************************/
+ 
+void onupdate(void) {
+}
+
 int main(int argc, char** argv) {
     win_init("term");
     //win_setkeys(&Bindings);
@@ -65,7 +69,7 @@ int main(int argc, char** argv) {
     layout(width, height);
     x11_draw_rect(CLR_BASE03, 0, 0, width, height);
     x11_draw_rect(CLR_BASE02, 0, Regions[EDIT].y-2, fwidth + 4, height - Regions[EDIT].y + 2);
-    
+
     draw_status(CLR_BASE1, (width - 4) / x11_font_width(Font));
     draw_region(TAGS);
     draw_region(EDIT);
@@ -187,7 +191,7 @@ static KeyBinding Bindings[] = {
     { ModAny, KEY_DOWN,  cursor_dn    },
     { ModAny, KEY_LEFT,  cursor_left  },
     { ModAny, KEY_RIGHT, cursor_right },
-    
+
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
     { ModCtrl, 'k', del_to_eol  },
@@ -336,23 +340,6 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
 }
 
 static void draw_status(int fg, size_t ncols) {
-    Buf* buf = getbuf(EDIT);
-    UGlyph glyphs[ncols], *status = glyphs;
-    (status++)->rune = (buf->charset == BINARY ? 'B' : 'U');
-    (status++)->rune = (buf->crlf ? 'C' : 'N');
-    (status++)->rune = (buf->expand_tabs ? 'S' : 'T');
-    (status++)->rune = (buf->copy_indent ? 'I' : 'i');
-    (status++)->rune = (SearchDir < 0 ? '<' : '>');
-    (status++)->rune = (buf->modified ? '*' : ' ');
-    (status++)->rune = ' ';
-    char* path = (buf->path ? buf->path : "*scratch*");
-    size_t len = strlen(path);
-    if (len > ncols-4) {
-        (status++)->rune = '.';
-        (status++)->rune = '.';
-        (status++)->rune = '.';
-        path += (len - ncols) + 6;
-    }
     while (*path)
         (status++)->rune = *path++;
     draw_runes(2, 2, fg, 0, glyphs, status - glyphs);
@@ -418,7 +405,7 @@ static void redraw(int width, int height) {
     layout(width, height);
     x11_draw_rect(CLR_BASE03, 0, 0, width, height);
     x11_draw_rect(CLR_BASE02, 0, Regions[EDIT].y-2, fwidth + 4, height - Regions[EDIT].y + 2);
-    
+
     draw_status(CLR_BASE1, (width - 4) / x11_font_width(Font));
     draw_region(TAGS);
     draw_region(EDIT);
@@ -435,19 +422,19 @@ static void delete(void) {
 
 static void del_to_bol(void) {
     view_bol(currview(), true);
-    if (view_selsize(currview()) > 0) 
+    if (view_selsize(currview()) > 0)
         delete();
 }
 
 static void del_to_eol(void) {
     view_eol(currview(), true);
-    if (view_selsize(currview()) > 0) 
+    if (view_selsize(currview()) > 0)
         delete();
 }
 
 static void del_to_bow(void) {
     view_byword(currview(), LEFT, true);
-    if (view_selsize(currview()) > 0) 
+    if (view_selsize(currview()) > 0)
         delete();
 }
 
@@ -606,10 +593,10 @@ static void cmd_exec(char* cmd) {
         if (op != '<') dest = Focused;
         output = cmdread(ShellCmd, &error);
     }
-    
+
     if (error)
         view_append(getview(TAGS), chomp(error));
-    
+
     if (output) {
         if (op == '>')
             view_append(getview(dest), chomp(output));
