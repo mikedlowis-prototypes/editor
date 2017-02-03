@@ -194,6 +194,7 @@ static void keyboard_input(int mods, uint32_t key) {
     score();
 }
 
+#ifndef TEST
 int main(int argc, char** argv) {
     load_choices();
     if (vec_size(&Choices) > 1) {
@@ -213,3 +214,4 @@ int main(int argc, char** argv) {
     }
     return 0;
 }
+#endif

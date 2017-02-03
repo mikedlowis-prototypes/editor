@@ -58,19 +58,15 @@ typedef struct {
 void buf_init(Buf* buf);
 unsigned buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
-
 Rune buf_get(Buf* buf, unsigned pos);
 unsigned buf_end(Buf* buf);
-
 unsigned buf_insert(Buf* buf, bool indent, unsigned off, Rune rune);
 unsigned buf_delete(Buf* buf, unsigned beg, unsigned end);
 unsigned buf_change(Buf* buf, unsigned beg, unsigned end);
-
 void buf_undo(Buf* buf, Sel* sel);
 void buf_redo(Buf* buf, Sel* sel);
 void buf_loglock(Buf* buf);
 void buf_logclear(Buf* buf);
-
 bool buf_iseol(Buf* buf, unsigned pos);
 unsigned buf_bol(Buf* buf, unsigned pos);
 unsigned buf_eol(Buf* buf, unsigned pos);
@@ -78,17 +74,13 @@ unsigned buf_bow(Buf* buf, unsigned pos);
 unsigned buf_eow(Buf* buf, unsigned pos);
 unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
 unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
-
 void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel);
 void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
-
 unsigned buf_byrune(Buf* buf, unsigned pos, int count);
 unsigned buf_byword(Buf* buf, unsigned pos, int count);
 unsigned buf_byline(Buf* buf, unsigned pos, int count);
-
 void buf_find(Buf* buf, int dir, size_t* beg, size_t* end);
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
-
 unsigned buf_setln(Buf* buf, unsigned line);
 unsigned buf_getcol(Buf* buf, unsigned pos);
 unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
@@ -150,7 +142,6 @@ Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
-
 char* view_fetchcmd(View* view, size_t row, size_t col);
 void view_find(View* view, int dir, size_t row, size_t col);
 void view_findstr(View* view, int dir, char* str);
@@ -171,7 +162,6 @@ void view_scroll(View* view, int move);
 void view_scrollpage(View* view, int move);
 void view_setln(View* view, size_t line);
 void view_indent(View* view, int dir);
-
 size_t view_selsize(View* view);
 void view_selprev(View* view);
 void view_setcursor(View* view, size_t row, size_t col);
@@ -210,40 +200,6 @@ enum ColorId {
     CLR_GREEN   = 15,
     CLR_COUNT   = 16
 };
-
-/* Global State
- *****************************************************************************/
-typedef struct {
-    int mods;
-    Rune key;
-    void (*action)(void);
-} KeyBinding;
-
-typedef struct {
-    uint64_t time;
-    uint8_t count;
-    bool pressed;
-    int region;
-} ButtonState;
-
-typedef struct {
-    size_t x;
-    size_t y;
-    size_t height;
-    size_t width;
-    size_t csrx;
-    size_t csry;
-    bool warp_ptr;
-    View view;
-} Region;
-
-typedef struct {
-    char* tag;
-    union {
-        void (*noarg)(void);
-        void (*arg)(char* arg);
-    } action;
-} Tag;
 
 /* Configuration
  *****************************************************************************/

@@ -7,7 +7,12 @@ typedef enum {
     FOCUSED  = 4
 } WinRegion;
 
-#if 0
+typedef struct {
+    int mods;
+    Rune key;
+    void (*action)(void);
+} KeyBinding;
+
 typedef struct {
     size_t x;
     size_t y;
@@ -18,7 +23,6 @@ typedef struct {
     bool warp_ptr;
     View view;
 } Region;
-#endif
 
 typedef void (*MouseFunc)(WinRegion id, size_t count, size_t row, size_t col);
 

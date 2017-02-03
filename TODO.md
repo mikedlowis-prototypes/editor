@@ -10,7 +10,7 @@ Up Next:
 * ctrl+alt+f should find next occurence of previous search term
 * Add keyboard shortcut to highlight the thing under the cursor
 
-The Rest:
+Tomorrow-ish:
 
 * Selection bug when selecting text with tabs
 * off by one error on scrolling up with wrapped lines

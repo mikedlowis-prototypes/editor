@@ -10,22 +10,19 @@ LIBEDIT_OBJS =     \
 	lib/x11.o      \
 	lib/win.o
 
-TEST_OBJS =      \
-	unittests.o  \
-	tests/buf.o  \
-	tests/utf8.o \
-	tests/xedit.o
+TEST_BINS = \
+	tests/xedit \
+	tests/xpick \
+	tests/libedit
 
 include config.mk
 
-all: xedit xpick term
+all: xedit xpick term test
 
 clean:
-	$(RM) *.o lib*/*.o tests/*.o *.a xpick xedit term unittests
-	$(RM) *.d lib*/*.d tests/*.d
-	$(RM) *.gcno lib*/*.gcno tests/*.gcno
-	$(RM) *.gcda lib*/*.gcda tests/*.gcda
-	$(RM) *.gcov lib*/*.gcov tests/*.gcov
+	find . -name '*.[oad]' -delete
+	$(RM) xpick xedit term tests/libedit
+	$(RM) $(TEST_BINS)
 
 install: all
 	mkdir -p $(PREFIX)/bin
@@ -44,8 +41,8 @@ uninstall:
 	rm -f $(PREFIX)/bin/xman
 	rm -f $(PREFIX)/bin/edit
 
-test: unittests
-	./unittests
+test: $(TEST_BINS)
+	for t in $(TEST_BINS); do ./$$t; done
 
 xedit: xedit.o libedit.a
 	$(LD) -o $@ $^ $(LDFLAGS)
@@ -59,7 +56,11 @@ term: term.o libedit.a
 libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
-unittests: $(TEST_OBJS) libedit.a
+#unittests: $(TEST_OBJS) libedit.a
+
+tests/libedit: tests/lib/buf.o tests/lib/utf8.o libedit.a
+tests/xedit: tests/xedit.o libedit.a
+tests/xpick: tests/xpick.o libedit.a
 
 -include *.d lib/*.d tests/*.d
 

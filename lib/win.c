@@ -3,6 +3,14 @@
 #include <edit.h>
 #include <x11.h>
 #include <win.h>
+#include <ctype.h>
+
+typedef struct {
+    uint64_t time;
+    uint8_t count;
+    bool pressed;
+    int region;
+} ButtonState;
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);

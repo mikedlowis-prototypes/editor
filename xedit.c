@@ -9,6 +9,14 @@
 #define exit mockexit
 #endif
 
+typedef struct {
+    char* tag;
+    union {
+        void (*noarg)(void);
+        void (*arg)(char* arg);
+    } action;
+} Tag;
+
 /* The shell: Filled in with $SHELL. Used to execute commands */
 static char* ShellCmd[] = { NULL, "-c", NULL, NULL };
 static char* SedCmd[] = { "sed", "-e", NULL, NULL };
