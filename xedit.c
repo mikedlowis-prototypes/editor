@@ -212,18 +212,19 @@ int main(int argc, char** argv) {
 
 static void mouse_handler(MouseAct act, MouseBtn btn, int x, int y) {
     enum RegionId id = getregion(x, y);
-    if (id != TAGS && id != EDIT) return;
-    if (Focused != id) Focused = id;
     size_t row = (y-Regions[id].y) / x11_font_height(Font);
     size_t col = (x-Regions[id].x) / x11_font_width(Font);
     if (act == MOUSE_ACT_MOVE) {
         if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
+            enum RegionId region = MouseBtns[MOUSE_BTN_LEFT].region;
             if (MouseBtns[MOUSE_BTN_LEFT].count == 1) {
-                view_setcursor(getview(id), row, col);
+                view_setcursor(getview(region), row, col);
                 MouseBtns[MOUSE_BTN_LEFT].count = 0;
             } else {
-                view_selext(getview(id), row, col);
+                view_selext(getview(region), row, col);
             }
+        } else if (id == TAGS || id == EDIT) {
+            Focused = id;
         }
     } else {
         MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);
