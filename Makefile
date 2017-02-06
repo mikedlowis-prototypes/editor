@@ -64,5 +64,5 @@ tests/xedit: tests/xedit.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
 tests/term: tests/term.o libedit.a
 
--include *.d lib/*.d tests/*.d tests/lib/*.d
+#-include *.d lib/*.d tests/*.d tests/lib/*.d
 

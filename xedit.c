@@ -132,7 +132,11 @@ static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
     if (!win_buf(EDIT)->modified || (now-before) <= 250) {
+        #ifndef TEST
         x11_deinit();
+        #else
+        exit(0);
+        #endif
     } else {
         view_append(win_view(TAGS),
             "File is modified. Repeat action twice in < 250ms to quit.");
@@ -486,11 +490,4 @@ int main(int argc, char** argv) {
     return 0;
 }
 #endif
-
-
-
-
-
-
-
 

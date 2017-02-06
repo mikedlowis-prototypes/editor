@@ -6,7 +6,6 @@ PREFIX = $(HOME)
 # Compiler Setup
 CC = cc
 CFLAGS = --std=c99 -MMD -g -O0 $(INCS)
-
 #CFLAGS += -Wall -Wextra -Werror
 
 # Linker Setup

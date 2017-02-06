@@ -235,9 +235,9 @@ static uint32_t getkey(XEvent* e) {
     Status status;
     /* Read the key string */
     if (X.xic)
-        len = Xutf8LookupString(X.xic, &e->xkey, buf, sizeof(buf), &key, &status);
+        len = Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
     else
-        len = XLookupString(&e->xkey, buf, sizeof(buf), &key, 0);
+        len = XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
     /* if it's ascii, just return it */
     if (key >= 0x20 && key <= 0x7F)
         return (uint32_t)key;
@@ -286,36 +286,39 @@ static void handle_mouse(XEvent* e) {
     Config->handle_mouse(action, button, x, y);
 }
 
+void x11_handle_event(XEvent* e) {
+    Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
+    switch (e->type) {
+        case FocusIn:          if (X.xic) XSetICFocus(X.xic);   break;
+        case FocusOut:         if (X.xic) XUnsetICFocus(X.xic); break;
+        case KeyPress:         handle_key(e);                   break;
+        case ButtonRelease:    handle_mouse(e);                 break;
+        case ButtonPress:      handle_mouse(e);                 break;
+        case MotionNotify:     handle_mouse(e);                 break;
+        case SelectionClear:   selclear(e);                     break;
+        case SelectionNotify:  selnotify(e);                    break;
+        case SelectionRequest: selrequest(e);                   break;
+        case ClientMessage:
+            if (e->xclient.data.l[0] == wmDeleteMessage)
+                Config->shutdown();
+            break;
+        case ConfigureNotify: // Resize the window
+            if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
+                X.width  = e->xconfigure.width;
+                X.height = e->xconfigure.height;
+                X.pixmap = XCreatePixmap(X.display, X.window, X.width, X.height, X.depth);
+                X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
+            }
+            break;
+    }
+}
+
 void x11_handle_events(void) {
     XEvent e;
-    Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
     while (XPending(X.display)) {
         XNextEvent(X.display, &e);
-        if (!XFilterEvent(&e, None)) {
-            switch (e.type) {
-                case FocusIn:          if (X.xic) XSetICFocus(X.xic);   break;
-                case FocusOut:         if (X.xic) XUnsetICFocus(X.xic); break;
-                case KeyPress:         handle_key(&e);                  break;
-                case ButtonRelease:    handle_mouse(&e);                break;
-                case ButtonPress:      handle_mouse(&e);                break;
-                case MotionNotify:     handle_mouse(&e);                break;
-                case SelectionClear:   selclear(&e);                    break;
-                case SelectionNotify:  selnotify(&e);                   break;
-                case SelectionRequest: selrequest(&e);                  break;
-                case ClientMessage:
-                    if (e.xclient.data.l[0] == wmDeleteMessage)
-                        Config->shutdown();
-                    break;
-                case ConfigureNotify: // Resize the window
-                    if (e.xconfigure.width != X.width || e.xconfigure.height != X.height) {
-                        X.width  = e.xconfigure.width;
-                        X.height = e.xconfigure.height;
-                        X.pixmap = XCreatePixmap(X.display, X.window, X.width, X.height, X.depth);
-                        X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
-                    }
-                    break;
-            }
-        }
+        if (!XFilterEvent(&e, None))
+            x11_handle_event(&e);
     }
 }
 
