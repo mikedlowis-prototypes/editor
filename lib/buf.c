@@ -172,8 +172,11 @@ static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
 
 void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
-    if (buf->bufstart) free(buf->bufstart);
-    buf_logclear(buf);
+    if (buf->bufstart) {
+        free(buf->bufstart);
+        buf->bufstart = NULL;
+        buf_logclear(buf);
+    }
 
     /* reset the state to defaults */
     buf->modified    = false;
@@ -188,6 +191,7 @@ void buf_init(Buf* buf) {
     buf->gapend      = buf->bufend;
     buf->undo        = NULL;
     buf->redo        = NULL;
+    assert(buf->bufstart);
 }
 
 unsigned buf_load(Buf* buf, char* path) {

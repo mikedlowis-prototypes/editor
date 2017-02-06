@@ -2,6 +2,7 @@
 
 Up Next:
 
+* reverse selections passed to commands do not have results highlighted properly
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region

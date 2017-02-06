@@ -72,7 +72,7 @@ static void handle_signal(int sig) {
     fprintf(stderr,"%s:%d:0:%s:CRASH (signal: %d - %s)\n", Curr_File, Curr_Line, Curr_Test, sig, sig_name);
     Failed++;
     (void)atf_print_results();
-    exit(1);
+    _Exit(1);
 }
 #endif
 

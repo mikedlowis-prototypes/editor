@@ -42,8 +42,9 @@ FMap mmap_readonly(char* path) {
     struct stat sb;
     if (((fd = open(path, O_RDONLY, 0)) < 0) ||
         (fstat(fd, &sb) < 0) ||
-        (sb.st_size == 0))
+        (sb.st_size == 0)) {
         return file;
+    }
     file.buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     file.len = sb.st_size;
     if (file.buf == MAP_FAILED)
@@ -72,6 +73,7 @@ void mmap_close(FMap file) {
 
 char* stringdup(const char* s) {
     char* ns = (char*)malloc(strlen(s) + 1);
+    assert(ns);
     strcpy(ns,s);
     return ns;
 }
