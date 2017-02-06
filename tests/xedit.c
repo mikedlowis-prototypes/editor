@@ -22,7 +22,7 @@ Display* XDisplay;
 #include "../xedit.c"
 
 static void initialize(void) {
-//    ShellCmd[0] = "/bin/sh";
+    ShellCmd[0] = "/bin/sh";
     win_init("edit");
     XDisplay = XOpenDisplay(NULL);
     win_setkeys(Bindings);
@@ -31,10 +31,8 @@ static void initialize(void) {
 
 /* Helper Functions
  *****************************************************************************/
-#define EXPECT_EXIT        \
-    ExitCode = -1;         \
-    ExitExpected = true;   \
-    if (0 == setjmp(ExitPad))
+#define EXPECT_EXIT \
+    if ((ExitExpected = true, 0 == setjmp(ExitPad)))
 
 
 void setup_view(WinRegion id, char* text, int crlf, unsigned cursor) {
@@ -438,17 +436,18 @@ TEST_SUITE(UnitTests) {
     }
 
     TEST(esc should select previously inserted text) {
-        IGNORE("escape must not be mappeing to XK_Escape, dunno why.");
         setup_view(EDIT, "", CRLF, 0);
-        view_putstr(win_view(EDIT), "foo");
+        insert(EDIT, "foo");
+        win_view(EDIT)->selection = (Sel) {0,0,0};
         send_keys(ModNone, XK_Escape);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 3);
     }
     
     TEST(esc should select previously edited text) {
-        IGNORE("escape must not be mappeing to XK_Escape, dunno why.");
-        setup_view(EDIT, "foob", CRLF, 4);
+        setup_view(EDIT, "foo", CRLF, 0);
+        insert(EDIT, "foob");
+        win_view(EDIT)->selection = (Sel) {4,4,4};
         send_keys(ModNone, XK_BackSpace);
         send_keys(ModNone, XK_Escape);
         CHECK(win_sel(EDIT)->beg == 0);
@@ -642,7 +641,6 @@ TEST_SUITE(UnitTests) {
         #endif
     }
 
-#if 0
     TEST(Commands starting with | should take selection as input and replace it with output) {
         setup_view(EDIT, "foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
@@ -655,7 +653,6 @@ TEST_SUITE(UnitTests) {
         CHECK(verify_text(EDIT, "bar"));
         #endif
     }
-#endif
     
     TEST(Commands starting with ! should execute in the background with no input or output) {
         setup_view(EDIT, "foo", CRLF, 0);
@@ -666,7 +663,6 @@ TEST_SUITE(UnitTests) {
         CHECK(verify_text(EDIT, "foo"));        
     }
 
-#if 0
     TEST(Commands starting with > should execute in the background with selection as input) {
         setup_view(EDIT, "foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
@@ -691,7 +687,6 @@ TEST_SUITE(UnitTests) {
         send_keys(ModCtrl, XK_d);
         CHECK(verify_text(EDIT, "foo\r\n"));        
     }
-#endif
 
     /* Tag Handling
      *************************************************************************/
@@ -720,13 +715,13 @@ TEST_SUITE(UnitTests) {
     }
     
     TEST(Quit should discard changes if quit executed twice in less than 250 ms) {
-        IGNORE("Failing on the first quit call");
+        //IGNORE("Failing on the first quit call");
         setup_view(TAGS, "", CRLF, 0);
         setup_view(EDIT, "", CRLF, 0);
         win_buf(EDIT)->modified = true;
         ExitCode = 42;
+        usleep(251 * 1000);
         EXPECT_EXIT {
-            usleep(252 * 1000);
             exec("Quit");
             CHECK(ExitCode == 42);
             CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
