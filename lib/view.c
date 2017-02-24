@@ -482,6 +482,7 @@ void view_redo(View* view) {
 }
 
 void view_putstr(View* view, char* str) {
+    selswap(&(view->selection));
     unsigned beg = view->selection.beg;
     buf_loglock(&(view->buffer));
     while (*str) {
