@@ -2,6 +2,7 @@
 
 Up Next:
 
+* implement 9term-like scrollbar
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
@@ -12,7 +13,6 @@ Up Next:
 
 Tomorrow-ish:
 
-* Selection bug when selecting text with tabs
 * off by one error on scrolling up with wrapped lines
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
