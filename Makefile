@@ -45,24 +45,17 @@ uninstall:
 test: $(TEST_BINS)
 	for t in $(TEST_BINS); do ./$$t || exit 1; done
 
-xedit: xedit.o libedit.a
-	$(LD) -o $@ $^ $(LDFLAGS)
-
-xpick: xpick.o libedit.a
-	$(LD) -o $@ $^ $(LDFLAGS)
-	
-term: term.o libedit.a
-	$(LD) -o $@ $^ $(LDFLAGS)
-
 libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
-#unittests: $(TEST_OBJS) libedit.a
-
+xedit: xedit.o libedit.a
+xpick: xpick.o libedit.a	
+term: term.o libedit.a
 tests/libedit: tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/xedit: tests/xedit.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
 tests/term: tests/term.o libedit.a
 
-#-include *.d lib/*.d tests/*.d tests/lib/*.d
+# load generate dependencies
+-include *.d lib/*.d tests/*.d tests/lib/*.d
 

@@ -8,7 +8,7 @@
 void x11_handle_event(XEvent* e);
 
 enum {
-    LF = 0, 
+    LF = 0,
     CRLF = 1
 };
 
@@ -18,7 +18,7 @@ int ExitCode = 0;
 jmp_buf ExitPad;
 Display* XDisplay;
 
-// Inculd the source file so we can access everything 
+// Include the source file so we can access everything
 #include "../xedit.c"
 
 static void initialize(void) {
@@ -51,8 +51,8 @@ void insert(WinRegion id, char* text) {
 void send_keys(uint mods, uint key) {
     XEvent e;
     e.xkey.display = XDisplay,
-    e.xkey.type    = KeyPress, 
-    e.xkey.state   = mods, 
+    e.xkey.type    = KeyPress,
+    e.xkey.state   = mods,
     e.xkey.keycode = XKeysymToKeycode(XDisplay, key),
     x11_handle_event(&e);
 }
@@ -77,7 +77,7 @@ TEST_SUITE(UnitTests) {
      *************************************************************************/
     TEST(input not matching a shortcut should be inserted as text) {
         setup_view(EDIT, "", CRLF, 0);
-        send_keys(ModNone, XK_e); 
+        send_keys(ModNone, XK_e);
         verify_text(EDIT, "e");
         CHECK(win_sel(EDIT)->beg == 1);
         CHECK(win_sel(EDIT)->end == 1);
@@ -91,7 +91,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 1);
         CHECK(RUNE_CRLF == buf_get(win_buf(EDIT), 0));
     }
-    
+
     TEST(input \n chould result in \n if not in crlf mode) {
         setup_view(EDIT, "", CRLF, 0);
         win_buf(EDIT)->crlf = 0;
@@ -116,154 +116,154 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(left should do nothing at beginning of buffer) {
         setup_view(EDIT, "AB", CRLF, 0);
         send_keys(ModNone, XK_Left);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+left should do nothing at beginning of buffer) {
         setup_view(EDIT, "AB", CRLF, 0);
         send_keys(ModCtrl, XK_Left);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+left should move left by one word) {
         setup_view(EDIT, "AB CD", CRLF, 3);
         send_keys(ModCtrl, XK_Left);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(left should move left by one rune) {
         setup_view(EDIT, "AB", CRLF, 1);
         send_keys(ModNone, XK_Left);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(right should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModNone, XK_Right);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(right should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_Right);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+right should do nothing at end of buffer) {
         setup_view(EDIT, "AB", CRLF, 2);
         send_keys(ModNone, XK_Right);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(ctrl+right should do nothing at end of buffer) {
         setup_view(EDIT, "AB", CRLF, 2);
         send_keys(ModCtrl, XK_Right);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(ctrl+right should move right by one word) {
         setup_view(EDIT, "AB CD", CRLF, 0);
         send_keys(ModCtrl, XK_Right);
         CHECK(win_sel(EDIT)->beg == 3);
         CHECK(win_sel(EDIT)->end == 3);
     }
-    
+
     TEST(right should move right by one rune) {
         setup_view(EDIT, "AB", CRLF, 1);
         send_keys(ModNone, XK_Right);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(up should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModNone, XK_Up);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(up should move cursor up one line) {
         setup_view(EDIT, "AB\nCD", CRLF, 4);
         send_keys(ModNone, XK_Up);
         CHECK(win_sel(EDIT)->beg == 1);
         CHECK(win_sel(EDIT)->end == 1);
     }
-    
+
     TEST(up should do nothing for first line) {
         setup_view(EDIT, "AB\nCD", CRLF, 1);
         send_keys(ModNone, XK_Up);
         CHECK(win_sel(EDIT)->beg == 1);
         CHECK(win_sel(EDIT)->end == 1);
     }
-    
+
     TEST(down should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModNone, XK_Down);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
-    }    
-    
+    }
+
     TEST(down should move down one line) {
         setup_view(EDIT, "AB\nCD", CRLF, 1);
         send_keys(ModNone, XK_Down);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(down should do nothing on last line) {
         setup_view(EDIT, "AB\nCD", CRLF, 4);
         send_keys(ModNone, XK_Down);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(home should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModNone, XK_Home);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+home should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_Home);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+home should move to beginning of buffer) {
         setup_view(EDIT, "ABCD", CRLF, 4);
         send_keys(ModCtrl, XK_Home);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(home should move to beginning of indented content) {
         setup_view(EDIT, "    ABCD", CRLF, 7);
         send_keys(ModNone, XK_Home);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(home should move to beginning of line if at beginning of indented content) {
         setup_view(EDIT, "    ABCD", CRLF, 7);
         send_keys(ModNone, XK_Home);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(home should move to beginning of indented content when at beginning of line) {
         setup_view(EDIT, "    ABCD", CRLF, 0);
         send_keys(ModNone, XK_Home);
@@ -277,28 +277,28 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+end should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_End);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+end should move to end of buffer) {
         setup_view(EDIT, "ABCD", CRLF, 0);
         send_keys(ModCtrl, XK_End);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(end should do nothing at end of line) {
         setup_view(EDIT, "AB\nCD", CRLF, 2);
         send_keys(ModNone, XK_End);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(end should move to end of line) {
         setup_view(EDIT, "AB\nCD", CRLF, 0);
         send_keys(ModNone, XK_End);
@@ -314,7 +314,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+u should delete to beginning of line) {
         setup_view(EDIT, "\nABC\n", CRLF, 2);
         send_keys(ModCtrl, XK_u);
@@ -322,7 +322,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 1);
         CHECK(buf_end(win_buf(EDIT)) == 4);
     }
-    
+
     TEST(ctrl+u should delete entire lines contents) {
         setup_view(EDIT, "\nABC\n", CRLF, 3);
         send_keys(ModCtrl, XK_u);
@@ -330,7 +330,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 1);
         CHECK(buf_end(win_buf(EDIT)) == 3);
     }
-    
+
     TEST(ctrl+k should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_k);
@@ -338,7 +338,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 0);
         CHECK(buf_end(win_buf(EDIT)) == 0);
     }
-    
+
     TEST(ctrl+k should delete to end of line) {
         setup_view(EDIT, "\nABC\n", CRLF, 2);
         send_keys(ModCtrl, XK_k);
@@ -346,7 +346,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 2);
         CHECK(buf_end(win_buf(EDIT)) == 3);
     }
-    
+
     TEST(ctrl+k should delete entire lines contents) {
         setup_view(EDIT, "\nABC\n", CRLF, 1);
         send_keys(ModCtrl, XK_k);
@@ -354,7 +354,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 1);
         CHECK(buf_end(win_buf(EDIT)) == 2);
     }
-    
+
     TEST(ctrl+w should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_w);
@@ -362,7 +362,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 0);
         CHECK(buf_end(win_buf(EDIT)) == 0);
     }
-    
+
     TEST(ctrl+w should delete previous word) {
         setup_view(EDIT, "abc def", CRLF, 4);
         send_keys(ModCtrl, XK_w);
@@ -370,14 +370,14 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 0);
         CHECK(buf_end(win_buf(EDIT)) == 3);
     }
-    
+
     TEST(ctrl+h should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+h should delete previous character) {
         setup_view(EDIT, "AB", CRLF, 1);
         send_keys(ModCtrl, XK_h);
@@ -385,49 +385,49 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 0);
         CHECK(buf_end(win_buf(EDIT)) == 1);
     }
-    
+
     TEST(ctrl+a should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_a);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+a should move to beginning of indented content) {
         setup_view(EDIT, "    ABCD", CRLF, 7);
         send_keys(ModCtrl, XK_a);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(ctrl+a should move to beginning of line if at beginning of indented content) {
         setup_view(EDIT, "    ABCD", CRLF, 7);
         send_keys(ModCtrl, XK_a);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(ctrl+a should move to beginning of indented content when at beginning of line) {
         setup_view(EDIT, "    ABCD", CRLF, 0);
         send_keys(ModCtrl, XK_a);
         CHECK(win_sel(EDIT)->beg == 4);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(ctrl+e should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_e);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+e should do nothing at end of line) {
         setup_view(EDIT, "AB\nCD", CRLF, 2);
         send_keys(ModCtrl, XK_e);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(ctrl+e should move to end of line) {
         setup_view(EDIT, "AB\nCD", CRLF, 0);
         send_keys(ModCtrl, XK_e);
@@ -443,7 +443,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 3);
     }
-    
+
     TEST(esc should select previously edited text) {
         setup_view(EDIT, "foo", CRLF, 0);
         insert(EDIT, "foob");
@@ -453,7 +453,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 3);
     }
-    
+
     /* Key Handling - Standard Text Editing Shortcuts
      *************************************************************************/
     TEST(cut and paste should delete selection and transfer it to+from the system clipboard) {
@@ -467,7 +467,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 12);
         CHECK(verify_text(EDIT, "baz\r\nfoo\r\nbar\r\n"));
     }
-    
+
     TEST(copy and paste should copy selection and transfer it to+from the system clipboard) {
         IGNORE("paste callback isn't happening");
         win_buf(EDIT)->crlf = 1;
@@ -489,21 +489,21 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+[ should do nothing at beginning of buffer) {
         setup_view(EDIT, "a", CRLF, 0);
         send_keys(ModCtrl, XK_bracketleft);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 1);
     }
-    
+
     TEST(ctrl+] should do nothing on empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_bracketright);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+] should indent the first line) {
         setup_view(EDIT, "a", CRLF, 0);
         send_keys(ModCtrl, XK_bracketright);
@@ -512,7 +512,7 @@ TEST_SUITE(UnitTests) {
         CHECK(verify_text(EDIT, "    a"));
     }
 
-    /* Key Handling - Special 
+    /* Key Handling - Special
      *************************************************************************/
     TEST(backspace should do nothing on empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
@@ -529,7 +529,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 0);
         CHECK(verify_text(EDIT, "abc"));
     }
-    
+
     TEST(backspace should delete previous character) {
         setup_view(EDIT, "abc", CRLF, 1);
         send_keys(ModNone, XK_BackSpace);
@@ -537,7 +537,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 0);
         CHECK(verify_text(EDIT, "bc"));
     }
-    
+
     TEST(backspace should delete selection) {
         setup_view(EDIT, "abcde", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 1, .end = 4 };
@@ -562,7 +562,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 3);
         CHECK(verify_text(EDIT, "abc"));
     }
-    
+
     TEST(delete should delete next character) {
         setup_view(EDIT, "abc", CRLF, 2);
         send_keys(ModNone, XK_Delete);
@@ -570,7 +570,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 2);
         CHECK(verify_text(EDIT, "ab"));
     }
-    
+
     TEST(delete should delete selection) {
         setup_view(EDIT, "abcde", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 1, .end = 4 };
@@ -587,13 +587,13 @@ TEST_SUITE(UnitTests) {
         send_keys(ModCtrl, XK_t);
         CHECK(win_getregion() == EDIT);
     }
-    
+
     TEST(ctrl+t should switch focus to TAGs view) {
         win_setregion(EDIT);
         send_keys(ModCtrl, XK_t);
         CHECK(win_getregion() == TAGS);
     }
-    
+
     TEST(ctrl+q should quit) {
         setup_view(TAGS, "", CRLF, 0);
         setup_view(EDIT, "", CRLF, 0);
@@ -606,7 +606,7 @@ TEST_SUITE(UnitTests) {
         CHECK(ExitCode == 0);
         CHECK(verify_text(TAGS, ""));
     }
-    
+
     TEST(ctrl+f should find next occurrence of selected text) {
         setup_view(EDIT, "foobarfoo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ 0, 3, 0 };
@@ -614,7 +614,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_view(EDIT)->selection.beg == 6);
         CHECK(win_view(EDIT)->selection.end == 9);
     }
-    
+
     TEST(ctrl+f should wrap around to beginning of buffer) {
         setup_view(EDIT, "foobarbazfoo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ 9, 12, 0 };
@@ -622,10 +622,10 @@ TEST_SUITE(UnitTests) {
         CHECK(win_view(EDIT)->selection.beg == 0);
         CHECK(win_view(EDIT)->selection.end == 3);
     }
-    
+
     /* Mouse Input Handling
      *************************************************************************/
-    
+
     /* Command Execution
      *************************************************************************/
     TEST(Commands starting with : should be executed as sed scripts) {
@@ -653,14 +653,14 @@ TEST_SUITE(UnitTests) {
         CHECK(verify_text(EDIT, "bar"));
         #endif
     }
-    
+
     TEST(Commands starting with ! should execute in the background with no input or output) {
         setup_view(EDIT, "foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 0, .end = 3 };
         setup_view(TAGS, "!ls", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 3 };
         send_keys(ModCtrl, XK_d);
-        CHECK(verify_text(EDIT, "foo"));        
+        CHECK(verify_text(EDIT, "foo"));
     }
 
     TEST(Commands starting with > should execute in the background with selection as input) {
@@ -669,7 +669,7 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, ">cat", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 4 };
         send_keys(ModCtrl, XK_d);
-        CHECK(verify_text(EDIT, "foo"));        
+        CHECK(verify_text(EDIT, "foo"));
     }
 
     TEST(Commands starting with < should replace selection with output) {
@@ -678,14 +678,14 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, "<echo bar", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 9 };
         send_keys(ModCtrl, XK_d);
-        CHECK(verify_text(EDIT, "bar\r\n"));        
+        CHECK(verify_text(EDIT, "bar\r\n"));
     }
 
     TEST(Commands not starting with a sigil should replace themselves with their output) {
         setup_view(EDIT, "echo foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 0, .end = 8 };
         send_keys(ModCtrl, XK_d);
-        CHECK(verify_text(EDIT, "foo\r\n"));        
+        CHECK(verify_text(EDIT, "foo\r\n"));
     }
 
     /* Tag Handling
@@ -713,7 +713,7 @@ TEST_SUITE(UnitTests) {
         CHECK(ExitCode == 42);
         CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
     }
-    
+
     TEST(Quit should discard changes if quit executed twice in less than 250 ms) {
         //IGNORE("Failing on the first quit call");
         setup_view(TAGS, "", CRLF, 0);
@@ -740,7 +740,7 @@ TEST_SUITE(UnitTests) {
         view_init(win_view(EDIT), "docs/crlf.txt");
         CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
     }
-    
+
     TEST(Save should save changes to disk with lf line endings) {
         setup_view(TAGS, "", CRLF, 0);
         view_init(win_view(EDIT), "docs/lf.txt");
@@ -762,7 +762,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 12);
         CHECK(verify_text(EDIT, "baz\r\nfoo\r\nbar\r\n"));
     }
-    
+
     TEST(Copy and Paste tags should copy selection to new location) {
         IGNORE("paste callback isn't happening");
         setup_view(EDIT, "", CRLF, 0);
@@ -784,7 +784,7 @@ TEST_SUITE(UnitTests) {
         exec("Redo");
         CHECK(verify_text(EDIT, "foo"));
     }
-    
+
     TEST(Undo+Redo should undo+redo the previous delete) {
         setup_view(EDIT, "foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ 0, 3, 0 };
@@ -794,7 +794,7 @@ TEST_SUITE(UnitTests) {
         exec("Redo");
         CHECK(verify_text(EDIT, ""));
     }
-    
+
     TEST(Undo+Redo should undo+redo the previous delete with two non-contiguous deletes logged) {
         setup_view(EDIT, "foobarbaz", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ 0, 3, 0 };
@@ -807,7 +807,7 @@ TEST_SUITE(UnitTests) {
         exec("Redo");
         CHECK(verify_text(EDIT, "bar"));
     }
-    
+
     TEST(Undo+Redo should undo+redo the previous delete performed with backspace) {
         setup_view(EDIT, "foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ 3, 3, 0 };
@@ -828,7 +828,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_view(EDIT)->selection.beg == 6);
         CHECK(win_view(EDIT)->selection.end == 9);
     }
-    
+
     TEST(Find should find wrap around to beginning of EDIT buffer) {
         setup_view(EDIT, "foobarbazfoo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ 9, 12, 0 };
@@ -836,7 +836,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_view(EDIT)->selection.beg == 0);
         CHECK(win_view(EDIT)->selection.end == 3);
     }
-    
+
     TEST(Find should find next occurrence of text selected in TAGS view) {
         setup_view(TAGS, "foo", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ 0, 3, 0 };
@@ -845,7 +845,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_view(EDIT)->selection.beg == 3);
         CHECK(win_view(EDIT)->selection.end == 6);
     }
-    
+
     TEST(Find should find next occurrence of text selected after tag) {
         setup_view(EDIT, "barfoo", CRLF, 0);
         exec("Find foo");
@@ -872,7 +872,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_buf(EDIT)->expand_tabs == false);
         CHECK(win_buf(TAGS)->expand_tabs == false);
     }
-    
+
     TEST(Tabs should set indent style to spaces) {
         setup_view(TAGS, "Tabs", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ 0, 4, 0 };
@@ -882,7 +882,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_buf(EDIT)->expand_tabs == true);
         CHECK(win_buf(TAGS)->expand_tabs == true);
     }
-    
+
     TEST(Indent should disable copyindent) {
         setup_view(TAGS, "Indent", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ 0, 6, 0 };
@@ -892,7 +892,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_buf(EDIT)->copy_indent == false);
         CHECK(win_buf(TAGS)->copy_indent == false);
     }
-    
+
     TEST(Indent should enable copyindent) {
         setup_view(TAGS, "Indent", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ 0, 6, 0 };
