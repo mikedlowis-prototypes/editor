@@ -16,7 +16,7 @@ Tomorrow-ish:
 * off by one error on scrolling up with wrapped lines
 * add a distinct state for pointer move versus drag
 * Add a SaveAs tag that takes an argument for the filename to save as
-* Add a GoTo tag for ctags lookup and line number jump (or right click magic?)
+* Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
 * Add a ctrl+space shortcut to autocomplete ctag
 * 100% coverage with unit and unit-integration tests
 

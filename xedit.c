@@ -179,7 +179,7 @@ void mouse_right(WinRegion id, size_t count, size_t row, size_t col) {
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         view_find(win_view(id), SearchDir, row, col);
-        //Regions[id].warp_ptr = true;
+        win_warpptr(id);
     }
 }
 
@@ -294,7 +294,8 @@ static void search(void) {
     char* str = view_getctx(win_view(FOCUSED));
     view_findstr(win_view(EDIT), SearchDir, str);
     free(str);
-    //Regions[EDIT].warp_ptr = true;
+    win_setregion(EDIT);
+    win_warpptr(EDIT);
 }
 
 static void execute(void) {

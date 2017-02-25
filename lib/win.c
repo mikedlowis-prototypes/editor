@@ -82,6 +82,10 @@ void win_setregion(WinRegion id) {
     Focused = id;
 }
 
+void win_warpptr(WinRegion id) {
+    Regions[id].warp_ptr = true;
+}
+
 View* win_view(WinRegion id) {
     if (id == FOCUSED) id = Focused;
     return &(Regions[id].view);
@@ -127,9 +131,17 @@ static void layout(int width, int height) {
     view_resize(tagview, tagrows, tagcols);
     view_update(tagview, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
     
-    /* Place the edit region relative to status */
+    /* Place the scroll region relative to tags */
+    Regions[SCROLL].x      = 0;
+    Regions[SCROLL].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
+    Regions[SCROLL].height = (height - Regions[EDIT].y - 5);
+    Regions[SCROLL].width  = 5 + fwidth;
+    
+    /* Place the edit region relative to tags */
+    Regions[EDIT].x      = 3 + Regions[SCROLL].width;
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[EDIT].height = (height - Regions[EDIT].y - 5);
+    Regions[EDIT].width  = width - Regions[SCROLL].width - 5; 
     view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
     view_update(editview, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
 }
@@ -144,7 +156,7 @@ static void onredraw(int width, int height) {
         View* view = win_view(i);
         x11_draw_rect((i == TAGS ? CLR_BASE02 : CLR_BASE03), 
             0, Regions[i].y - 3, width, Regions[i].height + 8);
-        x11_draw_rect(CLR_BASE01, 0, Regions[i].y - 3, Regions[i].width + 4, 1);
+        x11_draw_rect(CLR_BASE01, 0, Regions[i].y - 3, width, 1);
         for (size_t y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
@@ -152,12 +164,15 @@ static void onredraw(int width, int height) {
     }
     
     /* draw the scroll region */
+    x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y-2, 1, Regions[SCROLL].height);
     
     /* place the cursor on screen */
-    x11_draw_rect(CLR_BASE3, 
-        Regions[Focused].x + (Regions[Focused].csrx * fwidth), 
-        Regions[Focused].y + (Regions[Focused].csry * fheight), 
-        1, fheight);
+    if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
+        x11_draw_rect(CLR_BASE3, 
+            Regions[Focused].x + (Regions[Focused].csrx * fwidth), 
+            Regions[Focused].y + (Regions[Focused].csry * fheight), 
+            1, fheight);
+    }
     
     /* adjust the mouse location */
     if (Regions[Focused].warp_ptr) {
@@ -228,10 +243,12 @@ static void onshutdown(void) {
 }
 
 static void mouse_wheelup(WinRegion id, size_t count, size_t row, size_t col) {
+    if (id == SCROLL) id = EDIT;
     view_scroll(win_view(id), -ScrollLines);
 }
 
 static void mouse_wheeldn(WinRegion id, size_t count, size_t row, size_t col) {
+    if (id == SCROLL) id = EDIT;
     view_scroll(win_view(id), +ScrollLines);
 }
 
