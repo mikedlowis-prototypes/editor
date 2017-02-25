@@ -51,7 +51,7 @@ libedit.a: $(LIBEDIT_OBJS)
 xedit: xedit.o libedit.a
 xpick: xpick.o libedit.a	
 term: term.o libedit.a
-tests/libedit: tests/lib/buf.o tests/lib/utf8.o libedit.a
+tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/xedit: tests/xedit.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
 tests/term: tests/term.o libedit.a
