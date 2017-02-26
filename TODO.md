@@ -3,6 +3,7 @@
 Up Next:
 
 * implement 9term-like scrollbar
+* tab inserts dont coalesce like one would expect
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
