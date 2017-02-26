@@ -167,7 +167,19 @@ static void onredraw(int width, int height) {
     }
     
     /* draw the scroll region */
+    View* view = win_view(EDIT);
+    size_t bend = buf_end(win_buf(EDIT));
+    size_t vbeg = view->rows[0]->off;
+    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    size_t vtot = ((vend - vbeg) * 100) / bend;
+    size_t voff = (vbeg * 100 / bend);
+    size_t thumboff = (Regions[SCROLL].y - 2) + (Regions[SCROLL].height * voff / 100);
+    size_t thumbsz  = Regions[SCROLL].height * vtot / 100;
+    if (thumbsz < 5) thumbsz = 5;
+    
     x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y-2, 1, Regions[SCROLL].height);
+    x11_draw_rect(CLR_BASE02, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, Regions[SCROLL].height);
+    x11_draw_rect(CLR_BASE00, 0, thumboff, Regions[SCROLL].width, thumbsz);
     
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
