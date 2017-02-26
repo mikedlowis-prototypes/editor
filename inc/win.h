@@ -46,9 +46,7 @@ WinRegion win_getregion(void);
 void win_setregion(WinRegion id);
 
 void onupdate(void);
-void mouse_left(WinRegion id, size_t count, size_t row, size_t col);
-void mouse_middle(WinRegion id, size_t count, size_t row, size_t col);
-void mouse_right(WinRegion id, size_t count, size_t row, size_t col);
-
-
+void onmouseleft(WinRegion id, size_t count, size_t row, size_t col);
+void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col);
+void onmouseright(WinRegion id, size_t count, size_t row, size_t col);
 

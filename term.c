@@ -7,25 +7,25 @@
 
 /* Mouse Handling
  *****************************************************************************/
-void mouse_left(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
 
 }
 
-void mouse_middle(WinRegion id, size_t count, size_t row, size_t col) {
+void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
 
 }
 
-void mouse_right(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
 
 }
 
-MouseConfig* MouseHandlers[NREGIONS] = {
-    [EDIT] = &(MouseConfig){
-        .left   = mouse_left,
-        .middle = mouse_middle,
-        .right  = mouse_right
-    }
-};
+//MouseConfig* MouseHandlers[NREGIONS] = {
+//    [EDIT] = &(MouseConfig){
+//        .left   = mouse_left,
+//        .middle = mouse_middle,
+//        .right  = mouse_right
+//    }
+//};
 
 /* Keyboard Handling
  *****************************************************************************/

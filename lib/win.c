@@ -20,6 +20,9 @@ static void onmouse(MouseAct act, MouseBtn btn, int x, int y);
 static void onshutdown(void);
 static void mouse_wheelup(WinRegion id, size_t count, size_t row, size_t col);
 static void mouse_wheeldn(WinRegion id, size_t count, size_t row, size_t col);
+static void mouse_left(WinRegion id, size_t count, size_t row, size_t col);
+static void mouse_middle(WinRegion id, size_t count, size_t row, size_t col);
+static void mouse_right(WinRegion id, size_t count, size_t row, size_t col);
 
 static XFont Font;
 static XConfig Config = {
@@ -250,6 +253,27 @@ static void mouse_wheelup(WinRegion id, size_t count, size_t row, size_t col) {
 static void mouse_wheeldn(WinRegion id, size_t count, size_t row, size_t col) {
     if (id == SCROLL) id = EDIT;
     view_scroll(win_view(id), +ScrollLines);
+}
+
+static void mouse_left(WinRegion id, size_t count, size_t row, size_t col) {
+    if (id == SCROLL)
+        view_scroll(win_view(EDIT), row);
+    else
+        onmouseleft(id,count,row,col);
+}
+
+static void mouse_middle(WinRegion id, size_t count, size_t row, size_t col) {
+    if (id == SCROLL)
+        printf("scroll row: %lu\n", row);
+    else
+        onmousemiddle(id,count,row,col);
+}
+
+static void mouse_right(WinRegion id, size_t count, size_t row, size_t col) {
+    if (id == SCROLL)
+        view_scroll(win_view(EDIT), row - (win_view(EDIT)->nrows-1));
+    else
+        onmouseright(id,count,row,col);
 }
 
 /*****************************************************************************/

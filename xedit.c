@@ -150,7 +150,7 @@ static void save(void) {
 
 /* Mouse Handling
  *****************************************************************************/
-void mouse_left(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
     if (count == 1) {
         if (x11_keymodsset(ModShift))
             view_selext(win_view(id), row, col);
@@ -163,7 +163,7 @@ void mouse_left(WinRegion id, size_t count, size_t row, size_t col) {
     }
 }
 
-void mouse_middle(WinRegion id, size_t count, size_t row, size_t col) {
+void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
     if (win_btnpressed(MOUSE_BTN_LEFT)) {
         cut();
     } else {
@@ -173,7 +173,7 @@ void mouse_middle(WinRegion id, size_t count, size_t row, size_t col) {
     }
 }
 
-void mouse_right(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
     if (win_btnpressed(MOUSE_BTN_LEFT)) {
         paste();
     } else {
