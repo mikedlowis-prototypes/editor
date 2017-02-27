@@ -18,11 +18,8 @@ static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
 static void onmouse(MouseAct act, MouseBtn btn, int x, int y);
 static void onshutdown(void);
-static void mouse_wheelup(WinRegion id, size_t count, size_t row, size_t col);
-static void mouse_wheeldn(WinRegion id, size_t count, size_t row, size_t col);
-static void mouse_left(WinRegion id, size_t count, size_t row, size_t col);
-static void mouse_middle(WinRegion id, size_t count, size_t row, size_t col);
-static void mouse_right(WinRegion id, size_t count, size_t row, size_t col);
+static void onwheelup(WinRegion id, size_t count, size_t row, size_t col);
+static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col);
 
 static XFont Font;
 static XConfig Config = {
@@ -34,11 +31,11 @@ static XConfig Config = {
 };
 
 void (*MouseActs[MOUSE_BTN_COUNT])(WinRegion id, size_t count, size_t row, size_t col) = {
-    [MOUSE_BTN_LEFT]      = mouse_left,
-    [MOUSE_BTN_MIDDLE]    = mouse_middle,
-    [MOUSE_BTN_RIGHT]     = mouse_right,
-    [MOUSE_BTN_WHEELUP]   = mouse_wheelup,
-    [MOUSE_BTN_WHEELDOWN] = mouse_wheeldn,
+    [MOUSE_BTN_LEFT]      = onmouseleft,
+    [MOUSE_BTN_MIDDLE]    = onmousemiddle,
+    [MOUSE_BTN_RIGHT]     = onmouseright,
+    [MOUSE_BTN_WHEELUP]   = onwheelup,
+    [MOUSE_BTN_WHEELDOWN] = onwheeldn,
 };
 
 static WinRegion Focused = EDIT;
@@ -169,6 +166,7 @@ static void onredraw(int width, int height) {
     /* draw the scroll region */
     View* view = win_view(EDIT);
     size_t bend = buf_end(win_buf(EDIT));
+    if (bend == 0) bend = 1;
     size_t vbeg = view->rows[0]->off;
     size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     size_t vtot = ((vend - vbeg) * 100) / bend;
@@ -181,7 +179,7 @@ static void onredraw(int width, int height) {
     x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
     x11_draw_rect(CLR_BASE00, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
     x11_draw_rect(CLR_BASE03, 0, thumboff, Regions[SCROLL].width, thumbsz);
-    
+
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
         x11_draw_rect(CLR_BASE3, 
@@ -218,6 +216,41 @@ static void oninput(int mods, Rune key) {
         view_insert(win_view(FOCUSED), true, key);
 }
 
+static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
+    WinRegion id = getregion(x, y);
+    size_t row = (y-Regions[id].y) / x11_font_height(Font);
+    size_t col = (x-Regions[id].x) / x11_font_width(Font);
+    if (id == SCROLL) {
+        id = EDIT;
+        switch (btn) {
+            case MOUSE_BTN_LEFT:
+                view_scroll(win_view(EDIT), -row);
+                break;
+            case MOUSE_BTN_MIDDLE: {
+                    size_t percent = ((y - (Regions[SCROLL].y-2)) * 100) / Regions[SCROLL].height;
+                    size_t off = buf_bol(win_buf(EDIT), buf_end(win_buf(EDIT)) * percent / 100);
+                    size_t csrx, csry;
+                    win_view(EDIT)->rows[0]->off = off;
+                    view_update(win_view(EDIT), &csrx, &csry);
+                }
+                break;
+            case MOUSE_BTN_RIGHT:
+                view_scroll(win_view(EDIT), +row); 
+                break;
+            case MOUSE_BTN_WHEELUP:
+                view_scroll(win_view(id), -ScrollLines);
+                break;
+            case MOUSE_BTN_WHEELDOWN:
+                view_scroll(win_view(id), +ScrollLines);
+                break;
+            default:
+                break;
+        }
+    } else if (MouseActs[btn]) {
+        MouseActs[btn](MouseBtns[btn].region, MouseBtns[btn].count, row, col);
+    }
+}
+
 static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
     WinRegion id = getregion(x, y);
     size_t row = (y-Regions[id].y) / x11_font_height(Font);
@@ -247,9 +280,7 @@ static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
             else
                 MouseBtns[btn].count = 1;
         } else if (MouseBtns[btn].count > 0) {
-            /* execute the action on button release */
-            if (MouseActs[btn])
-                MouseActs[btn](MouseBtns[btn].region, MouseBtns[btn].count, row, col);
+            onclick(act, btn, x, y);
         }
     }
 }
@@ -258,35 +289,12 @@ static void onshutdown(void) {
     x11_deinit();
 }
 
-static void mouse_wheelup(WinRegion id, size_t count, size_t row, size_t col) {
-    if (id == SCROLL) id = EDIT;
+static void onwheelup(WinRegion id, size_t count, size_t row, size_t col) {
     view_scroll(win_view(id), -ScrollLines);
 }
 
-static void mouse_wheeldn(WinRegion id, size_t count, size_t row, size_t col) {
-    if (id == SCROLL) id = EDIT;
+static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col) {
     view_scroll(win_view(id), +ScrollLines);
-}
-
-static void mouse_left(WinRegion id, size_t count, size_t row, size_t col) {
-    if (id == SCROLL)
-        view_scroll(win_view(EDIT), row);
-    else
-        onmouseleft(id,count,row,col);
-}
-
-static void mouse_middle(WinRegion id, size_t count, size_t row, size_t col) {
-    if (id == SCROLL)
-        printf("scroll row: %lu\n", row);
-    else
-        onmousemiddle(id,count,row,col);
-}
-
-static void mouse_right(WinRegion id, size_t count, size_t row, size_t col) {
-    if (id == SCROLL)
-        view_scroll(win_view(EDIT), row - (win_view(EDIT)->nrows-1));
-    else
-        onmouseright(id,count,row,col);
 }
 
 /*****************************************************************************/
