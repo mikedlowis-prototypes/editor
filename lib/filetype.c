@@ -15,7 +15,6 @@ static const char Utf8Valid[256] = {
 
 void filetype(Buf* buf, FMap file) {
     size_t crs = 0, lfs = 0, tabs = 0;
-
     /* look for bytes that are invalid in utf-8 and count tabs, carriage 
        returns,  and line feeds */
     int type = buf->charset;
@@ -30,7 +29,8 @@ void filetype(Buf* buf, FMap file) {
     }
 
     /* setup filetype attributes in the buffer */
-    buf->crlf = (crs == lfs);
+    if (crs || lfs)
+        buf->crlf = (crs == lfs);
     buf->charset = type;
     buf->expand_tabs = (tabs == 0);
 }

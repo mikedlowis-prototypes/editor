@@ -206,6 +206,7 @@ unsigned buf_load(Buf* buf, char* path) {
     /* load the file and determine the character set */
     FMap file = mmap_readonly(buf->path);
     filetype(buf, file);
+
     if (buf->charset > UTF_8)
         die("Unsupported character set");
 
@@ -220,7 +221,7 @@ unsigned buf_load(Buf* buf, char* path) {
         }
         buf_insert(buf, false, buf_end(buf), r);
     }
-    
+
     /* jump to address if we got one */
     if (addr)
         off = buf_setln(buf, strtoul(addr, NULL, 0));
