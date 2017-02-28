@@ -227,10 +227,9 @@ static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
                 view_scroll(win_view(EDIT), -row);
                 break;
             case MOUSE_BTN_MIDDLE: {
-                    size_t percent = ((y - (Regions[SCROLL].y-2)) * 100) / Regions[SCROLL].height;
-                    size_t off = buf_bol(win_buf(EDIT), buf_end(win_buf(EDIT)) * percent / 100);
-                    size_t csrx, csry;
-                    win_view(EDIT)->rows[0]->off = off;
+                    size_t bend = buf_end(win_buf(EDIT));
+                    size_t csrx, csry, chunksz = (bend > 0 ? bend : 1) / Regions[SCROLL].height;
+                    win_view(EDIT)->rows[0]->off = buf_bol(win_buf(EDIT), (y - Regions[SCROLL].y) * chunksz);
                     view_update(win_view(EDIT), &csrx, &csry);
                 }
                 break;
