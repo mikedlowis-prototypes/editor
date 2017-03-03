@@ -391,6 +391,21 @@ static void new_win(void) {
     cmd_exec("!edit");
 }
 
+static void newline(void) {
+    View* view = win_view(FOCUSED);
+    if (x11_keymodsset(ModShift)) {
+        view_byline(view, UP, false);
+        view_bol(view, false);
+        if (view->selection.end == 0) {
+            view_insert(view, true, '\n');
+            view->selection = (Sel){0,0,0};
+        }
+    } else {
+        view_eol(view, false);
+        view_insert(view, true, '\n');
+    }
+}
+
 /* Main Routine
  *****************************************************************************/
 static Tag Builtins[] = {
@@ -454,6 +469,8 @@ static KeyBinding Bindings[] = {
     { ModCtrl,          'p',        pick_ctag    },
     { ModCtrl,          'g',        goto_ctag    },
     { ModCtrl,          'n',        new_win      },
+    { ModCtrl,          '\n',       newline      },
+    { ModCtrl|ModShift, '\n',       newline      },
     { 0, 0, 0 }
 };
 
