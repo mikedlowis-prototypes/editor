@@ -442,17 +442,31 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
     return pos;
 }
 
+static Rune nextrune(Buf* buf, unsigned off, int move, bool (*testfn)(Rune)) {
+    bool ret = false;
+    unsigned end = buf_end(buf);
+    if (move < 0 && off > 0)
+        ret = testfn(buf_get(buf, off-1));
+    else if (move > 0 && off < end)
+        ret = testfn(buf_get(buf, off+1));
+    return ret;
+}
+
 unsigned buf_byword(Buf* buf, unsigned off, int count) {
     int move = (count < 0 ? -1 : 1);
-    unsigned end = buf_end(buf);
-    if (move < 0) {
-        for (; off > 0 && !risword(buf_get(buf, off-1)); off--);
-        for (; off > 0 && risword(buf_get(buf, off-1)); off--);
+
+    while (nextrune(buf, off, move, risblank))
+        off = buf_byrune(buf, off, move);
+
+    if (nextrune(buf, off, move, risword)) {
+        while (nextrune(buf, off, move, risword))
+            off = buf_byrune(buf, off, move);
+        if (move > 0)
+            off = buf_byrune(buf, off, move);
     } else {
-        for (; off < end && risword(buf_get(buf, off+1)); off++);
-        for (; off < end && !risword(buf_get(buf, off+1)); off++);
-        if (off < buf_end(buf)) off++;
+        off = buf_byrune(buf, off, move);
     }
+    
     return off;
 }
 
@@ -558,22 +572,18 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
         opbeg = log->data.ins.end, opend = log->data.ins.end;
     
     unsigned delsize = 0;
-    //printf("start: %u-%u\n", opbeg, opend);
     for (; log; log = log->next) {
         if (log->insert) {
             unsigned ibeg = log->data.ins.beg,
                      iend = log->data.ins.end - delsize;
-            //printf("ins: %u-%u\n", ibeg, iend);
             if (iend < ibeg || ibeg > opbeg || iend < opbeg) break;
             if (ibeg < opbeg && iend > opend) break;
             opbeg = ibeg, delsize = 0;
         } else {
-            //printf("del: %u-%u\n", log->data.del.off, log->data.del.off+log->data.del.len);
             /* bail if the delete doesnt overlap */
             if(log->data.del.off != opbeg) break;
             delsize = log->data.del.len;
         }
     }
-    //printf("finish: %u-%u\n\n", opbeg, opend);
     *beg = opbeg, *end = opend;
 }

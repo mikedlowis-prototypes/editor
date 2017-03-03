@@ -176,8 +176,8 @@ TEST_SUITE(UnitTests) {
     TEST(ctrl+right should move right by one word) {
         setup_view(EDIT, "AB CD", CRLF, 0);
         send_keys(ModCtrl, XK_Right);
-        CHECK(win_sel(EDIT)->beg == 3);
-        CHECK(win_sel(EDIT)->end == 3);
+        CHECK(win_sel(EDIT)->beg == 2);
+        CHECK(win_sel(EDIT)->end == 2);
     }
 
     TEST(right should move right by one rune) {

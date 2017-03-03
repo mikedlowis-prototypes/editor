@@ -412,19 +412,13 @@ void view_insert(View* view, bool indent, Rune rune) {
 }
 
 void view_delete(View* view, int dir, bool byword) {
-    Sel sel = view->selection;
-    selswap(&sel);
-    size_t num = num_selected(sel);
-    if (num != 0)
-        sel.end = buf_delete(&(view->buffer), sel.beg, sel.end);
-    else if ((dir == LEFT) && (sel.end > 0))
-        sel.end = buf_delete(&(view->buffer), sel.end-1, sel.end);
-    else if ((dir == RIGHT) && (sel.end < buf_end(&(view->buffer))))
-        sel.end = buf_delete(&(view->buffer), sel.end, sel.end+1);
-    sel.beg = sel.end;
-    /* update the selection */
-    view->selection = sel;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    Sel* sel = &(view->selection);
+    if (sel->beg == sel->end)
+        (byword ? view_byword : view_byrune)(view, dir, true);
+    selswap(sel);
+    sel->end = buf_delete(&(view->buffer), sel->beg, sel->end);
+    sel->beg = sel->end;
+    sel->col = buf_getcol(&(view->buffer), sel->end);
     view->sync_needed = true;
 }
 
