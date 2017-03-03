@@ -399,11 +399,11 @@ static void newline(void) {
         if (view->selection.end == 0) {
             view_insert(view, true, '\n');
             view->selection = (Sel){0,0,0};
+            return;
         }
-    } else {
-        view_eol(view, false);
-        view_insert(view, true, '\n');
     }
+    view_eol(view, false);
+    view_insert(view, true, '\n');
 }
 
 /* Main Routine
