@@ -192,20 +192,6 @@ void view_init(View* view, char* file) {
 }
 
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
-#if 0
-    size_t nrows = 0;
-    size_t pos = 0;
-    while (nrows < maxrows && pos < buf_end(&(view->buffer))) {
-        for (size_t x = 0; x < ncols;) {
-            Rune r = buf_get(&(view->buffer), pos++);
-            x += runewidth(x, r);
-            if (buf_iseol(&(view->buffer), pos-1))
-                break;
-        }
-        nrows++;
-    }
-    return (!nrows ? 1 : nrows);
-#else
     size_t nrows = 1, pos = 0, col = 0;
     while (nrows < maxrows && pos < buf_end(&(view->buffer))) {
         Rune r = buf_get(&(view->buffer), pos++);
@@ -214,7 +200,6 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
             col = 0, nrows++;
     }
     return nrows;
-#endif
 }
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
