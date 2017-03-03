@@ -233,6 +233,7 @@ unsigned buf_load(Buf* buf, char* path) {
 }
 
 void buf_save(Buf* buf) {
+    if (0 == buf_end(buf)) return;
     size_t wrlen = 0;
     if (!buf->path) return;
     FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);

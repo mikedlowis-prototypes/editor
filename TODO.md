@@ -2,7 +2,6 @@
 
 Up Next:
 
-* save of an empty file crashes
 * implement 9term-like scrollbar
 * tab inserts dont coalesce like one would expect
 * check for file changes on save
@@ -35,4 +34,3 @@ The Future:
 * Win-like terminal emulator
 * File browser
 * Acme-like window manager
-
