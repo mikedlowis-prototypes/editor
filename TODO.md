@@ -3,30 +3,29 @@
 Up Next:
 
 * implement 9term-like scrollbar
-* tab inserts dont coalesce like one would expect
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
-* Tag line count should account for wrapped lines
 * ctrl+alt+f should find next occurence of previous search term
 * Add keyboard shortcut to highlight the thing under the cursor
+* 100% coverage with unit and unit-integration tests
 
 Tomorrow-ish:
 
-* off by one error on scrolling up with wrapped lines
-* add a distinct state for pointer move versus drag
+* selecting text should set PRIMARY x11 selection
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
 * Add a ctrl+space shortcut to autocomplete ctag
-* 100% coverage with unit and unit-integration tests
+* off by one error on scrolling up with wrapped lines
+* tab inserts dont coalesce like one would expect
 
 The Future:
 
 * Run commands in the background and don't block the main thread.
+* shortcut to repeat previous operation
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * add command env vars to set options (Tabs, Indent, etc..)
 * implement command diffing logic to optimize the undo/redo log
-* shortcut to repeat previous operation
 
 # Auxillary Programs
 
