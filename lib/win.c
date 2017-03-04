@@ -198,6 +198,8 @@ static void onredraw(int width, int height) {
 }
 
 static void oninput(int mods, Rune key) {
+    /* mask of modifiers we don't care about */
+    mods = mods & (ModCtrl|ModAlt|ModShift);
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
     if (key == '\n' && win_view(FOCUSED)->buffer.crlf) key = RUNE_CRLF;

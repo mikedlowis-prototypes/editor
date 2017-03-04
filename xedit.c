@@ -19,8 +19,9 @@ static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
 static char* PickTagCmd[] = { "xtagpick", "tags", NULL, NULL };
 static char* OpenCmd[] = { "xedit", NULL, NULL };
-static int SearchDir = DOWN;
 static Tag Builtins[];
+static int SearchDir = DOWN;
+static char* SearchTerm = NULL;
 
 /* Tag/Cmd Execution
  *****************************************************************************/
@@ -178,12 +179,15 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
         paste();
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+        free(SearchTerm);
         view_find(win_view(id), SearchDir, row, col);
+        SearchTerm = view_getstr(win_view(id), NULL);
         win_warpptr(id);
     }
 }
 
-/* Keyboard Handling */
+/* Keyboard Handling
+ *****************************************************************************/
 static void del_to_bol(void) {
     view_bol(win_view(FOCUSED), true);
     if (view_selsize(win_view(FOCUSED)) > 0) 
@@ -290,10 +294,15 @@ static void tag_redo(void) {
 }
 
 static void search(void) {
+    char* str;
     SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
-    char* str = view_getctx(win_view(FOCUSED));
+    if (x11_keymodsset(ModAlt) && SearchTerm)
+        str = stringdup(SearchTerm);
+    else
+        str = view_getctx(win_view(FOCUSED));
     view_findstr(win_view(EDIT), SearchDir, str);
-    free(str);
+    free(SearchTerm);
+    SearchTerm = str;
     win_setregion(EDIT);
     win_warpptr(EDIT);
 }
@@ -459,18 +468,20 @@ static KeyBinding Bindings[] = {
     { ModAny,  KEY_BACKSPACE, backspace },
 
     /* Implementation Specific */
-    { ModNone,          KEY_ESCAPE, select_prev  },
-    { ModCtrl,          't',        change_focus },
-    { ModCtrl,          'q',        quit         },
-    { ModCtrl,          'f',        search       },
-    { ModCtrl|ModShift, 'f',        search       },
-    { ModCtrl,          'd',        execute      },
-    { ModCtrl,          'o',        open_file    },
-    { ModCtrl,          'p',        pick_ctag    },
-    { ModCtrl,          'g',        goto_ctag    },
-    { ModCtrl,          'n',        new_win      },
-    { ModCtrl,          '\n',       newline      },
-    { ModCtrl|ModShift, '\n',       newline      },
+    { ModNone,                 KEY_ESCAPE, select_prev  },
+    { ModCtrl,                 't',        change_focus },
+    { ModCtrl,                 'q',        quit         },
+    { ModCtrl,                 'f',        search       },
+    { ModCtrl|ModShift,        'f',        search       },
+    { ModCtrl|ModAlt,          'f',        search       },
+    { ModCtrl|ModAlt|ModShift, 'f',        search       },
+    { ModCtrl,                 'd',        execute      },
+    { ModCtrl,                 'o',        open_file    },
+    { ModCtrl,                 'p',        pick_ctag    },
+    { ModCtrl,                 'g',        goto_ctag    },
+    { ModCtrl,                 'n',        new_win      },
+    { ModCtrl,                 '\n',       newline      },
+    { ModCtrl|ModShift,        '\n',       newline      },
     { 0, 0, 0 }
 };
 

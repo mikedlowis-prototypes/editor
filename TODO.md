@@ -2,11 +2,10 @@
 
 Up Next:
 
-* implement 9term-like scrollbar
+* Make Fn keys execute nth command in the tags buffer
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
-* ctrl+alt+f should find next occurence of previous search term
 * Add keyboard shortcut to highlight the thing under the cursor
 * 100% coverage with unit and unit-integration tests
 

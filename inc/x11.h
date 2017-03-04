@@ -118,7 +118,7 @@ enum {
     ModNumLock    = (1 << 4),
     ModScrollLock = (1 << 5),
     ModWindows    = (1 << 6),
-    ModAny        = (ModShift|ModCtrl|ModAlt)
+    ModAny        = -1
 };
 
 /* Selection identifiers */
