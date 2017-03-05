@@ -1,28 +1,50 @@
 #!/bin/sh
-TAGFILE="$1"
-TAG="$2"
+ACTION="$1"
+TAGFILE="$2"
+TAG="$3"
 
 usage(){
-    echo "Usage: $0 TAGFILE [TAG]"
+    echo "Usage: $0 ACTION TAGFILE [TAG]"
+    echo ""
+    echo "Actions:"
+    echo "    fetch - Print the filename and line number of the selcted tag"
+    echo "    print - Print the selected tag"
     exit 1
 }
 
-if [ "" == "$TAGFILE" ]; then
+if [ "" == "$TAGFILE" ] || [ "" == "$ACTION" ]; then
     usage
 fi
 
-if [ "" == "$TAG" ]; then
-    TAG=$(cat tags | grep -v '^!' | cut -f1 | uniq | xpick)
-    [ "" == "$TAG" ] && exit
-fi
-
-awk -v TAG="$TAG" '
-BEGIN { FS = "[\t]+" }
-($1 == TAG) {
-    matchstr = $3
-    sub(/^\//, "\"", matchstr)
-    sub(/\$?\/;"$/, "\"", matchstr)
-    gsub(/\*/, "\\*", matchstr)
-    print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
+printtags(){
+    cat "$TAGFILE" | grep -v '^!' | cut -f1 | uniq
 }
-' "$TAGFILE" | /bin/sh | xpick
+
+print(){
+    printtags | xpick "$TAG"
+}
+
+fetch(){
+    if [ "" == "$TAG" ]; then
+        TAG=$(printtags | xpick)
+        [ "" == "$TAG" ] && exit
+    fi
+    awk -v TAG="$TAG" '
+    BEGIN { FS = "[\t]+" }
+    ($1 == TAG) {
+        matchstr = $3
+        sub(/^\//, "\"", matchstr)
+        sub(/\$?\/;"$/, "\"", matchstr)
+        gsub(/\*/, "\\*", matchstr)
+        print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
+    }
+    ' "$TAGFILE" | /bin/sh | xpick
+}
+
+case "$ACTION" in
+    "print") print ;;
+    "fetch") fetch ;;
+    *) usage ;;
+esac
+
+

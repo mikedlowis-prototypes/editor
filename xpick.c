@@ -197,9 +197,14 @@ static void keyboard_input(int mods, uint32_t key) {
 #ifndef TEST
 int main(int argc, char** argv) {
     load_choices();
+    buf_init(&Query);
+    if (argc >= 2) {
+        char* str = argv[1];
+        while (*str)
+            buf_insert(&Query, false, Pos++, *(str++));
+        score();
+    }
     if (vec_size(&Choices) > 1) {
-        /* initialize the filter edit buffer */
-        buf_init(&Query);
         /* initialize the display engine */
         x11_init(&Config);
         x11_dialog("pick", Width, Height);

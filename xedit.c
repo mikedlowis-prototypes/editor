@@ -17,7 +17,7 @@ typedef struct {
 static char* ShellCmd[] = { NULL, "-c", NULL, NULL };
 static char* SedCmd[] = { "sed", "-e", NULL, NULL };
 static char* PickFileCmd[] = { "xfilepick", ".", NULL };
-static char* PickTagCmd[] = { "xtagpick", "tags", NULL, NULL };
+static char* PickTagCmd[] = { "xtagpick", NULL, "tags", NULL, NULL };
 static char* OpenCmd[] = { "xedit", NULL, NULL };
 static Tag Builtins[];
 static int SearchDir = DOWN;
@@ -333,7 +333,8 @@ static void open_file(void) {
 }
 
 static void pick_symbol(char* symbol) {
-    PickTagCmd[2] = symbol;
+    PickTagCmd[1] = "fetch";
+    PickTagCmd[3] = symbol;
     char* pick = cmdread(PickTagCmd, NULL);
     if (pick) {
         Buf* buf = win_buf(EDIT);
@@ -353,6 +354,17 @@ static void pick_symbol(char* symbol) {
 
 static void pick_ctag(void) {
     pick_symbol(NULL);
+}
+
+static void complete(void) {
+    View* view = win_view(FOCUSED);
+    view_selword(view, SIZE_MAX, SIZE_MAX);
+    PickTagCmd[1] = "print";
+    PickTagCmd[3] = view_getstr(view, NULL);
+    char* pick = cmdread(PickTagCmd, NULL);
+    if (pick)
+        view_putstr(view, chomp(pick));
+    free(PickTagCmd[3]);
 }
 
 static void goto_ctag(void) {
@@ -482,6 +494,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl,                 'n',        new_win      },
     { ModCtrl,                 '\n',       newline      },
     { ModCtrl|ModShift,        '\n',       newline      },
+    { ModCtrl,                 ' ',        complete     },
     { 0, 0, 0 }
 };
 

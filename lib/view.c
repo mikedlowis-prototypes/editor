@@ -316,7 +316,8 @@ static void selcontext(View* view, Sel* sel) {
 
 void view_selword(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
-    view_setcursor(view, row, col);
+    if (row != SIZE_MAX && col != SIZE_MAX)
+        view_setcursor(view, row, col);
     Sel sel = view->selection;
     buf_getword(&(view->buffer), risbigword, &(sel));
     sel.end++;
