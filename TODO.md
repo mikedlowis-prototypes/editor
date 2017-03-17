@@ -2,20 +2,29 @@
 
 Up Next:
 
+* picker should only draw visible lines
+* files should always end in newlines
+* ctrl+d on last line segfaults/asserts
+
+* Tweak the scrollbar for use with the picker
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
 * 100% coverage with unit and unit-integration tests
-
-Tomorrow-ish:
-
 * Make Fn keys execute nth command in the tags buffer
 * selecting text should set PRIMARY x11 selection
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
 * Add keyboard shortcut to highlight the thing under the cursor
-* off by one error on scrolling up with wrapped lines
+* right click to fetch file or line
+
+Straight-up Bugs:
+
+* ctrl+space selects too large of a word in some cases (function names followed by paren)
 * tab inserts dont coalesce like one would expect
+* off by one error on scrolling up with wrapped lines
+* Ctrl+u with a selection clears to bol *before* selected text
+* clipboard does not persist after exit
 
 The Future:
 
