@@ -298,17 +298,17 @@ static void selcontext(View* view, Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
     Rune r = buf_get(buf, sel->end);
-    if (sel->end == bol || r == '\n' || r == RUNE_CRLF) {
-        sel->beg = bol;
-        sel->end = buf_eol(buf, sel->end);
-    } else if (risword(r)) {
-        buf_getword(buf, risword, sel);
-    } else if (r == '(' || r == ')') {
+    if (r == '(' || r == ')') {
         buf_getblock(buf, '(', ')', sel);
     } else if (r == '[' || r == ']') {
         buf_getblock(buf, '[', ']', sel);
     } else if (r == '{' || r == '}') {
         buf_getblock(buf, '{', '}', sel);
+    } else if (sel->end == bol || r == '\n' || r == RUNE_CRLF) {
+        sel->beg = bol;
+        sel->end = buf_eol(buf, sel->end);
+    } else if (risword(r)) {
+        buf_getword(buf, risword, sel);
     } else {
         buf_getword(buf, risbigword, sel);
     }
