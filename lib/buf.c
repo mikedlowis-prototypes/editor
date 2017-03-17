@@ -234,6 +234,12 @@ unsigned buf_load(Buf* buf, char* path) {
 
 void buf_save(Buf* buf) {
     if (0 == buf_end(buf)) return;
+    
+    /* text files should  always end in a new line. If we detected a 
+       binary file or at least a non-utf8 file, skip this part. */
+    if (!buf_iseol(buf, buf_end(buf)-1) && (buf->charset != BINARY))
+        buf_insert(buf, false, buf_end(buf), '\n');
+    
     size_t wrlen = 0;
     if (!buf->path) return;
     FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);

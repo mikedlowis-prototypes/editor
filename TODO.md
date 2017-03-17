@@ -3,7 +3,6 @@
 Up Next:
 
 * picker should only draw visible lines
-* files should always end in newlines
 * ctrl+d on last line segfaults/asserts
 
 * Tweak the scrollbar for use with the picker
