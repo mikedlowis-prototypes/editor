@@ -303,8 +303,10 @@ static void search(void) {
     view_findstr(win_view(EDIT), SearchDir, str);
     free(SearchTerm);
     SearchTerm = str;
-    win_setregion(EDIT);
-    win_warpptr(EDIT);
+    if (view_selsize(win_view(EDIT))) {
+        win_setregion(EDIT);
+        win_warpptr(EDIT);
+    }
 }
 
 static void execute(void) {
