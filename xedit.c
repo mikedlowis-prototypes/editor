@@ -500,6 +500,12 @@ static KeyBinding Bindings[] = {
     { 0, 0, 0 }
 };
 
+void onscroll(double percent) {
+    size_t bend = buf_end(win_buf(EDIT));
+    size_t off  = (size_t)((double)bend * percent);
+    view_jumpto(win_view(EDIT), (off >= bend ? bend : off));    
+}
+
 void onupdate(void) {
     static char status_bytes[256];
     memset(status_bytes, 0, sizeof(status_bytes));
@@ -516,6 +522,17 @@ void onupdate(void) {
     size_t remlen = sizeof(status_bytes) - strlen(status_bytes) - 1;
     strncat(status, path, remlen);
     win_settext(STATUS, status_bytes);
+    
+    /* calculate and update scroll region */
+    View* view = win_view(EDIT);
+    size_t bend = buf_end(win_buf(EDIT));
+    if (bend == 0) bend = 1;
+    if (!view->rows) return;
+    size_t vbeg = view->rows[0]->off;
+    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    double scroll_vis = (double)(vend - vbeg) / (double)bend;
+    double scroll_off = ((double)vbeg / (double)bend);
+    win_setscroll(scroll_off, scroll_vis);
 }
 
 #ifndef TEST

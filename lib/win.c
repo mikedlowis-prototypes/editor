@@ -21,6 +21,8 @@ static void onshutdown(void);
 static void onwheelup(WinRegion id, size_t count, size_t row, size_t col);
 static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col);
 
+static double ScrollOffset = 0.0;
+static double ScrollVisible = 1.0;
 static XFont Font;
 static XConfig Config = {
     .redraw       = onredraw,
@@ -101,6 +103,11 @@ Sel* win_sel(WinRegion id) {
     return &(Regions[id].view.selection);
 }
 
+void win_setscroll(double offset, double visible) {
+    ScrollOffset  = offset;
+    ScrollVisible = visible;
+}
+
 static void layout(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
@@ -164,17 +171,9 @@ static void onredraw(int width, int height) {
     }
     
     /* draw the scroll region */
-    View* view = win_view(EDIT);
-    size_t bend = buf_end(win_buf(EDIT));
-    if (bend == 0) bend = 1;
-    size_t vbeg = view->rows[0]->off;
-    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
-    size_t vtot = ((vend - vbeg) * 100) / bend;
-    if (vend > bend) vtot += 1;
-    size_t voff = (vbeg * 100 / bend);
     size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
-    size_t thumboff = (thumbreg * voff / 100) + (Regions[SCROLL].y - 2);
-    size_t thumbsz  = (thumbreg * vtot / 100);
+    size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
+    size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
     if (thumbsz < 5) thumbsz = 5;
     x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
     x11_draw_rect(CLR_BASE00, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
@@ -228,12 +227,9 @@ static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
             case MOUSE_BTN_LEFT:
                 view_scroll(win_view(EDIT), -row);
                 break;
-            case MOUSE_BTN_MIDDLE: {
-                    size_t bend = buf_end(win_buf(EDIT));
-                    size_t csrx, csry, chunksz = (bend > 0 ? bend : 1) / Regions[SCROLL].height;
-                    win_view(EDIT)->rows[0]->off = buf_bol(win_buf(EDIT), (y - Regions[SCROLL].y) * chunksz);
-                    view_update(win_view(EDIT), &csrx, &csry);
-                }
+            case MOUSE_BTN_MIDDLE: 
+                onscroll((double)(y - Regions[SCROLL].y) /
+                         (double)(Regions[SCROLL].height - Regions[SCROLL].y()));
                 break;
             case MOUSE_BTN_RIGHT:
                 view_scroll(win_view(EDIT), +row); 

@@ -27,6 +27,10 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
 //    }
 //};
 
+void onscroll(double percent) {
+
+}
+
 /* Keyboard Handling
  *****************************************************************************/
 
