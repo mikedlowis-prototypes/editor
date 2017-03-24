@@ -229,7 +229,7 @@ static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
                 break;
             case MOUSE_BTN_MIDDLE: 
                 onscroll((double)(y - Regions[SCROLL].y) /
-                         (double)(Regions[SCROLL].height - Regions[SCROLL].y()));
+                         (double)(Regions[SCROLL].height - Regions[SCROLL].y));
                 break;
             case MOUSE_BTN_RIGHT:
                 view_scroll(win_view(EDIT), +row); 

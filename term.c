@@ -5,8 +5,6 @@
 #include <ctype.h>
 #include <win.h>
 
-/* Mouse Handling
- *****************************************************************************/
 void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
 
 }
@@ -19,24 +17,10 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
 
 }
 
-//MouseConfig* MouseHandlers[NREGIONS] = {
-//    [EDIT] = &(MouseConfig){
-//        .left   = mouse_left,
-//        .middle = mouse_middle,
-//        .right  = mouse_right
-//    }
-//};
-
 void onscroll(double percent) {
 
 }
 
-/* Keyboard Handling
- *****************************************************************************/
-
-/* Main Routine
- *****************************************************************************/
- 
 void onupdate(void) {
 }
 
