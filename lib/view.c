@@ -157,14 +157,6 @@ static void sync_view(View* view, size_t csr) {
     }
 }
 
-void view_jumpto(View* view, size_t off) {
-    size_t csrx, csry;
-    if (!view->nrows) return;
-    view->rows[0]->off = off;
-    view_update(view, &csrx, &csry);
-    sync_view(view, off);
-}
-
 static size_t getoffset(View* view, size_t row, size_t col) {
     Row* scrrow = view_getrow(view, row);
     if (!scrrow) return SIZE_MAX;
@@ -608,4 +600,12 @@ void view_indent(View* view, int dir) {
         off = buf_byline(buf, off, UP);
 
    } while (off && off >= view->selection.beg);
+}
+
+void view_jumpto(View* view, size_t off) {
+    size_t csrx, csry;
+    if (!view->nrows) return;
+    view->rows[0]->off = off;
+    view_update(view, &csrx, &csry);
+    sync_view(view, off);
 }

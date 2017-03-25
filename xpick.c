@@ -2,12 +2,9 @@
 #include <x11.h>
 #include <utf.h>
 #include <edit.h>
+#include <win.h>
 #include <vec.h>
 #include <ctype.h>
-
-static void redraw(int width, int height);
-static void mouse_input(MouseAct act, MouseBtn btn, int x, int y);
-static void keyboard_input(int mods, uint32_t key);
 
 typedef struct {
     float score;
@@ -18,16 +15,8 @@ typedef struct {
 } Choice;
 
 static unsigned Pos = 0;
-static Buf Query;
 static vec_t Choices = {0};
 static size_t ChoiceIdx = 0;
-static XFont Font;
-static XConfig Config = {
-    .redraw       = redraw,
-    .handle_key   = keyboard_input,
-    .handle_mouse = mouse_input,
-    .palette      = COLOR_PALETTE
-};
 
 static char* rdline(FILE* fin) {
     if (feof(fin) || ferror(fin))
@@ -84,14 +73,15 @@ static char* find_match_start(char *str, int ch) {
 }
 
 static bool match(char *string, size_t offset, size_t *start, size_t *end) {
+    Buf* buf = win_buf(TAGS);
     unsigned qpos = 0;
-    char* s = find_match_start(&string[offset], buf_get(&Query, qpos));
+    char* s = find_match_start(&string[offset], buf_get(buf, qpos));
     char* e = s;
     /* bail if no match for first char */
     if (s == NULL) return 0;
     /* find the end of the match */
-    for (unsigned bend = buf_end(&Query); qpos < bend; qpos++)
-        if ((e = find_match_start(e, buf_get(&Query, qpos))) == NULL)
+    for (unsigned bend = buf_end(buf); qpos < bend; qpos++)
+        if ((e = find_match_start(e, buf_get(buf, qpos))) == NULL)
             return false;
     /* make note of the matching range */
     *start = s - string;
@@ -105,9 +95,10 @@ static bool match(char *string, size_t offset, size_t *start, size_t *end) {
 }
 
 static void score(void) {
+    Buf* buf = win_buf(TAGS);
     for (int i = 0; i < vec_size(&Choices); i++) {
         Choice* choice = (Choice*)vec_at(&Choices, i);
-        float qlen = (float)buf_end(&Query);
+        float qlen = (float)buf_end(buf);
         if (match(choice->string, 0, &choice->match_start, &choice->match_end)) {
             float clen = (float)(choice->match_end - choice->match_start);
             choice->score = qlen / clen / (float)(choice->length);
@@ -120,97 +111,108 @@ static void score(void) {
     vec_sort(&Choices, by_score);
 }
 
-static void draw_runes(size_t x, size_t y, int fg, int bg, UGlyph* glyphs, size_t rlen) {
-    XGlyphSpec specs[rlen];
-    while (rlen) {
-        size_t nspecs = x11_font_getglyphs(specs, (XGlyph*)glyphs, rlen, Font, x, y);
-        x11_draw_glyphs(fg, bg, specs, nspecs);
-        rlen -= nspecs;
-    }
+void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
 }
 
-static void redraw(int width, int height) {
-    /* draw the background colors */
-    x11_draw_rect(CLR_BASE03, 0, 0, width, height);
-    x11_draw_rect(CLR_BASE02, 0, 0, width, x11_font_height(Font));
-    x11_draw_rect(CLR_BASE01, 0, x11_font_height(Font), width, 1);
-    /* create the array for the query glyphs */
-    int rows = height / x11_font_height(Font) - 1;
-    int cols = width  / x11_font_width(Font);
-    XGlyph glyphs[cols], *text = glyphs;
-    /* draw the query */
-    unsigned start = 0, end = buf_end(&Query);
-    while (start < end && start < cols)
-        (text++)->rune = buf_get(&Query, start++);
-    draw_runes(0, 0, CLR_BASE3, CLR_BASE03, (UGlyph*)glyphs, text - glyphs);
-    /* Draw the choices */
-    size_t off = (ChoiceIdx >= rows ? (ChoiceIdx-rows+1) : 0);
-    for (size_t i = 0; i < vec_size(&Choices) && i < rows; i++) {
-        Choice* choice = vec_at(&Choices, i+off);
-        if (i+off == ChoiceIdx) {
-            x11_draw_rect(CLR_BASE1, 0, ((i+1) * x11_font_height(Font))+x11_font_descent(Font), width, x11_font_height(Font));
-            x11_draw_utf8(Font, CLR_BASE03, CLR_BASE1, 0, (i+2) * x11_font_height(Font), choice->string);
-        } else {
-            x11_draw_utf8(Font, CLR_BASE1, CLR_BASE03, 0, (i+2) * x11_font_height(Font), choice->string);
+void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
+}
+
+void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
+}
+
+void onscroll(double percent) {
+    ChoiceIdx = (size_t)((double)vec_size(&Choices) * percent);
+    if (ChoiceIdx >= vec_size(&Choices))
+        ChoiceIdx = vec_size(&Choices)-1;
+}
+
+void onupdate(void) {
+    win_setregion(TAGS);
+    win_settext(EDIT, "");
+    View* view = win_view(EDIT);
+    view->selection = (Sel){0,0,0};
+
+    score();
+    Sel selection = (Sel){0,0,0};
+    unsigned off = (ChoiceIdx >= view->nrows ? ChoiceIdx-view->nrows+1 : 0);
+    for (int i = 0; (i < vec_size(&Choices)) && (i < view->nrows); i++) {
+        unsigned beg = view->selection.end;
+        Choice* choice = (Choice*)vec_at(&Choices, i+off);
+        for (char* str = choice->string; *str; str++)
+            view_insert(view, false, *str);
+        view_insert(view, false, '\n');
+        if (ChoiceIdx == i+off) {
+            selection.beg = view->selection.end-1;
+            selection.end = beg;
         }
     }
+    view->selection = selection;
+    
+    /* update scroll bar */
+    double visible = (double)(win_view(EDIT)->nrows);
+    double choices = (double)vec_size(&Choices);
+    double current = (double)off;
+    if (choices > visible)
+        win_setscroll(current/choices, visible/choices);
+    else
+        win_setscroll(0.0, 1.0);
 }
 
-static void mouse_input(MouseAct act, MouseBtn btn, int x, int y) {
-    (void)act;
-    (void)btn;
-    (void)x;
-    (void)y;
+/* Main Routine
+ *****************************************************************************/
+static void backspace(void) {
+    view_delete(win_view(TAGS), LEFT, false);
 }
 
-static void keyboard_input(int mods, uint32_t key) {
-    switch (key) {
-        case KEY_LEFT:  break;
-        case KEY_RIGHT: break;
-        case KEY_UP:
-            if (ChoiceIdx > 0) ChoiceIdx--;
-            break;
-        case KEY_DOWN:
-            if (ChoiceIdx+1 < vec_size(&Choices)) ChoiceIdx++;
-            break;
-        case KEY_ESCAPE:
-            ChoiceIdx = SIZE_MAX;
-            // fall-through
-        case '\n': case '\r':
-            x11_deinit();
-            break;
-        case '\b':
-            if (Pos > 0) {
-                Pos = buf_delete(&Query, Pos-1, Pos);
-            }
-            break;
-        case RUNE_ERR:
-            break;
-        default:
-            ChoiceIdx = 0;
-            buf_insert(&Query, false, Pos++, key);
-            break;
-    }
-    score();
+static void accept(void) {
+    x11_deinit();
 }
+
+static void reject(void) {
+    ChoiceIdx = SIZE_MAX;
+    x11_deinit();
+}
+
+static void select_up(void) {
+    if (ChoiceIdx > 0) ChoiceIdx--;
+}
+
+static void select_dn(void) {
+    if (ChoiceIdx < vec_size(&Choices)-1) ChoiceIdx++;
+}
+
+static KeyBinding Bindings[] = {
+    { ModAny, '\b',       backspace },
+    { ModAny, '\n',       accept    },
+    { ModAny, KEY_ESCAPE, reject    },
+    { ModAny, KEY_UP,     select_up    },
+    { ModAny, KEY_DOWN,   select_dn    },
+//    { ModAny, KEY_LEFT,  cursor_left  },
+//    { ModAny, KEY_RIGHT, cursor_right },
+//    { ModCtrl, 'u',  del_to_bol  },
+//    { ModCtrl, 'k',  del_to_eol  },
+//    { ModCtrl, 'w',  del_to_bow  },
+//    { ModCtrl, 'h',  backspace   },
+//    { ModCtrl, 'a',  cursor_bol  },
+//    { ModCtrl, 'e',  cursor_eol  },
+    { 0, 0, 0 }
+};
 
 #ifndef TEST
 int main(int argc, char** argv) {
+    char* title = getenv("XPICKTITLE");
     load_choices();
-    buf_init(&Query);
-    if (argc >= 2) {
-        char* str = argv[1];
-        while (*str)
-            buf_insert(&Query, false, Pos++, *(str++));
-        score();
-    }
     if (vec_size(&Choices) > 1) {
-        /* initialize the display engine */
-        x11_init(&Config);
-        x11_dialog("pick", Width, Height);
-        x11_show();
-        Font = x11_font_load(FONTNAME);
-        x11_loop();
+        win_init("xpick");
+        win_setkeys(Bindings);
+        win_settext(STATUS, (title ? title : "xpick"));
+        if (argc >= 2) {
+            for (char* str = argv[1]; *str; str++)
+                buf_insert(win_buf(TAGS), false, Pos++, *str);
+            score();
+            view_eof(win_view(TAGS), NULL);
+        }
+        win_loop();
     }
     /* print out the choice */
     if (vec_size(&Choices) && ChoiceIdx != SIZE_MAX) {
@@ -220,3 +222,4 @@ int main(int argc, char** argv) {
     return 0;
 }
 #endif
+

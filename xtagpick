@@ -41,6 +41,7 @@ fetch(){
     ' "$TAGFILE" | /bin/sh | xpick
 }
 
+export XPICKTITLE="Pick CTag ($PWD)"
 case "$ACTION" in
     "print") print ;;
     "fetch") fetch ;;

@@ -169,6 +169,7 @@ void view_selext(View* view, size_t row, size_t col);
 void view_selextend(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);
+void view_jumpto(View* view, size_t off);
 
 /* Command Executions
  *****************************************************************************/
