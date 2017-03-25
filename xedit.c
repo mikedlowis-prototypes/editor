@@ -544,6 +544,7 @@ int main(int argc, char** argv) {
     win_init("edit");
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DEFAULT_TAGS));
+    win_setruler(80);
     view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL));
     win_setkeys(Bindings);
     //win_setmouse(&MouseHandlers);

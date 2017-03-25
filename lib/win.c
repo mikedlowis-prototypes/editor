@@ -21,6 +21,7 @@ static void onshutdown(void);
 static void onwheelup(WinRegion id, size_t count, size_t row, size_t col);
 static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col);
 
+static size_t Ruler = 0;
 static double ScrollOffset = 0.0;
 static double ScrollVisible = 1.0;
 static XFont Font;
@@ -66,6 +67,10 @@ void win_settext(WinRegion id, char* text) {
     view_putstr(view, text);
     view_selprev(view); // clear the selection
     buf_logclear(&(view->buffer));
+}
+
+void win_setruler(size_t ruler) {
+    Ruler = ruler;
 }
 
 void win_setkeys(KeyBinding* bindings) {
@@ -164,6 +169,8 @@ static void onredraw(int width, int height) {
         x11_draw_rect((i == TAGS ? CLR_BASE02 : CLR_BASE03), 
             0, Regions[i].y - 3, width, Regions[i].height + 8);
         x11_draw_rect(CLR_BASE01, 0, Regions[i].y - 3, width, 1);
+        if ((i == EDIT) && (Ruler != 0))
+            x11_draw_rect(CLR_BASE02, (Ruler+1) * fwidth, Regions[i].y-2, 1, Regions[i].height+7);
         for (size_t y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);

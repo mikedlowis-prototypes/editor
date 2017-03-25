@@ -35,6 +35,7 @@ typedef struct {
 void win_init(char* name);
 void win_loop(void);
 void win_settext(WinRegion id, char* text);
+void win_setruler(size_t ruler);
 void win_setkeys(KeyBinding* bindings);
 void win_setmouse(MouseConfig* mconfig);
 void win_warpptr(WinRegion id);

@@ -2,10 +2,7 @@
 
 Up Next:
 
-* picker should only draw visible lines
 * ctrl+d on last line segfaults/asserts
-
-* Tweak the scrollbar for use with the picker
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
