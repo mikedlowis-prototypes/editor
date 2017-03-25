@@ -118,7 +118,7 @@ enum {
     ModNumLock    = (1 << 4),
     ModScrollLock = (1 << 5),
     ModWindows    = (1 << 6),
-    ModAny        = (ModShift|ModCtrl|ModAlt)
+    ModAny        = -1
 };
 
 /* Selection identifiers */
@@ -135,6 +135,7 @@ void x11_window(char* name, int width, int height);
 void x11_dialog(char* name, int height, int width);
 void x11_show(void);
 void x11_loop(void);
+void x11_handle_events(void);
 XFont x11_font_load(char* name);
 size_t x11_font_height(XFont fnt);
 size_t x11_font_width(XFont fnt);

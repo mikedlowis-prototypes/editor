@@ -172,8 +172,11 @@ static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
 
 void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
-    if (buf->bufstart) free(buf->bufstart);
-    buf_logclear(buf);
+    if (buf->bufstart) {
+        free(buf->bufstart);
+        buf->bufstart = NULL;
+        buf_logclear(buf);
+    }
 
     /* reset the state to defaults */
     buf->modified    = false;
@@ -188,6 +191,7 @@ void buf_init(Buf* buf) {
     buf->gapend      = buf->bufend;
     buf->undo        = NULL;
     buf->redo        = NULL;
+    assert(buf->bufstart);
 }
 
 unsigned buf_load(Buf* buf, char* path) {
@@ -202,6 +206,7 @@ unsigned buf_load(Buf* buf, char* path) {
     /* load the file and determine the character set */
     FMap file = mmap_readonly(buf->path);
     filetype(buf, file);
+
     if (buf->charset > UTF_8)
         die("Unsupported character set");
 
@@ -216,7 +221,7 @@ unsigned buf_load(Buf* buf, char* path) {
         }
         buf_insert(buf, false, buf_end(buf), r);
     }
-    
+
     /* jump to address if we got one */
     if (addr)
         off = buf_setln(buf, strtoul(addr, NULL, 0));
@@ -228,6 +233,13 @@ unsigned buf_load(Buf* buf, char* path) {
 }
 
 void buf_save(Buf* buf) {
+    if (0 == buf_end(buf)) return;
+    
+    /* text files should  always end in a new line. If we detected a 
+       binary file or at least a non-utf8 file, skip this part. */
+    if (!buf_iseol(buf, buf_end(buf)-1) && (buf->charset != BINARY))
+        buf_insert(buf, false, buf_end(buf), '\n');
+    
     size_t wrlen = 0;
     if (!buf->path) return;
     FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
@@ -437,17 +449,31 @@ unsigned buf_byrune(Buf* buf, unsigned pos, int count) {
     return pos;
 }
 
+static Rune nextrune(Buf* buf, unsigned off, int move, bool (*testfn)(Rune)) {
+    bool ret = false;
+    unsigned end = buf_end(buf);
+    if (move < 0 && off > 0)
+        ret = testfn(buf_get(buf, off-1));
+    else if (move > 0 && off < end)
+        ret = testfn(buf_get(buf, off+1));
+    return ret;
+}
+
 unsigned buf_byword(Buf* buf, unsigned off, int count) {
     int move = (count < 0 ? -1 : 1);
-    unsigned end = buf_end(buf);
-    if (move < 0) {
-        for (; off > 0 && !risword(buf_get(buf, off-1)); off--);
-        for (; off > 0 && risword(buf_get(buf, off-1)); off--);
+
+    while (nextrune(buf, off, move, risblank))
+        off = buf_byrune(buf, off, move);
+
+    if (nextrune(buf, off, move, risword)) {
+        while (nextrune(buf, off, move, risword))
+            off = buf_byrune(buf, off, move);
+        if (move > 0)
+            off = buf_byrune(buf, off, move);
     } else {
-        for (; off < end && risword(buf_get(buf, off+1)); off++);
-        for (; off < end && !risword(buf_get(buf, off+1)); off++);
-        if (off < buf_end(buf)) off++;
+        off = buf_byrune(buf, off, move);
     }
+    
     return off;
 }
 
@@ -553,22 +579,18 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
         opbeg = log->data.ins.end, opend = log->data.ins.end;
     
     unsigned delsize = 0;
-    //printf("start: %u-%u\n", opbeg, opend);
     for (; log; log = log->next) {
         if (log->insert) {
             unsigned ibeg = log->data.ins.beg,
                      iend = log->data.ins.end - delsize;
-            //printf("ins: %u-%u\n", ibeg, iend);
             if (iend < ibeg || ibeg > opbeg || iend < opbeg) break;
             if (ibeg < opbeg && iend > opend) break;
             opbeg = ibeg, delsize = 0;
         } else {
-            //printf("del: %u-%u\n", log->data.del.off, log->data.del.off+log->data.del.len);
             /* bail if the delete doesnt overlap */
             if(log->data.del.off != opbeg) break;
             delsize = log->data.del.len;
         }
     }
-    //printf("finish: %u-%u\n\n", opbeg, opend);
     *beg = opbeg, *end = opend;
 }

@@ -43,3 +43,6 @@ tags
 xedit
 xpick
 DELETEME
+tests/libedit
+tests/term
+term

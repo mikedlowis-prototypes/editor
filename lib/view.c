@@ -71,7 +71,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
 }
 
 static void reflow(View* view) {
-    if (!view->nrows) return;
+    if (!view->rows) return;
     size_t pos = view->rows[0]->off;
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos);
@@ -148,6 +148,8 @@ static void sync_view(View* view, size_t csr) {
         first = scroll_up(view);
     while (csr > last && last < buf_end(&(view->buffer)))
         last = scroll_dn(view);
+    while (buf_end(&(view->buffer)) && last > buf_end(&(view->buffer)))
+        last = scroll_up(view);
     view->sync_needed = false;
     if (view->sync_center) {
         sync_center(view, csr);
@@ -192,19 +194,14 @@ void view_init(View* view, char* file) {
 }
 
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
-    size_t nrows = 0;
-    size_t pos = 0;
+    size_t nrows = 1, pos = 0, col = 0;
     while (nrows < maxrows && pos < buf_end(&(view->buffer))) {
-        for (size_t x = 0; x < ncols;) {
-            Rune r = buf_get(&(view->buffer), pos++);
-            x += runewidth(x, r);
-            if (buf_iseol(&(view->buffer), pos)) {
-                nrows++;
-                break;
-            }
-        }
+        Rune r = buf_get(&(view->buffer), pos++);
+        col += runewidth(col, r);
+        if (col >= ncols || r == RUNE_CRLF || r == '\n')
+            col = 0, nrows++;
     }
-    return (!nrows ? 1 : nrows);
+    return nrows;
 }
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
@@ -303,17 +300,17 @@ static void selcontext(View* view, Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
     Rune r = buf_get(buf, sel->end);
-    if (sel->end == bol || r == '\n' || r == RUNE_CRLF) {
-        sel->beg = bol;
-        sel->end = buf_eol(buf, sel->end);
-    } else if (risword(r)) {
-        buf_getword(buf, risword, sel);
-    } else if (r == '(' || r == ')') {
+    if (r == '(' || r == ')') {
         buf_getblock(buf, '(', ')', sel);
     } else if (r == '[' || r == ']') {
         buf_getblock(buf, '[', ']', sel);
     } else if (r == '{' || r == '}') {
         buf_getblock(buf, '{', '}', sel);
+    } else if (sel->end == bol || r == '\n' || r == RUNE_CRLF) {
+        sel->beg = bol;
+        sel->end = buf_eol(buf, sel->end);
+    } else if (risword(r)) {
+        buf_getword(buf, risword, sel);
     } else {
         buf_getword(buf, risbigword, sel);
     }
@@ -321,7 +318,8 @@ static void selcontext(View* view, Sel* sel) {
 
 void view_selword(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
-    view_setcursor(view, row, col);
+    if (row != SIZE_MAX && col != SIZE_MAX)
+        view_setcursor(view, row, col);
     Sel sel = view->selection;
     buf_getword(&(view->buffer), risbigword, &(sel));
     sel.end++;
@@ -412,19 +410,13 @@ void view_insert(View* view, bool indent, Rune rune) {
 }
 
 void view_delete(View* view, int dir, bool byword) {
-    Sel sel = view->selection;
-    selswap(&sel);
-    size_t num = num_selected(sel);
-    if (num != 0)
-        sel.end = buf_delete(&(view->buffer), sel.beg, sel.end);
-    else if ((dir == LEFT) && (sel.end > 0))
-        sel.end = buf_delete(&(view->buffer), sel.end-1, sel.end);
-    else if ((dir == RIGHT) && (sel.end < buf_end(&(view->buffer))))
-        sel.end = buf_delete(&(view->buffer), sel.end, sel.end+1);
-    sel.beg = sel.end;
-    /* update the selection */
-    view->selection = sel;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    Sel* sel = &(view->selection);
+    if (sel->beg == sel->end)
+        (byword ? view_byword : view_byrune)(view, dir, true);
+    selswap(sel);
+    sel->end = buf_delete(&(view->buffer), sel->beg, sel->end);
+    sel->beg = sel->end;
+    sel->col = buf_getcol(&(view->buffer), sel->end);
     view->sync_needed = true;
 }
 
@@ -482,6 +474,7 @@ void view_redo(View* view) {
 }
 
 void view_putstr(View* view, char* str) {
+    selswap(&(view->selection));
     unsigned beg = view->selection.beg;
     buf_loglock(&(view->buffer));
     while (*str) {
@@ -607,4 +600,12 @@ void view_indent(View* view, int dir) {
         off = buf_byline(buf, off, UP);
 
    } while (off && off >= view->selection.beg);
+}
+
+void view_jumpto(View* view, size_t off) {
+    size_t csrx, csry;
+    if (!view->nrows) return;
+    view->rows[0]->off = off;
+    view_update(view, &csrx, &csry);
+    sync_view(view, off);
 }
