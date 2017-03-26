@@ -342,7 +342,8 @@ void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col);
     Sel sel = view->selection;
     selcontext(view, &sel);
-    sel.end++;
+    if (sel.end+1 < buf_end(&(view->buffer)))
+        sel.end++;
     view->selection = sel;
 }
 
