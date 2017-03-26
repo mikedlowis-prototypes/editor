@@ -170,7 +170,7 @@ static void onredraw(int width, int height) {
             0, Regions[i].y - 3, width, Regions[i].height + 8);
         x11_draw_rect(CLR_BASE01, 0, Regions[i].y - 3, width, 1);
         if ((i == EDIT) && (Ruler != 0))
-            x11_draw_rect(CLR_BASE02, (Ruler+1) * fwidth, Regions[i].y-2, 1, Regions[i].height+7);
+            x11_draw_rect(CLR_BASE02, (Ruler+2) * fwidth, Regions[i].y-2, 1, Regions[i].height+7);
         for (size_t y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);

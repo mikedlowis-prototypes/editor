@@ -24,7 +24,7 @@ static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
 
 /* Tag/Cmd Execution
- *****************************************************************************/
+ ******************************************************************************/
 static Tag* tag_lookup(char* cmd) {
     size_t len = 0;
     Tag* tags = Builtins;
@@ -104,7 +104,7 @@ static void exec(char* cmd) {
 }
 
 /* Action Callbacks
- *****************************************************************************/
+ ******************************************************************************/
 static void delete(void) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(win_view(FOCUSED), RIGHT, byword);
@@ -150,7 +150,7 @@ static void save(void) {
 }
 
 /* Mouse Handling
- *****************************************************************************/
+ ******************************************************************************/
 void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
     if (count == 1) {
         if (x11_keymodsset(ModShift))
@@ -187,7 +187,7 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
 }
 
 /* Keyboard Handling
- *****************************************************************************/
+ ******************************************************************************/
 static void del_to_bol(void) {
     view_bol(win_view(FOCUSED), true);
     if (view_selsize(win_view(FOCUSED)) > 0) 
@@ -430,7 +430,7 @@ static void newline(void) {
 }
 
 /* Main Routine
- *****************************************************************************/
+ ******************************************************************************/
 static Tag Builtins[] = {
     { .tag = "Quit",   .action.noarg = quit     },
     { .tag = "Save",   .action.noarg = save     },
