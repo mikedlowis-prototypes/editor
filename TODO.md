@@ -2,12 +2,14 @@
 
 Up Next:
 
-* ctrl+d on last line segfaults/asserts
+* update edit to cd to dir containing tags file if it exists
+* update win.c to launch dialog or normal window
+* Make Fn keys execute nth command in the tags buffer
+
 * check for file changes on save
 * check for file changes when window regains focus
 * Right click in tags region should search edit region
 * 100% coverage with unit and unit-integration tests
-* Make Fn keys execute nth command in the tags buffer
 * selecting text should set PRIMARY x11 selection
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
