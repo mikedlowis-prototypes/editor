@@ -1,5 +1,29 @@
 #!/bin/sh
 
+# search for a ctags file recursively up the directory tree from the file to be 
+# opened. If one is found, change the working directory of the new process to
+# the containing folder and launch xedit with the path of the file relative to  
+# the new working directory.
+edit_relative_ctags(){
+    file="$(realpath -m "$1")"
+    path="$(basename "$file")"
+    dir="$(dirname "$file")"
+    while [ "$dir" != "/" ]; do
+        if [ -f "$dir/tags" ]; then
+            cd "$dir"
+            (nohup xedit "$path" > /dev/null 2>&1) &
+            #echo "cd to $dir" >2
+            #cd "$dir"
+            #echo "$path"
+            return 0
+        else
+            path="$(basename "$dir")/$path"
+            dir="$(dirname "$dir")"
+        fi
+    done
+    (nohup xedit "$1" > /dev/null 2>&1) &
+}
+
 # Add the editing tools directory to your PATH var so its contents may be used
 # while editing.
 export PATH="$HOME/.config/edit/tools:$PATH"
@@ -25,6 +49,6 @@ elif [ 0 -eq $# ]; then
     (nohup xedit > /dev/null 2>&1) &
 else
     for f in "$@"; do
-        (nohup xedit "$f" > /dev/null 2>&1) &
+        edit_relative_ctags "$f" &
     done
 fi
