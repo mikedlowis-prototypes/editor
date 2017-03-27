@@ -3,7 +3,6 @@
 Up Next:
 
 * update edit to cd to dir containing tags file if it exists
-* update win.c to launch dialog or normal window
 * Make Fn keys execute nth command in the tags buffer
 
 * check for file changes on save
