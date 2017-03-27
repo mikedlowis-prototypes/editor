@@ -7,20 +7,22 @@
 \fBxpick\fR \- fuzzy find an item from a list of items
 .
 .SH "SYNOPSIS"
+\fBxpick\fR [\fIquery\fR]
 .
 .SH "DESCRIPTION"
+\fBxpick\fR Takes a list of items on standard input delimited by newlines and an optional initial \fIquery\fR\. A gui window is then presented to the user which allows the user to filter the list using a fuzzy\-find algorithm\. The user\'s selection is printed to standard output upon completion\. If no option is selected \fBxpick\fR exits with no output\.
 .
-.SH "OPTIONS"
-.
-.SH "FILES"
+.SS "Fuzzy\-Find Algorithm"
+TODO: Document this
 .
 .SH "ENVIRONMENT"
 .
-.SH "DIAGNOSTICS"
-.
-.SH "BUGS"
+.TP
+\fBXPICKTITLE\fR
+If this variable is set its contents are used to populate the status region of the \fBxpick\fR window\.
 .
 .SH "AUTHOR"
+Michael D\. Lowis
 .
 .SH "SEE ALSO"
-
+xedit(1) xpick(1) xfilepick(1) xtagpick(1)
