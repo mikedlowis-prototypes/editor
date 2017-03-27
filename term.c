@@ -26,7 +26,7 @@ void onupdate(void) {
 
 #ifndef TEST
 int main(int argc, char** argv) {
-    win_init("term");
+    win_window("term");
     //win_setkeys(&Bindings);
     //win_setmouse(&MouseHandlers);
     win_loop();

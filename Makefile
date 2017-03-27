@@ -23,7 +23,7 @@ include config.mk
 
 .PHONY: all docs clean install uninstall test
 
-all: $(BIN) test $(MAN1)
+all: $(BINS) test $(MAN1)
 
 docs:
 	ronn --roff docs/*.md

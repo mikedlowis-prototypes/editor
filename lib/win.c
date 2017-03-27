@@ -46,12 +46,21 @@ static Region Regions[NREGIONS] = {0};
 static ButtonState MouseBtns[MOUSE_BTN_COUNT] = {0};
 KeyBinding* Keys = NULL;
 
-void win_init(char* name) {
+static void win_init(void) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL);
     x11_init(&Config);
     Font = x11_font_load(FONTNAME);
+}
+
+void win_window(char* name) {
+    win_init();
     x11_window(name, Width, Height);
+}
+
+void win_dialog(char* name) {
+    win_init();
+    x11_dialog(name, Width, Height);
 }
 
 void win_loop(void) {

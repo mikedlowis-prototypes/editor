@@ -23,7 +23,7 @@ Display* XDisplay;
 
 static void initialize(void) {
     ShellCmd[0] = "/bin/sh";
-    win_init("edit");
+    win_window("edit");
     XDisplay = XOpenDisplay(NULL);
     win_setkeys(Bindings);
     //win_setmouse(&MouseHandlers);

@@ -541,7 +541,7 @@ int main(int argc, char** argv) {
     ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     /* Create the window and enter the event loop */
-    win_init("edit");
+    win_window("edit");
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DEFAULT_TAGS));
     win_setruler(80);

@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
     char* title = getenv("XPICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
-        win_init("xpick");
+        win_dialog("xpick");
         win_setkeys(Bindings);
         win_settext(STATUS, (title ? title : "xpick"));
         if (argc >= 2) {
