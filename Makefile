@@ -1,5 +1,8 @@
 INCS = -Iinc/
 
+BINS = xedit xpick term
+MAN1 = docs/edit.1 docs/xedit.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
+
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
 	lib/filetype.o \
@@ -10,15 +13,20 @@ LIBEDIT_OBJS =     \
 	lib/x11.o      \
 	lib/win.o
 
-TEST_BINS = \
-	tests/xedit \
-	tests/xpick \
-	tests/term \
+TEST_BINS =      \
+	tests/xedit  \
+	tests/xpick  \
+	tests/term   \
 	tests/libedit
 
 include config.mk
 
-all: xedit xpick term test
+.PHONY: all docs clean install uninstall test
+
+all: $(BIN) test $(MAN1)
+
+docs:
+	ronn --roff docs/*.md
 
 clean:
 	find . -name '*.[oad]' -delete

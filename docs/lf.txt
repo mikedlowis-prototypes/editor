@@ -1,5 +1,0 @@
-this file
-uses
-unix
-line
-endings

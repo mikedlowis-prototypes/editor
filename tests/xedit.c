@@ -734,19 +734,19 @@ TEST_SUITE(UnitTests) {
 
     TEST(Save should save changes to disk with crlf line endings) {
         setup_view(TAGS, "", CRLF, 0);
-        view_init(win_view(EDIT), "docs/crlf.txt");
+        view_init(win_view(EDIT), "testdocs/crlf.txt");
         CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
         exec("Save");
-        view_init(win_view(EDIT), "docs/crlf.txt");
+        view_init(win_view(EDIT), "testdocs/crlf.txt");
         CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
     }
 
     TEST(Save should save changes to disk with lf line endings) {
         setup_view(TAGS, "", CRLF, 0);
-        view_init(win_view(EDIT), "docs/lf.txt");
+        view_init(win_view(EDIT), "testdocs/lf.txt");
         CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
         exec("Save");
-        view_init(win_view(EDIT), "docs/lf.txt");
+        view_init(win_view(EDIT), "testdocs/lf.txt");
         CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
     }
 

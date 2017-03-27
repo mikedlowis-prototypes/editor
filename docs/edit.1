@@ -1,0 +1,45 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "EDIT" "1" "March 2017" "" ""
+.
+.SH "NAME"
+\fBedit\fR \- convenience script for launching xedit(1) with a proper environment
+.
+.SH "SYNOPSIS"
+.
+.nf
+
+edit [file \.\.]
+.
+.fi
+.
+.SH "DESCRIPTION"
+This script acts as a wrapper around xedit(1)\. It is responsible for setting up the environment variables and loading the rc file xedit(1) before launching a new instance of xedit(1) for each file provided on the command line\. If no files are provided, xedit(1) will be launched to edit a scratch buffer\.
+.
+.SH "FILES"
+.
+.nf
+
+$HOME/\.config/edit/editrc
+    Shell script loaded in current environment to make shell functions and environment variables available to xedit(1)
+.
+.fi
+.
+.SH "ENVIRONMENT"
+.
+.nf
+
+PATH
+EDITRCFILE
+BASH_ENV
+DISPLAY
+EDITOR
+.
+.fi
+.
+.SH "AUTHOR"
+Michael D\. Lowis
+.
+.SH "SEE ALSO"
+xedit(1) xpick(1) xfilepick(1) xtagpick(1)
