@@ -8,19 +8,41 @@
 .
 .SH "SYNOPSIS"
 .
-.SH "DESCRIPTION"
+.nf
+
+`xedit` [<file>]
 .
-.SH "OPTIONS"
+.fi
+.
+.SH "DESCRIPTION"
+\fBxedit\fR is a text editor inspired by the Acme editor from the Plan 9 and Inferno operating systems\. Unlike Acme, \fBxedit\fR is a single window, single file editor\. Instead of baking a window manager into the editor, this job is relegated to an X11 window manager\. It is recommended that \fBxedit\fR be used with a tiling window manager such as dwm(1) or spectrwm(1)\. These window managers will make dealing with multiple windows much easier and more efficient\.
+.
+.SS "Windows"
+.
+.SS "Scrolling"
+.
+.SS "Typing"
+.
+.SH "MOUSE HANDLING"
+.
+.SH "KEYBOARD SHORTCUTS"
+.
+.SH "COMMAND EXECUTION"
+.
+.SH "BUILTINS"
 .
 .SH "FILES"
 .
-.SH "ENVIRONMENT"
+.TP
+\fB$HOME/\.config/edit/editrc\fR
+Shell script loaded in current environment to make shell functions and environment variables available to xedit(1)
 .
-.SH "DIAGNOSTICS"
+.SH "ENVIRONMENT"
 .
 .SH "BUGS"
 .
 .SH "AUTHOR"
+Michael D\. Lowis
 .
 .SH "SEE ALSO"
-
+xedit(1) xpick(1) xfilepick(1) xtagpick(1)
