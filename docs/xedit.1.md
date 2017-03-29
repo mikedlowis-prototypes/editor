@@ -2,7 +2,7 @@
 
 ## SYNOPSIS
 
-    `xedit` [_file_]
+`xedit` [_file_]
 
 ## DESCRIPTION
 
