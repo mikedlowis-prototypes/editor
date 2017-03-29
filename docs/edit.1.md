@@ -2,7 +2,7 @@
 
 ## SYNOPSIS
 
-`edit` [<file>...]
+`edit` [_file_...]
 
 ## DESCRIPTION
 
