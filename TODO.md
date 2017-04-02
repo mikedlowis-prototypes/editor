@@ -2,6 +2,7 @@
 
 Up Next:
 
+* Status line should omit characters from beginning of path to make file path fit
 * clipboard does not persist after exit
 * Run commands in the background and don't block the main thread.
 * Make Fn keys execute nth command in the tags buffer
@@ -18,10 +19,9 @@ Up Next:
 
 Straight-up Bugs:
 
-* ctrl+space selects too large of a word in some cases (function names followed by paren)
+* tab inserts dont coalesce like one would expect
 * off by one error on scrolling up with wrapped lines
 * Ctrl+u with a selection clears to bol *before* selected text
-* tab inserts dont coalesce like one would expect
 
 The Future:
 

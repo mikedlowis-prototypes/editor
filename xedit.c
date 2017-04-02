@@ -360,7 +360,8 @@ static void pick_ctag(void) {
 
 static void complete(void) {
     View* view = win_view(FOCUSED);
-    view_selword(view, SIZE_MAX, SIZE_MAX);
+    buf_getword(&(view->buffer), risword, &(view->selection));
+    view->selection.end = buf_byrune(&(view->buffer), view->selection.end, RIGHT);
     PickTagCmd[1] = "print";
     PickTagCmd[3] = view_getstr(view, NULL);
     char* pick = cmdread(PickTagCmd, NULL);
@@ -522,6 +523,8 @@ void onupdate(void) {
     size_t remlen = sizeof(status_bytes) - strlen(status_bytes) - 1;
     strncat(status, path, remlen);
     win_settext(STATUS, status_bytes);
+    win_view(STATUS)->selection = (Sel){0,0,0};
+
     
     /* calculate and update scroll region */
     View* view = win_view(EDIT);
