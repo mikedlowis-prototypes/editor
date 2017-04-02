@@ -148,8 +148,6 @@ static void sync_view(View* view, size_t csr) {
         first = scroll_up(view);
     while (csr > last && last < buf_end(&(view->buffer)))
         last = scroll_dn(view);
-    while (buf_end(&(view->buffer)) && last > buf_end(&(view->buffer)))
-        last = scroll_up(view);
     view->sync_needed = false;
     if (view->sync_center) {
         sync_center(view, csr);
@@ -604,9 +602,5 @@ void view_indent(View* view, int dir) {
 }
 
 void view_jumpto(View* view, size_t off) {
-    size_t csrx, csry;
-    if (!view->nrows) return;
-    view->rows[0]->off = off;
-    view_update(view, &csrx, &csry);
     sync_view(view, off);
 }
