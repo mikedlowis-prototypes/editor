@@ -76,7 +76,6 @@ void win_settext(WinRegion id, char* text) {
     view_putstr(view, text);
     view_selprev(view); // clear the selection
     buf_logclear(&(view->buffer));
-    view->selection = (Sel){0,0,0};
 }
 
 void win_setruler(size_t ruler) {
