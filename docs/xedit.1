@@ -19,63 +19,177 @@
 .
 .SS "Typing"
 .
+.SH "TEXT SELECTION"
+.
 .SH "MOUSE HANDLING"
 .
 .SH "COMMAND EXECUTION"
 .
 .SH "KEYBOARD SHORTCUTS"
 .
-.TP
-\fBCtrl+u\fR:
-
+.SS "Unix Standard Shortcuts"
 .
 .TP
-\fBCtrl+k\fR:
-
+\fBCtrl+u\fR
+Delete from the cursor position to the beginning of the line\.
 .
 .TP
-\fBCtrl+w\fR:
-
+\fBCtrl+k\fR
+Delete from the cursor position to the end of the line\.
 .
 .TP
-\fBCtrl+a\fR:
-
+\fBCtrl+w\fR
+Delete the word to the left\.
 .
 .TP
-\fBCtrl+e\fR:
-
+\fBCtrl+a\fR
+Move cursor to the beginning of the line\.
 .
 .TP
-\fBCtrl+s\fR:
-
+\fBCtrl+e\fR
+Move cursor to the end of the line\.
 .
 .TP
-\fBCtrl+z\fR:
-
+\fBCtrl+h\fR
+Delete the cursor to the left\.
+.
+.SS "Cursor Movement and Selection"
+The key combinations below are responsible for moving the cursor around the document by character, by word, or by line\. The \fBShift\fR modifier key can be applied to any of them to also extend the current selection to the new cursor position\.
 .
 .TP
-\fBCtrl+y\fR:
-
+\fBEscape\fR
+Highlight the last contiguous block of inserted text or clear the current selection (deselect the currently selected text)\.
 .
 .TP
-\fBCtrl+x\fR:
-
+\fBLeft\fR
+Move the cursor one character to the left\.
 .
 .TP
-\fBCtrl+c\fR:
-
+\fBRight\fR
+Move the cursor one character to the right\.
 .
 .TP
-\fBCtrl+v\fR:
-
+\fBUp\fR
+Move the cursor to theprevious line\.
 .
 .TP
-\fBCtrl+[\fR:
-
+\fBDown\fR
+Move the cursor to the next line\.
 .
 .TP
-\fBCtrl+]\fR:
-
+\fBCtrl+Left\fR
+Move the cursor to the beginning of the word to the left\.
+.
+.TP
+\fBCtrl+Right\fR
+Move the cursor to the end of the word to the right\.
+.
+.SS "Modern Text Editing Shortcuts"
+.
+.TP
+\fBCtrl+s\fR
+Save the contents of the content region to disk\.
+.
+.TP
+\fBCtrl+z\fR
+Undo the last change performed on the active region\.
+.
+.TP
+\fBCtrl+y\fR
+Redo the previously undone change on the active region\.
+.
+.TP
+\fBCtrl+x\fR
+Cut the selected text to the X11 CLIPBOARD selection\.
+.
+.TP
+\fBCtrl+c\fR
+Copy the selected text to the X11 CLIPBOARD selection\.
+.
+.TP
+\fBCtrl+v\fR
+Paste the contents of the X11 CLIPBOARD selection to the active region\.
+.
+.TP
+\fBDelete\fR
+Delete the character to the right\.
+.
+.TP
+\fBCtrl+Delete\fR
+Delete the word to the right\.
+.
+.TP
+\fBBackspace\fR
+Delete the character to the left\.
+.
+.TP
+\fBCtrl+Backspace\fR
+Delete the word to the left\.
+.
+.TP
+\fBCtrl+Enter\fR
+Create a new line after the current line and place the cursor there\.
+.
+.TP
+\fBCtrl+Shift+Enter\fR
+Create a new line before the current line and place the cursor there\.
+.
+.TP
+\fBPageUp\fR
+Scroll the active region up by one screenful of text\. The cursor is not affected by this operation\.
+.
+.TP
+\fBPageDn\fR
+Scroll the active region down by one screenful of text\. The cursor is not affected by this operation\.
+.
+.SS "Search Shortcuts"
+The shortcuts below allow the user to search for selected text or by context\. The direction of the search defaults to the forward direction with regard to the position in the file\. Each search follows the direction of the previous search unless the \fBShift\fR modifier is applied\. The \fBShift\fR modifier causes the current search operation to be applied in the opposite direction of the previous\.
+.
+.TP
+\fBCtrl+f\fR
+Search for the next occurrence of the selected text in the content region\. If no text is currently selected, the text under the cursor is selected based on context as described in \fBTEXT SELECTION\fR\.
+.
+.TP
+\fBCtrl+Alt+f\fR
+Search for the next occurence previous search term in the content region\.
+.
+.SS "Implementation\-specific Shortcuts"
+.
+.TP
+\fBCtrl+[\fR
+Decrease the indent level of the selected text\.
+.
+.TP
+\fBCtrl+]\fR
+Increase the indent level of the selected text\.
+.
+.TP
+\fBCtrl+t\fR
+Toggle focus between the tags region and the content region\.
+.
+.TP
+\fBCtrl+q\fR
+Quit the editor\. If the file is modified a warning will be printed in the tags region and the editor will not quit\. Executing the shortcut twice within 250ms will ignore the warning and quit the editor without saving\.
+.
+.TP
+\fBCtrl+d\fR
+Execute the selected text as described in \fBCOMMAND EXECUTION\fR\. If no text is selected, the text under cursor is selecte dbased on context as described in \fBTEXT SELECTION\fR\.
+.
+.TP
+\fBCtrl+o\fR
+Launch xfilepick(1) to choose a file from a recursive list of files in the current deirectory and sub directories\. This file will be opened in a new instance of \fBxedit\fR\.
+.
+.TP
+\fBCtrl+p\fR
+Launch xtagpick(1) to select a tag from a ctags(1) generated index file\. \fBxedit\fR will jump to the selected ctag definition in the current window if the file is currently being edited\. Otherwise, a new instance of \fBxedit\fR will be launched with the target file and the cursor set to the line containing the definition\.
+.
+.TP
+\fBCtrl+g\fR
+Lookup the selected symbol or symbol under the cursor in a ctags(1) generated index file\. Jump to the location of the definition if it exist in the current file\. Otherwise, a new instance of \fBxedit\fR will be launched with the target file and the cursor set to the line containing the definition\.
+.
+.TP
+\fBCtrl+n\fR
+Open a new instance of \fBxedit\fR with no filename\.
 .
 .SH "BUILTINS"
 .
@@ -130,6 +244,10 @@ Undo the previous edit\.
 Shell script loaded in current environment to make shell functions and environment variables available to xedit(1)
 .
 .SH "ENVIRONMENT"
+.
+.TP
+\fBSHELL\fR
+The contents of this variable are used as the shell in which all non\-builtin commands are executed\. If this variable is not defined, sh(1) is used as a fallback shell\.
 .
 .SH "BUGS"
 .
