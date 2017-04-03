@@ -13,7 +13,7 @@ are provided, xedit(1) will be launched to edit a scratch buffer.
 
 ## FILES
 
-* $HOME/.config/edit/editrc:
+* `$HOME/.config/edit/editrc`:
     Shell script loaded in current environment to make shell functions and 
     environment variables available to xedit(1)
 
