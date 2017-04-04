@@ -1,4 +1,4 @@
-# xedit -- a text editor inspired by Acme from Plan 9 and Inferno
+# xedit -- a text editor inspired by acme(1) from Plan 9 and Inferno
 
 ## SYNOPSIS
 
@@ -27,11 +27,65 @@ the left of the content region is a narrow vertical region matching the height
 of the content region. This region acts as a scrollbar for the content region.
 
 ### Scrolling
-### Typing
+
+The scroll bar is located to the left of the content region. It's operation is
+similar to that of acme(1) or 9term(1). A left click on the scroll bar will 
+scroll the adjacent line in the content region to the bottom of the window. A 
+right click will move the adjacent line in the content region to the top of the 
+window. A middle click will jump to an approximate location in the file 
+determined by calculating the vertical distance from the top of the scrollbar 
+and applying that as a percentage to the offset in the file.
+
+### Typing and Editing
+
+Typed characters in `xedit` are delivered to the currently active region. Which
+region is active is determined by the placement of the mouse or by keyboard 
+shortcut. That is to say, the focus follows the mouse much as it does in acme(1)
+but there is a keyboard shortcut that allows users to toggle focus between the 
+content region and the tag region without using the mouse.
+
+The mechanics of editing text in the tag and content region is identical with 
+the exception of searching and saving. Edited content in the tag region is not 
+saved to disk unlike the content region. This region is considered a scratch 
+buffer for commands, notes, and other bits of text that are placed there 
+temporarily. The content region displays the current view of the file being 
+edited and can be flushed to disk when requested.
+
+Searching with a term selected in the tags region will search for the term in 
+the content region rather than the tags region. In this way a user can edit the 
+search term incrementally and perform repeated searches through the content 
+region. Searching for a term in the content region *will* search for the term in
+the content region however.
 
 ## TEXT SELECTION
+
+TBD
+
 ## MOUSE HANDLING
+
+* `Left Button`:
+    The left mouse button is used for selecting text or moving the cursor. A
+    single-click will move the mose to the clicked location. A double-click will
+    will select the object under the clicked location based on context as 
+    described in `TEXT SELECTION`. A triple-click will select the largest
+    contiguous chunk of non-whitespace characters at the clicked location.
+
+* `Middle Button`:
+    The middle mouse button is used for executing text at the clicked location.
+    The command to be executed is determined by the context rules defined in
+    the `TEXT SELECTION` section. The cursor position is not changed on a middle 
+    click.
+
+* `Right Button`:
+    The right button is used to search for the next occurrence of the clicked 
+    text. The search term is determined by the context rules defined in the 
+    `TEXT SELECTION` section. The search direction follows the direction of the
+    previous search operation. The `Shift` key can be held in combination with a
+    click of the right mosue button in order to reverse the search direction.
+
 ## COMMAND EXECUTION
+
+TBD
 
 ## KEYBOARD SHORTCUTS
 
@@ -188,12 +242,15 @@ search operation to be applied in the opposite direction of the previous.
 
 ## ENVIRONMENT
 
+* `EDITTAGS`:
+    The contents of this environment variable is used to initialize the contents
+    of the tags region of the window.
+
 * `SHELL`:
     The contents of this variable are used as the shell in which all non-builtin
     commands are executed. If this variable is not defined, sh(1) is used
     as a fallback shell.
 
-## BUGS
 ## AUTHOR
 
 Michael D. Lowis
