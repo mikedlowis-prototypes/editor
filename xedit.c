@@ -168,7 +168,7 @@ void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
     if (win_btnpressed(MOUSE_BTN_LEFT)) {
         cut();
     } else {
-        char* str = view_fetchcmd(win_view(id), row, col);
+        char* str = view_fetch(win_view(id), row, col);
         if (str) exec(str);
         free(str);
     }
@@ -180,11 +180,8 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
-        SearchTerm = view_getstr(win_view(id), NULL);
-        Sel before = win_view(EDIT)->selection;
-        view_findstr(win_view(EDIT), SearchDir, SearchTerm);
-        Sel after = win_view(EDIT)->selection;
-        if (memcmp(&before, &after, sizeof(Sel))) {
+        SearchTerm = view_fetch(win_view(id), row, col);
+        if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
             win_setregion(EDIT);
             win_warpptr(EDIT);
         }

@@ -2,7 +2,8 @@
 
 Up Next:
 
-* Status line should omit characters from beginning of path to make file path fit
+* fix crash on saving read-only file
+
 * clipboard does not persist after exit
 * Run commands in the background and don't block the main thread.
 * Make Fn keys execute nth command in the tags buffer
@@ -14,6 +15,7 @@ Up Next:
 * Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
 * Add keyboard shortcut to highlight the thing under the cursor
 * right click to fetch file or line
+* Status line should omit characters from beginning of path to make file path fit
 
 Straight-up Bugs:
 

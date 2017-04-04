@@ -348,7 +348,7 @@ size_t view_selsize(View* view) {
     return num_selected(view->selection);
 }
 
-char* view_fetchcmd(View* view, size_t row, size_t col) {
+char* view_fetch(View* view, size_t row, size_t col) {
    char* str = NULL;
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
@@ -364,12 +364,14 @@ char* view_fetchcmd(View* view, size_t row, size_t col) {
     return str;
 }
 
-void view_findstr(View* view, int dir, char* str) {
+bool view_findstr(View* view, int dir, char* str) {
     Sel sel = view->selection;
     buf_findstr(&(view->buffer), dir, str, &sel.beg, &sel.end);
+    bool found = (0 != memcmp(&sel, &(view->selection), sizeof(Sel)));
     view->selection = sel;
     view->sync_needed = true;
     view->sync_center = true;
+    return found;
 }
 
 void view_insert(View* view, bool indent, Rune rune) {
