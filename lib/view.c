@@ -140,7 +140,7 @@ static void sync_center(View* view, size_t csr) {
         (move < 0 ? scroll_up : scroll_dn)(view);
 }
 
-static void sync_view(View* view, size_t csr) {
+void view_scrollto(View* view, size_t csr) {
     if (!view->nrows) return;
     unsigned first = view->rows[0]->off;
     unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
@@ -227,7 +227,7 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     /* scroll the view and reflow the screen lines */
     reflow(view);
     if (view->sync_needed)
-        sync_view(view, csr);
+        view_scrollto(view, csr);
     /* find the cursor on the new screen */
     for (size_t y = 0; y < view->nrows; y++) {
         size_t start = view->rows[y]->off;
@@ -290,7 +290,7 @@ void view_selext(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
         view->selection.end = off;
-        sync_view(view, view->selection.end);
+        view_scrollto(view, view->selection.end);
     }
 }
 
@@ -382,10 +382,8 @@ void view_insert(View* view, bool indent, Rune rune) {
         sel.beg = sel.end = buf_change(&(view->buffer), sel.beg, sel.end);
         view->selection = sel;
     }
-    view->selection.end = buf_insert(&(view->buffer), indent, view->selection.end, rune);
-    view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed   = true;
+    unsigned newpos = buf_insert(&(view->buffer), indent, view->selection.end, rune);
+    view_jumpto(view, false, newpos);
 }
 
 void view_delete(View* view, int dir, bool byword) {
@@ -393,9 +391,15 @@ void view_delete(View* view, int dir, bool byword) {
     if (sel->beg == sel->end)
         (byword ? view_byword : view_byrune)(view, dir, true);
     selswap(sel);
-    sel->end = buf_delete(&(view->buffer), sel->beg, sel->end);
-    sel->beg = sel->end;
-    sel->col = buf_getcol(&(view->buffer), sel->end);
+    unsigned newpos = buf_delete(&(view->buffer), sel->beg, sel->end);
+    view_jumpto(view, false, newpos);
+}
+
+void view_jumpto(View* view, bool extsel, size_t off) {
+    view->selection.end = off;
+    if (!extsel)
+        view->selection.beg = view->selection.end;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
 }
 
@@ -407,49 +411,36 @@ void view_bol(View* view, bool extsel) {
     for (; ' ' == buf_get(buf, boi) || '\t' == buf_get(buf, boi); boi++);
     unsigned pos = view->selection.end;
     pos = (pos == bol || pos > boi ? boi : bol);
-
-    /* set the new cursor position */
-    view->selection.end = pos;
-    if (!extsel)
-        view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(buf, view->selection.end);
-    view->sync_needed = true;
+    view_jumpto(view, extsel, pos);
 }
 
 void view_eol(View* view, bool extsel) {
-    view->selection.end = buf_eol(&(view->buffer), view->selection.end);
-    if (!extsel)
-        view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    view_jumpto(view, extsel, buf_eol(&(view->buffer), view->selection.end));
 }
 
 void view_bof(View* view, bool extsel) {
-    view->selection.end = 0;
-    if (!extsel)
-        view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    view_jumpto(view, extsel, 0);
 }
 
 void view_eof(View* view, bool extsel) {
-    view->selection.end = buf_end(&(view->buffer));
-    if (!extsel)
-        view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    view_jumpto(view, extsel, buf_end(&(view->buffer)));
+}
+
+void view_setln(View* view, size_t line) {
+    view_jumpto(view, false, buf_setln(&(view->buffer), line));
+    view->sync_center = true;
 }
 
 void view_undo(View* view) {
     buf_undo(&(view->buffer), &(view->selection));
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    view_jumpto(view, true, view->selection.end);
+    view->sync_center = true;
 }
 
 void view_redo(View* view) {
     buf_redo(&(view->buffer), &(view->selection));
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    view_jumpto(view, true, view->selection.end);
+    view->sync_center = true;
 }
 
 void view_putstr(View* view, char* str) {
@@ -517,7 +508,7 @@ char* view_getcmd(View* view) {
 }
 
 char* view_getctx(View* view) {
-    if (0 == num_selected(view->selection)) {
+    if (!num_selected(view->selection)) {
         selcontext(view, &(view->selection));
         view->selection.end++;
     }
@@ -538,14 +529,6 @@ void view_scroll(View* view, int move) {
 void view_scrollpage(View* view, int move) {
     move = (move < 0 ? -1 : 1) * view->nrows;
     view_scroll(view, move);
-}
-
-void view_setln(View* view, size_t line) {
-    view->selection.end = buf_setln(&(view->buffer), line);
-    view->selection.beg = view->selection.end;
-    view->selection.col = 0;
-    view->sync_needed   = true;
-    view->sync_center   = true;
 }
 
 void view_indent(View* view, int dir) {
@@ -579,8 +562,4 @@ void view_indent(View* view, int dir) {
         off = buf_byline(buf, off, UP);
 
    } while (off && off >= view->selection.beg);
-}
-
-void view_jumpto(View* view, size_t off) {
-    sync_view(view, off);
 }

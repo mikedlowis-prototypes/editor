@@ -509,7 +509,7 @@ static KeyBinding Bindings[] = {
 void onscroll(double percent) {
     size_t bend = buf_end(win_buf(EDIT));
     size_t off  = (size_t)((double)bend * percent);
-    view_jumpto(win_view(EDIT), (off >= bend ? bend : off));    
+    view_scrollto(win_view(EDIT), (off >= bend ? bend : off));    
 }
 
 void onupdate(void) {
