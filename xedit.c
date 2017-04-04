@@ -180,9 +180,14 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
-        view_find(win_view(id), SearchDir, row, col);
         SearchTerm = view_getstr(win_view(id), NULL);
-        win_warpptr(id);
+        Sel before = win_view(EDIT)->selection;
+        view_findstr(win_view(EDIT), SearchDir, SearchTerm);
+        Sel after = win_view(EDIT)->selection;
+        if (memcmp(&before, &after, sizeof(Sel))) {
+            win_setregion(EDIT);
+            win_warpptr(EDIT);
+        }
     }
 }
 
@@ -555,4 +560,3 @@ int main(int argc, char** argv) {
     return 0;
 }
 #endif
-

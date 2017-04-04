@@ -9,13 +9,11 @@ Up Next:
 
 * check for file changes on save
 * check for file changes when window regains focus
-* Right click in tags region should search edit region
 * 100% coverage with unit and unit-integration tests
 * Add a SaveAs tag that takes an argument for the filename to save as
 * Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
 * Add keyboard shortcut to highlight the thing under the cursor
 * right click to fetch file or line
-* selecting text should set PRIMARY x11 selection
 
 Straight-up Bugs:
 

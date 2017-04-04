@@ -340,8 +340,7 @@ void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col);
     Sel sel = view->selection;
     selcontext(view, &sel);
-    if (sel.end+1 < buf_end(&(view->buffer)))
-        sel.end++;
+    sel.end = buf_byrune(&(view->buffer), sel.end, RIGHT);
     view->selection = sel;
 }
 
@@ -363,25 +362,6 @@ char* view_fetchcmd(View* view, size_t row, size_t col) {
         str = view_getstr(view, &sel);
     }
     return str;
-}
-
-void view_find(View* view, int dir, size_t row, size_t col) {
-    size_t off = getoffset(view, row, col);
-    if (off != SIZE_MAX) {
-        Sel sel = view->selection;
-        if (!num_selected(sel) || !in_selection(sel, off)) {
-            view_setcursor(view, row, col);
-            sel = view->selection;
-            selcontext(view, &sel);
-            buf_find(&(view->buffer), dir, &sel.beg, &sel.end);
-            sel.end++;
-        } else {
-            buf_find(&(view->buffer), dir, &sel.beg, &sel.end);
-        }
-        view->selection = sel;
-        view->sync_needed = true;
-        view->sync_center = true;
-    }
 }
 
 void view_findstr(View* view, int dir, char* str) {

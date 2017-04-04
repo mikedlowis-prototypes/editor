@@ -143,7 +143,6 @@ void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
 char* view_fetchcmd(View* view, size_t row, size_t col);
-void view_find(View* view, int dir, size_t row, size_t col);
 void view_findstr(View* view, int dir, char* str);
 void view_insert(View* view, bool indent, Rune rune);
 void view_delete(View* view, int dir, bool byword);
