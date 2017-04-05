@@ -37,10 +37,11 @@ install: all
 	mkdir -p $(PREFIX)/bin
 	cp -f xedit $(PREFIX)/bin
 	cp -f xpick $(PREFIX)/bin
-	cp xfilepick $(PREFIX)/bin
-	cp xtagpick $(PREFIX)/bin
-	cp xman $(PREFIX)/bin
-	cp edit $(PREFIX)/bin
+	cp -f xcpd $(PREFIX)/bin
+	cp -f xfilepick $(PREFIX)/bin
+	cp -f xtagpick $(PREFIX)/bin
+	cp -f xman $(PREFIX)/bin
+	cp -f edit $(PREFIX)/bin
 
 uninstall:
 	rm -f $(PREFIX)/bin/xedit
