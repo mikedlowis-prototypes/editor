@@ -1,6 +1,6 @@
 INCS = -Iinc/
 
-BINS = xedit xpick term
+BINS = xedit xpick xcpd term
 MAN1 = docs/edit.1 docs/xedit.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
 
 LIBEDIT_OBJS =     \
@@ -57,7 +57,8 @@ libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 xedit: xedit.o libedit.a
-xpick: xpick.o libedit.a	
+xpick: xpick.o libedit.a
+xcpd: xcpd.o libedit.a
 term: term.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/xedit: tests/xedit.o libedit.a

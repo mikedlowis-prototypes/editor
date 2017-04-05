@@ -3,8 +3,6 @@
 Up Next:
 
 * fix crash on saving read-only file
-
-* clipboard does not persist after exit
 * Run commands in the background and don't block the main thread.
 * Make Fn keys execute nth command in the tags buffer
 

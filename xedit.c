@@ -552,7 +552,6 @@ int main(int argc, char** argv) {
     win_setruler(80);
     view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL));
     win_setkeys(Bindings);
-    //win_setmouse(&MouseHandlers);
     win_loop();
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <stdc.h>
 #include <x11.h>
 #include <utf.h>
+#include <edit.h>
 #include <locale.h>
 
 static struct XSel* selfetch(Atom atom); 
@@ -323,8 +324,7 @@ void x11_handle_events(void) {
 }
 
 void x11_loop(void) {
-    XEvent e;
-    while (Running) {
+    for (XEvent e; Running;) {
         XPeekEvent(X.display,&e);
         x11_handle_events();
         if (Running) {
@@ -335,6 +335,9 @@ void x11_loop(void) {
         }
     }
     XCloseDisplay(X.display);
+    /* we're exiting now. If we own the clipboard, make sure it persists */
+    if (Selections[CLIPBOARD].text)
+        cmdwrite((char*[]){ "xcpd", NULL }, Selections[CLIPBOARD].text, NULL);
 }
 
 XFont x11_font_load(char* name) {
