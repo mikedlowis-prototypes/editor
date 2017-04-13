@@ -12,8 +12,15 @@ die() {
 # the new working directory.
 edit_relative_ctags(){
     origdir="$PWD"
-    origpath="$PWD/$1"
+    case "$1" in
+        /*) origpath="$1" ;;      # absoulte path given
+        *)  origpath="$PWD/$1" ;; # relative path given
+    esac
     path="${origpath##*/}"
+
+    # try to cd to the directory containing the file and attempt to walk the 
+    # tree backwars until we find a tags file. if one is found, open the file
+    # from that directory.
     cd "${origpath%/*}" || die "could not open file: '$1'"
     dir="$PWD"
     while [ "$dir" != "" ]; do
@@ -24,6 +31,8 @@ edit_relative_ctags(){
             dir="${dir%/*}"
         fi
     done
+
+    # file is not part of a project. open it as-is
     cd "$origdir" && exec nohup xedit "$1" > /dev/null 2>&1
 }
 
