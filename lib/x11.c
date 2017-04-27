@@ -6,6 +6,8 @@
 #include <utf.h>
 #include <edit.h>
 #include <locale.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 static struct XSel* selfetch(Atom atom); 
 static void selclear(XEvent* evnt);
@@ -324,9 +326,19 @@ void x11_handle_events(void) {
 }
 
 void x11_loop(void) {
+    fd_set fds;
+    int xfd = ConnectionNumber(X.display);
     for (XEvent e; Running;) {
-        XPeekEvent(X.display,&e);
-        x11_handle_events();
+        struct timeval tv = { .tv_usec = 100000 };
+        FD_ZERO(&fds);
+        FD_SET(xfd, &fds);
+    
+        int ready = select(xfd+1, &fds, NULL, NULL, &tv);
+        if (ready > 0)
+            x11_handle_events();
+        //else
+        //    timer expired
+        
         if (Running) {
             /* redraw the window */
             Config->redraw(X.width, X.height);
