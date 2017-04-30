@@ -338,6 +338,7 @@ void x11_loop(void) {
             /* redraw the window */
             Config->redraw(X.width, X.height);
             XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+            XFlush(X.display);
         }
         
     }
