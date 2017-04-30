@@ -140,10 +140,8 @@ void x11_window(char* name, int width, int height) {
         | ButtonReleaseMask
         | ButtonMotionMask
         | PointerMotionMask
-        | PointerMotionHintMask
         | KeyPressMask
-        | ExposureMask
-        | FocusChangeMask);
+    );
     
     /* set input methods */
     if ((X.xim = XOpenIM(X.display, 0, 0, 0)))
@@ -293,8 +291,6 @@ static void handle_mouse(XEvent* e) {
 void x11_handle_event(XEvent* e) {
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
     switch (e->type) {
-        case FocusIn:          if (X.xic) XSetICFocus(X.xic);   break;
-        case FocusOut:         if (X.xic) XUnsetICFocus(X.xic); break;
         case KeyPress:         handle_key(e);                   break;
         case ButtonRelease:    handle_mouse(e);                 break;
         case ButtonPress:      handle_mouse(e);                 break;
@@ -329,31 +325,21 @@ void x11_handle_events(void) {
 void x11_loop(void) {
     fd_set fds;
     int xfd = ConnectionNumber(X.display);
-    Window xw;
-    unsigned int ux;
-    int winx, winy, x;
-    
     for (XEvent e; Running;) {
         struct timeval tv = { .tv_usec = 100000 };
         FD_ZERO(&fds);
         FD_SET(xfd, &fds);
         
-        /* wait for activity on the socket. if we tiemd out, query for the 
-           pointer position so we can track the mouse focus without flooding the 
-           event queue with motion events */
         int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
-        if (ready > 0) {
+        if (ready > 0)
             x11_handle_events();
-        } else {
-            XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, &winx, &winy, &ux);
-        }
-        
+
         if (Running) {
             /* redraw the window */
             Config->redraw(X.width, X.height);
             XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
-            XFlush(X.display);
         }
+        
     }
     XCloseDisplay(X.display);
     /* we're exiting now. If we own the clipboard, make sure it persists */
@@ -599,7 +585,6 @@ static void selrequest(XEvent* evnt) {
             (unsigned char*)sel->text, strlen(sel->text));
     }
     XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
-    XFlush(X.display);
 }
 
 bool x11_getsel(int selid, void(*cbfn)(char*)) {
@@ -611,7 +596,6 @@ bool x11_getsel(int selid, void(*cbfn)(char*)) {
     } else if (owner != None){
         sel->callback = cbfn;    
         XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
-        XFlush(X.display);
     }
     return true;
 }
@@ -624,7 +608,6 @@ bool x11_setsel(int selid, char* str) {
     } else {
         sel->text = str;
         XSetSelectionOwner(X.display, sel->atom, X.window, CurrentTime);
-        XFlush(X.display);
         return true;
     }
 }
