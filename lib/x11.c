@@ -140,6 +140,7 @@ void x11_window(char* name, int width, int height) {
         | ButtonReleaseMask
         | ButtonMotionMask
         | PointerMotionMask
+        | PointerMotionHintMask
         | KeyPressMask
         | ExposureMask
         | FocusChangeMask);
@@ -328,16 +329,24 @@ void x11_handle_events(void) {
 void x11_loop(void) {
     fd_set fds;
     int xfd = ConnectionNumber(X.display);
+    Window xw;
+    unsigned int ux;
+    int winx, winy, x;
+    
     for (XEvent e; Running;) {
         struct timeval tv = { .tv_usec = 100000 };
         FD_ZERO(&fds);
         FD_SET(xfd, &fds);
-    
-        int ready = select(xfd+1, &fds, NULL, NULL, &tv);
-        if (ready > 0)
+        
+        /* wait for activity on the socket. if we tiemd out, query for the 
+           pointer position so we can track the mouse focus without flooding the 
+           event queue with motion events */
+        int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
+        if (ready > 0) {
             x11_handle_events();
-        //else
-        //    timer expired
+        } else {
+            XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, &winx, &winy, &ux);
+        }
         
         if (Running) {
             /* redraw the window */
@@ -590,16 +599,20 @@ static void selrequest(XEvent* evnt) {
             (unsigned char*)sel->text, strlen(sel->text));
     }
     XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
+    XFlush(X.display);
 }
 
 bool x11_getsel(int selid, void(*cbfn)(char*)) {
     struct XSel* sel = &(Selections[selid]);
     if (sel->callback) return false;
-    if (XGetSelectionOwner(X.display, sel->atom) == None) 
-        return true;
-    sel->callback = cbfn;    
-    XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
-    XFlush(X.display);
+    Window owner = XGetSelectionOwner(X.display, sel->atom);
+    if (owner == X.window) {
+        cbfn(sel->text);
+    } else if (owner != None){
+        sel->callback = cbfn;    
+        XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
+        XFlush(X.display);
+    }
     return true;
 }
 
