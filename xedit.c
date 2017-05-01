@@ -287,6 +287,15 @@ static void redo(void) {
     view_redo(win_view(FOCUSED));
 }
 
+static void tag_save(char* arg) {
+    if (arg) {
+        char* path = win_buf(EDIT)->path;
+        win_buf(EDIT)->path = stringdup(arg);
+        buf_save(win_buf(EDIT));
+        free(path);
+    }
+}
+
 static void tag_undo(void) {
     view_undo(win_view(EDIT));
 }
@@ -437,6 +446,7 @@ static void newline(void) {
 static Tag Builtins[] = {
     { .tag = "Quit",   .action.noarg = quit     },
     { .tag = "Save",   .action.noarg = save     },
+    { .tag = "SaveAs", .action.arg   = tag_save },
     { .tag = "Cut",    .action.noarg = cut      },
     { .tag = "Copy",   .action.noarg = copy     },
     { .tag = "Paste",  .action.noarg = paste    },

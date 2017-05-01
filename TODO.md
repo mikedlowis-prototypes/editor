@@ -2,24 +2,22 @@
 
 Up Next:
 
-* fix crash on saving read-only file
-* Run commands in the background and don't block the main thread.
+* refactor x11.c and win.c
+* Add a GoTo tag for ctags lookup and line number jump (or right click magic?)
+* Add keyboard shortcut to highlight the thing under the cursor
 * Make Fn keys execute nth command in the tags buffer
-
+* Run commands in the background and don't block the main thread.
 * check for file changes on save
 * check for file changes when window regains focus
 * 100% coverage with unit and unit-integration tests
-* Add a SaveAs tag that takes an argument for the filename to save as
-* Add a GoTo tag for ctags lookup and line number jump (or right click magic?) 
-* Add keyboard shortcut to highlight the thing under the cursor
 * right click to fetch file or line
 * Status line should omit characters from beginning of path to make file path fit
 
 Straight-up Bugs:
 
+* fix crash on saving read-only file
+* fix crash on save to file that can't be created
 * tab inserts dont coalesce like one would expect
-* off by one error on scrolling up with wrapped lines
-* Ctrl+u with a selection clears to bol *before* selected text
 
 The Future:
 

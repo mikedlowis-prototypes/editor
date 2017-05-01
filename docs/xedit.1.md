@@ -217,7 +217,7 @@ search operation to be applied in the opposite direction of the previous.
     Copy the selection to the X11 CLIPBOARD selection.
 * `Eol`:
     Toggle the line-ending style for the buffers contents between LF and CRLF
-* `Find`:
+* `Find [term]`:
     Find the next occurrence of the selected text.
 * `Indent`:
     Toggle the autoindent feature on or off.
@@ -229,6 +229,9 @@ search operation to be applied in the opposite direction of the previous.
     Redo the last undone change.
 * `Save`:
     Save the contents of the buffer to disk.
+* `SaveAs [path]`:
+    Save the contents of the buffer to disk. If a path argument is provided, the 
+    buffer will be saved to the new path.
 * `Tabs`:
     Toggle the expand tabs featuer on or off.
 * `Undo`:
