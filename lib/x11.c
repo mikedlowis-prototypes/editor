@@ -136,6 +136,7 @@ void x11_window(char* name, int width, int height) {
         | ButtonReleaseMask
         | ButtonMotionMask
         | PointerMotionMask
+        | PointerMotionHintMask
         | KeyPressMask
     );
     
@@ -330,6 +331,9 @@ void x11_loop(void) {
         /* wait for events with a timeout, then handle them if we got any */
         int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
         if (ready > 0) {
+            Window xw; int x, winx, winy; unsigned int ux;
+            XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, &winx, &winy, &ux);
+            Config->handle_mouse(MOUSE_ACT_MOVE, MOUSE_BTN_LEFT, winx, winy);
             x11_handle_events();
             Config->redraw(X.width, X.height);
             XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
