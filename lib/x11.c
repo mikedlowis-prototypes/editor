@@ -324,21 +324,19 @@ void x11_loop(void) {
     int xfd = ConnectionNumber(X.display);
     for (XEvent e; Running;) {
         /* configure for 100ms timeout */
-        struct timeval tv = { .tv_usec = 50000 };
+        struct timeval tv = { .tv_usec = 100000 };
         FD_ZERO(&fds);
         FD_SET(xfd, &fds);
 
         /* wait for events with a timeout, then handle them if we got any */
         int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
         if (ready > 0) {
-            Window xw; int x, winx, winy; unsigned int ux;
-            XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, &winx, &winy, &ux);
-            Config->handle_mouse(MOUSE_ACT_MOVE, MOUSE_BTN_LEFT, winx, winy);
             x11_handle_events();
             Config->redraw(X.width, X.height);
             XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
         } else {
-            XFlush(X.display);
+            Window xw; int x; unsigned int ux;
+            XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, &x, &x, &ux);
         }
     }
     XCloseDisplay(X.display);
