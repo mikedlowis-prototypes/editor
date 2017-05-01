@@ -31,7 +31,7 @@ struct XFont {
     struct {
         XftFont* font;
         uint32_t unicodep;
-    } cache[MAXFONTS];
+    } cache[FontCacheSize];
     int ncached;
 };
 
@@ -435,8 +435,8 @@ void x11_font_getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
     FcDefaultSubstitute(fcpattern);
     FcPattern* fontmatch = FcFontSetMatch(0, fcsets, 1, fcpattern, &fcres);
     /* add the font to the cache and use it */
-    if (font->ncached >= MAXFONTS) {
-        font->ncached = MAXFONTS - 1;
+    if (font->ncached >= FontCacheSize) {
+        font->ncached = FontCacheSize - 1;
         XftFontClose(X.display, font->cache[font->ncached].font);
     }
     font->cache[font->ncached].font = XftFontOpenPattern(X.display, fontmatch);

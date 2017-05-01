@@ -4,7 +4,7 @@ Up Next:
 
 * refactor x11.c and win.c
 * Add keyboard shortcut to highlight the thing under the cursor
-* Make Fn keys execute nth command in the tags buffer
+* Make Fn keys execute nth command in the tags buffers
 * Run commands in the background and don't block the main thread.
 * check for file changes on save
 * check for file changes when window regains focus

@@ -205,11 +205,12 @@ enum ColorId {
 /* Configuration
  *****************************************************************************/
 enum {
-    Width       = 640,  /* default window width */
-    Height      = 480,  /* default window height */
-    TabWidth    = 4,    /* maximum number of spaces used to represent a tab */
-    ScrollLines = 4,    /* number of lines to scroll by for mouse wheel scrolling */
-    BufSize     = 8192, /* default buffer size */
+    Width         = 640,  /* default window width */
+    Height        = 480,  /* default window height */
+    TabWidth      = 4,    /* maximum number of spaces used to represent a tab */
+    ScrollLines   = 4,    /* number of lines to scroll by for mouse wheel scrolling */
+    BufSize       = 8192, /* default buffer size */
+    FontCacheSize = 16,   /* Maximum number of fonts allowed in the font cache */
 };
 
 /* choose the font to  use for xft */
