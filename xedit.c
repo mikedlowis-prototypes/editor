@@ -287,7 +287,7 @@ static void redo(void) {
     view_redo(win_view(FOCUSED));
 }
 
-static void tag_save(char* arg) {
+static void saveas(char* arg) {
     if (arg) {
         char* path = win_buf(EDIT)->path;
         win_buf(EDIT)->path = stringdup(arg);
@@ -381,17 +381,21 @@ static void complete(void) {
     free(PickTagCmd[3]);
 }
 
-static void goto_ctag(void) {
-    char* str = view_getctx(win_view(FOCUSED));
-    if (str) {
-        size_t line = strtoul(str, NULL, 0);
+static void jump_to(char* arg) {
+    if (arg) {
+        size_t line = strtoul(arg, NULL, 0);
         if (line) {
             view_setln(win_view(EDIT), line);
             win_setregion(EDIT);
         } else {
-            pick_symbol(str);
+            pick_symbol(arg);
         }
     }
+}
+
+static void goto_ctag(void) {
+    char* str = view_getctx(win_view(FOCUSED));
+    jump_to(str);
     free(str);
 }
 
@@ -446,13 +450,14 @@ static void newline(void) {
 static Tag Builtins[] = {
     { .tag = "Quit",   .action.noarg = quit     },
     { .tag = "Save",   .action.noarg = save     },
-    { .tag = "SaveAs", .action.arg   = tag_save },
+    { .tag = "SaveAs", .action.arg   = saveas   },
     { .tag = "Cut",    .action.noarg = cut      },
     { .tag = "Copy",   .action.noarg = copy     },
     { .tag = "Paste",  .action.noarg = paste    },
     { .tag = "Undo",   .action.noarg = tag_undo },
     { .tag = "Redo",   .action.noarg = tag_redo },
     { .tag = "Find",   .action.arg   = find     },
+    { .tag = "GoTo",   .action.arg   = jump_to  },
     { .tag = "Tabs",   .action.noarg = tabs     },
     { .tag = "Indent", .action.noarg = indent   },
     { .tag = "Eol",    .action.noarg = eol_mode },

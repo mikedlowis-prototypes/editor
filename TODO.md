@@ -3,7 +3,6 @@
 Up Next:
 
 * refactor x11.c and win.c
-* Add a GoTo tag for ctags lookup and line number jump (or right click magic?)
 * Add keyboard shortcut to highlight the thing under the cursor
 * Make Fn keys execute nth command in the tags buffer
 * Run commands in the background and don't block the main thread.

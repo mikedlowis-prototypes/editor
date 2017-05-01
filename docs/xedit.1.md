@@ -219,6 +219,8 @@ search operation to be applied in the opposite direction of the previous.
     Toggle the line-ending style for the buffers contents between LF and CRLF
 * `Find [term]`:
     Find the next occurrence of the selected text.
+* `GoTo [arg]`:
+    Jump to a specific line number or symbol.
 * `Indent`:
     Toggle the autoindent feature on or off.
 * `Paste`:
