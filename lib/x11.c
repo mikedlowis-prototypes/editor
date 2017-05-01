@@ -14,10 +14,6 @@ static void selclear(XEvent* evnt);
 static void selnotify(XEvent* evnt);
 static void selrequest(XEvent* evnt);
 
-#ifndef MAXFONTS
-#define MAXFONTS 16
-#endif
-
 struct XFont {
     struct {
         int height;
@@ -326,21 +322,20 @@ void x11_loop(void) {
     fd_set fds;
     int xfd = ConnectionNumber(X.display);
     for (XEvent e; Running;) {
-        struct timeval tv = { .tv_usec = 100000 };
+        /* configure for 100ms timeout */
+        struct timeval tv = { .tv_usec = 50000 };
         FD_ZERO(&fds);
         FD_SET(xfd, &fds);
-        
-        int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
-        if (ready > 0)
-            x11_handle_events();
 
-        if (Running) {
-            /* redraw the window */
+        /* wait for events with a timeout, then handle them if we got any */
+        int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
+        if (ready > 0) {
+            x11_handle_events();
             Config->redraw(X.width, X.height);
             XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+        } else {
             XFlush(X.display);
         }
-        
     }
     XCloseDisplay(X.display);
     /* we're exiting now. If we own the clipboard, make sure it persists */

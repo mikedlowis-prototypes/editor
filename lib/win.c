@@ -170,9 +170,12 @@ static void layout(int width, int height) {
 static void onredraw(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-    onupdate(); // Let the user program update the status and such
+    
     /* layout and draw the three text regions */
+    onupdate(); // Let the user program update the status and such
     layout(width, height);
+    onupdate(); // Let the user program update the status and such
+    
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);
         x11_draw_rect((i == TAGS ? CLR_BASE02 : CLR_BASE03), 
@@ -194,7 +197,7 @@ static void onredraw(int width, int height) {
     x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
     x11_draw_rect(CLR_BASE00, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
     x11_draw_rect(CLR_BASE03, 0, thumboff, Regions[SCROLL].width, thumbsz);
-
+    
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
         x11_draw_rect(CLR_BASE3, 
