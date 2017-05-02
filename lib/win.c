@@ -63,15 +63,24 @@ void win_dialog(char* name) {
     x11_dialog(name, Width, Height);
 }
 
-void win_loop(void) {
+static bool update_focus(void) {
+    static int prev_x = 0, prev_y = 0;
     int ptr_x, ptr_y;
+    bool changed = true;
+    x11_mouse_get(&ptr_x, &ptr_y);
+    if (prev_x != ptr_x || prev_y != ptr_y)
+        changed = win_setregion(getregion(ptr_x, ptr_y));
+    prev_x = ptr_x, prev_y = ptr_y;
+    return changed;
+}
+
+void win_loop(void) {
     x11_show();
+    x11_flip();
     while (x11_running()) {
         bool pending = x11_events_await(200 /* ms */);
         x11_flush();
-        x11_mouse_get(&ptr_x, &ptr_y);
-        win_setregion(getregion(ptr_x, ptr_y));
-        if (win_setregion(getregion(ptr_x, ptr_y)) || pending) {
+        if (update_focus() || pending) {
             x11_events_take();
             x11_flip();
         }
@@ -295,8 +304,6 @@ static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
             } else {
                 view_selext(win_view(selid), row, col);
             }
-        } else if (id == TAGS || id == EDIT) {
-            Focused = id;
         }
     } else {
         MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);

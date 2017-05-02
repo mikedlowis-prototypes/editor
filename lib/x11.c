@@ -135,8 +135,6 @@ void x11_window(char* name, int width, int height) {
         | ButtonPressMask
         | ButtonReleaseMask
         | ButtonMotionMask
-//        | PointerMotionMask
-//        | PointerMotionHintMask
         | KeyPressMask
     );
     
