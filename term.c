@@ -24,6 +24,9 @@ void onscroll(double percent) {
 void onupdate(void) {
 }
 
+void onlayout(void) {
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
     win_window("term");

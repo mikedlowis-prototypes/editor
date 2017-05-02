@@ -81,7 +81,8 @@ void win_loop(void) {
         bool pending = x11_events_await(200 /* ms */);
         if (update_focus() || pending) {
             x11_events_take();
-            x11_flip();
+            if (x11_running())
+                x11_flip();
         }
         x11_flush();
     }
@@ -195,9 +196,9 @@ static void onredraw(int width, int height) {
     size_t fwidth  = x11_font_width(Font);
     
     /* layout and draw the three text regions */
-    onupdate(); // Let the user program update the status and such
+    onupdate(); // Let the user program update the status and other content
     layout(width, height);
-    onupdate(); // Let the user program update the status and such
+    onlayout(); // Let the user program update the scroll bar
     
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);

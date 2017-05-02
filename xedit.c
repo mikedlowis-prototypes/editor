@@ -541,7 +541,9 @@ void onupdate(void) {
     strncat(status, path, remlen);
     win_settext(STATUS, status_bytes);
     win_view(STATUS)->selection = (Sel){0,0,0};
-    
+}
+
+void onlayout(void) {    
     /* calculate and update scroll region */
     View* view = win_view(EDIT);
     size_t bend = buf_end(win_buf(EDIT));

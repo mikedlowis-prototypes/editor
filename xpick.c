@@ -131,14 +131,14 @@ void onupdate(void) {
     win_settext(EDIT, "");
     View* view = win_view(EDIT);
     view->selection = (Sel){0,0,0};
-
-    score();
     Sel selection = (Sel){0,0,0};
+    
+    score();
     unsigned off = (ChoiceIdx >= view->nrows ? ChoiceIdx-view->nrows+1 : 0);
     for (int i = 0; (i < vec_size(&Choices)) && (i < view->nrows); i++) {
         unsigned beg = view->selection.end;
         Choice* choice = (Choice*)vec_at(&Choices, i+off);
-        for (char* str = choice->string; *str; str++)
+        for (char* str = choice->string; str && *str; str++)
             view_insert(view, false, *str);
         view_insert(view, false, '\n');
         if (ChoiceIdx == i+off) {
@@ -147,8 +147,12 @@ void onupdate(void) {
         }
     }
     view->selection = selection;
-    
+}
+
+void onlayout(void) {
     /* update scroll bar */
+    View* view = win_view(EDIT);
+    unsigned off = (ChoiceIdx >= view->nrows ? ChoiceIdx-view->nrows+1 : 0);
     double visible = (double)(win_view(EDIT)->nrows);
     double choices = (double)vec_size(&Choices);
     double current = (double)off;
