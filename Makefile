@@ -30,7 +30,7 @@ docs:
 
 clean:
 	find . -name '*.[oad]' -delete
-	$(RM) xpick xedit term tests/libedit
+	$(RM) xpick xedit xcpd term tests/libedit
 	$(RM) $(TEST_BINS)
 
 install: all
