@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-static struct XSel* selfetch(Atom atom); 
+static struct XSel* selfetch(Atom atom);
 static void selclear(XEvent* evnt);
 static void selnotify(XEvent* evnt);
 static void selrequest(XEvent* evnt);
@@ -135,8 +135,8 @@ void x11_window(char* name, int width, int height) {
         | ButtonPressMask
         | ButtonReleaseMask
         | ButtonMotionMask
-        | PointerMotionMask
-        | PointerMotionHintMask
+//        | PointerMotionMask
+//        | PointerMotionHintMask
         | KeyPressMask
     );
     
@@ -171,6 +171,28 @@ void x11_show(void) {
     XSendEvent(X.display, X.window, False, StructureNotifyMask, (XEvent *)&ce);
     XMapWindow(X.display, X.window);
 }
+
+bool x11_running(void) {
+    return Running;
+}
+
+void x11_flip(void) {
+    Config->redraw(X.width, X.height);
+    XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+}
+
+void x11_flush(void) {
+    XFlush(X.display);
+}
+
+void x11_finish(void) {
+    XCloseDisplay(X.display);
+    /* we're exiting now. If we own the clipboard, make sure it persists */
+    if (Selections[CLIPBOARD].text)
+        cmdwrite((char*[]){ "xcpd", NULL }, Selections[CLIPBOARD].text, NULL);
+}
+
+/******************************************************************************/
 
 static uint32_t special_keys(uint32_t key) {
     switch (key) {
@@ -310,7 +332,17 @@ void x11_handle_event(XEvent* e) {
     }
 }
 
-void x11_handle_events(void) {
+bool x11_events_await(unsigned int ms) {
+    fd_set fds;
+    int xfd = ConnectionNumber(X.display), redraw = 1;
+    /* configure for 100ms timeout */
+    struct timeval tv = { .tv_usec = ms * 1000 };
+    FD_ZERO(&fds);
+    FD_SET(xfd, &fds);
+    return (select(xfd+1, &fds, NULL, NULL, &tv) > 0);
+}
+
+void x11_events_take(void) {
     XEvent e;
     while (XPending(X.display)) {
         XNextEvent(X.display, &e);
@@ -319,30 +351,13 @@ void x11_handle_events(void) {
     }
 }
 
-void x11_loop(void) {
-    fd_set fds;
-    int xfd = ConnectionNumber(X.display);
-    for (XEvent e; Running;) {
-        /* configure for 100ms timeout */
-        struct timeval tv = { .tv_usec = 100000 };
-        FD_ZERO(&fds);
-        FD_SET(xfd, &fds);
+void x11_mouse_set(int x, int y) {
+    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
+}
 
-        /* wait for events with a timeout, then handle them if we got any */
-        int ready = select(xfd+1, &fds, NULL, NULL, &tv); 
-        if (ready > 0) {
-            x11_handle_events();
-            Config->redraw(X.width, X.height);
-            XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
-        } else {
-            Window xw; int x; unsigned int ux;
-            XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, &x, &x, &ux);
-        }
-    }
-    XCloseDisplay(X.display);
-    /* we're exiting now. If we own the clipboard, make sure it persists */
-    if (Selections[CLIPBOARD].text)
-        cmdwrite((char*[]){ "xcpd", NULL }, Selections[CLIPBOARD].text, NULL);
+void x11_mouse_get(int* ptrx, int* ptry) {
+    Window xw; int x; unsigned int ux;
+    XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, ptrx, ptry, &ux);
 }
 
 XFont x11_font_load(char* name) {
@@ -497,10 +512,6 @@ void x11_draw_utf8(XFont fnt, int fg, int bg, int x, int y, char* str) {
     x11_draw_glyphs(fg, bg, (XGlyphSpec*)specs, nspecs);
 }
 
-void x11_warp_mouse(int x, int y) {
-    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
-}
-
 /* Selection Handling
  *****************************************************************************/
 
@@ -585,7 +596,7 @@ static void selrequest(XEvent* evnt) {
     XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
 }
 
-bool x11_getsel(int selid, void(*cbfn)(char*)) {
+bool x11_sel_get(int selid, void(*cbfn)(char*)) {
     struct XSel* sel = &(Selections[selid]);
     if (sel->callback) return false;
     Window owner = XGetSelectionOwner(X.display, sel->atom);
@@ -598,7 +609,7 @@ bool x11_getsel(int selid, void(*cbfn)(char*)) {
     return true;
 }
 
-bool x11_setsel(int selid, char* str) {
+bool x11_sel_set(int selid, char* str) {
     struct XSel* sel = &(Selections[selid]);
     if (!sel || !str || !*str) {
         free(str);

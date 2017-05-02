@@ -45,7 +45,7 @@ Buf* win_buf(WinRegion id);
 Sel* win_sel(WinRegion id);
 bool win_btnpressed(MouseBtn btn);
 WinRegion win_getregion(void);
-void win_setregion(WinRegion id);
+bool win_setregion(WinRegion id);
 void win_setscroll(double offset, double visible);
 
 /* These functions must be implemented by any appliation that wishes 

@@ -64,8 +64,20 @@ void win_dialog(char* name) {
 }
 
 void win_loop(void) {
+    int ptr_x, ptr_y;
     x11_show();
-    x11_loop();
+    while (x11_running()) {
+        bool pending = x11_events_await(200 /* ms */);
+        x11_flush();
+        x11_mouse_get(&ptr_x, &ptr_y);
+        win_setregion(getregion(ptr_x, ptr_y));
+        if (win_setregion(getregion(ptr_x, ptr_y)) || pending) {
+            x11_events_take();
+            x11_flip();
+        }
+        x11_flush();
+    }
+    x11_finish();
 }
 
 void win_settext(WinRegion id, char* text) {
@@ -94,8 +106,11 @@ WinRegion win_getregion(void) {
     return Focused;
 }
 
-void win_setregion(WinRegion id) {
-    Focused = id;
+bool win_setregion(WinRegion id) {
+    bool changed = true;
+    if (id == TAGS || id == EDIT)
+        changed = true, Focused = id;
+    return changed;
 }
 
 void win_warpptr(WinRegion id) {
@@ -211,7 +226,7 @@ static void onredraw(int width, int height) {
         Regions[Focused].warp_ptr = false;
         size_t x = Regions[Focused].x + (Regions[Focused].csrx * fwidth)  - (fwidth/2);
         size_t y = Regions[Focused].y + (Regions[Focused].csry * fheight) + (fheight/2);
-        x11_warp_mouse(x,y);
+        x11_mouse_set(x, y);
     }
 }
 

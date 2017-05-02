@@ -134,20 +134,29 @@ bool x11_keymodsset(int mask);
 void x11_window(char* name, int width, int height);
 void x11_dialog(char* name, int height, int width);
 void x11_show(void);
-void x11_loop(void);
-void x11_handle_events(void);
+bool x11_running(void);
+void x11_flip(void);
+void x11_flush(void);
+void x11_finish(void);
+
+bool x11_events_await(unsigned int ms);
+void x11_events_take(void);
+
+void x11_mouse_get(int* x, int* y);
+void x11_mouse_set(int x, int y);
+
 XFont x11_font_load(char* name);
 size_t x11_font_height(XFont fnt);
 size_t x11_font_width(XFont fnt);
 size_t x11_font_descent(XFont fnt);
-void x11_draw_rect(int color, int x, int y, int width, int height);
-void x11_getsize(int* width, int* height);
-void x11_warp_mouse(int x, int y);
-void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
 size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
+
+void x11_draw_rect(int color, int x, int y, int width, int height);
+void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 void x11_draw_glyphs(int fg, int bg, XGlyphSpec* glyphs, size_t nglyphs);
 void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
-bool x11_getsel(int selid, void(*cbfn)(char*));
-bool x11_setsel(int selid, char* str);
+
+bool x11_sel_get(int selid, void(*cbfn)(char*));
+bool x11_sel_set(int selid, char* str);
 

@@ -116,17 +116,17 @@ static void onpaste(char* text) {
 
 static void cut(void) {
     char* str = view_getstr(win_view(FOCUSED), NULL);
-    x11_setsel(CLIPBOARD, str);
+    x11_sel_set(CLIPBOARD, str);
     if (str && *str) delete();
 }
 
 static void paste(void) {
-    assert(x11_getsel(CLIPBOARD, onpaste));
+    assert(x11_sel_get(CLIPBOARD, onpaste));
 }
 
 static void copy(void) {
     char* str = view_getstr(win_view(FOCUSED), NULL);
-    x11_setsel(CLIPBOARD, str);
+    x11_sel_set(CLIPBOARD, str);
 }
 
 static void quit(void) {
