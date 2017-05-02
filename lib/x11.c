@@ -177,6 +177,7 @@ bool x11_running(void) {
 void x11_flip(void) {
     Config->redraw(X.width, X.height);
     XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+    x11_flush();
 }
 
 void x11_flush(void) {

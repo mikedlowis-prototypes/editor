@@ -83,8 +83,9 @@ void win_loop(void) {
             x11_events_take();
             if (x11_running())
                 x11_flip();
+        } else {
+            x11_flush();
         }
-        x11_flush();
     }
     x11_finish();
 }
