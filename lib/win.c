@@ -243,7 +243,6 @@ static void oninput(int mods, Rune key) {
     mods = mods & (ModCtrl|ModAlt|ModShift);
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
-    if (key == '\n' && win_view(FOCUSED)->buffer.crlf) key = RUNE_CRLF;
     /* search for a key binding entry */
     uint32_t mkey = tolower(key);
     for (KeyBinding* bind = Keys; bind && bind->key; bind++) {
@@ -255,8 +254,11 @@ static void oninput(int mods, Rune key) {
     
     /* fallback to just inserting the rune if it doesn't fall in the private use area.
      * the private use area is used to encode special keys */
-    if (key < 0xE000 || key > 0xF8FF)
+    if (key < 0xE000 || key > 0xF8FF) {
+        if (key == '\n' && win_view(FOCUSED)->buffer.crlf) 
+            key = RUNE_CRLF;
         view_insert(win_view(FOCUSED), true, key);
+    }
 }
 
 static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
