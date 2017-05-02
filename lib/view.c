@@ -433,16 +433,24 @@ void view_setln(View* view, size_t line) {
     view->sync_center = true;
 }
 
+static bool selvisible(View* view) {
+    if (!view->nrows) return true;
+    unsigned beg = view->rows[0]->off;
+    unsigned end = view->rows[view->nrows-1]->off + 
+                   view->rows[view->nrows-1]->rlen;
+    return (view->selection.beg >= beg && view->selection.end <= end);
+}
+
 void view_undo(View* view) {
     buf_undo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
-    view->sync_center = true;
+    view->sync_center = !selvisible(view);
 }
 
 void view_redo(View* view) {
     buf_redo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
-    view->sync_center = true;
+    view->sync_center = !selvisible(view);
 }
 
 void view_putstr(View* view, char* str) {
