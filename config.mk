@@ -26,6 +26,14 @@ ARFLAGS = rcs
 # Treat all  warnings as errors (poor man's lint?)
 #CFLAGS += -Wall -Wextra -Werror
 
+# GCC Profiling
+ifeq ($(GPROF), 1)
+    CFLAGS  += -pg
+    LDFLAGS += -pg
+endif
+
 # Gcov Coverage
-#CFLAGS  += --coverage
-#LDFLAGS += --coverage
+ifeq ($(GCOV), 1)
+    CFLAGS  += --coverage
+    LDFLAGS += --coverage
+endif

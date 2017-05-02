@@ -66,7 +66,7 @@ void win_dialog(char* name) {
 static bool update_focus(void) {
     static int prev_x = 0, prev_y = 0;
     int ptr_x, ptr_y;
-    bool changed = true;
+    bool changed = false;
     x11_mouse_get(&ptr_x, &ptr_y);
     if (prev_x != ptr_x || prev_y != ptr_y)
         changed = win_setregion(getregion(ptr_x, ptr_y));
