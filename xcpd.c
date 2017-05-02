@@ -6,7 +6,7 @@
 #include <X11/Xft/Xft.h>
 #include <unistd.h>
 
-char* SelText;      // The text of the clipboard selection
+char* SelText;     // The text of the clipboard selection
 Atom SelType;      // The X11 selection name. Always CLIPBOARD
 Atom SelTarget;    // The conversion target for the selection (always string or utf8)
 Display* XDisplay; // Handle for the X connection
