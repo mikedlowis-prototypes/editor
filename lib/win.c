@@ -166,7 +166,6 @@ static void layout(int width, int height) {
     
     /* place the status region */
     view_resize(statview, 1, Regions[STATUS].width / fwidth);
-    view_update(statview, &(Regions[STATUS].csrx), &(Regions[STATUS].csry));
     
     /* Place the tag region relative to status */
     Regions[TAGS].y = 5 + Regions[STATUS].y + Regions[STATUS].height;
@@ -175,7 +174,6 @@ static void layout(int width, int height) {
     size_t tagrows    = view_limitrows(tagview, maxtagrows, tagcols);
     Regions[TAGS].height = tagrows * fheight;
     view_resize(tagview, tagrows, tagcols);
-    view_update(tagview, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
     
     /* Place the scroll region relative to tags */
     Regions[SCROLL].x      = 0;
@@ -189,16 +187,17 @@ static void layout(int width, int height) {
     Regions[EDIT].height = (height - Regions[EDIT].y - 5);
     Regions[EDIT].width  = width - Regions[SCROLL].width - 5; 
     view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
-    view_update(editview, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
 }
 
 static void onredraw(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
     
-    /* layout and draw the three text regions */
-    onupdate(); // Let the user program update the status and other content
     layout(width, height);
+    onupdate(); // Let the user program update the status and other content
+    view_update(win_view(STATUS), &(Regions[STATUS].csrx), &(Regions[STATUS].csry));
+    view_update(win_view(TAGS), &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
+    view_update(win_view(EDIT), &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
     onlayout(); // Let the user program update the scroll bar
     
     for (int i = 0; i < SCROLL; i++) {
