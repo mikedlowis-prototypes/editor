@@ -162,6 +162,10 @@ void onlayout(void) {
         win_setscroll(0.0, 1.0);
 }
 
+void onshutdown(void) {
+    x11_deinit();
+}
+
 /* Main Routine
  *****************************************************************************/
 static void backspace(void) {

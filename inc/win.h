@@ -50,6 +50,7 @@ void win_setscroll(double offset, double visible);
 
 /* These functions must be implemented by any appliation that wishes 
    to use this module */
+void onshutdown(void);
 void onupdate(void);
 void onlayout(void);
 void onscroll(double percent);

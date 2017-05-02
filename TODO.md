@@ -14,7 +14,6 @@ Up Next:
 
 Straight-up Bugs:
 
-* Window manager will close window without regard to modified status
 * fix crash on saving read-only file
 * fix crash on save to file that can't be created
 * tab inserts dont coalesce like one would expect

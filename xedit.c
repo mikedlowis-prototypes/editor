@@ -556,6 +556,10 @@ void onlayout(void) {
     win_setscroll(scroll_off, scroll_vis);
 }
 
+void onshutdown(void) {
+    quit();
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
     /* setup the shell */

@@ -17,7 +17,6 @@ static WinRegion getregion(size_t x, size_t y);
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
 static void onmouse(MouseAct act, MouseBtn btn, int x, int y);
-static void onshutdown(void);
 static void onwheelup(WinRegion id, size_t count, size_t row, size_t col);
 static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col);
 
@@ -321,10 +320,6 @@ static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
             onclick(act, btn, x, y);
         }
     }
-}
-
-static void onshutdown(void) {
-    x11_deinit();
 }
 
 static void onwheelup(WinRegion id, size_t count, size_t row, size_t col) {

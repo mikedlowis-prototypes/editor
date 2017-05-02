@@ -27,6 +27,10 @@ void onupdate(void) {
 void onlayout(void) {
 }
 
+void onshutdown(void) {
+    x11_deinit();
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
     win_window("term");
