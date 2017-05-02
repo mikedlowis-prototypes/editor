@@ -79,7 +79,6 @@ void win_loop(void) {
     x11_flip();
     while (x11_running()) {
         bool pending = x11_events_await(200 /* ms */);
-        x11_flush();
         if (update_focus() || pending) {
             x11_events_take();
             x11_flip();
@@ -117,7 +116,7 @@ WinRegion win_getregion(void) {
 
 bool win_setregion(WinRegion id) {
     bool changed = true;
-    if (id == TAGS || id == EDIT)
+    if (Focused != id && (id == TAGS || id == EDIT))
         changed = true, Focused = id;
     return changed;
 }
