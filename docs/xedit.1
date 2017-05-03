@@ -65,7 +65,31 @@ The middle mouse button is used for executing text at the clicked location\. The
 The right button is used to search for the next occurrence of the clicked text\. The search term is determined by the context rules defined in the \fBTEXT SELECTION\fR section\. The search direction follows the direction of the previous search operation\. The \fBShift\fR key can be held in combination with a click of the right mosue button in order to reverse the search direction\.
 .
 .SH "COMMAND EXECUTION"
-TBD
+\fBxedit\fR allows for the execution of any arbitrary text as a command\. The input and output to/from each command executed can be controlled by prepending one of a set of sigils defined below\. These sigils instruct \fBxedit\fR from where the command will receive its input and where it will place its output (both standard and errors)\.
+.
+.TP
+\fB\'!\' \- Run command detached from editor\fR
+The command will be executed in the background and all of its input and output file descriptors will be closed\.
+.
+.TP
+\fB\'<\' \- Input from command\fR
+The command will be executed in the background and its standard output will be placed in the content region\. Its error output will be placed in the tags region\.
+.
+.TP
+\fB\'>\' \- Output to command\fR
+The command will be executed in the background\. The currently selected text will be written to the command\'s standard input\. The command\'s standard output and standard error content will be written to the tags region\.
+.
+.TP
+\fB\'|\' \- Pipe through command\fR
+The command will be executed in the background\. The currently selected text will be written to the command\'s standard input\. The command\'s standard output will replace the currently selected text\. Any error output will be placed in the tags region\.
+.
+.TP
+\fB\':\' \- Pipe through sed(1)\fR
+Identical to \'|\' except that the command is always sed(1)\. This is a convenience shortcut to allow quick and easy access to sed for editing blocks of text\.
+.
+.TP
+\fBCommands with no sigil\fR
+Commands with none of the aforementioned sigils will be executed in the background and have their standard output placed in the content region and their error output placed in the tags region\.
 .
 .SH "KEYBOARD SHORTCUTS"
 .

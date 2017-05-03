@@ -106,7 +106,41 @@ non-whitespace characters under the cursor.
 
 ## COMMAND EXECUTION
 
-TBD
+`xedit` allows for the execution of any arbitrary text as a command. The input 
+and output to/from each command executed can be controlled by prepending one of
+a set of sigils defined below. These sigils instruct `xedit` from where the 
+command will receive its input and where it will place its output (both standard 
+and errors).
+
+* `'!' - Run command detached from editor`:
+    The command will be executed in the background and all of its input and 
+    output file descriptors will be closed.
+
+* `'<' - Input from command`:
+    The command will be executed in the background and its standard output will 
+    be placed in the content region. Its error output will be placed in the tags 
+    region.
+
+* `'>' - Output to command`:
+    The command will be executed in the background. The currently selected text
+    will be written to the command's standard input. The command's standard 
+    output and standard error content will be written to the tags region.
+
+* `'|' - Pipe through command`:
+    The command will be executed in the background. The currently selected text
+    will be written to the command's standard input. The command's standard 
+    output will replace the currently selected text. Any error output will be
+    placed in the tags region.
+    
+* `':' - Pipe through sed(1)`:
+    Identical to '|' except that the command is always sed(1). This is a 
+    convenience shortcut to allow  quick and easy access to sed for editing 
+    blocks of text.
+
+* `Commands with no sigil`:
+    Commands with none of the aforementioned sigils will be executed in the 
+    background and have their standard output placed in the content region and 
+    their error output placed in the tags region.
 
 ## KEYBOARD SHORTCUTS
 
