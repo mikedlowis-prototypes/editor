@@ -59,7 +59,28 @@ the content region however.
 
 ## TEXT SELECTION
 
-TBD
+`xedit` uses a series of rules to determine how much text to select when the 
+user executes a context sensitive selection, a search, or a context sensitive 
+execution. The following rules are applied in order until a match is found.
+
+1. `Cursor over '(' or ')'`:
+    Highlight text between the parentheses including nested parentheses.
+
+2. `Cursor over '[' or ']'`:
+    Highlight text between the brackets including nested brackets.
+
+3. `Cursor over '{' or '}'`:
+    Highlight text between the braces including nested braces.
+    
+4. `Cursor at beginning or end of line`:
+    Highlight the entire line (including the newline)
+    
+5. `Cursor over alphanumeric character or underscore`:
+    Highlight the word under the cursor consisting of only alphanumeric and 
+    underscore characters.
+    
+If none of the above rules match, `xedit` will simply highlight the block of 
+non-whitespace characters under the cursor.
 
 ## MOUSE HANDLING
 
@@ -93,16 +114,18 @@ TBD
 
 * `Ctrl+u`:
     Delete from the cursor position to the beginning of the line.
+
 * `Ctrl+k`:
     Delete from the cursor position to the end of the line.
+
 * `Ctrl+w`:
     Delete the word to the left.
+
 * `Ctrl+a`:
     Move cursor to the beginning of the line.
+
 * `Ctrl+e`:
     Move cursor to the end of the line.
-* `Ctrl+h`:
-    Delete the cursor to the left.
 
 ### Cursor Movement and Selection
 
@@ -114,16 +137,22 @@ position.
 * `Escape`:
     Highlight the last contiguous block of inserted text or clear the current
     selection (deselect the currently selected text).
+
 * `Left`:
     Move the cursor one character to the left.
+
 * `Right`:
     Move the cursor one character to the right.
+
 * `Up`:
     Move the cursor to theprevious line.
+
 * `Down`:
     Move the cursor to the next line.
+
 * `Ctrl+Left`:
     Move the cursor to the beginning of the word to the left.
+
 * `Ctrl+Right`:
     Move the cursor to the end of the word to the right.
 
@@ -131,31 +160,44 @@ position.
 
 * `Ctrl+s`:
     Save the contents of the content region to disk.
+
 * `Ctrl+z`:
     Undo the last change performed on the active region.
+
 * `Ctrl+y`:
     Redo the previously undone change on the active region.
+
 * `Ctrl+x`:
     Cut the selected text to the X11 CLIPBOARD selection.
+
 * `Ctrl+c`:
     Copy the selected text to the X11 CLIPBOARD selection.
+
 * `Ctrl+v`:
     Paste the contents of the X11 CLIPBOARD selection to the active region.
+
 * `Delete`:
     Delete the character to the right.
+
 * `Ctrl+Delete`:
     Delete the word to the right.
+
 * `Backspace`:
     Delete the character to the left.
+
 * `Ctrl+Backspace`:
     Delete the word to the left.
+
 * `Ctrl+Enter`:
     Create a new line after the current line and place the cursor there.
+
 * `Ctrl+Shift+Enter`:
     Create a new line before the current line and place the cursor there.
+
 * `PageUp`:
     Scroll the active region up by one screenful of text. The cursor is not
     affected by this operation.
+
 * `PageDn`:
     Scroll the active region down by one screenful of text. The cursor is not
     affected by this  operation.
@@ -172,6 +214,7 @@ search operation to be applied in the opposite direction of the previous.
     Search for the next occurrence of the selected text in the content region.
     If no text is currently selected, the text under the cursor is selected
     based on context as described in `TEXT SELECTION`.
+
 * `Ctrl+Alt+f`:
     Search for the next occurence previous search term in the content region.
 
@@ -179,33 +222,44 @@ search operation to be applied in the opposite direction of the previous.
 
 * `Ctrl+[`:
     Decrease the indent level of the selected text.
+
 * `Ctrl+]`:
     Increase the indent level of the selected text.
+
+* `Ctrl+h`:
+    Highlight the item under cursor following the rules in `TEXT SELECTION`
+
 * `Ctrl+t`:
     Toggle focus between the tags region and the content region.
+
 * `Ctrl+q`:
     Quit the editor. If the file is modified a warning will be printed in the
     tags region and the editor will not quit. Executing the  shortcut twice
     within 250ms will ignore the warning and quit the editor without saving.
+
 * `Ctrl+d`:
     Execute the selected text as described in `COMMAND EXECUTION`. If no text
     is selected, the text under cursor is selecte dbased on context as described
     in `TEXT SELECTION`.
+
 * `Ctrl+o`:
     Launch xfilepick(1) to choose a file from a recursive list of files in the
     current deirectory and sub directories. This file will be opened in a
     new instance of `xedit`.
+
 * `Ctrl+p`:
     Launch xtagpick(1) to select a tag from a ctags(1) generated index file.
     `xedit` will jump to the selected ctag definition in the current window if
     the file is currently being edited. Otherwise, a new instance of `xedit`
     will be launched with the target file and the cursor set to the line
     containing the definition.
+
 * `Ctrl+g`:
     Lookup the selected symbol or symbol under the cursor in a ctags(1)
     generated index file. Jump to the location of the definition if it exist in
     the current file. Otherwise, a new instance of `xedit` will be launched with
     the target file and the cursor set to the line containing the definition.
+
 * `Ctrl+n`:
     Open a new instance of `xedit` with no filename.
 
@@ -213,29 +267,41 @@ search operation to be applied in the opposite direction of the previous.
 
 * `Cut`:
     Cut the selection to the X11 CLIPBOARD selection.
+
 * `Copy`:
     Copy the selection to the X11 CLIPBOARD selection.
+
 * `Eol`:
     Toggle the line-ending style for the buffers contents between LF and CRLF
+
 * `Find [term]`:
     Find the next occurrence of the selected text.
+
 * `GoTo [arg]`:
     Jump to a specific line number or symbol.
+
 * `Indent`:
     Toggle the autoindent feature on or off.
+
 * `Paste`:
     Paste the contents of the X11 CLIPBOARD selection into the buffer.
+
 * `Quit`:
     Quit the editor.
+
 * `Redo`:
     Redo the last undone change.
+
 * `Save`:
     Save the contents of the buffer to disk.
+
 * `SaveAs [path]`:
     Save the contents of the buffer to disk. If a path argument is provided, the 
     buffer will be saved to the new path.
+
 * `Tabs`:
     Toggle the expand tabs featuer on or off.
+
 * `Undo`:
     Undo the previous edit.
 

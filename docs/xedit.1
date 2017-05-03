@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "XEDIT" "1" "April 2017" "" ""
+.TH "XEDIT" "1" "May 2017" "" ""
 .
 .SH "NAME"
 \fBxedit\fR \- a text editor inspired by acme(1) from Plan 9 and Inferno
@@ -28,7 +28,27 @@ The mechanics of editing text in the tag and content region is identical with th
 Searching with a term selected in the tags region will search for the term in the content region rather than the tags region\. In this way a user can edit the search term incrementally and perform repeated searches through the content region\. Searching for a term in the content region \fIwill\fR search for the term in the content region however\.
 .
 .SH "TEXT SELECTION"
-TBD
+\fBxedit\fR uses a series of rules to determine how much text to select when the user executes a context sensitive selection, a search, or a context sensitive execution\. The following rules are applied in order until a match is found\.
+.
+.IP "1." 4
+\fBCursor over \'(\' or \')\'\fR: Highlight text between the parentheses including nested parentheses\.
+.
+.IP "2." 4
+\fBCursor over \'[\' or \']\'\fR: Highlight text between the brackets including nested brackets\.
+.
+.IP "3." 4
+\fBCursor over \'{\' or \'}\'\fR: Highlight text between the braces including nested braces\.
+.
+.IP "4." 4
+\fBCursor at beginning or end of line\fR: Highlight the entire line (including the newline)
+.
+.IP "5." 4
+\fBCursor over alphanumeric character or underscore\fR: Highlight the word under the cursor consisting of only alphanumeric and underscore characters\.
+.
+.IP "" 0
+.
+.P
+If none of the above rules match, \fBxedit\fR will simply highlight the block of non\-whitespace characters under the cursor\.
 .
 .SH "MOUSE HANDLING"
 .
@@ -70,10 +90,6 @@ Move cursor to the beginning of the line\.
 .TP
 \fBCtrl+e\fR
 Move cursor to the end of the line\.
-.
-.TP
-\fBCtrl+h\fR
-Delete the cursor to the left\.
 .
 .SS "Cursor Movement and Selection"
 The key combinations below are responsible for moving the cursor around the document by character, by word, or by line\. The \fBShift\fR modifier key can be applied to any of them to also extend the current selection to the new cursor position\.
@@ -184,6 +200,10 @@ Decrease the indent level of the selected text\.
 .TP
 \fBCtrl+]\fR
 Increase the indent level of the selected text\.
+.
+.TP
+\fBCtrl+h\fR
+Highlight the item under cursor following the rules in \fBTEXT SELECTION\fR
 .
 .TP
 \fBCtrl+t\fR
