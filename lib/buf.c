@@ -194,6 +194,12 @@ void buf_init(Buf* buf) {
     assert(buf->bufstart);
 }
 
+static size_t next_size(size_t curr) {
+    int size = 1;
+    while(size < curr)
+        size = (size << 1);
+}
+
 unsigned buf_load(Buf* buf, char* path) {
     /* process the file path and address */
     if (path && path[0] == '.' && path[1] == '/')
@@ -211,6 +217,7 @@ unsigned buf_load(Buf* buf, char* path) {
         die("Unsupported character set");
 
     /* read the file contents into the buffer */
+    buf_resize(buf, next_size(file.len));
     for (size_t i = 0; i < file.len;) {
         Rune r;
         if (buf->charset == BINARY) {
