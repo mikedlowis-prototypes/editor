@@ -72,10 +72,10 @@ static void cmd_exec(char* cmd) {
         if (op != '<') dest = win_getregion();
         output = cmdread(ShellCmd, &error);
     }
-    
+
     if (error)
         view_append(win_view(TAGS), chomp(error));
-    
+
     if (output) {
         if (op == '>')
             view_append(win_view(dest), chomp(output));
@@ -192,19 +192,19 @@ void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
  ******************************************************************************/
 static void del_to_bol(void) {
     view_bol(win_view(FOCUSED), true);
-    if (view_selsize(win_view(FOCUSED)) > 0) 
+    if (view_selsize(win_view(FOCUSED)) > 0)
         delete();
 }
 
 static void del_to_eol(void) {
     view_eol(win_view(FOCUSED), true);
-    if (view_selsize(win_view(FOCUSED)) > 0) 
+    if (view_selsize(win_view(FOCUSED)) > 0)
         delete();
 }
 
 static void del_to_bow(void) {
     view_byword(win_view(FOCUSED), LEFT, true);
-    if (view_selsize(win_view(FOCUSED)) > 0) 
+    if (view_selsize(win_view(FOCUSED)) > 0)
         delete();
 }
 
@@ -445,6 +445,10 @@ static void newline(void) {
     view_insert(view, true, '\n');
 }
 
+void highlight(void) {
+    view_selctx(win_view(FOCUSED));
+}
+
 /* Main Routine
  ******************************************************************************/
 static Tag Builtins[] = {
@@ -462,7 +466,7 @@ static Tag Builtins[] = {
     { .tag = "Indent", .action.noarg = indent   },
     { .tag = "Eol",    .action.noarg = eol_mode },
     { .tag = NULL,     .action.noarg = NULL     }
-}; 
+};
 
 static KeyBinding Bindings[] = {
     /* Cursor Movements */
@@ -472,12 +476,11 @@ static KeyBinding Bindings[] = {
     { ModAny, KEY_DOWN,  cursor_dn    },
     { ModAny, KEY_LEFT,  cursor_left  },
     { ModAny, KEY_RIGHT, cursor_right },
-    
+
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
     { ModCtrl, 'k', del_to_eol  },
     { ModCtrl, 'w', del_to_bow  },
-    { ModCtrl, 'h', backspace   },
     { ModCtrl, 'a', cursor_bol  },
     { ModCtrl, 'e', cursor_eol  },
 
@@ -488,7 +491,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'x', cut   },
     { ModCtrl, 'c', copy  },
     { ModCtrl, 'v', paste },
-    
+
     /* Block Indent */
     { ModCtrl, '[', del_indent },
     { ModCtrl, ']', add_indent },
@@ -503,6 +506,7 @@ static KeyBinding Bindings[] = {
     { ModNone,                 KEY_ESCAPE, select_prev  },
     { ModCtrl,                 't',        change_focus },
     { ModCtrl,                 'q',        quit         },
+    { ModCtrl,                 'h',        highlight    },
     { ModCtrl,                 'f',        search       },
     { ModCtrl|ModShift,        'f',        search       },
     { ModCtrl|ModAlt,          'f',        search       },
@@ -521,7 +525,7 @@ static KeyBinding Bindings[] = {
 void onscroll(double percent) {
     size_t bend = buf_end(win_buf(EDIT));
     size_t off  = (size_t)((double)bend * percent);
-    view_scrollto(win_view(EDIT), (off >= bend ? bend : off));    
+    view_scrollto(win_view(EDIT), (off >= bend ? bend : off));
 }
 
 void onupdate(void) {
@@ -543,7 +547,7 @@ void onupdate(void) {
     win_view(STATUS)->selection = (Sel){0,0,0};
 }
 
-void onlayout(void) {    
+void onlayout(void) {
     /* calculate and update scroll region */
     View* view = win_view(EDIT);
     size_t bend = buf_end(win_buf(EDIT));

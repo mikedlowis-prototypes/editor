@@ -48,7 +48,7 @@ WinRegion win_getregion(void);
 bool win_setregion(WinRegion id);
 void win_setscroll(double offset, double visible);
 
-/* These functions must be implemented by any appliation that wishes 
+/* These functions must be implemented by any appliation that wishes
    to use this module */
 void onshutdown(void);
 void onupdate(void);

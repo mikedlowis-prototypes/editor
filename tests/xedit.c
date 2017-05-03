@@ -371,21 +371,6 @@ TEST_SUITE(UnitTests) {
         CHECK(buf_end(win_buf(EDIT)) == 3);
     }
 
-    TEST(ctrl+h should do nothing for empty buffer) {
-        setup_view(EDIT, "", CRLF, 0);
-        send_keys(ModCtrl, XK_h);
-        CHECK(win_sel(EDIT)->beg == 0);
-        CHECK(win_sel(EDIT)->end == 0);
-    }
-
-    TEST(ctrl+h should delete previous character) {
-        setup_view(EDIT, "AB", CRLF, 1);
-        send_keys(ModCtrl, XK_h);
-        CHECK(win_sel(EDIT)->beg == 0);
-        CHECK(win_sel(EDIT)->end == 0);
-        CHECK(buf_end(win_buf(EDIT)) == 1);
-    }
-
     TEST(ctrl+a should do nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_a);
@@ -621,6 +606,83 @@ TEST_SUITE(UnitTests) {
         send_keys(ModCtrl, XK_f);
         CHECK(win_view(EDIT)->selection.beg == 0);
         CHECK(win_view(EDIT)->selection.end == 3);
+    }
+    
+    TEST(ctrl+h should nothing for empty buffer) {
+        setup_view(EDIT, "", CRLF, 0);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 0);
+        CHECK(win_sel(EDIT)->end == 0);
+    }
+    
+    TEST(ctrl+h should highlight content in parens from left paren) {
+        setup_view(EDIT, " (foo bar) ", CRLF, 1);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 2);
+        CHECK(win_sel(EDIT)->end == 9);
+    }
+    
+    TEST(ctrl+h should highlight content in parens from right paren) {
+        setup_view(EDIT, " (foo bar) ", CRLF, 9);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 9);
+        CHECK(win_sel(EDIT)->end == 2);
+    }
+    
+    TEST(ctrl+h should highlight content in parens from left bracket) {
+        setup_view(EDIT, " [foo bar] ", CRLF, 1);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 2);
+        CHECK(win_sel(EDIT)->end == 9);
+    }
+    
+    TEST(ctrl+h should highlight content in parens from right bracket) {
+        setup_view(EDIT, " [foo bar] ", CRLF, 9);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 9);
+        CHECK(win_sel(EDIT)->end == 2);
+    }
+    
+    TEST(ctrl+h should highlight content in parens from left brace) {
+        setup_view(EDIT, " {foo bar} ", CRLF, 1);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 2);
+        CHECK(win_sel(EDIT)->end == 9);
+    }
+    
+    TEST(ctrl+h should highlight content in parens from right brace) {
+        setup_view(EDIT, " {foo bar} ", CRLF, 9);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 9);
+        CHECK(win_sel(EDIT)->end == 2);
+    }
+    
+    TEST(ctrl+h should highlight whole line from bol) {
+        setup_view(EDIT, "foo bar\n", CRLF, 0);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 0);
+        CHECK(win_sel(EDIT)->end == 8);
+    }
+    
+    TEST(ctrl+h should highlight whole line from eol) {
+        setup_view(EDIT, "foo bar\n", CRLF, 7);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 0);
+        CHECK(win_sel(EDIT)->end == 8);
+    }
+    
+    TEST(ctrl+h should highlight word under cursor) {
+        setup_view(EDIT, " foo.bar \n", CRLF, 1);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 1);
+        CHECK(win_sel(EDIT)->end == 4);
+    }
+    
+    TEST(ctrl+h should highlight word under cursor) {
+        setup_view(EDIT, " foo.bar \n", CRLF, 4);
+        send_keys(ModCtrl, XK_h);
+        CHECK(win_sel(EDIT)->beg == 1);
+        CHECK(win_sel(EDIT)->end == 8);
     }
 
     /* Mouse Input Handling

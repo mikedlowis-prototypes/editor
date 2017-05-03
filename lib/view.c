@@ -517,11 +517,16 @@ char* view_getcmd(View* view) {
     return view_getstr(view, &sel);
 }
 
-char* view_getctx(View* view) {
+void view_selctx(View* view) {
     if (!num_selected(view->selection)) {
         selcontext(view, &(view->selection));
-        view->selection.end++;
+        view->selection.end = buf_byrune(
+            &(view->buffer), view->selection.end, RIGHT);
     }
+}
+
+char* view_getctx(View* view) {
+    view_selctx(view);
     return view_getstr(view, NULL);
 }
 

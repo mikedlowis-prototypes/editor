@@ -119,11 +119,11 @@ void x11_window(char* name, int width, int height) {
         X.height,
         0, X.depth,
         Config->palette[0]);
-    
+
     /* register interest in the delete window message */
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(X.display, X.window, &wmDeleteMessage, 1);
-    
+
     /* setup window attributes and events */
     XSetWindowAttributes swa;
     swa.backing_store = WhenMapped;
@@ -137,15 +137,15 @@ void x11_window(char* name, int width, int height) {
         | ButtonMotionMask
         | KeyPressMask
     );
-    
+
     /* set input methods */
     if ((X.xim = XOpenIM(X.display, 0, 0, 0)))
         X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.window, XNFocusWindow, X.window, NULL);
-    
+
     /* initialize pixmap and drawing context */
     X.pixmap = XCreatePixmap(X.display, X.window, width, height, X.depth);
     X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
-    
+
     /* initialize the graphics context */
     XGCValues gcv;
     gcv.foreground = WhitePixel(X.display, X.screen);
@@ -572,7 +572,7 @@ static void selrequest(XEvent* evnt) {
     s.xselection.selection = evnt->xselectionrequest.selection;
     s.xselection.target    = evnt->xselectionrequest.target;
     s.xselection.time      = evnt->xselectionrequest.time;
-    
+
     Atom target    = evnt->xselectionrequest.target;
     Atom xatargets = XInternAtom(X.display, "TARGETS", 0);
     Atom xastring  = XInternAtom(X.display, "STRING", 0);
@@ -580,16 +580,16 @@ static void selrequest(XEvent* evnt) {
         /* respond with the supported type */
         XChangeProperty(
             X.display,
-            s.xselection.requestor, 
+            s.xselection.requestor,
             s.xselection.property,
             XA_ATOM, 32, PropModeReplace,
             (unsigned char*)&SelTarget, 1);
     } else if (target == SelTarget || target == xastring) {
         XChangeProperty(
-            X.display, 
+            X.display,
             s.xselection.requestor,
             s.xselection.property,
-            SelTarget, 8, PropModeReplace, 
+            SelTarget, 8, PropModeReplace,
             (unsigned char*)sel->text, strlen(sel->text));
     }
     XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
@@ -602,7 +602,7 @@ bool x11_sel_get(int selid, void(*cbfn)(char*)) {
     if (owner == X.window) {
         cbfn(sel->text);
     } else if (owner != None){
-        sel->callback = cbfn;    
+        sel->callback = cbfn;
         XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
     }
     return true;

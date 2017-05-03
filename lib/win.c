@@ -152,7 +152,7 @@ static void layout(int width, int height) {
     View* statview = win_view(STATUS);
     View* tagview  = win_view(TAGS);
     View* editview = win_view(EDIT);
-    
+
     /* update the text views and region positions and sizes */
     for (int i = 0; i < SCROLL; i++) {
         Regions[i].x      = 2;
@@ -162,10 +162,10 @@ static void layout(int width, int height) {
         Regions[i].width  = (width - 4);
         Regions[i].height = fheight;
     }
-    
+
     /* place the status region */
     view_resize(statview, 1, Regions[STATUS].width / fwidth);
-    
+
     /* Place the tag region relative to status */
     Regions[TAGS].y = 5 + Regions[STATUS].y + Regions[STATUS].height;
     size_t maxtagrows = ((height - Regions[TAGS].y - 5) / 4) / fheight;
@@ -173,35 +173,35 @@ static void layout(int width, int height) {
     size_t tagrows    = view_limitrows(tagview, maxtagrows, tagcols);
     Regions[TAGS].height = tagrows * fheight;
     view_resize(tagview, tagrows, tagcols);
-    
+
     /* Place the scroll region relative to tags */
     Regions[SCROLL].x      = 0;
     Regions[SCROLL].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[SCROLL].height = (height - Regions[EDIT].y - 5);
     Regions[SCROLL].width  = 5 + fwidth;
-    
+
     /* Place the edit region relative to tags */
     Regions[EDIT].x      = 3 + Regions[SCROLL].width;
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[EDIT].height = (height - Regions[EDIT].y - 5);
-    Regions[EDIT].width  = width - Regions[SCROLL].width - 5; 
+    Regions[EDIT].width  = width - Regions[SCROLL].width - 5;
     view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
 static void onredraw(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-    
+
     layout(width, height);
     onupdate(); // Let the user program update the status and other content
     view_update(win_view(STATUS), &(Regions[STATUS].csrx), &(Regions[STATUS].csry));
     view_update(win_view(TAGS), &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
     view_update(win_view(EDIT), &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
     onlayout(); // Let the user program update the scroll bar
-    
+
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);
-        x11_draw_rect((i == TAGS ? CLR_BASE02 : CLR_BASE03), 
+        x11_draw_rect((i == TAGS ? CLR_BASE02 : CLR_BASE03),
             0, Regions[i].y - 3, width, Regions[i].height + 8);
         x11_draw_rect(CLR_BASE01, 0, Regions[i].y - 3, width, 1);
         if ((i == EDIT) && (Ruler != 0))
@@ -211,7 +211,7 @@ static void onredraw(int width, int height) {
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
         }
     }
-    
+
     /* draw the scroll region */
     size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
     size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
@@ -220,15 +220,15 @@ static void onredraw(int width, int height) {
     x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
     x11_draw_rect(CLR_BASE00, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
     x11_draw_rect(CLR_BASE03, 0, thumboff, Regions[SCROLL].width, thumbsz);
-    
+
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
-        x11_draw_rect(CLR_BASE3, 
-            Regions[Focused].x + (Regions[Focused].csrx * fwidth), 
-            Regions[Focused].y + (Regions[Focused].csry * fheight), 
+        x11_draw_rect(CLR_BASE3,
+            Regions[Focused].x + (Regions[Focused].csrx * fwidth),
+            Regions[Focused].y + (Regions[Focused].csry * fheight),
             1, fheight);
     }
-    
+
     /* adjust the mouse location */
     if (Regions[Focused].warp_ptr) {
         Regions[Focused].warp_ptr = false;
@@ -251,11 +251,11 @@ static void oninput(int mods, Rune key) {
             return;
         }
     }
-    
+
     /* fallback to just inserting the rune if it doesn't fall in the private use area.
      * the private use area is used to encode special keys */
     if (key < 0xE000 || key > 0xF8FF) {
-        if (key == '\n' && win_view(FOCUSED)->buffer.crlf) 
+        if (key == '\n' && win_view(FOCUSED)->buffer.crlf)
             key = RUNE_CRLF;
         view_insert(win_view(FOCUSED), true, key);
     }
@@ -271,12 +271,12 @@ static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
             case MOUSE_BTN_LEFT:
                 view_scroll(win_view(EDIT), -row);
                 break;
-            case MOUSE_BTN_MIDDLE: 
+            case MOUSE_BTN_MIDDLE:
                 onscroll((double)(y - Regions[SCROLL].y) /
                          (double)(Regions[SCROLL].height - Regions[SCROLL].y));
                 break;
             case MOUSE_BTN_RIGHT:
-                view_scroll(win_view(EDIT), +row); 
+                view_scroll(win_view(EDIT), +row);
                 break;
             case MOUSE_BTN_WHEELUP:
                 view_scroll(win_view(id), -ScrollLines);
