@@ -331,6 +331,10 @@ void x11_handle_event(XEvent* e) {
     }
 }
 
+int x11_events_queued(void) {
+    return XEventsQueued(X.display, QueuedAfterFlush);
+}
+
 bool x11_events_await(unsigned int ms) {
     fd_set fds;
     int xfd = ConnectionNumber(X.display), redraw = 1;

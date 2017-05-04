@@ -139,6 +139,7 @@ void x11_flip(void);
 void x11_flush(void);
 void x11_finish(void);
 
+int x11_events_queued(void);
 bool x11_events_await(unsigned int ms);
 void x11_events_take(void);
 

@@ -77,14 +77,14 @@ void win_loop(void) {
     x11_show();
     x11_flip();
     while (x11_running()) {
-        bool pending = x11_events_await(200 /* ms */);
-        if (update_focus() || pending) {
+        bool pending = x11_events_await(EventTimeout);
+        int nevents  = x11_events_queued();
+        if (update_focus() || pending || nevents) {
             x11_events_take();
             if (x11_running())
                 x11_flip();
-        } else {
-            x11_flush();
         }
+        x11_flush();
     }
     x11_finish();
 }

@@ -212,6 +212,7 @@ enum {
     ScrollLines   = 4,    /* number of lines to scroll by for mouse wheel scrolling */
     BufSize       = 8192, /* default buffer size */
     FontCacheSize = 16,   /* Maximum number of fonts allowed in the font cache */
+    EventTimeout  = 100,  /* Maximum blocking wait time for events */
 };
 
 /* choose the font to  use for xft */
