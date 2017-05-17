@@ -489,10 +489,10 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
         XGlyphInfo extent;
         XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
         int w = extent.xOff;
-        int h = (font->height - font->descent);
+        int h = (font->height - font->descent) + LineSpacing;
         xftcolor(&bgc, Config->palette[bg]);
         size_t width = specs[nspecs-1].x - specs[0].x + w;
-        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height);
+        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + LineSpacing);
         XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
     xftcolor(&fgc, Config->palette[fg]);
