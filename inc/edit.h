@@ -220,7 +220,7 @@ enum {
 #ifdef __MACH__
 #define FONTNAME "Monaco:size=10:antialias=true:autohint=true"
 #else
-#define FONTNAME "Liberation Mono:size=10:antialias=true:autohint=true"
+#define FONTNAME "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
 #endif
 #define DEFAULT_COLORSCHEME DARK
 #define DEFAULT_CRLF 0
