@@ -1,3 +1,9 @@
+static void select_line(void) {
+    View* view = win_view(FOCUSED);
+    view_eol(view, false);
+    view_selctx(view);
+}
+
 static void delete(void) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(win_view(FOCUSED), RIGHT, byword);
@@ -8,14 +14,11 @@ static void onpaste(char* text) {
 }
 
 static void cut(void) {
-    View* view = win_view(FOCUSED);
     /* select the current line if no selection */
-    if (!view_selsize(view)) {
-        view_eol(view, false);
-        view_selctx(view);
-    }
+    if (!view_selsize(win_view(FOCUSED)))
+        select_line();
     /* now perform the cut */
-    char* str = view_getstr(view, NULL);
+    char* str = view_getstr(win_view(FOCUSED), NULL);
     x11_sel_set(CLIPBOARD, str);
     if (str && *str) delete();
 }
@@ -25,6 +28,9 @@ static void paste(void) {
 }
 
 static void copy(void) {
+    /* select the current line if no selection */
+    if (!view_selsize(win_view(FOCUSED)))
+        select_line();
     char* str = view_getstr(win_view(FOCUSED), NULL);
     x11_sel_set(CLIPBOARD, str);
 }

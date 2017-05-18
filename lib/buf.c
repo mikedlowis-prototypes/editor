@@ -198,6 +198,7 @@ static size_t next_size(size_t curr) {
     int size = 1;
     while(size < curr)
         size = (size << 1);
+    return size;
 }
 
 unsigned buf_load(Buf* buf, char* path) {
