@@ -132,11 +132,19 @@ Move the cursor one character to the right\.
 .
 .TP
 \fBUp\fR
-Move the cursor to theprevious line\.
+Move the cursor to the previous line\.
 .
 .TP
 \fBDown\fR
 Move the cursor to the next line\.
+.
+.TP
+\fBCtrl+Up\fR
+Move the current line or selection up a line\.
+.
+.TP
+\fBCtrl+Down\fR
+Move the current line or selection down a line\.
 .
 .TP
 \fBCtrl+Left\fR
@@ -162,11 +170,11 @@ Redo the previously undone change on the active region\.
 .
 .TP
 \fBCtrl+x\fR
-Cut the selected text to the X11 CLIPBOARD selection\.
+Cut the selected text to the X11 CLIPBOARD selection\. If no text is selected then the current line is cut\.
 .
 .TP
 \fBCtrl+c\fR
-Copy the selected text to the X11 CLIPBOARD selection\.
+Copy the selected text to the X11 CLIPBOARD selection\. If no text is selected then the current line is copied\.
 .
 .TP
 \fBCtrl+v\fR

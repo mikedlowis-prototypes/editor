@@ -66,6 +66,23 @@ static void cursor_eol(void) {
     view_eol(win_view(FOCUSED), false);
 }
 
+static void move_line_up(void) {
+    if (!view_selsize(win_view(FOCUSED)))
+        select_line();
+    cut();
+    view_byline(win_view(FOCUSED), UP, false);
+    paste();
+}
+
+static void move_line_dn(void) {
+    if (!view_selsize(win_view(FOCUSED)))
+        select_line();
+    cut();
+    cursor_eol();
+    view_byrune(win_view(FOCUSED), RIGHT, false);
+    paste();
+}
+
 static void cursor_home(void) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
@@ -84,12 +101,18 @@ static void cursor_end(void) {
 
 static void cursor_up(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byline(win_view(FOCUSED), UP, extsel);
+    if (x11_keymodsset(ModCtrl))
+        move_line_up();
+    else
+        view_byline(win_view(FOCUSED), UP, extsel);
 }
 
 static void cursor_dn(void) {
     bool extsel = x11_keymodsset(ModShift);
-    view_byline(win_view(FOCUSED), DOWN, extsel);
+    if (x11_keymodsset(ModCtrl))
+        move_line_dn();
+    else
+        view_byline(win_view(FOCUSED), DOWN, extsel);
 }
 
 static void cursor_left(void) {

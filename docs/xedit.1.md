@@ -179,10 +179,16 @@ position.
     Move the cursor one character to the right.
 
 * `Up`:
-    Move the cursor to theprevious line.
+    Move the cursor to the previous line.
 
 * `Down`:
     Move the cursor to the next line.
+    
+* `Ctrl+Up`:
+    Move the current line or selection up a line.
+
+* `Ctrl+Down`:
+    Move the current line or selection down a line.
 
 * `Ctrl+Left`:
     Move the cursor to the beginning of the word to the left.
@@ -202,10 +208,12 @@ position.
     Redo the previously undone change on the active region.
 
 * `Ctrl+x`:
-    Cut the selected text to the X11 CLIPBOARD selection.
+    Cut the selected text to the X11 CLIPBOARD selection. If no text is selected
+    then the current line is cut.
 
 * `Ctrl+c`:
-    Copy the selected text to the X11 CLIPBOARD selection.
+    Copy the selected text to the X11 CLIPBOARD selection. If no text is selected
+    then the current line is copied.
 
 * `Ctrl+v`:
     Paste the contents of the X11 CLIPBOARD selection to the active region.
