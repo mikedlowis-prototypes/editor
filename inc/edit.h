@@ -213,7 +213,11 @@ enum {
     BufSize       = 8192, /* default buffer size */
     FontCacheSize = 16,   /* Maximum number of fonts allowed in the font cache */
     EventTimeout  = 100,  /* Maximum blocking wait time for events */
+#ifdef __MACH__
+    LineSpacing   = 0,    /* Number of pixels for spacing between lines */
+#else
     LineSpacing   = 2,    /* Number of pixels for spacing between lines */
+#endif
 };
 
 /* choose the font to  use for xft */
