@@ -10,7 +10,7 @@ static void join_lines(void) {
     view_delete(view, RIGHT, false);
     Rune r = view_getrune(view);
     for (; r == '\t' || r == ' '; r = view_getrune(view))
-        view_delete(view, RIGHT, false);
+        view_byrune(view, RIGHT, true);
     if (r != '\n' && r != RUNE_CRLF)
         view_insert(view, false, ' ');
 }
