@@ -218,6 +218,9 @@ position.
 * `Ctrl+v`:
     Paste the contents of the X11 CLIPBOARD selection to the active region.
 
+* `Ctrl+j`:
+    Join the current line and the next line.
+
 * `Delete`:
     Delete the character to the right.
 

@@ -171,6 +171,7 @@ void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);
 void view_jumpto(View* view, bool extsel, size_t off);
 void view_scrollto(View* view, size_t csr);
+Rune view_getrune(View* view);
 
 /* Command Executions
  *****************************************************************************/

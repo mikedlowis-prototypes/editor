@@ -365,12 +365,13 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'e', cursor_eol  },
 
     /* Standard Text Editing Shortcuts */
-    { ModCtrl, 's', save  },
-    { ModCtrl, 'z', undo  },
-    { ModCtrl, 'y', redo  },
-    { ModCtrl, 'x', cut   },
-    { ModCtrl, 'c', copy  },
-    { ModCtrl, 'v', paste },
+    { ModCtrl, 's', save       },
+    { ModCtrl, 'z', undo       },
+    { ModCtrl, 'y', redo       },
+    { ModCtrl, 'x', cut        },
+    { ModCtrl, 'c', copy       },
+    { ModCtrl, 'v', paste      },
+    { ModCtrl, 'j', join_lines },
 
     /* Block Indent */
     { ModCtrl, '[', del_indent },

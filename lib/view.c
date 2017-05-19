@@ -578,3 +578,7 @@ void view_indent(View* view, int dir) {
 
    } while (off && off >= view->selection.beg);
 }
+
+Rune view_getrune(View* view) {
+    return buf_get(&(view->buffer), view->selection.end);
+}

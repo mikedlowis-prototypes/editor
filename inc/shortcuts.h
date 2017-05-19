@@ -4,6 +4,17 @@ static void select_line(void) {
     view_selctx(view);
 }
 
+static void join_lines(void) {
+    View* view = win_view(FOCUSED);
+    view_eol(view, false);
+    view_delete(view, RIGHT, false);
+    Rune r = view_getrune(view);
+    for (; r == '\t' || r == ' '; r = view_getrune(view))
+        view_delete(view, RIGHT, false);
+    if (r != '\n' && r != RUNE_CRLF)
+        view_insert(view, false, ' ');
+}
+
 static void delete(void) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(win_view(FOCUSED), RIGHT, byword);
