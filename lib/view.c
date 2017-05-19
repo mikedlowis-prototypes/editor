@@ -290,6 +290,7 @@ void view_selext(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
         view->selection.end = off;
+        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
         view_scrollto(view, view->selection.end);
     }
 }
@@ -341,6 +342,7 @@ void view_select(View* view, size_t row, size_t col) {
     Sel sel = view->selection;
     selcontext(view, &sel);
     sel.end = buf_byrune(&(view->buffer), sel.end, RIGHT);
+    sel.col = buf_getcol(&(view->buffer), sel.end);
     view->selection = sel;
 }
 
@@ -522,6 +524,7 @@ void view_selctx(View* view) {
         selcontext(view, &(view->selection));
         view->selection.end = buf_byrune(
             &(view->buffer), view->selection.end, RIGHT);
+        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     }
 }
 

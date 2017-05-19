@@ -2,6 +2,7 @@
 
 Up Next:
 
+* refactor selection handling to buf.c to prepare fo rmultiple selections.
 * refactor x11.c and win.c
 * Make Fn keys execute nth command in the tags buffers
 * Run commands in the background and don't block the main thread.
