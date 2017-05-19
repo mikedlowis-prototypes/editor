@@ -221,6 +221,9 @@ position.
 * `Ctrl+j`:
     Join the current line and the next line.
 
+* `Ctrl+l`:
+    Select the current line.
+
 * `Delete`:
     Delete the character to the right.
 
