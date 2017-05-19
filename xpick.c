@@ -5,6 +5,7 @@
 #include <win.h>
 #include <vec.h>
 #include <ctype.h>
+#include <shortcuts.h>
 
 typedef struct {
     float score;
@@ -168,10 +169,6 @@ void onshutdown(void) {
 
 /* Main Routine
  *****************************************************************************/
-static void backspace(void) {
-    view_delete(win_view(TAGS), LEFT, false);
-}
-
 static void accept(void) {
     x11_deinit();
 }
@@ -190,19 +187,27 @@ static void select_dn(void) {
 }
 
 static KeyBinding Bindings[] = {
-    { ModAny, '\b',       backspace },
-    { ModAny, '\n',       accept    },
-    { ModAny, KEY_ESCAPE, reject    },
-    { ModAny, KEY_UP,     select_up    },
-    { ModAny, KEY_DOWN,   select_dn    },
-//    { ModAny, KEY_LEFT,  cursor_left  },
-//    { ModAny, KEY_RIGHT, cursor_right },
-//    { ModCtrl, 'u',  del_to_bol  },
-//    { ModCtrl, 'k',  del_to_eol  },
-//    { ModCtrl, 'w',  del_to_bow  },
-//    { ModCtrl, 'h',  backspace   },
-//    { ModCtrl, 'a',  cursor_bol  },
-//    { ModCtrl, 'e',  cursor_eol  },
+    { ModAny, '\b',           backspace    },
+    { ModAny, '\n',           accept       },
+    { ModCtrl, 'u',           del_to_bol   },
+    { ModCtrl, 'k',           del_to_eol   },
+    { ModCtrl, 'w',           del_to_bow   },
+    { ModCtrl, 'a',           cursor_bol   },
+    { ModCtrl, 'e',           cursor_eol   },
+    { ModCtrl, 'x',           cut          },
+    { ModCtrl, 'c',           copy         },
+    { ModCtrl, 'v',           paste        },
+    { ModCtrl, 'z',           undo         },
+    { ModCtrl, 'y',           redo         },
+    { ModAny,  KEY_ESCAPE,    reject       },
+    { ModAny,  KEY_DELETE,    delete       },
+    { ModAny,  KEY_BACKSPACE, backspace    },
+    { ModAny,  KEY_UP,        select_up    },
+    { ModAny,  KEY_DOWN,      select_dn    },
+    { ModAny,  KEY_LEFT,      cursor_left  },
+    { ModAny,  KEY_RIGHT,     cursor_right },
+    { ModAny,  KEY_HOME,      cursor_home  },
+    { ModAny,  KEY_END,       cursor_end   },
     { 0, 0, 0 }
 };
 
