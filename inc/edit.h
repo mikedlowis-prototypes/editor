@@ -1,5 +1,6 @@
 /* Utility Functions
  *****************************************************************************/
+/* Memory-mapped file representation */
 typedef struct {
     uint8_t* buf; /* memory mapped byte buffer */
     size_t len;   /* length of the buffer */
@@ -15,6 +16,7 @@ char* chomp(char* in);
 
 /* Buffer management functions
  *****************************************************************************/
+/* undo/redo list item */
 typedef struct Log {
     struct Log* next;   /* pointer to next operation in the stack */
     bool insert;        /* whether this operation was an insert or delete */
@@ -32,30 +34,33 @@ typedef struct Log {
     } data;
 } Log;
 
+/* gap buffer main data structure */
 typedef struct buf {
-    char* path;       /* the path to the open file */
-    int charset;      /* the character set of the buffer */
-    int crlf;         /* tracks whether the file uses dos style line endings */
-    size_t bufsize;   /* size of the buffer in runes */
-    Rune* bufstart;   /* start of the data buffer */
-    Rune* bufend;     /* end of the data buffer */
-    Rune* gapstart;   /* start of the gap */
-    Rune* gapend;     /* end of the gap */
-    Log* undo;        /* undo list */
-    Log* redo;        /* redo list */
-    bool modified;    /* tracks whether the buffer has been modified */
-    bool expand_tabs; /* tracks current mode */
-    bool copy_indent; /* copy the indent level from the previous line on new lines */
-    uint transid;     /* tracks the last used transaction id for log entries */
+    char* path;           /* the path to the open file */
+    int charset;          /* the character set of the buffer */
+    int crlf;             /* tracks whether the file uses dos style line endings */
+    size_t bufsize;       /* size of the buffer in runes */
+    Rune* bufstart;       /* start of the data buffer */
+    Rune* bufend;         /* end of the data buffer */
+    Rune* gapstart;       /* start of the gap */
+    Rune* gapend;         /* end of the gap */
+    Log* undo;            /* undo list */
+    Log* redo;            /* redo list */
+    bool modified;        /* tracks whether the buffer has been modified */
+    bool expand_tabs;     /* tracks current mode */
+    bool copy_indent;     /* copy the indent level from the previous line on new lines */
+    uint transid;         /* tracks the last used transaction id for log entries */
+    void (*errfn)(char*); /* callback for error messages */
 } Buf;
 
+/* cursor/selection representation */
 typedef struct {
     size_t beg;
     size_t end;
     size_t col;
 } Sel;
 
-void buf_init(Buf* buf);
+void buf_init(Buf* buf, void (*errfn)(char*));
 unsigned buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 Rune buf_get(Buf* buf, unsigned pos);
@@ -91,6 +96,8 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end);
 enum {
     BINARY = 0, /* binary encoded file */
     UTF_8,      /* UTF-8 encoded file */
+    
+    /* these arent used but are reserved for later */
     UTF_16BE,   /* UTF-16 encoding, big-endian */
     UTF_16LE,   /* UTF-16 encoding, little-endian */
     UTF_32BE,   /* UTF-32 encoding, big-endian */
@@ -134,7 +141,7 @@ enum {
     DOWN  = +1
 };
 
-void view_init(View* view, char* file);
+void view_init(View* view, char* file, void (*errfn)(char*));
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
 void view_resize(View* view, size_t nrows, size_t ncols);
 void view_update(View* view, size_t* csrx, size_t* csry);

@@ -170,7 +170,7 @@ static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
 
 /*****************************************************************************/
 
-void buf_init(Buf* buf) {
+void buf_init(Buf* buf, void (*errfn)(char*)) {
     /* cleanup old data if there is any */
     if (buf->bufstart) {
         free(buf->bufstart);
@@ -191,6 +191,7 @@ void buf_init(Buf* buf) {
     buf->gapend      = buf->bufend;
     buf->undo        = NULL;
     buf->redo        = NULL;
+    buf->errfn       = errfn;
     assert(buf->bufstart);
 }
 
@@ -213,9 +214,6 @@ unsigned buf_load(Buf* buf, char* path) {
     /* load the file and determine the character set */
     FMap file = mmap_readonly(buf->path);
     filetype(buf, file);
-
-    if (buf->charset > UTF_8)
-        die("Unsupported character set");
 
     /* read the file contents into the buffer */
     buf_resize(buf, next_size(file.len));
@@ -249,22 +247,29 @@ void buf_save(Buf* buf) {
         buf_insert(buf, false, buf_end(buf), '\n');
     
     size_t wrlen = 0;
-    if (!buf->path) return;
-    FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
-    for (unsigned i = 0, end = buf_end(buf); i < end; i++) {
-        Rune r = buf_get(buf, i);
-        if (r == RUNE_CRLF) {
-            file.buf[wrlen++] = '\r';
-            file.buf[wrlen++] = '\n';
-        } else if (buf->charset == BINARY) {
-            file.buf[wrlen++] = (char)r;
+    if (buf->path) {
+        FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
+        if (file.buf) {
+            for (unsigned i = 0, end = buf_end(buf); i < end; i++) {
+                Rune r = buf_get(buf, i);
+                if (r == RUNE_CRLF) {
+                    file.buf[wrlen++] = '\r';
+                    file.buf[wrlen++] = '\n';
+                } else if (buf->charset == BINARY) {
+                    file.buf[wrlen++] = (char)r;
+                } else {
+                    wrlen += utf8encode((char*)&(file.buf[wrlen]), r);
+                }
+            }
+            mmap_close(file);
+            truncate(buf->path, wrlen);
+            buf->modified = false;
         } else {
-            wrlen += utf8encode((char*)&(file.buf[wrlen]), r);
+            buf->errfn("Failed to open file for writing");
         }
+    } else {
+        buf->errfn("Need a filename: SaveAs ");
     }
-    mmap_close(file);
-    truncate(buf->path, wrlen);
-    buf->modified = false;
 }
 
 /*****************************************************************************/

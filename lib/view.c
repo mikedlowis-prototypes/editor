@@ -175,13 +175,13 @@ static size_t getoffset(View* view, size_t row, size_t col) {
     return pos;
 }
 
-void view_init(View* view, char* file) {
+void view_init(View* view, char* file, void (*errfn)(char*)) {
     if (view->nrows) {
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
     }
-    buf_init(&(view->buffer));
+    buf_init(&(view->buffer), errfn);
     view->selection = (Sel){ 0 };
     if (file) {
         view->selection.end = buf_load(&(view->buffer), file);
@@ -438,7 +438,7 @@ void view_setln(View* view, size_t line) {
 static bool selvisible(View* view) {
     if (!view->nrows) return true;
     unsigned beg = view->rows[0]->off;
-    unsigned end = view->rows[view->nrows-1]->off + 
+    unsigned end = view->rows[view->nrows-1]->off +
                    view->rows[view->nrows-1]->rlen;
     return (view->selection.beg >= beg && view->selection.end <= end);
 }

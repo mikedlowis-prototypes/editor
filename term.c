@@ -31,9 +31,13 @@ void onshutdown(void) {
     x11_deinit();
 }
 
+void onerror(char* msg) {
+
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
-    win_window("term");
+    win_window("term", onerror);
     //win_setkeys(&Bindings);
     //win_setmouse(&MouseHandlers);
     win_loop();

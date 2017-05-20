@@ -32,8 +32,8 @@ typedef struct {
     MouseFunc right;
 } MouseConfig;
 
-void win_window(char* name);
-void win_dialog(char* name);
+void win_window(char* name, void (*errfn)(char*));
+void win_dialog(char* name, void (*errfn)(char*));
 void win_loop(void);
 void win_settext(WinRegion id, char* text);
 void win_setruler(size_t ruler);

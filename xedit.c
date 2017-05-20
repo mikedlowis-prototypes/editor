@@ -106,6 +106,10 @@ static void exec(char* cmd) {
 
 /* Action Callbacks
  ******************************************************************************/
+static void onerror(char* msg) {
+    view_append(win_view(TAGS), msg);
+}
+
 static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
@@ -236,7 +240,7 @@ static void pick_symbol(char* symbol) {
             win_setregion(EDIT);
         } else {
             if (!buf->path && !buf->modified) {
-                view_init(win_view(EDIT), pick);
+                view_init(win_view(EDIT), pick, onerror);
             } else {
                 OpenCmd[1] = chomp(pick);
                 cmdrun(OpenCmd, NULL);
@@ -452,11 +456,11 @@ int main(int argc, char** argv) {
     ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     /* Create the window and enter the event loop */
-    win_window("edit");
+    win_window("edit", onerror);
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DEFAULT_TAGS));
     win_setruler(80);
-    view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL));
+    view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL), onerror);
     win_setkeys(Bindings);
     win_loop();
     return 0;

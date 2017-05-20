@@ -133,7 +133,7 @@ void onupdate(void) {
     View* view = win_view(EDIT);
     view->selection = (Sel){0,0,0};
     Sel selection = (Sel){0,0,0};
-    
+
     score();
     unsigned off = (ChoiceIdx >= view->nrows ? ChoiceIdx-view->nrows+1 : 0);
     for (int i = 0; (i < vec_size(&Choices)) && (i < view->nrows); i++) {
@@ -169,6 +169,10 @@ void onshutdown(void) {
 
 /* Main Routine
  *****************************************************************************/
+static void onerror(char* msg) {
+
+}
+
 static void accept(void) {
     x11_deinit();
 }
@@ -216,7 +220,7 @@ int main(int argc, char** argv) {
     char* title = getenv("XPICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
-        win_dialog("xpick");
+        win_dialog("xpick", onerror);
         win_setkeys(Bindings);
         win_settext(STATUS, (title ? title : "xpick"));
         if (argc >= 2) {

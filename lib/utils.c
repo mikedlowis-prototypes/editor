@@ -18,24 +18,6 @@ static size_t pagealign(size_t sz) {
     return sz;
 }
 
-uint64_t getmillis(void) {
-    struct timespec time;
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    uint64_t ms = ((uint64_t)time.tv_sec * (uint64_t)1000);
-    ms += ((uint64_t)time.tv_nsec / (uint64_t)1000000);
-    return ms;
-}
-
-void die(const char* msgfmt, ...) {
-    va_list args;
-    va_start(args, msgfmt);
-    fprintf(stderr, "Error: ");
-    vfprintf(stderr, msgfmt, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-    exit(EXIT_FAILURE);
-}
-
 FMap mmap_readonly(char* path) {
     FMap file = { .buf = NULL, .len = 0 };
     int fd;
@@ -56,19 +38,38 @@ FMap mmap_readonly(char* path) {
 FMap mmap_readwrite(char* path, size_t sz) {
     FMap file = { .buf = NULL, .len = 0 };
     int fd = open(path, O_CREAT|O_RDWR, 0644);
-    if (fd < 0) die("could not open/create file");
-    ftruncate(fd, sz);
-    file.buf = mmap(NULL, pagealign(sz), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    file.len = sz;
-    if (file.buf == MAP_FAILED)
-        die("memory mapping of file failed");
-    close(fd);
+    if (fd >= 0) {
+        ftruncate(fd, sz);
+        void* buf = mmap(NULL, pagealign(sz), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);        if (buf != MAP_FAILED) {
+            file.buf = buf;
+            file.len = sz;
+        }
+        close(fd);
+    }
     return file;
 }
 
 void mmap_close(FMap file) {
     if (file.buf)
         munmap(file.buf, file.len);
+}
+
+uint64_t getmillis(void) {
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC, &time);
+    uint64_t ms = ((uint64_t)time.tv_sec * (uint64_t)1000);
+    ms += ((uint64_t)time.tv_nsec / (uint64_t)1000000);
+    return ms;
+}
+
+void die(const char* msgfmt, ...) {
+    va_list args;
+    va_start(args, msgfmt);
+    fprintf(stderr, "Error: ");
+    vfprintf(stderr, msgfmt, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+    exit(EXIT_FAILURE);
 }
 
 char* stringdup(const char* s) {

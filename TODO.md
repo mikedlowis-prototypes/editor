@@ -14,8 +14,6 @@ Up Next:
 
 Straight-up Bugs:
 
-* fix crash on saving read-only file
-* fix crash on save to file that can't be created
 * tab inserts dont coalesce like one would expect
 
 The Future:

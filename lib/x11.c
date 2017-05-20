@@ -370,7 +370,7 @@ XFont x11_font_load(char* name) {
         die("Could not init fontconfig.\n");
     FcPattern* pattern = FcNameParse((FcChar8 *)name);
     if (!pattern)
-        die("st: can't open font %s\n", name);
+        die("can't open font %s\n", name);
 
     /* load the base font */
     FcResult result;

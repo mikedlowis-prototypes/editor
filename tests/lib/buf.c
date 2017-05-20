@@ -5,9 +5,12 @@
 
 static Buf TestBuf;
 
+static void onerror(char* msg) {
+}
+
 static void set_buffer_text(char* str) {
     int i = 0;
-    buf_init(&TestBuf);
+    buf_init(&TestBuf, onerror);
     TestBuf.crlf = 1;
     for (Rune* curr = TestBuf.bufstart; curr < TestBuf.bufend; curr++)
         *curr = '-';
@@ -35,27 +38,27 @@ TEST_SUITE(BufferTests) {
     /* Insertions
      *************************************************************************/
     TEST(buf_insert should insert at 0 in empty buf) {
-        buf_init(&TestBuf);
+        buf_init(&TestBuf, onerror);
         buf_insert(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("a"));
     }
 
     TEST(buf_insert should insert at 0) {
-        buf_init(&TestBuf);
+        buf_init(&TestBuf, onerror);
         buf_insert(&TestBuf, false, 0, 'b');
         buf_insert(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("ab"));
     }
 
     TEST(buf_insert should insert at 1) {
-        buf_init(&TestBuf);
+        buf_init(&TestBuf, onerror);
         buf_insert(&TestBuf, false, 0, 'a');
         buf_insert(&TestBuf, false, 1, 'b');
         CHECK(buf_text_eq("ab"));
     }
 
     TEST(buf_insert should insert at 1) {
-        buf_init(&TestBuf);
+        buf_init(&TestBuf, onerror);
         buf_insert(&TestBuf, false, 0, 'a');
         buf_insert(&TestBuf, false, 1, 'c');
         buf_insert(&TestBuf, false, 1, 'b');
