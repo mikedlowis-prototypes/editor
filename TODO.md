@@ -2,14 +2,14 @@
 
 Up Next:
 
-* refactor selection handling to buf.c to prepare fo rmultiple selections.
-* refactor x11.c and win.c
-* Make Fn keys execute nth command in the tags buffers
 * Run commands in the background and don't block the main thread.
+* refactor selection handling to buf.c to prepare for multiple selections.
+* right click to fetch file or line
+* Make Fn keys execute nth command in the tags buffers
 * check for file changes on save
 * check for file changes when window regains focus
 * 100% coverage with unit and unit-integration tests
-* right click to fetch file or line
+* refactor x11.c and win.c
 * Status line should omit characters from beginning of path to make file path fit
 
 Straight-up Bugs:

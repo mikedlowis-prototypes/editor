@@ -127,7 +127,24 @@ static void quit(void) {
 }
 
 static void save(void) {
-    buf_save(win_buf(EDIT));
+    Buf* buf = win_buf(EDIT);
+    if (TrimOnSave) {
+        View* view = win_view(EDIT);
+        unsigned off = 0;
+        while (buf_end(buf) && (off < buf_end(buf)-1)) {
+            off = buf_eol(buf, off);
+            Rune r = buf_get(buf, off-1);
+            for (; (r == ' ' || r == '\t'); r = buf_get(buf, off-1)) {
+                if (off <= view->selection.beg) {
+                    view->selection.end--;
+                    view->selection.beg--;
+                }
+                off = buf_delete(buf, off-1, off);
+            }
+            off = buf_byline(buf, off, +1);
+        }
+    }
+    buf_save(buf);
 }
 
 /* Mouse Handling
