@@ -128,10 +128,10 @@ static void quit(void) {
 
 static void save(void) {
     Buf* buf = win_buf(EDIT);
-    if (TrimOnSave) {
+    if (TrimOnSave && buf_end(buf) > 0) {
         View* view = win_view(EDIT);
         unsigned off = 0;
-        while (buf_end(buf) && (off < buf_end(buf)-1)) {
+        while (off < buf_end(buf)-1) {
             off = buf_eol(buf, off);
             Rune r = buf_get(buf, off-1);
             for (; (r == ' ' || r == '\t'); r = buf_get(buf, off-1)) {
