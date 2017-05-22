@@ -130,8 +130,9 @@ static void save(void) {
     Buf* buf = win_buf(EDIT);
     if (TrimOnSave && buf_end(buf) > 0) {
         View* view = win_view(EDIT);
-        unsigned off = 0;
-        while (off < buf_end(buf)-1) {
+        unsigned off = 0, prev = 1;
+        /* loop through the buffer till we hit the end or we stop advancing */
+        while (off < buf_end(buf) && prev != off) {
             off = buf_eol(buf, off);
             Rune r = buf_get(buf, off-1);
             for (; (r == ' ' || r == '\t'); r = buf_get(buf, off-1)) {
@@ -141,7 +142,9 @@ static void save(void) {
                 }
                 off = buf_delete(buf, off-1, off);
             }
-            off = buf_byline(buf, off, +1);
+            /* make sure we keep advancing */
+            prev = off;
+            off  = buf_byline(buf, off, +1);
         }
     }
     buf_save(buf);
