@@ -13,6 +13,7 @@ uint64_t getmillis(void);
 char* stringdup(const char* str);
 char* fdgets(int fd);
 char* chomp(char* in);
+uint64_t modtime(char* path);
 
 /* Buffer management functions
  *****************************************************************************/
@@ -37,6 +38,7 @@ typedef struct Log {
 /* gap buffer main data structure */
 typedef struct buf {
     char* path;           /* the path to the open file */
+    uint64_t modtime;     /* modification time of the opened file */
     int charset;          /* the character set of the buffer */
     int crlf;             /* tracks whether the file uses dos style line endings */
     size_t bufsize;       /* size of the buffer in runes */
@@ -61,6 +63,7 @@ typedef struct {
 } Sel;
 
 void buf_init(Buf* buf, void (*errfn)(char*));
+void buf_reload(Buf* buf);
 unsigned buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
 Rune buf_get(Buf* buf, unsigned pos);
@@ -96,7 +99,7 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end);
 enum {
     BINARY = 0, /* binary encoded file */
     UTF_8,      /* UTF-8 encoded file */
-    
+
     /* these arent used but are reserved for later */
     UTF_16BE,   /* UTF-16 encoding, big-endian */
     UTF_16LE,   /* UTF-16 encoding, little-endian */
@@ -142,6 +145,7 @@ enum {
 };
 
 void view_init(View* view, char* file, void (*errfn)(char*));
+void view_reload(View* view);
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
 void view_resize(View* view, size_t nrows, size_t ncols);
 void view_update(View* view, size_t* csrx, size_t* csry);

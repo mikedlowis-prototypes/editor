@@ -110,23 +110,7 @@ static void onerror(char* msg) {
     view_append(win_view(TAGS), msg);
 }
 
-static void quit(void) {
-    static uint64_t before = 0;
-    uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= 250) {
-        #ifndef TEST
-        x11_deinit();
-        #else
-        exit(0);
-        #endif
-    } else {
-        view_append(win_view(TAGS),
-            "File is modified. Repeat action twice in < 250ms to quit.");
-    }
-    before = now;
-}
-
-static void save(void) {
+static void trim_whitespace(void) {
     Buf* buf = win_buf(EDIT);
     if (TrimOnSave && buf_end(buf) > 0) {
         View* view = win_view(EDIT);
@@ -147,7 +131,42 @@ static void save(void) {
             off  = buf_byline(buf, off, +1);
         }
     }
-    buf_save(buf);
+}
+
+static void quit(void) {
+    static uint64_t before = 0;
+    uint64_t now = getmillis();
+    if (!win_buf(EDIT)->modified || (now-before) <= 250) {
+        #ifndef TEST
+        x11_deinit();
+        #else
+        exit(0);
+        #endif
+    } else {
+        view_append(win_view(TAGS),
+            "File is modified. Repeat action twice in < 250ms to quit.");
+    }
+    before = now;
+}
+
+static void save(void) {
+    Buf* buf = win_buf(EDIT);
+    if (buf->modtime != modtime(buf->path)) {
+        view_append(win_view(TAGS),
+            "File modified externally: Reload or Overwrite");
+    } else {
+        trim_whitespace();
+        buf_save(win_buf(EDIT));
+    }
+}
+
+static void overwrite(void) {
+    trim_whitespace();
+    buf_save(win_buf(EDIT));
+}
+
+static void reload(void) {
+    view_reload(win_view(EDIT));
 }
 
 /* Mouse Handling
@@ -356,20 +375,22 @@ void highlight(void) {
 /* Main Routine
  ******************************************************************************/
 static Tag Builtins[] = {
-    { .tag = "Quit",   .action.noarg = quit     },
-    { .tag = "Save",   .action.noarg = save     },
-    { .tag = "SaveAs", .action.arg   = saveas   },
-    { .tag = "Cut",    .action.noarg = cut      },
-    { .tag = "Copy",   .action.noarg = copy     },
-    { .tag = "Paste",  .action.noarg = paste    },
-    { .tag = "Undo",   .action.noarg = tag_undo },
-    { .tag = "Redo",   .action.noarg = tag_redo },
-    { .tag = "Find",   .action.arg   = find     },
-    { .tag = "GoTo",   .action.arg   = jump_to  },
-    { .tag = "Tabs",   .action.noarg = tabs     },
-    { .tag = "Indent", .action.noarg = indent   },
-    { .tag = "Eol",    .action.noarg = eol_mode },
-    { .tag = NULL,     .action.noarg = NULL     }
+    { .tag = "Cut",       .action.noarg = cut       },
+    { .tag = "Copy",      .action.noarg = copy      },
+    { .tag = "Eol",       .action.noarg = eol_mode  },
+    { .tag = "Find",      .action.arg   = find      },
+    { .tag = "GoTo",      .action.arg   = jump_to   },
+    { .tag = "Indent",    .action.noarg = indent    },
+    { .tag = "Overwrite", .action.noarg = overwrite },
+    { .tag = "Paste",     .action.noarg = paste     },
+    { .tag = "Quit",      .action.noarg = quit      },
+    { .tag = "Redo",      .action.noarg = tag_redo  },
+    { .tag = "Reload",    .action.noarg = reload    },
+    { .tag = "Save",      .action.noarg = save      },
+    { .tag = "SaveAs",    .action.arg   = saveas    },
+    { .tag = "Tabs",      .action.noarg = tabs      },
+    { .tag = "Undo",      .action.noarg = tag_undo  },
+    { .tag = NULL,        .action.noarg = NULL      }
 };
 
 static KeyBinding Bindings[] = {

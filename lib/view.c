@@ -187,6 +187,15 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
         view->selection.end = buf_load(&(view->buffer), file);
         view->selection.beg = view->selection.end;
         view->sync_needed   = true;
+        view->sync_center   = true;
+    }
+}
+
+void view_reload(View* view) {
+    if (view->buffer.path) {
+        buf_reload(&(view->buffer));
+        view->selection   = (Sel){ 0 };
+        view->sync_needed = true;
         view->sync_center = true;
     }
 }

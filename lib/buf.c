@@ -234,18 +234,26 @@ unsigned buf_load(Buf* buf, char* path) {
 
     /* reset buffer state */
     buf->modified = false;
+    buf->modtime  = modtime(buf->path);
     buf_logclear(buf);
     return off;
 }
 
+void buf_reload(Buf* buf) {
+    void (*errfn)(char*) = buf->errfn;
+    char* path = buf->path;
+    buf_init(buf, errfn);
+    buf_load(buf, path);
+}
+
 void buf_save(Buf* buf) {
     if (0 == buf_end(buf)) return;
-    
-    /* text files should  always end in a new line. If we detected a 
+
+    /* text files should  always end in a new line. If we detected a
        binary file or at least a non-utf8 file, skip this part. */
     if (!buf_iseol(buf, buf_end(buf)-1) && (buf->charset != BINARY))
         buf_insert(buf, false, buf_end(buf), '\n');
-    
+
     size_t wrlen = 0;
     if (buf->path) {
         FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
@@ -264,6 +272,7 @@ void buf_save(Buf* buf) {
             mmap_close(file);
             truncate(buf->path, wrlen);
             buf->modified = false;
+            buf->modtime  = modtime(buf->path);
         } else {
             buf->errfn("Failed to open file for writing");
         }
@@ -486,7 +495,7 @@ unsigned buf_byword(Buf* buf, unsigned off, int count) {
     } else {
         off = buf_byrune(buf, off, move);
     }
-    
+
     return off;
 }
 
@@ -590,7 +599,7 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
     unsigned opbeg = *end, opend = *end;
     if (log && log->insert)
         opbeg = log->data.ins.end, opend = log->data.ins.end;
-    
+
     unsigned delsize = 0;
     for (; log; log = log->next) {
         if (log->insert) {

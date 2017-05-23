@@ -6,7 +6,6 @@ Up Next:
 * refactor selection handling to buf.c to prepare for multiple selections.
 * right click to fetch file or line
 * Make Fn keys execute nth command in the tags buffers
-* check for file changes on save
 * check for file changes when window regains focus
 * 100% coverage with unit and unit-integration tests
 * refactor x11.c and win.c

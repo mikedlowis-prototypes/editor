@@ -98,3 +98,9 @@ char* chomp(char* in) {
     return in;
 }
 
+uint64_t modtime(char* path) {
+    struct stat status;
+    if (stat(path, &status) < 0)
+        return 0u;
+    return (uint64_t)status.st_mtime;
+}

@@ -29,38 +29,38 @@ of the content region. This region acts as a scrollbar for the content region.
 ### Scrolling
 
 The scroll bar is located to the left of the content region. It's operation is
-similar to that of acme(1) or 9term(1). A left click on the scroll bar will 
-scroll the adjacent line in the content region to the bottom of the window. A 
-right click will move the adjacent line in the content region to the top of the 
-window. A middle click will jump to an approximate location in the file 
-determined by calculating the vertical distance from the top of the scrollbar 
+similar to that of acme(1) or 9term(1). A left click on the scroll bar will
+scroll the adjacent line in the content region to the bottom of the window. A
+right click will move the adjacent line in the content region to the top of the
+window. A middle click will jump to an approximate location in the file
+determined by calculating the vertical distance from the top of the scrollbar
 and applying that as a percentage to the offset in the file.
 
 ### Typing and Editing
 
 Typed characters in `xedit` are delivered to the currently active region. Which
-region is active is determined by the placement of the mouse or by keyboard 
+region is active is determined by the placement of the mouse or by keyboard
 shortcut. That is to say, the focus follows the mouse much as it does in acme(1)
-but there is a keyboard shortcut that allows users to toggle focus between the 
+but there is a keyboard shortcut that allows users to toggle focus between the
 content region and the tag region without using the mouse.
 
-The mechanics of editing text in the tag and content region is identical with 
-the exception of searching and saving. Edited content in the tag region is not 
-saved to disk unlike the content region. This region is considered a scratch 
-buffer for commands, notes, and other bits of text that are placed there 
-temporarily. The content region displays the current view of the file being 
+The mechanics of editing text in the tag and content region is identical with
+the exception of searching and saving. Edited content in the tag region is not
+saved to disk unlike the content region. This region is considered a scratch
+buffer for commands, notes, and other bits of text that are placed there
+temporarily. The content region displays the current view of the file being
 edited and can be flushed to disk when requested.
 
-Searching with a term selected in the tags region will search for the term in 
-the content region rather than the tags region. In this way a user can edit the 
-search term incrementally and perform repeated searches through the content 
+Searching with a term selected in the tags region will search for the term in
+the content region rather than the tags region. In this way a user can edit the
+search term incrementally and perform repeated searches through the content
 region. Searching for a term in the content region *will* search for the term in
 the content region however.
 
 ## TEXT SELECTION
 
-`xedit` uses a series of rules to determine how much text to select when the 
-user executes a context sensitive selection, a search, or a context sensitive 
+`xedit` uses a series of rules to determine how much text to select when the
+user executes a context sensitive selection, a search, or a context sensitive
 execution. The following rules are applied in order until a match is found.
 
 1. `Cursor over '(' or ')'`:
@@ -71,15 +71,15 @@ execution. The following rules are applied in order until a match is found.
 
 3. `Cursor over '{' or '}'`:
     Highlight text between the braces including nested braces.
-    
+
 4. `Cursor at beginning or end of line`:
     Highlight the entire line (including the newline)
-    
+
 5. `Cursor over alphanumeric character or underscore`:
-    Highlight the word under the cursor consisting of only alphanumeric and 
+    Highlight the word under the cursor consisting of only alphanumeric and
     underscore characters.
-    
-If none of the above rules match, `xedit` will simply highlight the block of 
+
+If none of the above rules match, `xedit` will simply highlight the block of
 non-whitespace characters under the cursor.
 
 ## MOUSE HANDLING
@@ -87,59 +87,59 @@ non-whitespace characters under the cursor.
 * `Left Button`:
     The left mouse button is used for selecting text or moving the cursor. A
     single-click will move the mose to the clicked location. A double-click will
-    will select the object under the clicked location based on context as 
+    will select the object under the clicked location based on context as
     described in `TEXT SELECTION`. A triple-click will select the largest
     contiguous chunk of non-whitespace characters at the clicked location.
 
 * `Middle Button`:
     The middle mouse button is used for executing text at the clicked location.
     The command to be executed is determined by the context rules defined in
-    the `TEXT SELECTION` section. The cursor position is not changed on a middle 
+    the `TEXT SELECTION` section. The cursor position is not changed on a middle
     click.
 
 * `Right Button`:
-    The right button is used to search for the next occurrence of the clicked 
-    text. The search term is determined by the context rules defined in the 
+    The right button is used to search for the next occurrence of the clicked
+    text. The search term is determined by the context rules defined in the
     `TEXT SELECTION` section. The search direction follows the direction of the
     previous search operation. The `Shift` key can be held in combination with a
     click of the right mosue button in order to reverse the search direction.
 
 ## COMMAND EXECUTION
 
-`xedit` allows for the execution of any arbitrary text as a command. The input 
+`xedit` allows for the execution of any arbitrary text as a command. The input
 and output to/from each command executed can be controlled by prepending one of
-a set of sigils defined below. These sigils instruct `xedit` from where the 
-command will receive its input and where it will place its output (both standard 
+a set of sigils defined below. These sigils instruct `xedit` from where the
+command will receive its input and where it will place its output (both standard
 and errors).
 
 * `'!' - Run command detached from editor`:
-    The command will be executed in the background and all of its input and 
+    The command will be executed in the background and all of its input and
     output file descriptors will be closed.
 
 * `'<' - Input from command`:
-    The command will be executed in the background and its standard output will 
-    be placed in the content region. Its error output will be placed in the tags 
+    The command will be executed in the background and its standard output will
+    be placed in the content region. Its error output will be placed in the tags
     region.
 
 * `'>' - Output to command`:
     The command will be executed in the background. The currently selected text
-    will be written to the command's standard input. The command's standard 
+    will be written to the command's standard input. The command's standard
     output and standard error content will be written to the tags region.
 
 * `'|' - Pipe through command`:
     The command will be executed in the background. The currently selected text
-    will be written to the command's standard input. The command's standard 
+    will be written to the command's standard input. The command's standard
     output will replace the currently selected text. Any error output will be
     placed in the tags region.
-    
+
 * `':' - Pipe through sed(1)`:
-    Identical to '|' except that the command is always sed(1). This is a 
-    convenience shortcut to allow  quick and easy access to sed for editing 
+    Identical to '|' except that the command is always sed(1). This is a
+    convenience shortcut to allow  quick and easy access to sed for editing
     blocks of text.
 
 * `Commands with no sigil`:
-    Commands with none of the aforementioned sigils will be executed in the 
-    background and have their standard output placed in the content region and 
+    Commands with none of the aforementioned sigils will be executed in the
+    background and have their standard output placed in the content region and
     their error output placed in the tags region.
 
 ## KEYBOARD SHORTCUTS
@@ -183,7 +183,7 @@ position.
 
 * `Down`:
     Move the cursor to the next line.
-    
+
 * `Ctrl+Up`:
     Move the current line or selection up a line.
 
@@ -331,6 +331,9 @@ search operation to be applied in the opposite direction of the previous.
 * `Indent`:
     Toggle the autoindent feature on or off.
 
+* `Overwrite`:
+    Save the file to disk even if the file has been modified externally.
+
 * `Paste`:
     Paste the contents of the X11 CLIPBOARD selection into the buffer.
 
@@ -340,11 +343,14 @@ search operation to be applied in the opposite direction of the previous.
 * `Redo`:
     Redo the last undone change.
 
+* `Reload`:
+    Reload the buffer contents from the on-disk file.
+
 * `Save`:
     Save the contents of the buffer to disk.
 
 * `SaveAs [path]`:
-    Save the contents of the buffer to disk. If a path argument is provided, the 
+    Save the contents of the buffer to disk. If a path argument is provided, the
     buffer will be saved to the new path.
 
 * `Tabs`:
