@@ -136,6 +136,7 @@ void x11_window(char* name, int width, int height) {
         | ButtonReleaseMask
         | ButtonMotionMask
         | KeyPressMask
+        | FocusChangeMask
     );
 
     /* set input methods */
@@ -306,16 +307,27 @@ static void handle_mouse(XEvent* e) {
     Config->handle_mouse(action, button, x, y);
 }
 
+static void set_focus(bool focused) {
+    if (focused) {
+        if (X.xic) XSetICFocus(X.xic);
+    } else {
+        if (X.xic) XUnsetICFocus(X.xic);
+    }
+    Config->set_focus(focused);
+}
+
 void x11_handle_event(XEvent* e) {
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
     switch (e->type) {
-        case KeyPress:         handle_key(e);                   break;
-        case ButtonRelease:    handle_mouse(e);                 break;
-        case ButtonPress:      handle_mouse(e);                 break;
-        case MotionNotify:     handle_mouse(e);                 break;
-        case SelectionClear:   selclear(e);                     break;
-        case SelectionNotify:  selnotify(e);                    break;
-        case SelectionRequest: selrequest(e);                   break;
+        case FocusIn:          set_focus(true);  break;
+        case FocusOut:         set_focus(false); break;
+        case KeyPress:         handle_key(e);    break;
+        case ButtonRelease:    handle_mouse(e);  break;
+        case ButtonPress:      handle_mouse(e);  break;
+        case MotionNotify:     handle_mouse(e);  break;
+        case SelectionClear:   selclear(e);      break;
+        case SelectionNotify:  selnotify(e);     break;
+        case SelectionRequest: selrequest(e);    break;
         case ClientMessage:
             if (e->xclient.data.l[0] == wmDeleteMessage)
                 Config->shutdown();

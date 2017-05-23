@@ -29,6 +29,7 @@ static XConfig Config = {
     .handle_key   = oninput,
     .handle_mouse = onmouse,
     .shutdown     = onshutdown,
+    .set_focus    = onfocus,
     .palette      = COLOR_PALETTE
 };
 

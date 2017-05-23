@@ -127,6 +127,9 @@ void onscroll(double percent) {
         ChoiceIdx = vec_size(&Choices)-1;
 }
 
+void onfocus(bool focused) {
+}
+
 void onupdate(void) {
     win_setregion(TAGS);
     win_settext(EDIT, "");

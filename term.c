@@ -21,6 +21,9 @@ void onscroll(double percent) {
 
 }
 
+void onfocus(bool focused) {
+}
+
 void onupdate(void) {
 }
 

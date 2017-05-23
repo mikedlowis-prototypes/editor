@@ -149,20 +149,23 @@ static void quit(void) {
     before = now;
 }
 
-static void save(void) {
-    Buf* buf = win_buf(EDIT);
-    if (buf->modtime != modtime(buf->path)) {
+static bool changed_externally(Buf* buf) {
+    bool modified = (buf->modtime != modtime(buf->path));
+    if (modified) {
         view_append(win_view(TAGS),
-            "File modified externally: Reload or Overwrite");
-    } else {
-        trim_whitespace();
-        buf_save(win_buf(EDIT));
+            "File modified externally: Reload, Overwrite, or {SaveAs }");
     }
+    return modified;
 }
 
 static void overwrite(void) {
     trim_whitespace();
     buf_save(win_buf(EDIT));
+}
+
+static void save(void) {
+    if (!changed_externally(win_buf(EDIT)))
+        overwrite();
 }
 
 static void reload(void) {
@@ -453,6 +456,11 @@ void onscroll(double percent) {
     size_t bend = buf_end(win_buf(EDIT));
     size_t off  = (size_t)((double)bend * percent);
     view_scrollto(win_view(EDIT), (off >= bend ? bend : off));
+}
+
+void onfocus(bool focused) {
+    /* notify the user if the file has changed externally */
+    (void)changed_externally(win_buf(EDIT));
 }
 
 void onupdate(void) {

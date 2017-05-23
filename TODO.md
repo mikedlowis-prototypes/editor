@@ -4,12 +4,10 @@ Up Next:
 
 * Run commands in the background and don't block the main thread.
 * refactor selection handling to buf.c to prepare for multiple selections.
-* right click to fetch file or line
 * Make Fn keys execute nth command in the tags buffers
-* check for file changes when window regains focus
 * 100% coverage with unit and unit-integration tests
-* refactor x11.c and win.c
 * Status line should omit characters from beginning of path to make file path fit
+* right click to fetch file or line
 
 Straight-up Bugs:
 
@@ -21,6 +19,20 @@ The Future:
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * add command env vars to set options (Tabs, Indent, etc..)
 * implement command diffing logic to optimize the undo/redo log
+
+# Mouse Chords
+
+Mouse Sequence      Description
+--------------------------------------------------------------------------------
+Pl Rl               Null Selection
+Pl Rl Pl Rl         Select by context
+Pl Rl Pl Rl Pl Rl   Select big word
+Pl Pm               Cut line or selection
+Pl Pr               Paste
+Pm Rm               Execute text
+Pm Pr               Cancel the execution that would occur
+Pr Rr               Search
+Pr Pm               Cancel the search that would occur
 
 # Auxillary Programs
 
