@@ -50,7 +50,7 @@ static struct {
     GC gc;
 } X;
 static XConfig* Config;
-static int Mods;
+static int KeyBtnState;
 static Atom SelTarget;
 static struct XSel {
     char* name;
@@ -98,12 +98,12 @@ void x11_init(XConfig* cfg) {
         SelTarget = XInternAtom(X.display, "STRING", 0);
 }
 
-int x11_keymods(void) {
-    return Mods;
+int x11_keybtnstate(void) {
+    return KeyBtnState;
 }
 
 bool x11_keymodsset(int mask) {
-    return ((Mods & mask) == mask);
+    return ((KeyBtnState & mask) == mask);
 }
 
 void x11_window(char* name, int width, int height) {
@@ -274,37 +274,24 @@ static uint32_t getkey(XEvent* e) {
 
 static void handle_key(XEvent* event) {
     uint32_t key = getkey(event);
-    Mods = event->xkey.state & ModAny;
+    KeyBtnState = event->xkey.state;
     if (key == RUNE_ERR) return;
-    Config->handle_key(Mods, key);
+    Config->handle_key(KeyBtnState, key);
 }
 
 static void handle_mouse(XEvent* e) {
-    MouseAct action;
-    MouseBtn button;
     int x = 0, y = 0;
     if (e->type == MotionNotify) {
-        action = MOUSE_ACT_MOVE;
-        button = MOUSE_BTN_LEFT;
+        KeyBtnState = e->xmotion.state;
         x      = e->xmotion.x;
         y      = e->xmotion.y;
+        Config->mouse_drag(KeyBtnState, x, y);
     } else {
-        Mods = e->xbutton.state & ModAny;
-        action = (e->type == ButtonPress ? MOUSE_ACT_DOWN : MOUSE_ACT_UP);
-        /* set the button id */
-        switch (e->xbutton.button) {
-            case Button1: button = MOUSE_BTN_LEFT;      break;
-            case Button2: button = MOUSE_BTN_MIDDLE;    break;
-            case Button3: button = MOUSE_BTN_RIGHT;     break;
-            case Button4: button = MOUSE_BTN_WHEELUP;   break;
-            case Button5: button = MOUSE_BTN_WHEELDOWN; break;
-            default:      button = MOUSE_BTN_NONE;      break;
-        }
+        KeyBtnState = e->xbutton.state;
         x = e->xbutton.x;
         y = e->xbutton.y;
+        Config->mouse_btn(e->xbutton.button, (e->type == ButtonPress), x, y);
     }
-    /* pass the data to the app */
-    Config->handle_mouse(action, button, x, y);
 }
 
 static void set_focus(bool focused) {

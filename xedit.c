@@ -174,7 +174,14 @@ static void reload(void) {
 
 /* Mouse Handling
  ******************************************************************************/
-void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
+    static int count = 0;
+    static uint64_t before = 0;
+    if (!pressed) return;
+    uint64_t now = getmillis();
+    count = ((now-before) <= 250 ? count+1 : 1);
+    before = now;
+
     if (count == 1) {
         if (x11_keymodsset(ModShift))
             view_selext(win_view(id), row, col);
@@ -187,8 +194,9 @@ void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
     }
 }
 
-void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
-    if (win_btnpressed(MOUSE_BTN_LEFT)) {
+void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (pressed) return;
+    if (win_btnpressed(MouseLeft)) {
         cut();
     } else {
         char* str = view_fetch(win_view(id), row, col);
@@ -197,8 +205,9 @@ void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
     }
 }
 
-void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
-    if (win_btnpressed(MOUSE_BTN_LEFT)) {
+void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (pressed) return;
+    if (win_btnpressed(MouseLeft)) {
         paste();
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);

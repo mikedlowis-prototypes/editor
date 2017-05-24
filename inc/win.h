@@ -1,3 +1,11 @@
+enum {
+    MouseLeft    = 1,
+    MouseMiddle  = 2,
+    MouseRight   = 3,
+    MouseWheelUp = 4,
+    MouseWheelDn = 5
+};
+
 typedef enum {
     STATUS   = 0,
     TAGS     = 1,
@@ -43,7 +51,7 @@ void win_warpptr(WinRegion id);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
 Sel* win_sel(WinRegion id);
-bool win_btnpressed(MouseBtn btn);
+bool win_btnpressed(int btn);
 WinRegion win_getregion(void);
 bool win_setregion(WinRegion id);
 void win_setscroll(double offset, double visible);
@@ -55,7 +63,7 @@ void onfocus(bool focused);
 void onupdate(void);
 void onlayout(void);
 void onscroll(double percent);
-void onmouseleft(WinRegion id, size_t count, size_t row, size_t col);
-void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col);
-void onmouseright(WinRegion id, size_t count, size_t row, size_t col);
+void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col);
+void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col);
+void onmouseright(WinRegion id, bool pressed, size_t row, size_t col);
 

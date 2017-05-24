@@ -112,13 +112,13 @@ static void score(void) {
     vec_sort(&Choices, by_score);
 }
 
-void onmouseleft(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
 }
 
-void onmousemiddle(WinRegion id, size_t count, size_t row, size_t col) {
+void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
 }
 
-void onmouseright(WinRegion id, size_t count, size_t row, size_t col) {
+void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
 }
 
 void onscroll(double percent) {

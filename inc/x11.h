@@ -1,25 +1,10 @@
-typedef enum {
-    MOUSE_ACT_UP,
-    MOUSE_ACT_DOWN,
-    MOUSE_ACT_MOVE
-} MouseAct;
-
-typedef enum {
-    MOUSE_BTN_LEFT      = 0,
-    MOUSE_BTN_MIDDLE    = 1,
-    MOUSE_BTN_RIGHT     = 2,
-    MOUSE_BTN_WHEELUP   = 3,
-    MOUSE_BTN_WHEELDOWN = 4,
-    MOUSE_BTN_NONE      = 5,
-    MOUSE_BTN_COUNT     = 6
-} MouseBtn;
-
 typedef struct {
     void (*redraw)(int width, int height);
     void (*handle_key)(int mods, uint32_t rune);
-    void (*handle_mouse)(MouseAct act, MouseBtn btn, int x, int y);
     void (*shutdown)(void);
     void (*set_focus)(bool focus);
+    void (*mouse_drag)(int state, int x, int y);
+    void (*mouse_btn)(int state, bool pressed, int x, int y);
     uint32_t palette[16];
 } XConfig;
 
@@ -130,7 +115,7 @@ enum {
 
 void x11_init(XConfig* cfg);
 void x11_deinit(void);
-int x11_keymods(void);
+int x11_keybtnstate(void);
 bool x11_keymodsset(int mask);
 void x11_window(char* name, int width, int height);
 void x11_dialog(char* name, int height, int width);

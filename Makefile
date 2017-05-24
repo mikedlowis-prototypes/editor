@@ -66,6 +66,9 @@ tests/xedit: tests/xedit.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
 tests/term: tests/term.o libedit.a
 
+%: %.o
+	$(LD) -o $@ $^ $(LDFLAGS)
+
 # load generate dependencies
 -include *.d lib/*.d tests/*.d tests/lib/*.d
 

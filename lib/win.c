@@ -5,20 +5,14 @@
 #include <win.h>
 #include <ctype.h>
 
-typedef struct {
-    uint64_t time;
-    uint8_t count;
-    bool pressed;
-    int region;
-} ButtonState;
-
-static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
-static WinRegion getregion(size_t x, size_t y);
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
-static void onmouse(MouseAct act, MouseBtn btn, int x, int y);
-static void onwheelup(WinRegion id, size_t count, size_t row, size_t col);
-static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col);
+static void onmousedrag(int state, int x, int y);
+static void onmousebtn(int btn, bool pressed, int x, int y);
+static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col);
+static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col);
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
+static WinRegion getregion(size_t x, size_t y);
 
 static size_t Ruler = 0;
 static double ScrollOffset = 0.0;
@@ -27,23 +21,14 @@ static XFont Font;
 static XConfig Config = {
     .redraw       = onredraw,
     .handle_key   = oninput,
-    .handle_mouse = onmouse,
     .shutdown     = onshutdown,
     .set_focus    = onfocus,
+    .mouse_drag   = onmousedrag,
+    .mouse_btn    = onmousebtn,
     .palette      = COLOR_PALETTE
 };
-
-void (*MouseActs[MOUSE_BTN_COUNT])(WinRegion id, size_t count, size_t row, size_t col) = {
-    [MOUSE_BTN_LEFT]      = onmouseleft,
-    [MOUSE_BTN_MIDDLE]    = onmousemiddle,
-    [MOUSE_BTN_RIGHT]     = onmouseright,
-    [MOUSE_BTN_WHEELUP]   = onwheelup,
-    [MOUSE_BTN_WHEELDOWN] = onwheeldn,
-};
-
 static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
-static ButtonState MouseBtns[MOUSE_BTN_COUNT] = {0};
 KeyBinding* Keys = NULL;
 
 static void win_init(void (*errfn)(char*)) {
@@ -67,10 +52,14 @@ static bool update_focus(void) {
     static int prev_x = 0, prev_y = 0;
     int ptr_x, ptr_y;
     bool changed = false;
-    x11_mouse_get(&ptr_x, &ptr_y);
-    if (prev_x != ptr_x || prev_y != ptr_y)
-        changed = win_setregion(getregion(ptr_x, ptr_y));
-    prev_x = ptr_x, prev_y = ptr_y;
+    /* dont change focus if any mouse buttons are pressed */
+    if ((x11_keybtnstate() & 0x1f00) == 0)
+    {
+        x11_mouse_get(&ptr_x, &ptr_y);
+        if (prev_x != ptr_x || prev_y != ptr_y)
+            changed = win_setregion(getregion(ptr_x, ptr_y));
+        prev_x = ptr_x, prev_y = ptr_y;
+    }
     return changed;
 }
 
@@ -108,8 +97,9 @@ void win_setkeys(KeyBinding* bindings) {
     Keys = bindings;
 }
 
-bool win_btnpressed(MouseBtn btn) {
-    return MouseBtns[btn].pressed;
+bool win_btnpressed(int btn) {
+    int btnmask = (1 << (btn + 7));
+    return ((x11_keybtnstate() & btnmask) == btnmask);
 }
 
 WinRegion win_getregion(void) {
@@ -262,78 +252,67 @@ static void oninput(int mods, Rune key) {
     }
 }
 
-static void onclick(MouseAct act, MouseBtn btn, int x, int y) {
-    WinRegion id = getregion(x, y);
-    size_t row = (y-Regions[id].y) / x11_font_height(Font);
-    size_t col = (x-Regions[id].x) / x11_font_width(Font);
-    if (id == SCROLL) {
-        id = EDIT;
-        switch (btn) {
-            case MOUSE_BTN_LEFT:
+static void scroll_actions(int btn, bool pressed, int x, int y) {
+    size_t row = (y-Regions[SCROLL].y) / x11_font_height(Font);
+    size_t col = (x-Regions[SCROLL].x) / x11_font_width(Font);
+    switch (btn) {
+        case MouseLeft:
+            if (pressed)
                 view_scroll(win_view(EDIT), -row);
-                break;
-            case MOUSE_BTN_MIDDLE:
+            break;
+        case MouseMiddle:
+            if (pressed)
                 onscroll((double)(y - Regions[SCROLL].y) /
                          (double)(Regions[SCROLL].height - Regions[SCROLL].y));
-                break;
-            case MOUSE_BTN_RIGHT:
+            break;
+        case MouseRight:
+            if (pressed)
                 view_scroll(win_view(EDIT), +row);
-                break;
-            case MOUSE_BTN_WHEELUP:
-                view_scroll(win_view(id), -ScrollLines);
-                break;
-            case MOUSE_BTN_WHEELDOWN:
-                view_scroll(win_view(id), +ScrollLines);
-                break;
-            default:
-                break;
-        }
-    } else if (MouseActs[btn]) {
-        MouseActs[btn](MouseBtns[btn].region, MouseBtns[btn].count, row, col);
+            break;
+        case MouseWheelUp:
+            view_scroll(win_view(EDIT), -ScrollLines);
+            break;
+        case MouseWheelDn:
+            view_scroll(win_view(EDIT), +ScrollLines);
+            break;
     }
 }
 
-static void onmouse(MouseAct act, MouseBtn btn, int x, int y) {
+static void onmousedrag(int state, int x, int y) {
     WinRegion id = getregion(x, y);
     size_t row = (y-Regions[id].y) / x11_font_height(Font);
     size_t col = (x-Regions[id].x) / x11_font_width(Font);
-    if (act == MOUSE_ACT_MOVE) {
-        if (MouseBtns[MOUSE_BTN_LEFT].pressed) {
-            WinRegion selid = MouseBtns[MOUSE_BTN_LEFT].region;
-            if (MouseBtns[MOUSE_BTN_LEFT].count == 1) {
-                view_setcursor(win_view(selid), row, col);
-                MouseBtns[MOUSE_BTN_LEFT].count = 0;
-            } else {
-                view_selext(win_view(selid), row, col);
-            }
-        }
+    if (id == Focused && win_btnpressed(MouseLeft))
+        view_selext(win_view(id), row, col);
+}
+
+static void onmousebtn(int btn, bool pressed, int x, int y) {
+    WinRegion id = getregion(x, y);
+    size_t row = (y-Regions[id].y) / x11_font_height(Font);
+    size_t col = (x-Regions[id].x) / x11_font_width(Font);
+
+    if (id == SCROLL) {
+        scroll_actions(btn, pressed, x, y);
     } else {
-        MouseBtns[btn].pressed = (act == MOUSE_ACT_DOWN);
-        if (MouseBtns[btn].pressed) {
-            /* update the number of clicks and click time */
-            uint32_t now = getmillis();
-            uint32_t elapsed = now - MouseBtns[btn].time;
-            MouseBtns[btn].time = now;
-            MouseBtns[btn].region = id;
-            if (elapsed <= 250)
-                MouseBtns[btn].count++;
-            else
-                MouseBtns[btn].count = 1;
-        } else if (MouseBtns[btn].count > 0) {
-            onclick(act, btn, x, y);
+        switch(btn) {
+            case MouseLeft:    onmouseleft(id, pressed, row, col);   break;
+            case MouseMiddle:  onmousemiddle(id, pressed, row, col); break;
+            case MouseRight:   onmouseright(id, pressed, row, col);  break;
+            case MouseWheelUp: onwheelup(id, pressed, row, col);     break;
+            case MouseWheelDn: onwheeldn(id, pressed, row, col);     break;
         }
     }
 }
 
-static void onwheelup(WinRegion id, size_t count, size_t row, size_t col) {
+static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (!pressed) return;
     view_scroll(win_view(id), -ScrollLines);
 }
 
-static void onwheeldn(WinRegion id, size_t count, size_t row, size_t col) {
+static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (!pressed) return;
     view_scroll(win_view(id), +ScrollLines);
 }
-
-/*****************************************************************************/
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
     XGlyphSpec specs[rlen];
@@ -369,4 +348,3 @@ static WinRegion getregion(size_t x, size_t y) {
     }
     return NREGIONS;
 }
-
