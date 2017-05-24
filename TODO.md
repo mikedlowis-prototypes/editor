@@ -2,6 +2,7 @@
 
 Up Next:
 
+* use transaction ids to only mark buffer dirty when it really is
 * Make Fn keys execute nth command in the tags buffers
 * arrow keys with selection should clear the selection instead of moving.
 * move by words is inconsistent. Example:

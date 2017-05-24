@@ -346,6 +346,8 @@ bool x11_events_await(unsigned int ms) {
 
 void x11_events_take(void) {
     XEvent e;
+    int nevents;
+    XGetMotionEvents(X.display, X.window, CurrentTime, CurrentTime, &nevents);
     while (XPending(X.display)) {
         XNextEvent(X.display, &e);
         if (!XFilterEvent(&e, None))
