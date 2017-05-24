@@ -261,8 +261,15 @@ Row* view_getrow(View* view, size_t row) {
 
 void view_byrune(View* view, int move, bool extsel) {
     Sel sel = view->selection;
-    sel.end = buf_byrune(&(view->buffer), sel.end, move);
-    if (!extsel) sel.beg = sel.end;
+    if (view_selsize(view) && !extsel) {
+        if (move == RIGHT)
+            sel.beg = sel.end;
+        else
+            sel.end = sel.beg;
+    } else {
+        sel.end = buf_byrune(&(view->buffer), sel.end, move);
+        if (!extsel) sel.beg = sel.end;
+    }
     sel.col = buf_getcol(&(view->buffer), sel.end);
     view->selection = sel;
     view->sync_needed = true;
