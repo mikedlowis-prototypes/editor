@@ -53,8 +53,7 @@ static bool update_focus(void) {
     int ptr_x, ptr_y;
     bool changed = false;
     /* dont change focus if any mouse buttons are pressed */
-    if ((x11_keybtnstate() & 0x1f00) == 0)
-    {
+    if ((x11_keybtnstate() & 0x1f00) == 0) {
         x11_mouse_get(&ptr_x, &ptr_y);
         if (prev_x != ptr_x || prev_y != ptr_y)
             changed = win_setregion(getregion(ptr_x, ptr_y));

@@ -280,16 +280,17 @@ static void handle_key(XEvent* event) {
 }
 
 static void handle_mouse(XEvent* e) {
-    int x = 0, y = 0;
+    KeyBtnState = e->xbutton.state;
+    int x = e->xbutton.x;
+    int y = e->xbutton.y;
+
     if (e->type == MotionNotify) {
-        KeyBtnState = e->xmotion.state;
-        x      = e->xmotion.x;
-        y      = e->xmotion.y;
         Config->mouse_drag(KeyBtnState, x, y);
     } else {
-        KeyBtnState = e->xbutton.state;
-        x = e->xbutton.x;
-        y = e->xbutton.y;
+        if (e->type == ButtonRelease)
+            KeyBtnState &= ~(1 << (e->xbutton.button + 7));
+        else
+            KeyBtnState |= (1 << (e->xbutton.button + 7));
         Config->mouse_btn(e->xbutton.button, (e->type == ButtonPress), x, y);
     }
 }
