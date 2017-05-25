@@ -5,21 +5,24 @@ Up Next:
 * ctrl+d with no selection does word selection instead of context
 * add config option to change default tab style
 * get rid of edit wrapper script
-* Add a way to CD using a builtin
-* Ctrl+Shift+N to set a mark, Ctrl+N to jump to a mark
-* Make Fn keys execute nth command in the tags buffers
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * rename to tide
 
-The Future:
-
+* Ctrl+Shift+N to set a mark, Ctrl+N to jump to a mark
+* Make Fn keys execute nth command in the tags buffers
+* Add a way to CD using a builtin
+* Ctrl+PageUp/Dn to move cursor by screenfuls
 * Ctrl+Shift+g to jump to undo a goto line action
-* Shortcut to warp cursor to middle of current screen.
+* Ctrl+\ Shortcut to warp cursor to middle of current screen.
 * Find shortcut should select previous word if current char is newline
 * diagnostic messages can stack up if deselected and not resolved
 * highlight all matches of search term
 * Ctrl+Shift+Enter copies indent of wrong line
+* jump to previous or next line with less indent
+* Shift+Insert should insert primary selection
+
+The Future:
 
 * use transaction ids to only mark buffer dirty when it really is
 * refactor selection handling to buf.c to prepare for multiple selections.
