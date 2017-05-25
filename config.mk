@@ -13,7 +13,7 @@ INCS += -I/usr/include/freetype2
 
 # Compiler Setup
 CC = cc
-CFLAGS = --std=c99 -MMD -g -O0 $(INCS)
+CFLAGS = --std=c99 -MMD $(INCS)
 
 # Linker Setup
 LD = $(CC)
@@ -26,13 +26,19 @@ ARFLAGS = rcs
 # Treat all  warnings as errors (poor man's lint?)
 #CFLAGS += -Wall -Wextra -Werror
 
+# GCC Debugging
+ifeq ($(DEBUG), 1)
+    CFLAGS  += -g -O0
+    LDFLAGS += -g -O0
+endif
+
 # GCC Profiling
 ifeq ($(GPROF), 1)
     CFLAGS  += -pg
     LDFLAGS += -pg
 endif
 
-# Gcov Coverage
+# GCC Coverage
 ifeq ($(GCOV), 1)
     CFLAGS  += --coverage
     LDFLAGS += --coverage

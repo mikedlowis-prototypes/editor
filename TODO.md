@@ -2,13 +2,13 @@
 
 Up Next:
 
-* use transaction ids to only mark buffer dirty when it really is
 * Make Fn keys execute nth command in the tags buffers
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 
 The Future:
 
+* use transaction ids to only mark buffer dirty when it really is
 * refactor selection handling to buf.c to prepare for multiple selections.
 * 100% coverage with unit and unit-integration tests
 * right click to fetch file or line
