@@ -23,7 +23,7 @@ Display* XDisplay;
 
 static void initialize(void) {
     ShellCmd[0] = "/bin/sh";
-    win_window("edit", onerror);
+    win_window("edit", ondiagmsg);
     XDisplay = XOpenDisplay(NULL);
     win_setkeys(Bindings);
     //win_setmouse(&MouseHandlers);
@@ -796,19 +796,19 @@ TEST_SUITE(UnitTests) {
 
     TEST(Save should save changes to disk with crlf line endings) {
         setup_view(TAGS, "", CRLF, 0);
-        view_init(win_view(EDIT), "testdocs/crlf.txt", onerror);
+        view_init(win_view(EDIT), "testdocs/crlf.txt", ondiagmsg);
         CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
         exec("Save");
-        view_init(win_view(EDIT), "testdocs/crlf.txt", onerror);
+        view_init(win_view(EDIT), "testdocs/crlf.txt", ondiagmsg);
         CHECK(verify_text(EDIT, "this file\r\nuses\r\ndos\r\nline\r\nendings\r\n"));
     }
 
     TEST(Save should save changes to disk with lf line endings) {
         setup_view(TAGS, "", CRLF, 0);
-        view_init(win_view(EDIT), "testdocs/lf.txt", onerror);
+        view_init(win_view(EDIT), "testdocs/lf.txt", ondiagmsg);
         CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
         exec("Save");
-        view_init(win_view(EDIT), "testdocs/lf.txt", onerror);
+        view_init(win_view(EDIT), "testdocs/lf.txt", ondiagmsg);
         CHECK(verify_text(EDIT, "this file\nuses\nunix\nline\nendings\n"));
     }
 

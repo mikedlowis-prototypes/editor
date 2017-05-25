@@ -103,8 +103,9 @@ static void exec(char* cmd) {
 
 /* Action Callbacks
  ******************************************************************************/
-static void onerror(char* msg) {
+static void ondiagmsg(char* msg) {
     view_append(win_view(TAGS), msg);
+    win_setregion(TAGS);
 }
 
 static void trim_whitespace(void) {
@@ -140,18 +141,15 @@ static void quit(void) {
         exit(0);
         #endif
     } else {
-        view_append(win_view(TAGS),
-            "File is modified. Repeat action twice quickly to quit.");
+        ondiagmsg("File is modified. Repeat action twice quickly to quit.");
     }
     before = now;
 }
 
 static bool changed_externally(Buf* buf) {
     bool modified = (buf->modtime != modtime(buf->path));
-    if (modified) {
-        view_append(win_view(TAGS),
-            "File modified externally: Reload, Overwrite, or {SaveAs }");
-    }
+    if (modified)
+        ondiagmsg("File modified externally: Reload, Overwrite, or {SaveAs }");
     return modified;
 }
 
@@ -288,7 +286,7 @@ static void pick_symbol(char* symbol) {
             win_setregion(EDIT);
         } else {
             if (!buf->path && !buf->modified) {
-                view_init(win_view(EDIT), pick, onerror);
+                view_init(win_view(EDIT), pick, ondiagmsg);
             } else {
                 OpenCmd[1] = chomp(pick);
                 cmdrun(OpenCmd, NULL);
@@ -466,7 +464,8 @@ void onscroll(double percent) {
 
 void onfocus(bool focused) {
     /* notify the user if the file has changed externally */
-    (void)changed_externally(win_buf(EDIT));
+    if (focused)
+        (void)changed_externally(win_buf(EDIT));
 }
 
 void onupdate(void) {
@@ -511,11 +510,11 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     /* Create the window and enter the event loop */
-    win_window("edit", onerror);
+    win_window("edit", ondiagmsg);
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DefaultTags));
     win_setruler(RulePosition);
-    view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL), onerror);
+    view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL), ondiagmsg);
     win_setkeys(Bindings);
     win_loop();
     return 0;
