@@ -6,6 +6,9 @@
 #include <win.h>
 #include <shortcuts.h>
 
+#define INCLUDE_DEFS
+#include "config.h"
+
 typedef struct {
     char* tag;
     union {
@@ -14,12 +17,6 @@ typedef struct {
     } action;
 } Tag;
 
-/* The shell: Filled in with $SHELL. Used to execute commands */
-static char* ShellCmd[] = { NULL, "-c", NULL, NULL };
-static char* SedCmd[] = { "sed", "-e", NULL, NULL };
-static char* PickFileCmd[] = { "xfilepick", ".", NULL };
-static char* PickTagCmd[] = { "xtagpick", NULL, "tags", NULL, NULL };
-static char* OpenCmd[] = { "xedit", NULL, NULL };
 static Tag Builtins[];
 static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
@@ -136,7 +133,7 @@ static void trim_whitespace(void) {
 static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= 250) {
+    if (!win_buf(EDIT)->modified || (now-before) <= DblClickTime) {
         #ifndef TEST
         x11_deinit();
         #else
@@ -144,7 +141,7 @@ static void quit(void) {
         #endif
     } else {
         view_append(win_view(TAGS),
-            "File is modified. Repeat action twice in < 250ms to quit.");
+            "File is modified. Repeat action twice quickly to quit.");
     }
     before = now;
 }
@@ -179,7 +176,7 @@ void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
     static uint64_t before = 0;
     if (!pressed) return;
     uint64_t now = getmillis();
-    count = ((now-before) <= 250 ? count+1 : 1);
+    count = ((now-before) <= DblClickTime ? count+1 : 1);
     before = now;
 
     if (count == 1) {
@@ -241,7 +238,7 @@ static void tag_redo(void) {
 
 static void search(void) {
     char* str;
-    SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+    SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
     if (x11_keymodsset(ModAlt) && SearchTerm)
         str = stringdup(SearchTerm);
     else
@@ -262,7 +259,7 @@ static void execute(void) {
 }
 
 static void find(char* arg) {
-    SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+    SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
     view_findstr(win_view(EDIT), SearchDir, arg);
 }
 
@@ -511,13 +508,13 @@ void onshutdown(void) {
 #ifndef TEST
 int main(int argc, char** argv) {
     /* setup the shell */
-    ShellCmd[0] = getenv("SHELL");
+    if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     /* Create the window and enter the event loop */
     win_window("edit", onerror);
     char* tags = getenv("EDITTAGS");
-    win_settext(TAGS, (tags ? tags : DEFAULT_TAGS));
-    win_setruler(80);
+    win_settext(TAGS, (tags ? tags : DefaultTags));
+    win_setruler(RulePosition);
     view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL), onerror);
     win_setkeys(Bindings);
     win_loop();

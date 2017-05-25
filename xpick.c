@@ -7,6 +7,9 @@
 #include <ctype.h>
 #include <shortcuts.h>
 
+#define INCLUDE_DEFS
+#include "config.h"
+
 typedef struct {
     float score;
     char* string;

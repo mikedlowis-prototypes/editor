@@ -607,77 +607,77 @@ TEST_SUITE(UnitTests) {
         CHECK(win_view(EDIT)->selection.beg == 0);
         CHECK(win_view(EDIT)->selection.end == 3);
     }
-    
+
     TEST(ctrl+h should nothing for empty buffer) {
         setup_view(EDIT, "", CRLF, 0);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 0);
     }
-    
+
     TEST(ctrl+h should highlight content in parens from left paren) {
         setup_view(EDIT, " (foo bar) ", CRLF, 1);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 9);
     }
-    
+
     TEST(ctrl+h should highlight content in parens from right paren) {
         setup_view(EDIT, " (foo bar) ", CRLF, 9);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 9);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(ctrl+h should highlight content in parens from left bracket) {
         setup_view(EDIT, " [foo bar] ", CRLF, 1);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 9);
     }
-    
+
     TEST(ctrl+h should highlight content in parens from right bracket) {
         setup_view(EDIT, " [foo bar] ", CRLF, 9);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 9);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(ctrl+h should highlight content in parens from left brace) {
         setup_view(EDIT, " {foo bar} ", CRLF, 1);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 2);
         CHECK(win_sel(EDIT)->end == 9);
     }
-    
+
     TEST(ctrl+h should highlight content in parens from right brace) {
         setup_view(EDIT, " {foo bar} ", CRLF, 9);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 9);
         CHECK(win_sel(EDIT)->end == 2);
     }
-    
+
     TEST(ctrl+h should highlight whole line from bol) {
         setup_view(EDIT, "foo bar\n", CRLF, 0);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 8);
     }
-    
+
     TEST(ctrl+h should highlight whole line from eol) {
         setup_view(EDIT, "foo bar\n", CRLF, 7);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 0);
         CHECK(win_sel(EDIT)->end == 8);
     }
-    
+
     TEST(ctrl+h should highlight word under cursor) {
         setup_view(EDIT, " foo.bar \n", CRLF, 1);
         send_keys(ModCtrl, XK_h);
         CHECK(win_sel(EDIT)->beg == 1);
         CHECK(win_sel(EDIT)->end == 4);
     }
-    
+
     TEST(ctrl+h should highlight word under cursor) {
         setup_view(EDIT, " foo.bar \n", CRLF, 4);
         send_keys(ModCtrl, XK_h);
@@ -773,7 +773,7 @@ TEST_SUITE(UnitTests) {
         usleep(251 * 1000);
         exec("Quit");
         CHECK(ExitCode == 42);
-        CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
+        CHECK(verify_text(TAGS, "File is modified. Repeat action twice quickly to quit."));
     }
 
     TEST(Quit should discard changes if quit executed twice in less than 250 ms) {
@@ -786,12 +786,12 @@ TEST_SUITE(UnitTests) {
         EXPECT_EXIT {
             exec("Quit");
             CHECK(ExitCode == 42);
-            CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
+            CHECK(verify_text(TAGS, "File is modified. Repeat action twice quickly to quit."));
             exec("Quit");
         }
         ExitExpected = false;
         CHECK(ExitCode == 0);
-        CHECK(verify_text(TAGS, "File is modified. Repeat action twice in < 250ms to quit."));
+        CHECK(verify_text(TAGS, "File is modified. Repeat action twice quickly to quit."));
     }
 
     TEST(Save should save changes to disk with crlf line endings) {

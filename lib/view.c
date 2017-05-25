@@ -2,6 +2,7 @@
 #include <utf.h>
 #include <edit.h>
 #include <ctype.h>
+#include <config.h>
 
 #define ATTR_NORMAL   (CLR_BASE03 << 8 | CLR_BASE0)
 #define ATTR_SELECTED (CLR_BASE0  << 8 | CLR_BASE03)

@@ -5,7 +5,6 @@ typedef struct {
     void (*set_focus)(bool focus);
     void (*mouse_drag)(int state, int x, int y);
     void (*mouse_btn)(int state, bool pressed, int x, int y);
-    uint32_t palette[16];
 } XConfig;
 
 typedef void* XFont;

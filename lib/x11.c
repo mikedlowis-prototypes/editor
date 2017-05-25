@@ -5,6 +5,7 @@
 #include <x11.h>
 #include <utf.h>
 #include <edit.h>
+#include <config.h>
 #include <locale.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -118,7 +119,7 @@ void x11_window(char* name, int width, int height) {
         X.width,
         X.height,
         0, X.depth,
-        Config->palette[0]);
+        ColorPalette[0]);
 
     /* register interest in the delete window message */
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
@@ -414,7 +415,7 @@ size_t x11_font_descent(XFont fnt) {
 
 void x11_draw_rect(int color, int x, int y, int width, int height) {
     XftColor clr;
-    xftcolor(&clr, Config->palette[color]);
+    xftcolor(&clr, ColorPalette[color]);
     XftDrawRect(X.xft, &clr, x, y, width, height);
     XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
@@ -492,12 +493,12 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
         XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
         int w = extent.xOff;
         int h = (font->height - font->descent) + LineSpacing;
-        xftcolor(&bgc, Config->palette[bg]);
+        xftcolor(&bgc, ColorPalette[bg]);
         size_t width = specs[nspecs-1].x - specs[0].x + w;
         x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + LineSpacing);
         XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
-    xftcolor(&fgc, Config->palette[fg]);
+    xftcolor(&fgc, ColorPalette[fg]);
     XftDrawGlyphFontSpec(X.xft, &fgc, (XftGlyphFontSpec*)specs, nspecs);
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }

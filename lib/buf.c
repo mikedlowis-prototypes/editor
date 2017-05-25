@@ -4,6 +4,7 @@
 #include <edit.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <config.h>
 
 static void buf_resize(Buf* buf, size_t sz);
 
@@ -182,8 +183,8 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
     buf->modified    = false;
     buf->expand_tabs = true;
     buf->copy_indent = true;
-    buf->charset     = DEFAULT_CHARSET;
-    buf->crlf        = DEFAULT_CRLF;
+    buf->charset     = DefaultCharset;
+    buf->crlf        = DefaultCRLF;
     buf->bufsize     = BufSize;
     buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
     buf->bufend      = buf->bufstart + buf->bufsize;

@@ -4,6 +4,7 @@
 #include <x11.h>
 #include <win.h>
 #include <ctype.h>
+#include <config.h>
 
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
@@ -25,7 +26,6 @@ static XConfig Config = {
     .set_focus    = onfocus,
     .mouse_drag   = onmousedrag,
     .mouse_btn    = onmousebtn,
-    .palette      = COLOR_PALETTE
 };
 static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
@@ -35,7 +35,7 @@ static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL, errfn);
     x11_init(&Config);
-    Font = x11_font_load(FONTNAME);
+    Font = x11_font_load(FontString);
 }
 
 void win_window(char* name, void (*errfn)(char*)) {

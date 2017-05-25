@@ -5,7 +5,8 @@ PREFIX = $(HOME)
 
 # OSX X11 Flags
 INCS += -I/usr/X11/include           \
-		-I/usr/X11/include/freetype2
+		-I/usr/X11/include/freetype2 \
+		-I.
 LIBS += -L/usr/X11/lib
 
 # Linux Freetype2 Flags
