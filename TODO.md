@@ -4,7 +4,6 @@ Up Next:
 
 * ctrl+d with no selection does word selection instead of context
 * add config option to change default tab style
-* Diagnostic messages should order options so most frequent is closest to cursor
 * get rid of edit wrapper script
 * Add a way to CD using a builtin
 * Ctrl+Shift+N to set a mark, Ctrl+N to jump to a mark

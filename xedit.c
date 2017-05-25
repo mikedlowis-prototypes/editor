@@ -149,7 +149,7 @@ static void quit(void) {
 static bool changed_externally(Buf* buf) {
     bool modified = (buf->modtime != modtime(buf->path));
     if (modified)
-        ondiagmsg("File modified externally: Reload, Overwrite, or {SaveAs }");
+        ondiagmsg("File modified externally: {SaveAs } Overwrite Reload");
     return modified;
 }
 
