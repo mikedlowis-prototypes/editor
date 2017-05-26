@@ -250,6 +250,17 @@ position.
     Scroll the active region down by one screenful of text. The cursor is not
     affected by this  operation.
 
+### Bookmark Shortcuts
+
+`xedit` supports marking locations in a document to quickly jump to later. This
+eases navigation between multiple locations in a large document.
+
+* `Ctrl+[0-9]`:
+    Jump to a bookmarked location.
+
+* `Ctrl+Alt+[0-9]`:
+    Save the cursor location as a bookmark
+
 ### Search Shortcuts
 
 The shortcuts below allow the user to search for selected text or by context.

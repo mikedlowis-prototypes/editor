@@ -29,7 +29,8 @@ static XConfig Config = {
 };
 static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
-KeyBinding* Keys = NULL;
+static Rune LastKey;
+static KeyBinding* Keys = NULL;
 
 static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
@@ -90,6 +91,10 @@ void win_settext(WinRegion id, char* text) {
 
 void win_setruler(size_t ruler) {
     Ruler = ruler;
+}
+
+Rune win_getkey(void) {
+    return LastKey;
 }
 
 void win_setkeys(KeyBinding* bindings) {
@@ -229,14 +234,19 @@ static void onredraw(int width, int height) {
 }
 
 static void oninput(int mods, Rune key) {
+    LastKey = key;
     /* mask of modifiers we don't care about */
-    mods = mods & (ModCtrl|ModAlt|ModShift);
+    mods = mods & (ModCtrl|ModShift|ModAlt);
     /* handle the proper line endings */
     if (key == '\r') key = '\n';
     /* search for a key binding entry */
     uint32_t mkey = tolower(key);
     for (KeyBinding* bind = Keys; bind && bind->key; bind++) {
-        if ((mkey == bind->key) && (bind->mods == ModAny || bind->mods == mods)) {
+        bool match   = (mkey == bind->key);
+        bool exact   = (bind->mods == mods);
+        bool any     = (bind->mods == ModAny);
+        bool oneplus = ((bind->mods == ModOneOrMore) && (mods & ModOneOrMore));
+        if (match && (exact || oneplus || any)) {
             bind->action();
             return;
         }

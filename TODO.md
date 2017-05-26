@@ -8,8 +8,6 @@ Up Next:
     var infoId = 'readerinfo'+reader.id;
 * rename to tide
 
-* Ctrl+Shift+N to set a mark, Ctrl+N to jump to a mark
-* Make Fn keys execute nth command in the tags buffers
 * Add a way to CD using a builtin
 * Ctrl+PageUp/Dn to move cursor by screenfuls
 * Ctrl+\ Shortcut to warp cursor to middle of current screen.
@@ -22,6 +20,7 @@ Up Next:
 
 The Future:
 
+* Make Fn keys execute nth command in the tags buffers
 * use transaction ids to only mark buffer dirty when it really is
 * refactor selection handling to buf.c to prepare for multiple selections.
 * 100% coverage with unit and unit-integration tests

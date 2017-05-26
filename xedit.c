@@ -20,6 +20,7 @@ typedef struct {
 static Tag Builtins[];
 static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
+static size_t Marks[10] = {0};
 
 /* Tag/Cmd Execution
  ******************************************************************************/
@@ -379,8 +380,17 @@ static void newline(void) {
     view_insert(view, true, '\n');
 }
 
-void highlight(void) {
+static void highlight(void) {
     view_selctx(win_view(FOCUSED));
+}
+
+static void jumpmark(void) {
+    int mark = (win_getkey() - '0');
+    assert(mark < 10);
+    if (x11_keymodsset(ModAlt))
+        Marks[mark] = win_view(FOCUSED)->selection.end;
+    else
+        view_jumpto(win_view(FOCUSED), false, Marks[mark]);
 }
 
 /* Main Routine
@@ -440,23 +450,30 @@ static KeyBinding Bindings[] = {
     { ModAny,  KEY_DELETE,    delete    },
     { ModAny,  KEY_BACKSPACE, backspace },
 
+    /* Marks Handling */
+    { ModOneOrMore, '0', jumpmark },
+    { ModOneOrMore, '1', jumpmark },
+    { ModOneOrMore, '2', jumpmark },
+    { ModOneOrMore, '3', jumpmark },
+    { ModOneOrMore, '4', jumpmark },
+    { ModOneOrMore, '5', jumpmark },
+    { ModOneOrMore, '6', jumpmark },
+    { ModOneOrMore, '7', jumpmark },
+    { ModOneOrMore, '8', jumpmark },
+    { ModOneOrMore, '9', jumpmark },
+
     /* Implementation Specific */
     { ModNone,                 KEY_ESCAPE, select_prev  },
     { ModCtrl,                 't',        change_focus },
     { ModCtrl,                 'q',        quit         },
     { ModCtrl,                 'h',        highlight    },
-    { ModCtrl,                 'f',        search       },
-    { ModCtrl|ModShift,        'f',        search       },
-    { ModCtrl|ModAlt,          'f',        search       },
-    { ModCtrl|ModAlt|ModShift, 'f',        search       },
+    { ModOneOrMore,            'f',        search       },
     { ModCtrl,                 'd',        execute      },
     { ModCtrl,                 'o',        open_file    },
     { ModCtrl,                 'p',        pick_ctag    },
-    { ModCtrl,                 'g',        goto_ctag    },
-    { ModCtrl|ModShift,        'g',        goto_ctag    },
+    { ModOneOrMore,            'g',        goto_ctag    },
     { ModCtrl,                 'n',        new_win      },
-    { ModCtrl,                 '\n',       newline      },
-    { ModCtrl|ModShift,        '\n',       newline      },
+    { ModOneOrMore,            '\n',       newline      },
     { ModCtrl,                 ' ',        complete     },
     { 0, 0, 0 }
 };

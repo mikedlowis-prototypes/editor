@@ -220,6 +220,17 @@ Scroll the active region up by one screenful of text\. The cursor is not affecte
 \fBPageDn\fR
 Scroll the active region down by one screenful of text\. The cursor is not affected by this operation\.
 .
+.SS "Bookmark Shortcuts"
+\fBxedit\fR supports marking locations in a document to quickly jump to later\. This eases navigation between multiple locations in a large document\.
+.
+.TP
+\fBCtrl+[0\-9]\fR
+Jump to a bookmarked location\.
+.
+.TP
+\fBCtrl+Alt+[0\-9]\fR
+Save the cursor location as a bookmark
+.
 .SS "Search Shortcuts"
 The shortcuts below allow the user to search for selected text or by context\. The direction of the search defaults to the forward direction with regard to the position in the file\. Each search follows the direction of the previous search unless the \fBShift\fR modifier is applied\. The \fBShift\fR modifier causes the current search operation to be applied in the opposite direction of the previous\.
 .
@@ -268,6 +279,10 @@ Launch xtagpick(1) to select a tag from a ctags(1) generated index file\. \fBxed
 .TP
 \fBCtrl+g\fR
 Lookup the selected symbol or symbol under the cursor in a ctags(1) generated index file\. Jump to the location of the definition if it exist in the current file\. Otherwise, a new instance of \fBxedit\fR will be launched with the target file and the cursor set to the line containing the definition\.
+.
+.TP
+\fBCtrl+Shift+g\fR
+Jump to the previous cursor location\.
 .
 .TP
 \fBCtrl+n\fR
