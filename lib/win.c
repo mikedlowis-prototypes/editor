@@ -185,17 +185,17 @@ static void onredraw(int width, int height) {
     layout(width, height);
     onupdate(); // Let the user program update the status and other content
     view_update(win_view(STATUS), &(Regions[STATUS].csrx), &(Regions[STATUS].csry));
-    view_update(win_view(TAGS), &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
-    view_update(win_view(EDIT), &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
+    view_update(win_view(TAGS),   &(Regions[TAGS].csrx),   &(Regions[TAGS].csry));
+    view_update(win_view(EDIT),   &(Regions[EDIT].csrx),   &(Regions[EDIT].csry));
     onlayout(); // Let the user program update the scroll bar
 
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);
-        x11_draw_rect((i == TAGS ? CLR_BASE02 : CLR_BASE03),
+        x11_draw_rect((i == TAGS ? CLR_TagsBkg : CLR_EditBkg),
             0, Regions[i].y - 3, width, Regions[i].height + 8);
-        x11_draw_rect(CLR_BASE01, 0, Regions[i].y - 3, width, 1);
+        x11_draw_rect(CLR_HorBorder, 0, Regions[i].y - 3, width, 1);
         if ((i == EDIT) && (Ruler != 0))
-            x11_draw_rect(CLR_BASE02, (Ruler+2) * fwidth, Regions[i].y-2, 1, Regions[i].height+7);
+            x11_draw_rect(CLR_Ruler, (Ruler+2) * fwidth, Regions[i].y-2, 1, Regions[i].height+7);
         for (size_t y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
@@ -207,13 +207,13 @@ static void onredraw(int width, int height) {
     size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
     size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
     if (thumbsz < 5) thumbsz = 5;
-    x11_draw_rect(CLR_BASE01, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
-    x11_draw_rect(CLR_BASE00, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
-    x11_draw_rect(CLR_BASE03, 0, thumboff, Regions[SCROLL].width, thumbsz);
+    x11_draw_rect(CLR_VerBorder, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
+    x11_draw_rect(CLR_ScrollBkg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
+    x11_draw_rect(CLR_ThumbBkg, 0, thumboff, Regions[SCROLL].width, thumbsz);
 
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
-        x11_draw_rect(CLR_BASE3,
+        x11_draw_rect(CLR_Cursor,
             Regions[Focused].x + (Regions[Focused].csrx * fwidth),
             Regions[Focused].y + (Regions[Focused].csry * fheight),
             1, fheight);

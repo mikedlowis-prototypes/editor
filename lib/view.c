@@ -4,9 +4,6 @@
 #include <ctype.h>
 #include <config.h>
 
-#define ATTR_NORMAL   (CLR_BASE03 << 8 | CLR_BASE0)
-#define ATTR_SELECTED (CLR_BASE0  << 8 | CLR_BASE03)
-
 static void clearrow(View* view, size_t row) {
     Row* scrrow = view_getrow(view, row);
     if (!scrrow) return;
@@ -63,7 +60,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
     view_getrow(view, row)->off = pos;
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (selected(view, pos) ? ATTR_SELECTED : ATTR_NORMAL);
+        uint32_t attr = (selected(view, pos) ? CLR_SelectedText : CLR_NormalText);
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) break;

@@ -191,26 +191,3 @@ int cmdrun(char** cmd, char** err);
 char* cmdread(char** cmd, char** err);
 void cmdwrite(char** cmd, char* text, char** err);
 char* cmdwriteread(char** cmd, char* text, char** err);
-
-/* Color Scheme Handling
- *****************************************************************************/
-/* color indexes for the colorscheme */
-enum ColorId {
-    CLR_BASE03  = 0,
-    CLR_BASE02  = 1,
-    CLR_BASE01  = 2,
-    CLR_BASE00  = 3,
-    CLR_BASE0   = 4,
-    CLR_BASE1   = 5,
-    CLR_BASE2   = 6,
-    CLR_BASE3   = 7,
-    CLR_YELLOW  = 8,
-    CLR_ORANGE  = 9,
-    CLR_RED     = 10,
-    CLR_MAGENTA = 11,
-    CLR_VIOLET  = 12,
-    CLR_BLUE    = 13,
-    CLR_CYAN    = 14,
-    CLR_GREEN   = 15,
-    CLR_COUNT   = 16
-};

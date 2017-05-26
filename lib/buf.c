@@ -181,8 +181,8 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
 
     /* reset the state to defaults */
     buf->modified    = false;
-    buf->expand_tabs = true;
-    buf->copy_indent = true;
+    buf->expand_tabs = (ExpandTabs == 1);
+    buf->copy_indent = (CopyIndent == 1);
     buf->charset     = DefaultCharset;
     buf->crlf        = DefaultCRLF;
     buf->bufsize     = BufSize;
