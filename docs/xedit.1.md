@@ -308,6 +308,9 @@ search operation to be applied in the opposite direction of the previous.
     the current file. Otherwise, a new instance of `xedit` will be launched with
     the target file and the cursor set to the line containing the definition.
 
+* `Ctrl+Shift+g`:
+    Jump to the previous cursor location.
+
 * `Ctrl+n`:
     Open a new instance of `xedit` with no filename.
 

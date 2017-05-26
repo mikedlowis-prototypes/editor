@@ -3,7 +3,6 @@
 Up Next:
 
 * ctrl+d with no selection does word selection instead of context
-* add config option to change default tab style
 * get rid of edit wrapper script
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
@@ -13,7 +12,6 @@ Up Next:
 * Make Fn keys execute nth command in the tags buffers
 * Add a way to CD using a builtin
 * Ctrl+PageUp/Dn to move cursor by screenfuls
-* Ctrl+Shift+g to jump to undo a goto line action
 * Ctrl+\ Shortcut to warp cursor to middle of current screen.
 * Find shortcut should select previous word if current char is newline
 * diagnostic messages can stack up if deselected and not resolved

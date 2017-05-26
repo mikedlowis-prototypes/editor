@@ -324,9 +324,13 @@ static void jump_to(char* arg) {
 }
 
 static void goto_ctag(void) {
-    char* str = view_getctx(win_view(FOCUSED));
-    jump_to(str);
-    free(str);
+    if (x11_keymodsset(ModShift)) {
+        view_jumpback(win_view(FOCUSED));
+    } else {
+        char* str = view_getctx(win_view(FOCUSED));
+        jump_to(str);
+        free(str);
+    }
 }
 
 static void tabs(void) {
@@ -449,6 +453,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl,                 'o',        open_file    },
     { ModCtrl,                 'p',        pick_ctag    },
     { ModCtrl,                 'g',        goto_ctag    },
+    { ModCtrl|ModShift,        'g',        goto_ctag    },
     { ModCtrl,                 'n',        new_win      },
     { ModCtrl,                 '\n',       newline      },
     { ModCtrl|ModShift,        '\n',       newline      },

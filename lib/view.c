@@ -414,11 +414,18 @@ void view_delete(View* view, int dir, bool byword) {
 }
 
 void view_jumpto(View* view, bool extsel, size_t off) {
-    view->selection.end = off;
+    Buf* buf = &(view->buffer);
+    view->prev_csr = view->selection.end;
+    view->selection.end = (off > buf_end(buf) ? buf_end(buf) : off);
     if (!extsel)
         view->selection.beg = view->selection.end;
     view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
     view->sync_needed = true;
+}
+
+void view_jumpback(View* view) {
+    view_jumpto(view, false, view->prev_csr);
+    view->sync_center = true;
 }
 
 void view_bol(View* view, bool extsel) {

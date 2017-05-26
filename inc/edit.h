@@ -135,6 +135,7 @@ typedef struct {
     Row** rows;       /* array of row data structures */
     Buf buffer;       /* the buffer used to populate the view */
     Sel selection;    /* range of currently selected text */
+    size_t prev_csr;  /* previous cursor location */
 } View;
 
 enum {
@@ -181,6 +182,7 @@ void view_selextend(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);
 void view_jumpto(View* view, bool extsel, size_t off);
+void view_jumpback(View* view);
 void view_scrollto(View* view, size_t csr);
 Rune view_getrune(View* view);
 
