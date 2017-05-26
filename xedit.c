@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <win.h>
 #include <shortcuts.h>
+#include <unistd.h>
 
 #define INCLUDE_DEFS
 #include "config.h"
@@ -526,6 +527,54 @@ void onshutdown(void) {
     quit();
 }
 
+void edit_relative(char* path) {
+    char *currdir = NULL, *currpath = NULL, *relpath = NULL;
+    char* origdir = getcurrdir();
+
+    /* search for a ctags index file indicating the project root */
+    if (try_chdir(path)) {
+        currdir  = getcurrdir();
+        currpath = calloc(strlen(currdir) + strlen("/tags") + 1, 1);
+        relpath  = calloc(strlen(currdir) + strlen("/tags") + 1, 1);
+        while (true) {
+            /* figure out the current path to check */
+            strconcat(currpath, currdir, "/tags", 0);
+            if (file_exists(currpath)) {
+                /* move up a dir */
+                char* end = strrchr(currdir,'/');
+                if (!end) break;
+                char* temp = stringdup(relpath);
+                strconcat(relpath, end, temp, 0);
+                free(temp);
+                *end = '\0';
+            } else {
+                break;
+            }
+        }
+    }
+
+    /* cd to the project directory or the original working directory and open
+       the file relative to the new working directory */
+    if (currdir && *currdir) {
+        char* fname = strrchr(path, '/')+1;
+        if (*relpath)
+            strconcat(currpath, relpath+1, "/", fname, 0);
+        else
+            strconcat(currpath, fname, 0);
+        chdir(currdir);
+        view_init(win_view(EDIT), currpath, ondiagmsg);
+    } else {
+        chdir(origdir);
+        view_init(win_view(EDIT), path, ondiagmsg);
+    }
+
+    /* cleanup */
+    free(currdir);
+    free(currpath);
+    free(relpath);
+    free(origdir);
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
     /* setup the shell */
@@ -536,7 +585,15 @@ int main(int argc, char** argv) {
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DefaultTags));
     win_setruler(RulePosition);
-    view_init(win_view(EDIT), (argc > 1 ? argv[1] : NULL), ondiagmsg);
+    /* open the first file in this instance */
+    if (argc > 1)
+        edit_relative(argv[1]);
+    /* spawn a new instance for each remaining file */
+    for (int i = 2; i < argc; i++) {
+        OpenCmd[1] = argv[i];
+        cmdrun(OpenCmd, NULL);
+    }
+    /* now create the window and start the event loop */
     win_setkeys(Bindings);
     win_loop();
     return 0;

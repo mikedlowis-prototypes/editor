@@ -14,6 +14,11 @@ char* stringdup(const char* str);
 char* fdgets(int fd);
 char* chomp(char* in);
 uint64_t modtime(char* path);
+char* getcurrdir(void);
+char* dirname(char* path);
+bool try_chdir(char* fpath);
+char* strconcat(char* dest, ...);
+bool file_exists(char* path);
 
 /* Buffer management functions
  *****************************************************************************/

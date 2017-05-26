@@ -40,7 +40,8 @@ FMap mmap_readwrite(char* path, size_t sz) {
     int fd = open(path, O_CREAT|O_RDWR, 0644);
     if (fd >= 0) {
         ftruncate(fd, sz);
-        void* buf = mmap(NULL, pagealign(sz), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);        if (buf != MAP_FAILED) {
+        void* buf = mmap(NULL, pagealign(sz), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        if (buf != MAP_FAILED) {
             file.buf = buf;
             file.len = sz;
         }
@@ -103,4 +104,47 @@ uint64_t modtime(char* path) {
     if (stat(path, &status) < 0)
         return 0u;
     return (uint64_t)status.st_mtime;
+}
+
+char* getcurrdir(void) {
+    size_t size = 4096;
+    char *buf = NULL, *ptr = NULL;
+    for (; ptr == NULL; size *= 2) {
+        buf = realloc(buf, size);
+        ptr = getcwd(buf, size);
+        if (ptr == NULL && errno != ERANGE)
+            die("Failed to retrieve current directory");
+    }
+    return buf;
+}
+
+char* dirname(char* path) {
+    path = stringdup(path);
+    char* end = strrchr(path, '/');
+    if (!end) return NULL;
+    *end = '\0';
+    return path;
+}
+
+bool try_chdir(char* fpath) {
+    char* dir = dirname(fpath);
+    bool success = (dir && *dir && chdir(dir) >= 0);
+    free(dir);
+    return success;
+}
+
+char* strconcat(char* dest, ...) {
+    va_list args;
+    char* curr = dest;
+    va_start(args, dest);
+    for (char* s; (s = va_arg(args, char*));)
+        while (*s) *(curr++) = *(s++);
+    va_end(args);
+    *curr = '\0';
+    return dest;
+}
+
+bool file_exists(char* path) {
+    struct stat st;
+    return (stat(path, &st) < 0);
 }

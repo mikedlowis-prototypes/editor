@@ -1,41 +1,5 @@
 #!/bin/sh
 
-# exits with error message
-die() {
-    printf "error: %s\n" "$@"
-    exit 1
-}
-
-# search for a ctags file recursively up the directory tree from the file to be 
-# opened. If one is found, change the working directory of the new process to
-# the containing folder and launch xedit with the path of the file relative to  
-# the new working directory.
-edit_relative_ctags(){
-    origdir="$PWD"
-    case "$1" in
-        /*) origpath="$1" ;;      # absoulte path given
-        *)  origpath="$PWD/$1" ;; # relative path given
-    esac
-    path="${origpath##*/}"
-
-    # try to cd to the directory containing the file and attempt to walk the 
-    # tree backwars until we find a tags file. if one is found, open the file
-    # from that directory.
-    cd "${origpath%/*}" || die "could not open file: '$1'"
-    dir="$PWD"
-    while [ "$dir" != "" ]; do
-        if [ -f "$dir/tags" ]; then 
-            cd "$dir" && exec nohup xedit "$path" > /dev/null 2>&1
-        else
-            path="${dir##*/}/$path"
-            dir="${dir%/*}"
-        fi
-    done
-
-    # file is not part of a project. open it as-is
-    cd "$origdir" && exec nohup xedit "$1" > /dev/null 2>&1
-}
-
 # Add the editing tools directory to your PATH var so its contents may be used
 # while editing.
 export PATH="$HOME/.config/edit/tools:$PATH"
@@ -57,10 +21,6 @@ if [ -z "$DISPLAY" ]; then
     else
         "$EDITOR" "$@"
     fi
-elif [ 0 -eq $# ]; then
-    (nohup xedit > /dev/null 2>&1) &
 else
-    for f in "$@"; do
-        edit_relative_ctags "$f" &
-    done
+    (nohup xedit "$@" > /dev/null 2>&1) &
 fi

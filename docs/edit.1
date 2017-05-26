@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "EDIT" "1" "March 2017" "" ""
+.TH "EDIT" "1" "May 2017" "" ""
 .
 .SH "NAME"
 \fBedit\fR \- convenience script for launching xedit(1) with a proper environment
@@ -10,7 +10,7 @@
 \fBedit\fR [\fIfile\fR\.\.\.]
 .
 .SH "DESCRIPTION"
-This script acts as a wrapper around xedit(1)\. It is responsible for setting up the environment variables and loading the rc file xedit(1) before launching a new instance of xedit(1) for each file provided on the command line\. If no files are provided, xedit(1) will be launched to edit a scratch buffer\.
+This script acts as a wrapper around xedit(1)\. It is responsible for setting up the environment variables and loading the rc file before launching a new instance of xedit(1) to edit the given files\. If no files are provided a new instance of xedit(1) will be launched with an empty edit buffer\.
 .
 .SH "FILES"
 .
