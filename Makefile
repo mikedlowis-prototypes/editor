@@ -1,7 +1,7 @@
 INCS = -Iinc/
 
 BINS = xedit xpick xcpd term
-MAN1 = docs/edit.1 docs/xedit.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
+MAN1 = docs/xedit.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
 
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
@@ -40,16 +40,13 @@ install: all
 	cp -f xcpd $(PREFIX)/bin
 	cp -f xfilepick $(PREFIX)/bin
 	cp -f xtagpick $(PREFIX)/bin
-	cp -f xman $(PREFIX)/bin
-	cp -f edit $(PREFIX)/bin
 
 uninstall:
 	rm -f $(PREFIX)/bin/xedit
 	rm -f $(PREFIX)/bin/xpick
+	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/xfilepick
 	rm -f $(PREFIX)/bin/xtagpick
-	rm -f $(PREFIX)/bin/xman
-	rm -f $(PREFIX)/bin/edit
 
 test: $(TEST_BINS)
 	for t in $(TEST_BINS); do ./$$t || exit 1; done
@@ -66,6 +63,7 @@ tests/xedit: tests/xedit.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
 tests/term: tests/term.o libedit.a
 
+# define implicit rule for building binaries
 %: %.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
