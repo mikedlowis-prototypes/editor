@@ -4,7 +4,6 @@ Up Next:
 
 * Change PageUp/Dn to move cursor by screenfuls
 * Add Ctrl+Shift+A shortcut to select all
-* ctrl+d with no selection does word selection instead of context
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)

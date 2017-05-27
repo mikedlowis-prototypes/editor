@@ -309,7 +309,7 @@ void view_selext(View* view, size_t row, size_t col) {
     }
 }
 
-static void selcontext(View* view, Sel* sel) {
+static void selcontext(View* view, bool (*isword)(Rune), Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
     Rune r = buf_get(buf, sel->end);
@@ -323,7 +323,7 @@ static void selcontext(View* view, Sel* sel) {
         sel->beg = bol;
         sel->end = buf_eol(buf, sel->end);
     } else if (risword(r)) {
-        buf_getword(buf, risword, sel);
+        buf_getword(buf, isword, sel);
     } else {
         buf_getword(buf, risbigword, sel);
     }
@@ -354,7 +354,7 @@ void view_select(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
     view_setcursor(view, row, col);
     Sel sel = view->selection;
-    selcontext(view, &sel);
+    selcontext(view, risword, &sel);
     sel.end = buf_byrune(&(view->buffer), sel.end, RIGHT);
     sel.col = buf_getcol(&(view->buffer), sel.end);
     view->selection = sel;
@@ -533,16 +533,14 @@ char* view_getstr(View* view, Sel* range) {
 
 char* view_getcmd(View* view) {
     Sel sel = view->selection;
-    if (!num_selected(sel)) {
-        buf_getword(&(view->buffer), riscmd, &sel);
-        sel.end++;
-    }
+    if (!num_selected(sel))
+        selcontext(view, riscmd, &sel);
     return view_getstr(view, &sel);
 }
 
 void view_selctx(View* view) {
     if (!num_selected(view->selection)) {
-        selcontext(view, &(view->selection));
+        selcontext(view, risword, &(view->selection));
         view->selection.end = buf_byrune(
             &(view->buffer), view->selection.end, RIGHT);
         view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
