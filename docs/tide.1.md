@@ -1,21 +1,21 @@
-# xedit -- a text editor inspired by acme(1) from Plan 9 and Inferno
+# tide -- a text editor inspired by acme(1) from Plan 9 and Inferno
 
 ## SYNOPSIS
 
-`xedit` [_file_...]
+`tide` [_file_...]
 
 ## DESCRIPTION
 
-`xedit` is a text editor inspired by the Acme editor from the Plan 9 and Inferno
-operating systems. Unlike Acme, `xedit` is a single window, single file editor.
+`tide` is a text editor inspired by the Acme editor from the Plan 9 and Inferno
+operating systems. Unlike Acme, `tide` is a single window, single file editor.
 Instead of baking a window manager into the editor, this job is relegated to an
-X11 window manager. It is recommended that `xedit` be used with a tiling window
+X11 window manager. It is recommended that `tide` be used with a tiling window
 manager such as dwm(1) or spectrwm(1). These window managers will make dealing
 with multiple windows much easier and more efficient.
 
 ### Windows
 
-`xedit` windows are divided into four basic regions: a one-line status, an
+`tide` windows are divided into four basic regions: a one-line status, an
 expanding tags region, a main content region and an adjacent scroll region. The
 status region contains a set of symbolic flags indicating the current state of
 the editor followed by the path of the file being edited. The tags region acts
@@ -38,7 +38,7 @@ and applying that as a percentage to the offset in the file.
 
 ### Typing and Editing
 
-Typed characters in `xedit` are delivered to the currently active region. Which
+Typed characters in `tide` are delivered to the currently active region. Which
 region is active is determined by the placement of the mouse or by keyboard
 shortcut. That is to say, the focus follows the mouse much as it does in acme(1)
 but there is a keyboard shortcut that allows users to toggle focus between the
@@ -59,7 +59,7 @@ the content region however.
 
 ## TEXT SELECTION
 
-`xedit` uses a series of rules to determine how much text to select when the
+`tide` uses a series of rules to determine how much text to select when the
 user executes a context sensitive selection, a search, or a context sensitive
 execution. The following rules are applied in order until a match is found.
 
@@ -79,7 +79,7 @@ execution. The following rules are applied in order until a match is found.
     Highlight the word under the cursor consisting of only alphanumeric and
     underscore characters.
 
-If none of the above rules match, `xedit` will simply highlight the block of
+If none of the above rules match, `tide` will simply highlight the block of
 non-whitespace characters under the cursor.
 
 ## MOUSE HANDLING
@@ -106,9 +106,9 @@ non-whitespace characters under the cursor.
 
 ## COMMAND EXECUTION
 
-`xedit` allows for the execution of any arbitrary text as a command. The input
+`tide` allows for the execution of any arbitrary text as a command. The input
 and output to/from each command executed can be controlled by prepending one of
-a set of sigils defined below. These sigils instruct `xedit` from where the
+a set of sigils defined below. These sigils instruct `tide` from where the
 command will receive its input and where it will place its output (both standard
 and errors).
 
@@ -252,7 +252,7 @@ position.
 
 ### Bookmark Shortcuts
 
-`xedit` supports marking locations in a document to quickly jump to later. This
+`tide` supports marking locations in a document to quickly jump to later. This
 eases navigation between multiple locations in a large document.
 
 * `Ctrl+[0-9]`:
@@ -304,26 +304,26 @@ search operation to be applied in the opposite direction of the previous.
 * `Ctrl+o`:
     Launch xfilepick(1) to choose a file from a recursive list of files in the
     current deirectory and sub directories. This file will be opened in a
-    new instance of `xedit`.
+    new instance of `tide`.
 
 * `Ctrl+p`:
     Launch xtagpick(1) to select a tag from a ctags(1) generated index file.
-    `xedit` will jump to the selected ctag definition in the current window if
-    the file is currently being edited. Otherwise, a new instance of `xedit`
+    `tide` will jump to the selected ctag definition in the current window if
+    the file is currently being edited. Otherwise, a new instance of `tide`
     will be launched with the target file and the cursor set to the line
     containing the definition.
 
 * `Ctrl+g`:
     Lookup the selected symbol or symbol under the cursor in a ctags(1)
     generated index file. Jump to the location of the definition if it exist in
-    the current file. Otherwise, a new instance of `xedit` will be launched with
+    the current file. Otherwise, a new instance of `tide` will be launched with
     the target file and the cursor set to the line containing the definition.
 
 * `Ctrl+Shift+g`:
     Jump to the previous cursor location.
 
 * `Ctrl+n`:
-    Open a new instance of `xedit` with no filename.
+    Open a new instance of `tide` with no filename.
 
 ## BUILTINS
 
@@ -377,7 +377,7 @@ search operation to be applied in the opposite direction of the previous.
 
 * `$HOME/.config/edit/editrc`:
     Shell script loaded in current environment to make shell functions and
-    environment variables available to xedit(1)
+    environment variables available to tide(1)
 
 ## ENVIRONMENT
 
@@ -396,4 +396,4 @@ Michael D. Lowis
 
 ## SEE ALSO
 
-xedit(1) xpick(1) xfilepick(1) xtagpick(1)
+tide(1) xpick(1) xfilepick(1) xtagpick(1)

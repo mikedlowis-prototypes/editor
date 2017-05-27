@@ -57,7 +57,7 @@ char* PickFileCmd[] = { "xfilepick", ".", NULL };
 char* PickTagCmd[] = { "xtagpick", NULL, "tags", NULL, NULL };
 
 /* Open a new instance of the editor */
-char* OpenCmd[] = { "xedit", NULL, NULL };
+char* OpenCmd[] = { "tide", NULL, NULL };
 
 /* Solarized Theme - 16 color palette used for drawing */
 unsigned int ColorPalette[16] = {

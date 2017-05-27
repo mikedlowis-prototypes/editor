@@ -1,7 +1,7 @@
 INCS = -Iinc/
 
-BINS = xedit xpick xcpd term
-MAN1 = docs/xedit.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
+BINS = tide xpick xcpd term
+MAN1 = docs/tide.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
 
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
@@ -14,7 +14,7 @@ LIBEDIT_OBJS =     \
 	lib/win.o
 
 TEST_BINS =      \
-	tests/xedit  \
+	tests/tide  \
 	tests/xpick  \
 	tests/term   \
 	tests/libedit
@@ -30,19 +30,19 @@ docs:
 
 clean:
 	find . -name '*.[oad]' -delete
-	$(RM) xpick xedit xcpd term tests/libedit
+	$(RM) xpick tide xcpd term tests/libedit
 	$(RM) $(TEST_BINS)
 
 install: all
 	mkdir -p $(PREFIX)/bin
-	cp -f xedit $(PREFIX)/bin
+	cp -f tide $(PREFIX)/bin
 	cp -f xpick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
 	cp -f xfilepick $(PREFIX)/bin
 	cp -f xtagpick $(PREFIX)/bin
 
 uninstall:
-	rm -f $(PREFIX)/bin/xedit
+	rm -f $(PREFIX)/bin/tide
 	rm -f $(PREFIX)/bin/xpick
 	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/xfilepick
@@ -54,12 +54,12 @@ test: $(TEST_BINS)
 libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
-xedit: xedit.o libedit.a
+tide: tide.o libedit.a
 xpick: xpick.o libedit.a
 xcpd: xcpd.o libedit.a
 term: term.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
-tests/xedit: tests/xedit.o libedit.a
+tests/tide: tests/tide.o libedit.a
 tests/xpick: tests/xpick.o libedit.a
 tests/term: tests/term.o libedit.a
 

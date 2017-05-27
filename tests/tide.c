@@ -19,7 +19,7 @@ jmp_buf ExitPad;
 Display* XDisplay;
 
 // Include the source file so we can access everything
-#include "../xedit.c"
+#include "../tide.c"
 
 static void initialize(void) {
     ShellCmd[0] = "/bin/sh";
