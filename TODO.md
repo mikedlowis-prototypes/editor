@@ -2,7 +2,6 @@
 
 Up Next:
 
-* rename to tide
 * Change PageUp/Dn to move cursor by screenfuls
 * Add Ctrl+Shift+A shortcut to select all
 * ctrl+d with no selection does word selection instead of context
