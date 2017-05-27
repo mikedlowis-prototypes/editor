@@ -363,7 +363,7 @@ static void eol_mode(void) {
 }
 
 static void new_win(void) {
-    cmd_exec("!edit");
+    cmd_exec("!tide");
 }
 
 static void newline(void) {
@@ -432,14 +432,15 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'e', cursor_eol  },
 
     /* Standard Text Editing Shortcuts */
-    { ModCtrl, 's', save        },
-    { ModCtrl, 'z', undo        },
-    { ModCtrl, 'y', redo        },
-    { ModCtrl, 'x', cut         },
-    { ModCtrl, 'c', copy        },
-    { ModCtrl, 'v', paste       },
-    { ModCtrl, 'j', join_lines  },
-    { ModCtrl, 'l', select_line },
+    { ModCtrl,          's', save        },
+    { ModCtrl,          'z', undo        },
+    { ModCtrl,          'y', redo        },
+    { ModCtrl,          'x', cut         },
+    { ModCtrl,          'c', copy        },
+    { ModCtrl,          'v', paste       },
+    { ModCtrl,          'j', join_lines  },
+    { ModCtrl,          'l', select_line },
+    { ModCtrl|ModShift, 'a', select_all  },
 
     /* Block Indent */
     { ModCtrl, '[', del_indent },
@@ -464,18 +465,18 @@ static KeyBinding Bindings[] = {
     { ModOneOrMore, '9', jumpmark },
 
     /* Implementation Specific */
-    { ModNone,                 KEY_ESCAPE, select_prev  },
-    { ModCtrl,                 't',        change_focus },
-    { ModCtrl,                 'q',        quit         },
-    { ModCtrl,                 'h',        highlight    },
-    { ModOneOrMore,            'f',        search       },
-    { ModCtrl,                 'd',        execute      },
-    { ModCtrl,                 'o',        open_file    },
-    { ModCtrl,                 'p',        pick_ctag    },
-    { ModOneOrMore,            'g',        goto_ctag    },
-    { ModCtrl,                 'n',        new_win      },
-    { ModOneOrMore,            '\n',       newline      },
-    { ModCtrl,                 ' ',        complete     },
+    { ModNone,      KEY_ESCAPE, select_prev  },
+    { ModCtrl,      't',        change_focus },
+    { ModCtrl,      'q',        quit         },
+    { ModCtrl,      'h',        highlight    },
+    { ModOneOrMore, 'f',        search       },
+    { ModCtrl,      'd',        execute      },
+    { ModCtrl,      'o',        open_file    },
+    { ModCtrl,      'p',        pick_ctag    },
+    { ModOneOrMore, 'g',        goto_ctag    },
+    { ModCtrl,      'n',        new_win      },
+    { ModOneOrMore, '\n',       newline      },
+    { ModCtrl,      ' ',        complete     },
     { 0, 0, 0 }
 };
 
@@ -581,7 +582,7 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     /* Create the window and enter the event loop */
-    win_window("edit", ondiagmsg);
+    win_window("tide", ondiagmsg);
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DefaultTags));
     win_setruler(RulePosition);

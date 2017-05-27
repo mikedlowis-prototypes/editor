@@ -4,6 +4,12 @@ static void select_line(void) {
     view_selctx(view);
 }
 
+static void select_all(void) {
+    View* view = win_view(FOCUSED);
+    view->selection.beg = 0;
+    view->selection.end = buf_end(&(view->buffer));
+}
+
 static void join_lines(void) {
     View* view = win_view(FOCUSED);
     view_eol(view, false);
