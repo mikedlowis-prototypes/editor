@@ -224,6 +224,9 @@ position.
 * `Ctrl+l`:
     Select the current line.
 
+* `Ctrl+Shift+a`:
+    Select all text in the buffer.
+
 * `Delete`:
     Delete the character to the right.
 
