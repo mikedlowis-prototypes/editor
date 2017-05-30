@@ -5,7 +5,6 @@ Up Next:
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)
-* selection of size 1 and arrow keys moves wrong direction
 * cd to root in xcpd
 * Ctrl+; Shortcut to warp cursor to middle of current screen.
 * shortcut to jump to previous edit

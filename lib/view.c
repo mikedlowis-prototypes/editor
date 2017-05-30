@@ -264,6 +264,7 @@ Row* view_getrow(View* view, size_t row) {
 void view_byrune(View* view, int move, bool extsel) {
     Sel sel = view->selection;
     if (view_selsize(view) && !extsel) {
+        selswap(&sel);
         if (move == RIGHT)
             sel.beg = sel.end;
         else
