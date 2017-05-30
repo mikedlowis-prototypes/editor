@@ -2,15 +2,17 @@
 
 Up Next:
 
-* Change PageUp/Dn to move cursor by screenfuls
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)
-* Ctrl+Shift+Enter copies indent of wrong line
-* Shift+Insert should insert primary selection
+* selection of 1 and arrow keys moves wrong direction
+* cd to root in xcpd
+* Ctrl+; Shortcut to warp cursor to middle of current screen.
+* shortcut to jump to previous edit
 
 The Future:
 
+* Ctrl+Shift+Enter copies indent of wrong line
 * highlight all matches of search term
 * Make Fn keys execute nth command in the tags buffers
 * jump to previous or next line with less indent
@@ -28,8 +30,8 @@ The Future:
 
 Maybe think about addressing these later:
 
+* Shift+Insert should insert primary selection
 * Find shortcut should select previous word if current char is newline
-* Ctrl+\ Shortcut to warp cursor to middle of current screen.
 * diagnostic messages can stack up if deselected and not resolved
 
 # Auxillary Programs
