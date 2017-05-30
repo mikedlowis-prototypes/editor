@@ -229,13 +229,8 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
     view->ncols = ncols;
 }
 
-void view_update(View* view, size_t* csrx, size_t* csry) {
+static void find_cursor(View* view, size_t* csrx, size_t* csry) {
     size_t csr = view->selection.end;
-    /* scroll the view and reflow the screen lines */
-    reflow(view);
-    if (view->sync_needed)
-        view_scrollto(view, csr);
-    /* find the cursor on the new screen */
     for (size_t y = 0; y < view->nrows; y++) {
         size_t start = view->rows[y]->off;
         size_t end   = view->rows[y]->off + view->rows[y]->rlen - 1;
@@ -251,6 +246,15 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
             break;
         }
     }
+}
+
+void view_update(View* view, size_t* csrx, size_t* csry) {
+    size_t csr = view->selection.end;
+    /* scroll the view and reflow the screen lines */
+    reflow(view);
+    if (view->sync_needed)
+        view_scrollto(view, csr);
+    find_cursor(view, csrx, csry);
 }
 
 Row* view_getrow(View* view, size_t row) {
@@ -564,8 +568,18 @@ void view_scroll(View* view, int move) {
 }
 
 void view_scrollpage(View* view, int move) {
+    size_t col = SIZE_MAX, row = SIZE_MAX;
+    find_cursor(view, &col, &row);
     move = (move < 0 ? -1 : 1) * view->nrows;
     view_scroll(view, move);
+    size_t off = (move == UP ? view->rows[0]->off : view->rows[view->nrows-1]->off);
+    if (row != SIZE_MAX && col != SIZE_MAX) {
+        off = view->rows[row]->off + col;
+        if (col >= view->rows[row]->rlen)
+            off = view->rows[row]->off + view->rows[row]->rlen - 1;
+    }
+    view_jumpto(view, false, off);
+    view->sync_needed = false;
 }
 
 void view_indent(View* view, int dir) {
