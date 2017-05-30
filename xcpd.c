@@ -23,10 +23,10 @@ void serve_selection(void) {
     if (SelTarget == None)
         SelTarget = XInternAtom(XDisplay, "STRING", 0);
     XSetSelectionOwner(XDisplay, SelType, XWindow, CurrentTime);
-    
+
     for (XEvent e;;) {
         XNextEvent(XDisplay, &e);
-        if (e.type == SelectionRequest) {                
+        if (e.type == SelectionRequest) {
             XEvent s;
             s.xselection.type      = SelectionNotify;
             s.xselection.property  = e.xselectionrequest.property;
@@ -46,10 +46,10 @@ void serve_selection(void) {
             } else if (target == SelTarget || target == xastring) {
                 XChangeProperty(
                     XDisplay, s.xselection.requestor, s.xselection.property,
-                    SelTarget, 8, PropModeReplace, 
+                    SelTarget, 8, PropModeReplace,
                     (unsigned char*)SelText, strlen(SelText));
             }
-            XSendEvent(XDisplay, s.xselection.requestor, True, 0, &s);  
+            XSendEvent(XDisplay, s.xselection.requestor, True, 0, &s);
         } else if (e.type == SelectionClear) {
             break; // Someone else took over. We're done here.
         }
@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
             close(STDIN_FILENO);
             close(STDOUT_FILENO);
             close(STDERR_FILENO);
+            chdir("/");
             serve_selection();
         } else if (pid < 0) {
             die("fork() failed");
