@@ -417,12 +417,13 @@ static Tag Builtins[] = {
 
 static KeyBinding Bindings[] = {
     /* Cursor Movements */
-    { ModAny, KEY_HOME,  cursor_home  },
-    { ModAny, KEY_END,   cursor_end   },
-    { ModAny, KEY_UP,    cursor_up    },
-    { ModAny, KEY_DOWN,  cursor_dn    },
-    { ModAny, KEY_LEFT,  cursor_left  },
-    { ModAny, KEY_RIGHT, cursor_right },
+    { ModAny,  KEY_HOME,  cursor_home  },
+    { ModAny,  KEY_END,   cursor_end   },
+    { ModAny,  KEY_UP,    cursor_up    },
+    { ModAny,  KEY_DOWN,  cursor_dn    },
+    { ModAny,  KEY_LEFT,  cursor_left  },
+    { ModAny,  KEY_RIGHT, cursor_right },
+    { ModCtrl, ';',       cursor_warp  },
 
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
@@ -534,9 +535,10 @@ void edit_relative(char* path) {
 
     /* search for a ctags index file indicating the project root */
     if (try_chdir(path)) {
-        currdir  = getcurrdir();
-        currpath = calloc(strlen(currdir) + strlen("/tags") + 1, 1);
-        relpath  = calloc(strlen(currdir) + strlen("/tags") + 1, 1);
+        currdir   = getcurrdir();
+        size_t sz = strlen(currdir) + strlen(path) + strlen("/tags") + 1;
+        currpath  = calloc(sz, 1);
+        relpath   = calloc(sz, 1);
         while (true) {
             /* figure out the current path to check */
             strconcat(currpath, currdir, "/tags", 0);
@@ -559,7 +561,7 @@ void edit_relative(char* path) {
     if (currdir && *currdir) {
         char* fname = strrchr(path, '/')+1;
         if (*relpath)
-            strconcat(currpath, relpath+1, "/", fname, 0);
+            strconcat(currpath, (*relpath == '/' ? relpath+1 : relpath), "/", fname, 0);
         else
             strconcat(currpath, fname, 0);
         chdir(currdir);

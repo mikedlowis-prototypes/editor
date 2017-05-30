@@ -148,6 +148,10 @@ static void cursor_right(void) {
         view_byrune(win_view(FOCUSED), RIGHT, extsel);
 }
 
+static void cursor_warp(void) {
+    view_csrsummon(win_view(FOCUSED));
+}
+
 static void page_up(void) {
     view_scrollpage(win_view(FOCUSED), UP);
 }

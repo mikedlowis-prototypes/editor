@@ -40,8 +40,12 @@ void onerror(char* msg) {
 
 #ifndef TEST
 #include <unistd.h>
-#include <util.h>
 #include <sys/ioctl.h>
+#ifdef __MACH__
+#include <util.h>
+#else
+#include <pty.h>
+#endif
 
 void spawn_shell(int master, int slave) {
 	static char* shell[] = { "/bin/sh", "-l", NULL };

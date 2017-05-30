@@ -137,8 +137,8 @@ char* strconcat(char* dest, ...) {
     va_list args;
     char* curr = dest;
     va_start(args, dest);
-    for (char* s; (s = va_arg(args, char*));)
-        while (*s) *(curr++) = *(s++);
+    for (char* s = NULL; (s = va_arg(args, char*));)
+        while (s && *s) *(curr++) = *(s++);
     va_end(args);
     *curr = '\0';
     return dest;

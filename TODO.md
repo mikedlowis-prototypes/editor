@@ -5,7 +5,7 @@ Up Next:
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)
-* selection of 1 and arrow keys moves wrong direction
+* selection of size 1 and arrow keys moves wrong direction
 * cd to root in xcpd
 * Ctrl+; Shortcut to warp cursor to middle of current screen.
 * shortcut to jump to previous edit
@@ -33,6 +33,7 @@ Maybe think about addressing these later:
 * Shift+Insert should insert primary selection
 * Find shortcut should select previous word if current char is newline
 * diagnostic messages can stack up if deselected and not resolved
+* mouse click and hold on scroll bar should continually scroll
 
 # Auxillary Programs
 

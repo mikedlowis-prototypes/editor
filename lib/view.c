@@ -567,35 +567,23 @@ void view_scroll(View* view, int move) {
     }
 }
 
-void view_scrollpage(View* view, int move) {
+void view_csrsummon(View* view) {
     size_t col = SIZE_MAX, row = SIZE_MAX;
     find_cursor(view, &col, &row);
-    move = (move < 0 ? -1 : 1) * view->nrows;
-    view_scroll(view, move);
-    size_t off    = view->rows[view->nrows/2]->off;
-
-//    size_t scrbeg = view->rows[0]->off;
-//    size_t scrend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
-//    if (scrbeg == 0)
-//        off = 0;
-//    else if (scrend >= buf_end(&(view->buffer)))
-//        off = view->rows[view->nrows-1]->off;
-
-//    size_t off = (move == UP ? view->rows[0]->off : view->rows[view->nrows/2]->off);
-//    if (row != SIZE_MAX && col != SIZE_MAX) {
-//        off = view->rows[row]->off + col;
-//        if (col >= view->rows[row]->rlen)
-//            off = view->rows[row]->off + view->rows[row]->rlen - 1;
-//    }
-
+    size_t off = view->rows[view->nrows/2]->off;
     if (row != SIZE_MAX && col != SIZE_MAX)
         if (col >= view->rows[view->nrows/2]->rlen)
             off = view->rows[view->nrows/2]->off + view->rows[view->nrows/2]->rlen - 1;
         else
             off += col;
-
     view_jumpto(view, false, off);
     view->sync_needed = false;
+}
+
+void view_scrollpage(View* view, int move) {
+    move = (move < 0 ? -1 : 1) * view->nrows;
+    view_scroll(view, move);
+    view_csrsummon(view);
 }
 
 void view_indent(View* view, int dir) {

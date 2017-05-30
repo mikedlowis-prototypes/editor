@@ -18,7 +18,7 @@ CFLAGS = --std=c99 -MMD $(INCS)
 
 # Linker Setup
 LD = $(CC)
-LDFLAGS = $(LIBS) -lX11 -lXft -lfontconfig
+LDFLAGS = $(LIBS) -lX11 -lXft -lfontconfig -lutil
 
 # Archive Setup
 AR = ar
