@@ -26,6 +26,12 @@ The Future:
 * implement command diffing logic to optimize the undo/redo log
 * Status line should omit characters from beginning of path to make file path fit
 
+Possible Shortcuts:
+
+* Ctrl+{,} - Move to start or end brace of block
+* Ctrl+(,) - Move to start or end of paragraph
+* Ctrl+'   - Move to matching brace, bracket, or paren
+
 Maybe think about addressing these later:
 
 * Shift+Insert should insert primary selection

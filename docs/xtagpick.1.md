@@ -1,4 +1,4 @@
-# xtagpick -- Parses a ctags file and sends results to xpick
+# xtagpick -- Parses a ctags file and sends results to pick(1)
 ## SYNOPSIS
 ## DESCRIPTION
 ## OPTIONS

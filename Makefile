@@ -1,7 +1,7 @@
 INCS = -Iinc/
 
-BINS = tide xpick xcpd term
-MAN1 = docs/tide.1 docs/xpick.1 docs/xtagpick.1 docs/xfilepick.1
+BINS = tide pick xcpd term
+MAN1 = docs/tide.1 docs/pick.1 docs/xtagpick.1 docs/xfilepick.1
 
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
@@ -15,7 +15,7 @@ LIBEDIT_OBJS =     \
 
 TEST_BINS =      \
 	tests/tide  \
-	tests/xpick  \
+	tests/pick  \
 	tests/term   \
 	tests/libedit
 
@@ -30,20 +30,20 @@ docs:
 
 clean:
 	find . -name '*.[oad]' -delete
-	$(RM) xpick tide xcpd term tests/libedit
+	$(RM) pick tide xcpd term tests/libedit
 	$(RM) $(TEST_BINS)
 
 install: all
 	mkdir -p $(PREFIX)/bin
 	cp -f tide $(PREFIX)/bin
-	cp -f xpick $(PREFIX)/bin
+	cp -f pick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
 	cp -f xfilepick $(PREFIX)/bin
 	cp -f xtagpick $(PREFIX)/bin
 
 uninstall:
 	rm -f $(PREFIX)/bin/tide
-	rm -f $(PREFIX)/bin/xpick
+	rm -f $(PREFIX)/bin/pick
 	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/xfilepick
 	rm -f $(PREFIX)/bin/xtagpick
@@ -55,12 +55,12 @@ libedit.a: $(LIBEDIT_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 tide: tide.o libedit.a
-xpick: xpick.o libedit.a
+pick: pick.o libedit.a
 xcpd: xcpd.o libedit.a
 term: term.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/tide: tests/tide.o libedit.a
-tests/xpick: tests/xpick.o libedit.a
+tests/pick: tests/pick.o libedit.a
 tests/term: tests/term.o libedit.a
 
 # define implicit rule for building binaries

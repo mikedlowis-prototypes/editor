@@ -2,8 +2,8 @@
 #include <atf.h>
 #include <time.h>
 
-// Inculd the source file so we can access everything 
-#include "../xpick.c"
+// Inculd the source file so we can access everything
+#include "../pick.c"
 
 TEST_SUITE(UnitTests) {
 }

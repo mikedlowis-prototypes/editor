@@ -226,9 +226,9 @@ int main(int argc, char** argv) {
     char* title = getenv("XPICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
-        win_dialog("xpick", onerror);
+        win_dialog("pick", onerror);
         win_setkeys(Bindings);
-        win_settext(STATUS, (title ? title : "xpick"));
+        win_settext(STATUS, (title ? title : "pick"));
         if (argc >= 2) {
             for (char* str = argv[1]; *str; str++)
                 buf_insert(win_buf(TAGS), false, Pos++, *str);

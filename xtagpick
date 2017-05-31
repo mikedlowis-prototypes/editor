@@ -21,12 +21,12 @@ printtags(){
 }
 
 print(){
-    printtags | xpick "$TAG"
+    printtags | pick "$TAG"
 }
 
 fetch(){
     if [ "" == "$TAG" ]; then
-        TAG=$(printtags | xpick)
+        TAG=$(printtags | pick)
         [ "" == "$TAG" ] && exit
     fi
     awk -v TAG="$TAG" '
@@ -38,7 +38,7 @@ fetch(){
         gsub(/\*/, "\\*", matchstr)
         print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
     }
-    ' "$TAGFILE" | /bin/sh | xpick
+    ' "$TAGFILE" | /bin/sh | pick
 }
 
 export XPICKTITLE="Pick CTag ($PWD)"

@@ -1,0 +1,28 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "PICK" "1" "May 2017" "" ""
+.
+.SH "NAME"
+\fBpick\fR \- fuzzy find an item from a list of items
+.
+.SH "SYNOPSIS"
+\fBpick\fR [\fIquery\fR]
+.
+.SH "DESCRIPTION"
+\fBpick\fR Takes a list of items on standard input delimited by newlines and an optional initial \fIquery\fR\. A gui window is then presented to the user which allows the user to filter the list using a fuzzy\-find algorithm\. The user\'s selection is printed to standard output upon completion\. If no option is selected \fBpick\fR exits with no output\.
+.
+.SS "Fuzzy\-Find Algorithm"
+TODO: Document this
+.
+.SH "ENVIRONMENT"
+.
+.TP
+\fBXPICKTITLE\fR
+If this variable is set its contents are used to populate the status region of the \fBpick\fR window\.
+.
+.SH "AUTHOR"
+Michael D\. Lowis
+.
+.SH "SEE ALSO"
+tide(1) pick(1) xfilepick(1) xtagpick(1)
