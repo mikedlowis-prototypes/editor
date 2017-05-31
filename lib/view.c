@@ -332,6 +332,8 @@ static void selcontext(View* view, bool (*isword)(Rune), Sel* sel) {
     } else {
         buf_getword(buf, risbigword, sel);
     }
+    sel->end = buf_byrune(&(view->buffer), sel->end, RIGHT);
+    sel->col = buf_getcol(&(view->buffer), sel->end);
 }
 
 void view_selword(View* view, size_t row, size_t col) {
@@ -360,8 +362,6 @@ void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col);
     Sel sel = view->selection;
     selcontext(view, risword, &sel);
-    sel.end = buf_byrune(&(view->buffer), sel.end, RIGHT);
-    sel.col = buf_getcol(&(view->buffer), sel.end);
     view->selection = sel;
 }
 
@@ -387,11 +387,13 @@ char* view_fetch(View* view, size_t row, size_t col) {
 
 bool view_findstr(View* view, int dir, char* str) {
     Sel sel = view->selection;
+    size_t prev = sel.end;
     buf_findstr(&(view->buffer), dir, str, &sel.beg, &sel.end);
     bool found = (0 != memcmp(&sel, &(view->selection), sizeof(Sel)));
-    view->selection = sel;
+    view->selection   = sel;
     view->sync_needed = true;
     view->sync_center = true;
+    if (found) view->prev_csr = prev;
     return found;
 }
 
@@ -548,12 +550,8 @@ char* view_getcmd(View* view) {
 }
 
 void view_selctx(View* view) {
-    if (!num_selected(view->selection)) {
+    if (!num_selected(view->selection))
         selcontext(view, risword, &(view->selection));
-        view->selection.end = buf_byrune(
-            &(view->buffer), view->selection.end, RIGHT);
-        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    }
 }
 
 char* view_getctx(View* view) {
