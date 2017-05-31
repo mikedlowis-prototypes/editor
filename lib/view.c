@@ -178,6 +178,8 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
+        view->nrows = 0;
+        view->rows  = NULL;
     }
     buf_init(&(view->buffer), errfn);
     view->selection = (Sel){ 0 };
@@ -249,6 +251,7 @@ static void find_cursor(View* view, size_t* csrx, size_t* csry) {
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
+    if (!view->nrows) return;
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
     reflow(view);
