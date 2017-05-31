@@ -18,7 +18,7 @@ TODO: Document this
 
 ## ENVIRONMENT
 
-* `XPICKTITLE`:
+* `PICKTITLE`:
     If this variable is set its contents are used to populate the status region
     of the `pick` window.
 

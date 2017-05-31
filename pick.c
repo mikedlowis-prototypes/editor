@@ -223,7 +223,7 @@ static KeyBinding Bindings[] = {
 
 #ifndef TEST
 int main(int argc, char** argv) {
-    char* title = getenv("XPICKTITLE");
+    char* title = getenv("PICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
         win_dialog("pick", onerror);
