@@ -298,11 +298,8 @@ void view_byline(View* view, int move, bool extsel) {
 
 void view_setcursor(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
-    if (off != SIZE_MAX) {
-        view->selection.beg = view->selection.end = off;
-        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-        view->sync_needed = true;
-    }
+    if (off != SIZE_MAX)
+        view_jumpto(view, false, off);
 }
 
 void view_selext(View* view, size_t row, size_t col) {
@@ -395,6 +392,15 @@ bool view_findstr(View* view, int dir, char* str) {
     return found;
 }
 
+static void move_to(View* view, bool extsel, size_t off) {
+    Buf* buf = &(view->buffer);
+    view->selection.end = (off > buf_end(buf) ? buf_end(buf) : off);
+    if (!extsel)
+        view->selection.beg = view->selection.end;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}
+
 void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && rune < 0x20)
@@ -406,7 +412,7 @@ void view_insert(View* view, bool indent, Rune rune) {
         view->selection = sel;
     }
     unsigned newpos = buf_insert(&(view->buffer), indent, view->selection.end, rune);
-    view_jumpto(view, false, newpos);
+    move_to(view, false, newpos);
 }
 
 void view_delete(View* view, int dir, bool byword) {
@@ -415,17 +421,12 @@ void view_delete(View* view, int dir, bool byword) {
         (byword ? view_byword : view_byrune)(view, dir, true);
     selswap(sel);
     unsigned newpos = buf_delete(&(view->buffer), sel->beg, sel->end);
-    view_jumpto(view, false, newpos);
+    move_to(view, false, newpos);
 }
 
 void view_jumpto(View* view, bool extsel, size_t off) {
-    Buf* buf = &(view->buffer);
     view->prev_csr = view->selection.end;
-    view->selection.end = (off > buf_end(buf) ? buf_end(buf) : off);
-    if (!extsel)
-        view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
+    move_to(view, extsel, off);
 }
 
 void view_jumpback(View* view) {
@@ -441,11 +442,11 @@ void view_bol(View* view, bool extsel) {
     for (; ' ' == buf_get(buf, boi) || '\t' == buf_get(buf, boi); boi++);
     unsigned pos = view->selection.end;
     pos = (pos == bol || pos > boi ? boi : bol);
-    view_jumpto(view, extsel, pos);
+    move_to(view, extsel, pos);
 }
 
 void view_eol(View* view, bool extsel) {
-    view_jumpto(view, extsel, buf_eol(&(view->buffer), view->selection.end));
+    move_to(view, extsel, buf_eol(&(view->buffer), view->selection.end));
 }
 
 void view_bof(View* view, bool extsel) {
@@ -572,11 +573,13 @@ void view_csrsummon(View* view) {
     size_t col = SIZE_MAX, row = SIZE_MAX;
     find_cursor(view, &col, &row);
     size_t off = view->rows[view->nrows/2]->off;
-    if (row != SIZE_MAX && col != SIZE_MAX)
-        if (col >= view->rows[view->nrows/2]->rlen)
+    if (row != SIZE_MAX && col != SIZE_MAX) {
+        if (col >= view->rows[view->nrows/2]->rlen) {
             off = view->rows[view->nrows/2]->off + view->rows[view->nrows/2]->rlen - 1;
-        else
+        } else {
             off += col;
+        }
+    }
     view_jumpto(view, false, off);
     view->sync_needed = false;
 }

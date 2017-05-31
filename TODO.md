@@ -6,6 +6,7 @@ Up Next:
     var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
+* xrandr dpi setting does not affect tide like it should
 
 The Future:
 

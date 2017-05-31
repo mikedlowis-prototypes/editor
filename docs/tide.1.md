@@ -323,7 +323,10 @@ search operation to be applied in the opposite direction of the previous.
     the target file and the cursor set to the line containing the definition.
 
 * `Ctrl+Shift+g`:
-    Jump to the previous cursor location.
+    Jump to the last implicitly marked location. In general, actions that move
+    the cursor potentially greate distances will set an implicit mark before
+    performing the move. These actions include, jumping to a ctag definition,
+    jumping to a line, or clicking with the mouse.
 
 * `Ctrl+n`:
     Open a new instance of `tide` with no filename.
