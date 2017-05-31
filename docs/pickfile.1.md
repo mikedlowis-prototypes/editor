@@ -1,4 +1,4 @@
-# xfilepick -- fuzzy find a file from the current directory tree
+# pickfile -- fuzzy find a file from the current directory tree
 ## SYNOPSIS
 ## DESCRIPTION
 ## OPTIONS

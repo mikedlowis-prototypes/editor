@@ -8,6 +8,7 @@ Up Next:
 * shortcut to jump to previous edit
 * xrandr dpi setting does not affect tide like it should
 
+
 The Future:
 
 * Ctrl+Shift+Enter copies indent of wrong line
@@ -34,6 +35,8 @@ Possible Shortcuts:
 
 Maybe think about addressing these later:
 
+* add current dir to path
+* add support for guidefiles
 * Shift+Insert should insert primary selection
 * Find shortcut should select previous word if current char is newline
 * diagnostic messages can stack up if deselected and not resolved

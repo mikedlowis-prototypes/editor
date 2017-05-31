@@ -274,11 +274,11 @@ Execute the selected text as described in \fBCOMMAND EXECUTION\fR\. If no text i
 .
 .TP
 \fBCtrl+o\fR
-Launch xfilepick(1) to choose a file from a recursive list of files in the current deirectory and sub directories\. This file will be opened in a new instance of \fBtide\fR\.
+Launch pickfile(1) to choose a file from a recursive list of files in the current deirectory and sub directories\. This file will be opened in a new instance of \fBtide\fR\.
 .
 .TP
 \fBCtrl+p\fR
-Launch xtagpick(1) to select a tag from a ctags(1) generated index file\. \fBtide\fR will jump to the selected ctag definition in the current window if the file is currently being edited\. Otherwise, a new instance of \fBtide\fR will be launched with the target file and the cursor set to the line containing the definition\.
+Launch picktag(1) to select a tag from a ctags(1) generated index file\. \fBtide\fR will jump to the selected ctag definition in the current window if the file is currently being edited\. Otherwise, a new instance of \fBtide\fR will be launched with the target file and the cursor set to the line containing the definition\.
 .
 .TP
 \fBCtrl+g\fR
@@ -374,4 +374,4 @@ The contents of this variable are used as the shell in which all non\-builtin co
 Michael D\. Lowis
 .
 .SH "SEE ALSO"
-tide(1) pick(1) xfilepick(1) xtagpick(1)
+tide(1) pick(1) pickfile(1) picktag(1)

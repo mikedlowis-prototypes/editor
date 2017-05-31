@@ -1,7 +1,7 @@
 INCS = -Iinc/
 
 BINS = tide pick xcpd term
-MAN1 = docs/tide.1 docs/pick.1 docs/xtagpick.1 docs/xfilepick.1
+MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
@@ -38,15 +38,15 @@ install: all
 	cp -f tide $(PREFIX)/bin
 	cp -f pick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
-	cp -f xfilepick $(PREFIX)/bin
-	cp -f xtagpick $(PREFIX)/bin
+	cp -f pickfile $(PREFIX)/bin
+	cp -f picktag $(PREFIX)/bin
 
 uninstall:
 	rm -f $(PREFIX)/bin/tide
 	rm -f $(PREFIX)/bin/pick
 	rm -f $(PREFIX)/bin/xcpd
-	rm -f $(PREFIX)/bin/xfilepick
-	rm -f $(PREFIX)/bin/xtagpick
+	rm -f $(PREFIX)/bin/pickfile
+	rm -f $(PREFIX)/bin/picktag
 
 test: $(TEST_BINS)
 	for t in $(TEST_BINS); do ./$$t || exit 1; done

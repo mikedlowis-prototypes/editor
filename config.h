@@ -9,11 +9,11 @@ extern int CLR_NormalText, CLR_SelectedText, CLR_TagsBkg, CLR_EditBkg,
 /* OS-Specific Config
  ******************************************************************************/
 #ifdef __MACH__
-#define FONT    "Monaco:size=10:antialias=true:autohint=true"
-#define LNSPACE 0
+    #define FONT    "Monaco:size=10:antialias=true:autohint=true"
+    #define LNSPACE 0
 #else
-#define FONT    "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
-#define LNSPACE 2
+    #define FONT    "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
+    #define LNSPACE 2
 #endif
 
 /* General Config
@@ -51,10 +51,10 @@ char* ShellCmd[] = { NULL, "-c", NULL, NULL };
 char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
 /* Fuzzy Picker for files in the current directory and subdirectories */
-char* PickFileCmd[] = { "xfilepick", ".", NULL };
+char* PickFileCmd[] = { "pickfile", ".", NULL };
 
 /* Fuzzy picker for tags in a ctags database. */
-char* PickTagCmd[] = { "xtagpick", NULL, "tags", NULL, NULL };
+char* PickTagCmd[] = { "picktag", NULL, "tags", NULL, NULL };
 
 /* Open a new instance of the editor */
 char* OpenCmd[] = { "tide", NULL, NULL };

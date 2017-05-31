@@ -28,4 +28,4 @@ Michael D. Lowis
 
 ## SEE ALSO
 
-tide(1) pick(1) xfilepick(1) xtagpick(1)
+tide(1) pick(1) pickfile(1) picktag(1)

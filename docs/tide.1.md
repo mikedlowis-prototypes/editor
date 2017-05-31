@@ -305,12 +305,12 @@ search operation to be applied in the opposite direction of the previous.
     in `TEXT SELECTION`.
 
 * `Ctrl+o`:
-    Launch xfilepick(1) to choose a file from a recursive list of files in the
+    Launch pickfile(1) to choose a file from a recursive list of files in the
     current deirectory and sub directories. This file will be opened in a
     new instance of `tide`.
 
 * `Ctrl+p`:
-    Launch xtagpick(1) to select a tag from a ctags(1) generated index file.
+    Launch picktag(1) to select a tag from a ctags(1) generated index file.
     `tide` will jump to the selected ctag definition in the current window if
     the file is currently being edited. Otherwise, a new instance of `tide`
     will be launched with the target file and the cursor set to the line
@@ -402,4 +402,4 @@ Michael D. Lowis
 
 ## SEE ALSO
 
-tide(1) pick(1) xfilepick(1) xtagpick(1)
+tide(1) pick(1) pickfile(1) picktag(1)
