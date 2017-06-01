@@ -30,13 +30,14 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
         view->nrows = 0;
         view->rows  = NULL;
     }
-    buf_init(&(view->buffer), errfn);
-    if (file)
-        buf_load(&(view->buffer), file);
     view->selection   = (Sel){ 0 };
     view->sync_needed = true;
     view->sync_center = true;
     view->prev_csr    = 0;
+    /* load the file and jump to the address returned from the load function */
+    buf_init(&(view->buffer), errfn);
+    if (file)
+        view_jumpto(view, false, buf_load(&(view->buffer), file));
 }
 
 void view_reload(View* view) {
@@ -61,11 +62,11 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
     size_t off = 0;
-    if (view->nrows == nrows && view->ncols == ncols)  return;
+    if (view->nrows == nrows && view->ncols == ncols) return;
     /* free the old row data */
     if (view->nrows) {
         off = view->rows[0]->off;
-        for (unsigned i = 0; i < view->nrows; i++)
+        for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
     }
