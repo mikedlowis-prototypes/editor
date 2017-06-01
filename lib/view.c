@@ -7,22 +7,20 @@
 typedef size_t (*movefn_t)(Buf* buf, size_t pos, int count);
 
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything);
-static void selcontext(View* view, bool (*isword)(Rune), Sel* sel);
-static void clearrow(View* view, size_t row);
-static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
+static void select_context(View* view, bool (*isword)(Rune), Sel* sel);
 static void selswap(Sel* sel);
 static size_t num_selected(Sel sel);
 static bool in_selection(Sel sel, size_t off);
-static bool selected(View* view, size_t pos);
+static bool selection_visible(View* view);
+static void find_cursor(View* view, size_t* csrx, size_t* csry);
+static void clearrow(View* view, size_t row);
+static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
 static size_t fill_row(View* view, unsigned row, size_t pos);
-static void reflow(View* view);
 static unsigned prev_screen_line(View* view, unsigned bol, unsigned off);
 static unsigned scroll_up(View* view);
 static unsigned scroll_dn(View* view);
 static void sync_center(View* view, size_t csr);
 static size_t getoffset(View* view, size_t row, size_t col);
-static bool selvisible(View* view);
-static void find_cursor(View* view, size_t* csrx, size_t* csry);
 
 void view_init(View* view, char* file, void (*errfn)(char*)) {
     if (view->nrows) {
@@ -86,9 +84,12 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     if (!view->nrows) return;
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
-    reflow(view);
+    size_t pos = view->rows[0]->off;
+    for (size_t y = 0; y < view->nrows; y++)
+        pos = fill_row(view, y, pos);
     if (view->sync_needed)
         view_scrollto(view, csr);
+    /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
 }
 
@@ -151,7 +152,7 @@ void view_select(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
     view_setcursor(view, row, col);
     Sel sel = view->selection;
-    selcontext(view, risword, &sel);
+    select_context(view, risword, &sel);
     view->selection = sel;
 }
 
@@ -260,13 +261,13 @@ void view_setln(View* view, size_t line) {
 void view_undo(View* view) {
     buf_undo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
-    view->sync_center = !selvisible(view);
+    view->sync_center = !selection_visible(view);
 }
 
 void view_redo(View* view) {
     buf_redo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
-    view->sync_center = !selvisible(view);
+    view->sync_center = !selection_visible(view);
 }
 
 void view_putstr(View* view, char* str) {
@@ -327,13 +328,13 @@ char* view_getstr(View* view, Sel* range) {
 char* view_getcmd(View* view) {
     Sel sel = view->selection;
     if (!num_selected(sel))
-        selcontext(view, riscmd, &sel);
+        select_context(view, riscmd, &sel);
     return view_getstr(view, &sel);
 }
 
 void view_selctx(View* view) {
     if (!num_selected(view->selection))
-        selcontext(view, risword, &(view->selection));
+        select_context(view, risword, &(view->selection));
 }
 
 char* view_getctx(View* view) {
@@ -353,16 +354,11 @@ void view_scroll(View* view, int move) {
 }
 
 void view_csrsummon(View* view) {
-    size_t col = SIZE_MAX, row = SIZE_MAX;
+    Row* midrow = view->rows[view->nrows/2];
+    size_t col = SIZE_MAX, row = SIZE_MAX, off = midrow->off;
     find_cursor(view, &col, &row);
-    size_t off = view->rows[view->nrows/2]->off;
-    if (row != SIZE_MAX && col != SIZE_MAX) {
-        if (col >= view->rows[view->nrows/2]->rlen) {
-            off = view->rows[view->nrows/2]->off + view->rows[view->nrows/2]->rlen - 1;
-        } else {
-            off += col;
-        }
-    }
+    if (row != SIZE_MAX && col != SIZE_MAX)
+        off += (col >= midrow->rlen ? (midrow->rlen - 1) : col);
     view_jumpto(view, false, off);
     view->sync_needed = false;
 }
@@ -428,7 +424,7 @@ void view_scrollto(View* view, size_t csr) {
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything) {
     if (num_selected(*sel) && !extsel) {
         selswap(sel);
-        if (move == RIGHT)
+        if (move == RIGHT || move == DOWN)
             sel->beg = sel->end;
         else
             sel->end = sel->beg;
@@ -441,7 +437,7 @@ static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t
     sel->col = buf_getcol(&(view->buffer), sel->end);
 }
 
-static void selcontext(View* view, bool (*isword)(Rune), Sel* sel) {
+static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
     Rune r = buf_get(buf, sel->end);
@@ -461,6 +457,53 @@ static void selcontext(View* view, bool (*isword)(Rune), Sel* sel) {
     }
     sel->end = buf_byrune(&(view->buffer), sel->end, RIGHT);
     sel->col = buf_getcol(&(view->buffer), sel->end);
+}
+
+static void selswap(Sel* sel) {
+    if (sel->end < sel->beg) {
+        size_t temp = sel->beg;
+        sel->beg = sel->end;
+        sel->end = temp;
+    }
+}
+
+static size_t num_selected(Sel sel) {
+    selswap(&sel);
+    return (sel.end - sel.beg);
+}
+
+static bool in_selection(Sel sel, size_t off) {
+    selswap(&sel);
+    return (sel.beg <= off && off < sel.end);
+}
+
+static bool selection_visible(View* view) {
+    if (!view->nrows) return true;
+    Sel sel = view->selection;
+    selswap(&sel);
+    size_t beg = view->rows[0]->off;
+    size_t end = view->rows[view->nrows-1]->off +
+                 view->rows[view->nrows-1]->rlen;
+    return (sel.beg >= beg && sel.end <= end);
+}
+
+static void find_cursor(View* view, size_t* csrx, size_t* csry) {
+    size_t csr = view->selection.end;
+    for (size_t y = 0; y < view->nrows; y++) {
+        size_t start = view->rows[y]->off;
+        size_t end   = view->rows[y]->off + view->rows[y]->rlen - 1;
+        if (start <= csr && csr <= end) {
+            size_t pos = start;
+            for (size_t x = 0; x < view->ncols;) {
+                if (pos == csr) {
+                    *csry = y, *csrx = x;
+                    break;
+                }
+                x += runewidth(x, buf_get(&(view->buffer),pos++));
+            }
+            break;
+        }
+    }
 }
 
 static void clearrow(View* view, size_t row) {
@@ -493,45 +536,16 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     return ncols;
 }
 
-static void selswap(Sel* sel) {
-    if (sel->end < sel->beg) {
-        size_t temp = sel->beg;
-        sel->beg = sel->end;
-        sel->end = temp;
-    }
-}
-
-static size_t num_selected(Sel sel) {
-    selswap(&sel);
-    return (sel.end - sel.beg);
-}
-
-static bool in_selection(Sel sel, size_t off) {
-    selswap(&sel);
-    return (sel.beg <= off && off < sel.end);
-}
-
-static bool selected(View* view, size_t pos) {
-    return in_selection(view->selection, pos);
-}
-
 static size_t fill_row(View* view, unsigned row, size_t pos) {
     view_getrow(view, row)->off = pos;
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (selected(view, pos) ? CLR_SelectedText : CLR_NormalText);
+        uint32_t attr = (in_selection(view->selection, pos) ? CLR_SelectedText : CLR_NormalText);
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) break;
     }
     return pos;
-}
-
-static void reflow(View* view) {
-    if (!view->rows) return;
-    size_t pos = view->rows[0]->off;
-    for (size_t y = 0; y < view->nrows; y++)
-        pos = fill_row(view, y, pos);
 }
 
 static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
@@ -615,31 +629,4 @@ static size_t getoffset(View* view, size_t row, size_t col) {
     if (pos >= buf_end(&(view->buffer)))
         return buf_end(&(view->buffer));
     return pos;
-}
-
-static bool selvisible(View* view) {
-    if (!view->nrows) return true;
-    unsigned beg = view->rows[0]->off;
-    unsigned end = view->rows[view->nrows-1]->off +
-                   view->rows[view->nrows-1]->rlen;
-    return (view->selection.beg >= beg && view->selection.end <= end);
-}
-
-static void find_cursor(View* view, size_t* csrx, size_t* csry) {
-    size_t csr = view->selection.end;
-    for (size_t y = 0; y < view->nrows; y++) {
-        size_t start = view->rows[y]->off;
-        size_t end   = view->rows[y]->off + view->rows[y]->rlen - 1;
-        if (start <= csr && csr <= end) {
-            size_t pos = start;
-            for (size_t x = 0; x < view->ncols;) {
-                if (pos == csr) {
-                    *csry = y, *csrx = x;
-                    break;
-                }
-                x += runewidth(x, buf_get(&(view->buffer),pos++));
-            }
-            break;
-        }
-    }
 }
