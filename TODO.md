@@ -11,6 +11,7 @@ Up Next:
 
 The Future:
 
+* Scrolling line offset
 * Ctrl+Shift+Enter copies indent of wrong line
 * highlight all matches of search term
 * Make Fn keys execute nth command in the tags buffers
