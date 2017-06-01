@@ -4,6 +4,9 @@
 #include <ctype.h>
 #include <config.h>
 
+typedef size_t (*movefn_t)(Buf* buf, size_t pos, int count);
+
+static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything);
 static void selcontext(View* view, bool (*isword)(Rune), Sel* sel);
 static void clearrow(View* view, size_t row);
 static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
@@ -94,37 +97,17 @@ Row* view_getrow(View* view, size_t row) {
 }
 
 void view_byrune(View* view, int move, bool extsel) {
-    Sel sel = view->selection;
-    if (view_selsize(view) && !extsel) {
-        selswap(&sel);
-        if (move == RIGHT)
-            sel.beg = sel.end;
-        else
-            sel.end = sel.beg;
-    } else {
-        sel.end = buf_byrune(&(view->buffer), sel.end, move);
-        if (!extsel) sel.beg = sel.end;
-    }
-    sel.col = buf_getcol(&(view->buffer), sel.end);
-    view->selection = sel;
+    move_selection(view, extsel, &(view->selection), move, buf_byrune);
     view->sync_needed = true;
 }
 
 void view_byword(View* view, int move, bool extsel) {
-    Sel sel = view->selection;
-    sel.end = buf_byword(&(view->buffer), sel.end, move);
-    if (!extsel) sel.beg = sel.end;
-    sel.col = buf_getcol(&(view->buffer), sel.end);
-    view->selection = sel;
+    move_selection(view, extsel, &(view->selection), move, buf_byword);
     view->sync_needed = true;
 }
 
 void view_byline(View* view, int move, bool extsel) {
-    Sel sel = view->selection;
-    sel.end = buf_byline(&(view->buffer), sel.end, move);
-    sel.end = buf_setcol(&(view->buffer), sel.end, sel.col);
-    if (!extsel) sel.beg = sel.end;
-    view->selection = sel;
+    move_selection(view, extsel, &(view->selection), move, buf_byline);
     view->sync_needed = true;
 }
 
@@ -440,6 +423,22 @@ void view_scrollto(View* view, size_t csr) {
         sync_center(view, csr);
         view->sync_center = false;
     }
+}
+
+static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything) {
+    if (num_selected(*sel) && !extsel) {
+        selswap(sel);
+        if (move == RIGHT)
+            sel->beg = sel->end;
+        else
+            sel->end = sel->beg;
+    } else {
+        sel->end = bything(&(view->buffer), sel->end, move);
+        if (bything == buf_byline)
+            sel->end = buf_setcol(&(view->buffer), sel->end, sel->col);
+        if (!extsel) sel->beg = sel->end;
+    }
+    sel->col = buf_getcol(&(view->buffer), sel->end);
 }
 
 static void selcontext(View* view, bool (*isword)(Rune), Sel* sel) {
