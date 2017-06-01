@@ -1,4 +1,0 @@
-#!/bin/sh
-file=$(mktemp)
-man -P cat "$@" | fmt > "$file"
-(nohup xedit "$file" && rm -f "$file") &> /dev/null &
