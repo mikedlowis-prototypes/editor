@@ -68,36 +68,36 @@ typedef struct {
 } Sel;
 
 void buf_init(Buf* buf, void (*errfn)(char*));
+size_t buf_load(Buf* buf, char* path);
 void buf_reload(Buf* buf);
-unsigned buf_load(Buf* buf, char* path);
 void buf_save(Buf* buf);
-Rune buf_get(Buf* buf, unsigned pos);
-unsigned buf_end(Buf* buf);
-unsigned buf_insert(Buf* buf, bool indent, unsigned off, Rune rune);
-unsigned buf_delete(Buf* buf, unsigned beg, unsigned end);
-unsigned buf_change(Buf* buf, unsigned beg, unsigned end);
+Rune buf_get(Buf* buf, size_t pos);
+size_t buf_end(Buf* buf);
+size_t buf_insert(Buf* buf, bool indent, size_t off, Rune rune);
+size_t buf_delete(Buf* buf, size_t beg, size_t end);
+size_t buf_change(Buf* buf, size_t beg, size_t end);
 void buf_undo(Buf* buf, Sel* sel);
 void buf_redo(Buf* buf, Sel* sel);
 void buf_loglock(Buf* buf);
 void buf_logclear(Buf* buf);
-bool buf_iseol(Buf* buf, unsigned pos);
-unsigned buf_bol(Buf* buf, unsigned pos);
-unsigned buf_eol(Buf* buf, unsigned pos);
-unsigned buf_bow(Buf* buf, unsigned pos);
-unsigned buf_eow(Buf* buf, unsigned pos);
-unsigned buf_lscan(Buf* buf, unsigned pos, Rune r);
-unsigned buf_rscan(Buf* buf, unsigned pos, Rune r);
+bool buf_iseol(Buf* buf, size_t pos);
+size_t buf_bol(Buf* buf, size_t pos);
+size_t buf_eol(Buf* buf, size_t pos);
+size_t buf_bow(Buf* buf, size_t pos);
+size_t buf_eow(Buf* buf, size_t pos);
+size_t buf_lscan(Buf* buf, size_t pos, Rune r);
+size_t buf_rscan(Buf* buf, size_t pos, Rune r);
 void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel);
 void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
-unsigned buf_byrune(Buf* buf, unsigned pos, int count);
-unsigned buf_byword(Buf* buf, unsigned pos, int count);
-unsigned buf_byline(Buf* buf, unsigned pos, int count);
+size_t buf_byrune(Buf* buf, size_t pos, int count);
+size_t buf_byword(Buf* buf, size_t pos, int count);
+size_t buf_byline(Buf* buf, size_t pos, int count);
 void buf_find(Buf* buf, int dir, size_t* beg, size_t* end);
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
-unsigned buf_setln(Buf* buf, unsigned line);
-unsigned buf_getcol(Buf* buf, unsigned pos);
-unsigned buf_setcol(Buf* buf, unsigned pos, unsigned col);
 void buf_lastins(Buf* buf, size_t* beg, size_t* end);
+size_t buf_setln(Buf* buf, size_t line);
+size_t buf_getcol(Buf* buf, size_t pos);
+size_t buf_setcol(Buf* buf, size_t pos, size_t col);
 
 /* Charset Handling
  *****************************************************************************/
@@ -126,7 +126,7 @@ typedef struct {
 } UGlyph;
 
 typedef struct {
-    size_t off;    /* offset of the first rune in the row */
+    size_t off;     /* offset of the first rune in the row */
     size_t rlen;   /* number of runes displayed in the row */
     size_t len;    /* number of screen columns taken up by row */
     UGlyph cols[]; /* row data */

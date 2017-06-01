@@ -7,7 +7,7 @@ Up Next:
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
 * xrandr dpi setting does not affect tide like it should
-
+* add command line flags to toggle options (Tabs, Indent, etc..)
 
 The Future:
 
@@ -22,7 +22,6 @@ The Future:
 * tab inserts dont coalesce like one would expect
 * Run commands in the background and don't block the main thread.
 * shortcut to repeat previous operation
-* add command line flags to toggle options (Tabs, Indent, etc..)
 * add command env vars to set options (Tabs, Indent, etc..)
 * implement command diffing logic to optimize the undo/redo log
 * Status line should omit characters from beginning of path to make file path fit
