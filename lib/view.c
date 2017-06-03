@@ -434,7 +434,9 @@ static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t
             sel->end = buf_setcol(&(view->buffer), sel->end, sel->col);
         if (!extsel) sel->beg = sel->end;
     }
-    sel->col = buf_getcol(&(view->buffer), sel->end);
+    /* only update column if not moving vertically */
+    if (bything != buf_byline)
+        sel->col = buf_getcol(&(view->buffer), sel->end);
 }
 
 static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {

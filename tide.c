@@ -237,6 +237,10 @@ static void tag_redo(void) {
     view_redo(win_view(EDIT));
 }
 
+static void tag_lnnum(void) {
+    LineNumbers = !LineNumbers;
+}
+
 static void search(void) {
     char* str;
     SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
@@ -413,6 +417,7 @@ static Tag Builtins[] = {
     { .tag = "SaveAs",    .action.arg   = saveas    },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
+    { .tag = "LineNums",  .action.noarg = tag_lnnum },
     { .tag = NULL,        .action.noarg = NULL      }
 };
 

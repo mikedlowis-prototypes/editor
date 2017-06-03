@@ -45,6 +45,7 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
     buf->undo        = NULL;
     buf->redo        = NULL;
     buf->errfn       = errfn;
+    buf->nlines      = 0;
     assert(buf->bufstart);
 }
 
@@ -143,7 +144,9 @@ size_t buf_end(Buf* buf) {
 }
 
 size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
+    bool is_eol = (rune == '\n' || rune == RUNE_CRLF);
     buf->modified = true;
+    if (is_eol) buf->nlines++;
     if (fmt && buf->expand_tabs && rune == '\t') {
         size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
         log_insert(buf, &(buf->undo), off, off+n);
@@ -155,7 +158,7 @@ size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
             off += n;
         }
     }
-    if (fmt && buf->copy_indent && (rune == '\n' || rune == RUNE_CRLF)) {
+    if (fmt && buf->copy_indent && is_eol) {
         size_t beg = buf_bol(buf, off-1), end = beg;
         for (; end < buf_end(buf) && (' ' == buf_get(buf, end) || '\t' == buf_get(buf, end)); end++);
         for (; beg < end; beg++)
@@ -170,6 +173,8 @@ size_t buf_delete(Buf* buf, size_t beg, size_t end) {
     log_clear(&(buf->redo));
     for (size_t i = end-beg; i > 0; i--) {
         Rune r = buf_get(buf, beg);
+        bool is_eol = (r == '\n' || r == RUNE_CRLF);
+        if (is_eol) buf->nlines--;
         log_delete(buf, &(buf->undo), beg, &r, 1);
         delete(buf, beg);
     }
@@ -298,12 +303,13 @@ void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
 size_t buf_byrune(Buf* buf, size_t pos, int count) {
     int move = (count < 0 ? -1 : 1);
     count *= move; // remove the sign if there is one
-    for (; count > 0; count--)
+    for (; count > 0; count--) {
         if (move < 0) {
             if (pos > 0) pos--;
         } else {
             if (pos < buf_end(buf)) pos++;
         }
+    }
     return pos;
 }
 
@@ -403,8 +409,6 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
     }
     *beg = opbeg, *end = opend;
 }
-
-/*****************************************************************************/
 
 size_t buf_setln(Buf* buf, size_t line) {
     size_t off = 0;

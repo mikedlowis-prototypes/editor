@@ -2,9 +2,10 @@
 extern char *FontString, *DefaultTags;
 extern unsigned int ColorPalette[16];
 extern char *ShellCmd[], *SedCmd[], *PickFileCmd[], *PickTagCmd[], *OpenCmd[];
-extern int CLR_NormalText, CLR_SelectedText, CLR_TagsBkg, CLR_EditBkg,
-           CLR_HorBorder, CLR_VerBorder, CLR_Ruler, CLR_ScrollBkg, CLR_ThumbBkg,
-           CLR_Cursor;
+extern int CLR_NormalText, CLR_GutterText, CLR_SelectedText, CLR_TagsBkg,
+           CLR_EditBkg, CLR_HorBorder, CLR_VerBorder, CLR_Ruler, CLR_ScrollBkg,
+           CLR_ThumbBkg, CLR_Cursor;
+extern int LineNumbers;
 
 /* OS-Specific Config
  ******************************************************************************/
@@ -81,6 +82,7 @@ unsigned int ColorPalette[16] = {
 
 #define COLOR_PAIR(bg, fg) (((bg) << 8) | (fg))
 int CLR_NormalText   = COLOR_PAIR(0,4);
+int CLR_GutterText   = COLOR_PAIR(0,3);
 int CLR_SelectedText = COLOR_PAIR(4,0);
 int CLR_TagsBkg      = 1; // Background color for the tags region
 int CLR_EditBkg      = 0; // Background color for the edit region
@@ -90,6 +92,8 @@ int CLR_HorBorder    = 2; // Horizontal border color
 int CLR_VerBorder    = 2; // Vertical border color
 int CLR_Ruler        = 1; // Ruler color
 int CLR_Cursor       = 7; // Cursor color
+
+int LineNumbers = 1;
 
 #undef INCLUDE_DEFS
 #endif

@@ -58,6 +58,7 @@ typedef struct buf {
     bool copy_indent;     /* copy the indent level from the previous line on new lines */
     uint transid;         /* tracks the last used transaction id for log entries */
     void (*errfn)(char*); /* callback for error messages */
+    size_t nlines;
 } Buf;
 
 /* cursor/selection representation */
