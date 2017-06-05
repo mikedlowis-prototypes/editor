@@ -217,10 +217,11 @@ static void onredraw(int width, int height) {
         x11_draw_rect(CLR_HorBorder, 0, Regions[i].y - 3, width, 1);
 
         if (i == EDIT) {
+            size_t gsz = gutter_size();
             if (Ruler)
-                x11_draw_rect(CLR_Ruler, (Ruler+2) * fwidth, Regions[i].y-2, 1, Regions[i].height+7);
+                x11_draw_rect(CLR_Ruler, ((Ruler+2) * fwidth) + gsz, Regions[i].y-2, 1, Regions[i].height+7);
             if (LineNumbers)
-                x11_draw_rect(CLR_Ruler, Regions[SCROLL].width, Regions[SCROLL].y-2, gutter_size(), Regions[SCROLL].height+7);
+                x11_draw_rect(CLR_Ruler, Regions[SCROLL].width, Regions[SCROLL].y-2, gsz, Regions[SCROLL].height+7);
         }
 
         size_t gcols = gutter_cols();
