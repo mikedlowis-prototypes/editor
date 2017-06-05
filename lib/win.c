@@ -143,14 +143,14 @@ void win_setscroll(double offset, double visible) {
 }
 
 static size_t gutter_cols(void) {
-    size_t len = 1, lines = win_buf(EDIT)->nlines;
+    size_t len   = (LineNumbers ? 1 : 0),
+           lines = win_buf(EDIT)->nlines;
     while (LineNumbers && lines > 9)
         lines /= 10, len++;
     return len;
 }
 
 static size_t gutter_size(void) {
-    if (!LineNumbers) return 0;
     return (gutter_cols() * x11_font_width(Font)) + (LineNumbers ? 5 : 0);
 }
 
@@ -193,7 +193,7 @@ static void layout(int width, int height) {
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[EDIT].height = (height - Regions[EDIT].y - 5);
     Regions[EDIT].width  = width - Regions[SCROLL].width - 5;
-    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
+    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth - gutter_cols());
 }
 
 static void onredraw(int width, int height) {
