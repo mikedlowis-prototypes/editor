@@ -225,8 +225,8 @@ static void onredraw(int width, int height) {
 
         size_t gcols = gutter_cols();
         for (size_t y = 0; y < view->nrows; y++) {
-            draw_line_num(Regions[i].x - (gcols * fwidth) - 5, Regions[i].y + ((y+1) * fheight), gcols, (y % 2 ? 123 : 45));
             Row* row = view_getrow(view, y);
+            draw_line_num(Regions[i].x - (gcols * fwidth) - 5, Regions[i].y + ((y+1) * fheight), gcols, row->line);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
         }
     }
@@ -256,12 +256,10 @@ static void onredraw(int width, int height) {
         x11_mouse_set(x, y);
     }
 
-    printf("lines: %llu\n", win_buf(EDIT)->nlines);
-
     uint64_t stop = getmillis();
     uint64_t elapsed = stop-start;
     if (elapsed > maxtime) {
-        printf("%llu\n", elapsed);
+        //printf("%llu\n", elapsed);
         maxtime = elapsed;
     }
 }
@@ -359,7 +357,6 @@ static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
 static void draw_line_num(size_t x, size_t y, size_t gcols, size_t num) {
     UGlyph glyphs[gcols];
     if (LineNumbers) {
-        printf("cols: %lu\n", gcols);
         for (int i = gcols-1; i >= 0; i--) {
             glyphs[i].attr = CLR_GutterText;
             if (num > 0) {

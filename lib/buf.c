@@ -417,6 +417,13 @@ size_t buf_setln(Buf* buf, size_t line) {
     return off;
 }
 
+size_t buf_getln(Buf* buf, size_t off) {
+    size_t line = 1, curr = 0, end = buf_end(buf);
+    while (curr < off && curr < end)
+        line++, curr = buf_byline(buf, curr, DOWN);
+    return line;
+}
+
 size_t buf_getcol(Buf* buf, size_t pos) {
     size_t curr = buf_bol(buf, pos);
     size_t col = 0;

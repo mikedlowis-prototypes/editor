@@ -7,6 +7,7 @@
 typedef size_t (*movefn_t)(Buf* buf, size_t pos, int count);
 
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything);
+static void move_to(View* view, bool extsel, size_t off);
 static void select_context(View* view, bool (*isword)(Rune), Sel* sel);
 static void selswap(Sel* sel);
 static size_t num_selected(Sel sel);
@@ -15,7 +16,7 @@ static bool selection_visible(View* view);
 static void find_cursor(View* view, size_t* csrx, size_t* csry);
 static void clearrow(View* view, size_t row);
 static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
-static size_t fill_row(View* view, unsigned row, size_t pos);
+static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line);
 static unsigned prev_screen_line(View* view, unsigned bol, unsigned off);
 static unsigned scroll_up(View* view);
 static unsigned scroll_dn(View* view);
@@ -61,11 +62,12 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
 }
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
-    size_t off = 0;
+    size_t line = 1, off = 0;
     if (view->nrows == nrows && view->ncols == ncols) return;
     /* free the old row data */
     if (view->nrows) {
-        off = view->rows[0]->off;
+        line = view->rows[0]->line;
+        off  = view->rows[0]->off;
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
@@ -76,6 +78,7 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
         view->rows[i] = calloc(1, sizeof(Row) + (ncols * sizeof(UGlyph)));
     /* update dimensions */
     view->rows[0]->off = off;
+    //view->rows[0]->off = line;
     view->nrows = nrows;
     view->ncols = ncols;
 }
@@ -84,9 +87,9 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     if (!view->nrows) return;
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
-    size_t pos = view->rows[0]->off;
+    size_t pos = view->rows[0]->off, line = buf_getln(&(view->buffer), pos);
     for (size_t y = 0; y < view->nrows; y++)
-        pos = fill_row(view, y, pos);
+        pos = fill_row(view, y, pos, &line);
     if (view->sync_needed)
         view_scrollto(view, csr);
     /* locate the cursor if visible */
@@ -120,11 +123,8 @@ void view_setcursor(View* view, size_t row, size_t col) {
 
 void view_selext(View* view, size_t row, size_t col) {
     size_t off = getoffset(view, row, col);
-    if (off != SIZE_MAX) {
-        view->selection.end = off;
-        view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-        view_scrollto(view, view->selection.end);
-    }
+    if (off != SIZE_MAX)
+        view_jumpto(view, true, off);
 }
 
 void view_selword(View* view, size_t row, size_t col) {
@@ -186,15 +186,6 @@ bool view_findstr(View* view, int dir, char* str) {
     view->sync_center = true;
     if (found) view->prev_csr = prev;
     return found;
-}
-
-static void move_to(View* view, bool extsel, size_t off) {
-    Buf* buf = &(view->buffer);
-    view->selection.end = (off > buf_end(buf) ? buf_end(buf) : off);
-    if (!extsel)
-        view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
-    view->sync_needed = true;
 }
 
 void view_insert(View* view, bool indent, Rune rune) {
@@ -439,6 +430,15 @@ static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t
         sel->col = buf_getcol(&(view->buffer), sel->end);
 }
 
+static void move_to(View* view, bool extsel, size_t off) {
+    Buf* buf = &(view->buffer);
+    view->selection.end = (off > buf_end(buf) ? buf_end(buf) : off);
+    if (!extsel)
+        view->selection.beg = view->selection.end;
+    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    view->sync_needed = true;
+}
+
 static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
@@ -538,14 +538,20 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     return ncols;
 }
 
-static size_t fill_row(View* view, unsigned row, size_t pos) {
-    view_getrow(view, row)->off = pos;
+static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line) {
+    view_getrow(view, row)->off  = pos;
+    if (line)
+        view_getrow(view, row)->line = *line;
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
         uint32_t attr = (in_selection(view->selection, pos) ? CLR_SelectedText : CLR_NormalText);
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
-        if (buf_iseol(&(view->buffer), pos-1)) break;
+        if (buf_iseol(&(view->buffer), pos-1)) {
+            if (line)
+                *line += 1;
+            break;
+        }
     }
     return pos;
 }
@@ -563,7 +569,7 @@ static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
 }
 
 static unsigned scroll_up(View* view) {
-    unsigned first = view->rows[0]->off;
+    unsigned first  = view->rows[0]->off;
     unsigned bol    = buf_bol(&(view->buffer), first);
     unsigned prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
     if (!first) return first;
@@ -574,7 +580,7 @@ static unsigned scroll_up(View* view) {
     view->rows[0] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
     view->rows[0]->off = prevln;
     /* fill in row content */
-    fill_row(view, 0, view->rows[0]->off);
+    fill_row(view, 0, view->rows[0]->off, NULL);
     return view->rows[0]->off;
 }
 
@@ -588,10 +594,10 @@ static unsigned scroll_dn(View* view) {
         view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
         view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
         /* fill in row content */
-        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
+        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off, NULL);
     } else {
         view->rows[0]->off += view->rows[0]->rlen;
-        fill_row(view, 0, view->rows[0]->off);
+        fill_row(view, 0, view->rows[0]->off, NULL);
     }
     return view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
 }

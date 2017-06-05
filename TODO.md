@@ -11,6 +11,9 @@ Up Next:
 
 The Future:
 
+* Case insensitive search
+* Ctrl+Up,Down requires two undos to revert.
+* Ctrl+Up,Down with non line selection should track column
 * Scrolling line offset
 * Ctrl+Shift+Enter copies indent of wrong line
 * highlight all matches of search term
@@ -26,6 +29,7 @@ The Future:
 * add command env vars to set options (Tabs, Indent, etc..)
 * implement command diffing logic to optimize the undo/redo log
 * Status line should omit characters from beginning of path to make file path fit
+* pickfile directory traversal when no tags file
 
 Possible Shortcuts:
 
@@ -48,3 +52,7 @@ Maybe think about addressing these later:
 * Win-like terminal emulator
 * File browser
 * Acme-like window manager
+
+# Syntax Highlighting
+
+Label, Conditional, Repeat, Character, Number, PreProc, Float, Operator, Structure

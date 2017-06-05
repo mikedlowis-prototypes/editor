@@ -97,6 +97,7 @@ void buf_find(Buf* buf, int dir, size_t* beg, size_t* end);
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
 void buf_lastins(Buf* buf, size_t* beg, size_t* end);
 size_t buf_setln(Buf* buf, size_t line);
+size_t buf_getln(Buf* buf, size_t off);
 size_t buf_getcol(Buf* buf, size_t pos);
 size_t buf_setcol(Buf* buf, size_t pos, size_t col);
 
@@ -127,7 +128,8 @@ typedef struct {
 } UGlyph;
 
 typedef struct {
-    size_t off;     /* offset of the first rune in the row */
+    size_t line;   /* the line number of the data in the row */
+    size_t off;    /* offset of the first rune in the row */
     size_t rlen;   /* number of runes displayed in the row */
     size_t len;    /* number of screen columns taken up by row */
     UGlyph cols[]; /* row data */
