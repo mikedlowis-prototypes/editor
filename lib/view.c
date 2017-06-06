@@ -22,6 +22,7 @@ static unsigned scroll_up(View* view);
 static unsigned scroll_dn(View* view);
 static void sync_center(View* view, size_t csr);
 static size_t getoffset(View* view, size_t row, size_t col);
+static void sync_line_numbers(View* view);
 
 void view_init(View* view, char* file, void (*errfn)(char*)) {
     if (view->nrows) {
@@ -193,20 +194,11 @@ bool view_findstr(View* view, int dir, char* str) {
     return found;
 }
 
-static void update_lines(View* view) {
-    if (!view->nrows ||
-        view->selection.beg <= view->rows[0]->off ||
-        view->selection.end <= view->rows[0]->off)
-        view->sync_lines = true;
-}
-
 void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && rune < 0x20)
         return;
-
-    update_lines(view);
-
+    sync_line_numbers(view);
     if (num_selected(view->selection)) {
         Sel sel = view->selection;
         selswap(&sel);
@@ -218,8 +210,7 @@ void view_insert(View* view, bool indent, Rune rune) {
 }
 
 void view_delete(View* view, int dir, bool byword) {
-    update_lines(view);
-
+    sync_line_numbers(view);
     Sel* sel = &(view->selection);
     if (sel->beg == sel->end)
         (byword ? view_byword : view_byrune)(view, dir, true);
@@ -659,4 +650,11 @@ static size_t getoffset(View* view, size_t row, size_t col) {
     if (pos >= buf_end(&(view->buffer)))
         return buf_end(&(view->buffer));
     return pos;
+}
+
+static void sync_line_numbers(View* view) {
+    if (!view->nrows ||
+        view->selection.beg <= view->rows[0]->off ||
+        view->selection.end <= view->rows[0]->off)
+        view->sync_lines = true;
 }
