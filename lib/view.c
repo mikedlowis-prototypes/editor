@@ -569,9 +569,9 @@ static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
 }
 
 static unsigned scroll_up(View* view) {
-    unsigned first  = view->rows[0]->off;
-    unsigned bol    = buf_bol(&(view->buffer), first);
-    unsigned prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+    size_t first  = view->rows[0]->off;
+    size_t bol    = buf_bol(&(view->buffer), first);
+    size_t prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
     if (!first) return first;
     prevln = prev_screen_line(view, prevln, first);
     /* delete the last row and shift the others */
@@ -585,7 +585,8 @@ static unsigned scroll_up(View* view) {
 }
 
 static unsigned scroll_dn(View* view) {
-    unsigned last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+    size_t last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
+    size_t line = view->rows[view->nrows-1]->line;
     if (last >= buf_end(&(view->buffer))) return last;
     /* delete the first row and shift the others */
     if (view->nrows > 1) {
@@ -599,6 +600,7 @@ static unsigned scroll_dn(View* view) {
         view->rows[0]->off += view->rows[0]->rlen;
         fill_row(view, 0, view->rows[0]->off, NULL);
     }
+    view->rows[view->nrows-1]->line = (buf_iseol(&(view->buffer), last) ? line+1 : line);
     return view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
 }
 
