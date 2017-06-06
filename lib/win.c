@@ -32,6 +32,7 @@ static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
+static bool ShowLineNumbers = false;
 
 static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
@@ -90,6 +91,14 @@ void win_settext(WinRegion id, char* text) {
     buf_logclear(&(view->buffer));
 }
 
+void win_setlinenums(bool enable) {
+    ShowLineNumbers = enable;
+}
+
+bool win_getlinenums(void) {
+    return ShowLineNumbers;
+}
+
 void win_setruler(size_t ruler) {
     Ruler = ruler;
 }
@@ -143,15 +152,15 @@ void win_setscroll(double offset, double visible) {
 }
 
 static size_t gutter_cols(void) {
-    size_t len   = (LineNumbers ? 1 : 0),
+    size_t len   = (ShowLineNumbers ? 1 : 0),
            lines = win_buf(EDIT)->nlines;
-    while (LineNumbers && lines > 9)
+    while (ShowLineNumbers && lines > 9)
         lines /= 10, len++;
     return len;
 }
 
 static size_t gutter_size(void) {
-    return (gutter_cols() * x11_font_width(Font)) + (LineNumbers ? 5 : 0);
+    return (gutter_cols() * x11_font_width(Font)) + (ShowLineNumbers ? 5 : 0);
 }
 
 static void layout(int width, int height) {
@@ -220,7 +229,7 @@ static void onredraw(int width, int height) {
             size_t gsz = gutter_size();
             if (Ruler)
                 x11_draw_rect(CLR_Ruler, ((Ruler+2) * fwidth) + gsz, Regions[i].y-2, 1, Regions[i].height+7);
-            if (LineNumbers)
+            if (ShowLineNumbers)
                 x11_draw_rect(CLR_Ruler, Regions[SCROLL].width, Regions[SCROLL].y-2, gsz, Regions[SCROLL].height+7);
         }
 
@@ -359,7 +368,7 @@ static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
 
 static void draw_line_num(size_t x, size_t y, size_t gcols, size_t num) {
     UGlyph glyphs[gcols];
-    if (LineNumbers) {
+    if (ShowLineNumbers) {
         for (int i = gcols-1; i >= 0; i--) {
             glyphs[i].attr = CLR_GutterText;
             if (num > 0) {

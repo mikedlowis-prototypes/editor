@@ -5,7 +5,6 @@ extern char *ShellCmd[], *SedCmd[], *PickFileCmd[], *PickTagCmd[], *OpenCmd[];
 extern int CLR_NormalText, CLR_GutterText, CLR_SelectedText, CLR_TagsBkg,
            CLR_EditBkg, CLR_HorBorder, CLR_VerBorder, CLR_Ruler, CLR_ScrollBkg,
            CLR_ThumbBkg, CLR_Cursor;
-extern int LineNumbers;
 
 /* OS-Specific Config
  ******************************************************************************/
@@ -35,6 +34,7 @@ enum {
     DblClickTime   = 250,     /* Millisecond time for detecting double clicks */
     RulePosition   = 80,      /* Column in which the vertical ruler appears */
     CopyIndent     = 1,       /* New lines will inherit the indent of the preceding line */
+    LineNumbers    = 1,       /* Enable line numbers by default or not */
 };
 
 #ifdef INCLUDE_DEFS
@@ -92,8 +92,6 @@ int CLR_HorBorder    = 2; // Horizontal border color
 int CLR_VerBorder    = 2; // Vertical border color
 int CLR_Ruler        = 1; // Ruler color
 int CLR_Cursor       = 7; // Cursor color
-
-int LineNumbers = 1;
 
 #undef INCLUDE_DEFS
 #endif

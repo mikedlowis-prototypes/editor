@@ -550,8 +550,11 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
 
 static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line) {
     view_getrow(view, row)->off  = pos;
-    if (line)
+    if (line) {
+        if (pos > buf_end(&(view->buffer)))
+            *line = 0;
         view_getrow(view, row)->line = *line;
+    }
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
         uint32_t attr = (in_selection(view->selection, pos) ? CLR_SelectedText : CLR_NormalText);

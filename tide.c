@@ -238,7 +238,7 @@ static void tag_redo(void) {
 }
 
 static void tag_lnnum(void) {
-    LineNumbers = !LineNumbers;
+    win_setlinenums(!win_getlinenums());
 }
 
 static void search(void) {
@@ -594,6 +594,7 @@ int main(int argc, char** argv) {
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : DefaultTags));
     win_setruler(RulePosition);
+    win_setlinenums((bool)LineNumbers);
     /* open the first file in this instance */
     if (argc > 1)
         edit_relative(argv[1]);
