@@ -44,7 +44,7 @@ void win_window(char* name, void (*errfn)(char*));
 void win_dialog(char* name, void (*errfn)(char*));
 void win_loop(void);
 void win_settext(WinRegion id, char* text);
-void win_showlinenums(bool enable);
+void win_setlinenums(bool enable);
 bool win_getlinenums(void);
 void win_setruler(size_t ruler);
 Rune win_getkey(void);
