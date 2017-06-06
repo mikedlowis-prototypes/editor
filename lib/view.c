@@ -89,9 +89,10 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     /* scroll the view and reflow the screen lines */
     size_t pos = view->rows[0]->off, line = view->rows[0]->line;
     if (!line || view->sync_lines) {
-        line = buf_getln(&(view->buffer), pos);
+        line = buf_getln(&(view->buffer), buf_bol(&(view->buffer), pos));
         view->sync_lines = false;
     }
+
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos, &line);
     if (view->sync_needed)
@@ -193,8 +194,8 @@ bool view_findstr(View* view, int dir, char* str) {
 }
 
 static void update_lines(View* view) {
-    if (!view->nrows) return;
-    if (view->selection.beg <= view->rows[0]->off ||
+    if (!view->nrows ||
+        view->selection.beg <= view->rows[0]->off ||
         view->selection.end <= view->rows[0]->off)
         view->sync_lines = true;
 }
@@ -269,12 +270,14 @@ void view_undo(View* view) {
     buf_undo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
     view->sync_center = !selection_visible(view);
+    view->sync_lines  = true;
 }
 
 void view_redo(View* view) {
     buf_redo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
     view->sync_center = !selection_visible(view);
+    view->sync_lines  = true;
 }
 
 void view_putstr(View* view, char* str) {
@@ -564,8 +567,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line) {
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {
-            if (line)
-                *line += 1;
+            if (line) *line += 1;
             break;
         }
     }
@@ -587,7 +589,7 @@ static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
 static unsigned scroll_up(View* view) {
     size_t first   = view->rows[0]->off;
     size_t bol     = buf_bol(&(view->buffer), first);
-    size_t prevln  = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+    size_t prevln  = (first == bol ? buf_byline(&(view->buffer), bol, UP) : bol);
     size_t linenum = (prevln < bol ? view->rows[0]->line-1 : view->rows[0]->line);
     if (!first) return first;
     prevln = prev_screen_line(view, prevln, first);
