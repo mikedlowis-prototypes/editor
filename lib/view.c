@@ -34,6 +34,7 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     view->selection   = (Sel){ 0 };
     view->sync_needed = true;
     view->sync_center = true;
+    view->sync_lines  = true;
     view->prev_csr    = 0;
     /* load the file and jump to the address returned from the load function */
     buf_init(&(view->buffer), errfn);
@@ -78,7 +79,6 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
         view->rows[i] = calloc(1, sizeof(Row) + (ncols * sizeof(UGlyph)));
     /* update dimensions */
     view->rows[0]->off = off;
-    //view->rows[0]->off = line;
     view->nrows = nrows;
     view->ncols = ncols;
 }
@@ -87,7 +87,11 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     if (!view->nrows) return;
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
-    size_t pos = view->rows[0]->off, line = buf_getln(&(view->buffer), pos);
+    size_t pos = view->rows[0]->off, line = view->rows[0]->line;
+    if (!line || view->sync_lines) {
+        line = buf_getln(&(view->buffer), pos);
+        view->sync_lines = false;
+    }
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos, &line);
     if (view->sync_needed)
@@ -188,10 +192,20 @@ bool view_findstr(View* view, int dir, char* str) {
     return found;
 }
 
+static void update_lines(View* view) {
+    if (!view->nrows) return;
+    if (view->selection.beg <= view->rows[0]->off ||
+        view->selection.end <= view->rows[0]->off)
+        view->sync_lines = true;
+}
+
 void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && rune < 0x20)
         return;
+
+    update_lines(view);
+
     if (num_selected(view->selection)) {
         Sel sel = view->selection;
         selswap(&sel);
@@ -203,6 +217,8 @@ void view_insert(View* view, bool indent, Rune rune) {
 }
 
 void view_delete(View* view, int dir, bool byword) {
+    update_lines(view);
+
     Sel* sel = &(view->selection);
     if (sel->beg == sel->end)
         (byword ? view_byword : view_byrune)(view, dir, true);
@@ -569,9 +585,10 @@ static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
 }
 
 static unsigned scroll_up(View* view) {
-    size_t first  = view->rows[0]->off;
-    size_t bol    = buf_bol(&(view->buffer), first);
-    size_t prevln = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+    size_t first   = view->rows[0]->off;
+    size_t bol     = buf_bol(&(view->buffer), first);
+    size_t prevln  = (first == bol ? buf_byline(&(view->buffer), bol, -1) : bol);
+    size_t linenum = (prevln < bol ? view->rows[0]->line-1 : view->rows[0]->line);
     if (!first) return first;
     prevln = prev_screen_line(view, prevln, first);
     /* delete the last row and shift the others */
@@ -579,6 +596,7 @@ static unsigned scroll_up(View* view) {
     memmove(&view->rows[1], &view->rows[0], sizeof(Row*) * (view->nrows-1));
     view->rows[0] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
     view->rows[0]->off = prevln;
+    view->rows[0]->line = linenum;
     /* fill in row content */
     fill_row(view, 0, view->rows[0]->off, NULL);
     return view->rows[0]->off;

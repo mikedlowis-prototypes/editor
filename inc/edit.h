@@ -138,6 +138,7 @@ typedef struct {
 typedef struct {
     bool sync_needed; /* whether the view needs to be synced with cursor */
     bool sync_center; /* cursor should be centered on screen if possible */
+    bool sync_lines;  /* whether the line numbers should be recalculated */
     size_t nrows;     /* number of rows in the view */
     size_t ncols;     /* number of columns in the view */
     Row** rows;       /* array of row data structures */

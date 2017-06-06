@@ -225,10 +225,12 @@ static void onredraw(int width, int height) {
         }
 
         size_t gcols = gutter_cols();
-        for (size_t y = 0; y < view->nrows; y++) {
+        for (size_t line = 0, y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
-            draw_line_num(Regions[i].x - (gcols * fwidth) - 5, Regions[i].y + ((y+1) * fheight), gcols, row->line);
+            if (line != row->line)
+                draw_line_num(Regions[i].x - (gcols * fwidth) - 5, Regions[i].y + ((y+1) * fheight), gcols, row->line);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
+            line = row->line;
         }
     }
 
