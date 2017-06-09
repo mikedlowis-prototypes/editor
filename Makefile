@@ -11,7 +11,8 @@ LIBEDIT_OBJS =     \
 	lib/exec.o     \
 	lib/view.o     \
 	lib/x11.o      \
-	lib/win.o
+	lib/win.o      \
+	lib/colors.o
 
 TEST_BINS =      \
 	tests/tide  \

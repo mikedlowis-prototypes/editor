@@ -39,8 +39,10 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     view->prev_csr    = 0;
     /* load the file and jump to the address returned from the load function */
     buf_init(&(view->buffer), errfn);
-    if (file)
+    if (file) {
         view_jumpto(view, false, buf_load(&(view->buffer), file));
+        view->syntax = colors_find(view->buffer.path);
+    }
 }
 
 void view_reload(View* view) {
@@ -100,6 +102,31 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
+
+    view->spans = colors_scan(view->syntax, &(view->buffer));
+    SyntaxSpan* curr = view->spans;
+    for (size_t r = 0; curr && r < view->nrows; r++) {
+        Row* row = view->rows[r];
+        for (; curr && curr->end < row->off; curr = curr->next);
+        if (curr) {
+            size_t off = row->off, col = 0;
+            while (col < row->len) {
+                if (curr->beg <= off && off < curr->end) {
+                    uint32_t attr = row->cols[col].attr;
+                    row->cols[col].attr = (attr & 0xF0) | curr->color;
+                }
+                off++, col++;
+                while (col < row->len && row->cols[col].rune == '\0')
+                    col++;
+            }
+        }
+    }
+
+    while (view->spans) {
+        SyntaxSpan* deadite = view->spans;
+        view->spans = deadite->next;
+        free(deadite);
+    }
 }
 
 Row* view_getrow(View* view, size_t row) {

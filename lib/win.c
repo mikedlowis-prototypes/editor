@@ -367,8 +367,8 @@ static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
 }
 
 static void draw_line_num(size_t x, size_t y, size_t gcols, size_t num) {
-    UGlyph glyphs[gcols];
     if (ShowLineNumbers) {
+        UGlyph glyphs[gcols];
         for (int i = gcols-1; i >= 0; i--) {
             glyphs[i].attr = CLR_GutterText;
             if (num > 0) {
