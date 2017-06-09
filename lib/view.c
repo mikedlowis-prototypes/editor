@@ -111,9 +111,9 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
         if (curr) {
             size_t off = row->off, col = 0;
             while (col < row->len) {
-                if (curr->beg <= off && off < curr->end) {
+                if (curr->beg <= off && off < curr->end && !(row->cols[col].attr & 0xFF00)) {
                     uint32_t attr = row->cols[col].attr;
-                    row->cols[col].attr = (attr & 0xF0) | curr->color;
+                    row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
                 }
                 off++, col++;
                 while (col < row->len && row->cols[col].rune == '\0')
