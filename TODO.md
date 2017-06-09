@@ -2,6 +2,11 @@
 
 Up Next:
 
+* highlight strings and characters
+* highlight classes of identifiers
+* higlight current line in gutter
+* ^A shortcut should set implicit mark
+
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)
@@ -11,7 +16,6 @@ Up Next:
 
 The Future:
 
-* Syntax highlighting
 * Case insensitive search
 * Ctrl+Up,Down requires two undos to revert.
 * Ctrl+Up,Down with non line selection should track column

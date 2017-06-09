@@ -107,18 +107,20 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     SyntaxSpan* curr = view->spans;
     for (size_t r = 0; curr && r < view->nrows; r++) {
         Row* row = view->rows[r];
-        for (; curr && curr->end < row->off; curr = curr->next);
-        if (curr) {
-            size_t off = row->off, col = 0;
-            while (col < row->len) {
-                if (curr->beg <= off && off < curr->end && !(row->cols[col].attr & 0xFF00)) {
-                    uint32_t attr = row->cols[col].attr;
-                    row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
-                }
-                off++, col++;
-                while (col < row->len && row->cols[col].rune == '\0')
-                    col++;
+        size_t off = row->off, col = 0;
+        while (col < row->len) {
+            /* skip irrelevant highlight regions */
+            for (; curr && curr->end < off; curr = curr->next);
+            if (!curr) { r = -1; break; } // Break both loops if we're done
+
+            /* check if we're in the current region */
+            if (curr->beg <= off && off <= curr->end && !(row->cols[col].attr & 0xFF00)) {
+                uint32_t attr = row->cols[col].attr;
+                row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
             }
+            off++, col++;
+            while (col < row->len && row->cols[col].rune == '\0')
+                col++;
         }
     }
 

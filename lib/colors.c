@@ -76,7 +76,7 @@ SyntaxSpan* colors_scan(SyntaxDef* syntax, Buf* buf) {
         else if (matches(buf, &off, syntax->comments.multi_beg))
             for (; off < end && !matches(buf, &off, syntax->comments.multi_end); off++);
         if (start != off)
-            spans = mkspan(start, ++off, CLR_Comment, spans);
+            spans = mkspan(start, --off, CLR_Comment, spans);
         if (!firstspan && spans)
             firstspan = spans;
     }
