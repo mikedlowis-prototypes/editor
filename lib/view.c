@@ -23,6 +23,7 @@ static unsigned scroll_dn(View* view);
 static void sync_center(View* view, size_t csr);
 static size_t getoffset(View* view, size_t row, size_t col);
 static void sync_line_numbers(View* view);
+static void apply_colors(View* view);
 
 void view_init(View* view, char* file, void (*errfn)(char*)) {
     if (view->nrows) {
@@ -95,40 +96,21 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
         line = buf_getln(&(view->buffer), buf_bol(&(view->buffer), pos));
         view->sync_lines = false;
     }
-
+    /* fill the view and scroll if needed */
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos, &line);
     if (view->sync_needed)
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
-
-    view->spans = colors_scan(view->syntax, &(view->buffer));
-    SyntaxSpan* curr = view->spans;
-    for (size_t r = 0; curr && r < view->nrows; r++) {
-        Row* row = view->rows[r];
-        size_t off = row->off, col = 0;
-        while (col < row->len) {
-            /* skip irrelevant highlight regions */
-            for (; curr && curr->end < off; curr = curr->next);
-            if (!curr) { r = -1; break; } // Break both loops if we're done
-
-            /* check if we're in the current region */
-            if (curr->beg <= off && off <= curr->end && !(row->cols[col].attr & 0xFF00)) {
-                uint32_t attr = row->cols[col].attr;
-                row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
-            }
-            off++, col++;
-            while (col < row->len && row->cols[col].rune == '\0')
-                col++;
-        }
-    }
-
-    while (view->spans) {
-        SyntaxSpan* deadite = view->spans;
-        view->spans = deadite->next;
-        free(deadite);
-    }
+    /* synchronize, scan for, and apply highlighted regions */
+    size_t first = (view->nrows ? view->rows[0]->off : 0),
+           last  = buf_end(&(view->buffer));
+    if (view->nrows)
+        last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    view->spans = colors_rewind(view->spans, first);
+    view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), first, last+1);
+    apply_colors(view);
 }
 
 Row* view_getrow(View* view, size_t row) {
@@ -689,4 +671,27 @@ static void sync_line_numbers(View* view) {
         view->selection.beg <= view->rows[0]->off ||
         view->selection.end <= view->rows[0]->off)
         view->sync_lines = true;
+}
+
+static void apply_colors(View* view) {
+    SyntaxSpan* curr = view->spans;
+    for (size_t r = 0; curr && r < view->nrows; r++) {
+        Row* row = view->rows[r];
+        size_t off = row->off, col = 0;
+        while (col < row->len) {
+            /* skip irrelevant highlight regions */
+            for (; curr && curr->end < off; curr = curr->next);
+            if (!curr) { r = -1; break; } // Break both loops if we're done
+
+            /* check if we're in the current region */
+            if (curr->beg <= off && off <= curr->end && !(row->cols[col].attr & 0xFF00)) {
+                uint32_t attr = row->cols[col].attr;
+                row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
+            }
+            off++, col++;
+            while (col < row->len && row->cols[col].rune == '\0')
+                col++;
+        }
+    }
+
 }

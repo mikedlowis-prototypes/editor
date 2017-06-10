@@ -141,7 +141,8 @@ typedef struct SyntaxSpan {
 } SyntaxSpan;
 
 SyntaxDef* colors_find(char* path);
-SyntaxSpan* colors_scan(SyntaxDef* syntax, Buf* buf);
+SyntaxSpan* colors_scan(SyntaxDef* syntax, SyntaxSpan* spans, Buf* buf, size_t beg, size_t end);
+SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first);
 
 /* Screen management functions
  *****************************************************************************/

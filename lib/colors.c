@@ -65,11 +65,10 @@ static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span) 
     return newspan;
 }
 
-SyntaxSpan* colors_scan(SyntaxDef* syntax, Buf* buf) {
-    SyntaxSpan* firstspan = NULL;
-    SyntaxSpan* spans = NULL;
-    if (!syntax) return spans;
-    for (size_t end = buf_end(buf), off = 0; off < end; off++) {
+SyntaxSpan* colors_scan(SyntaxDef* syntax, SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
+    SyntaxSpan* firstspan = spans;
+    if (!syntax) return firstspan;
+    for (size_t off = beg; off < end; off++) {
         size_t start = off;
         if (matches(buf, &off, syntax->comments.line_beg))
             for (; off < end && !buf_iseol(buf, off); off++);
@@ -82,3 +81,27 @@ SyntaxSpan* colors_scan(SyntaxDef* syntax, Buf* buf) {
     }
     return firstspan;
 }
+
+SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first) {
+    /* rewind to the first span that start before visible space */
+    while (spans && spans->beg >= first && spans->prev)
+        spans = spans->prev;
+
+    /* if we're on the first one, setup to return NULL, otherwise return the
+       previous one because we're about to regenerate the current one and
+       everything after it */
+    SyntaxSpan* ret = (spans ? spans->prev : NULL);
+
+    /* ok now free the rest of the list */
+    while (spans) {
+        SyntaxSpan* dead = spans;
+        spans = dead->next;
+        free(dead);
+    }
+
+    /* make sure we clear out the next link */
+    if (ret) ret->next = NULL;
+
+    return ret;
+}
+
