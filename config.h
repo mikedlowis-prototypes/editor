@@ -92,6 +92,7 @@ int CLR_HorBorder    = 2;  // Horizontal border color
 int CLR_VerBorder    = 2;  // Vertical border color
 int CLR_Ruler        = 1;  // Ruler color
 int CLR_Cursor       = 7;  // Cursor color
+
 int CLR_CurrentLine  = 13; // Current Line Number
 int CLR_Comment      = 2;  // Comment color
 

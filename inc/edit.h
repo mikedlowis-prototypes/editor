@@ -123,13 +123,16 @@ void binsave(Buf* buf, FILE* file);
 /* Syntax Highlighting
  *****************************************************************************/
 typedef struct {
+    int color;
+    enum { END, CONT } oneol;
+    char* beg;
+    char* end;
+} SyntaxRule;
+
+typedef struct {
     char* name;
     char** extensions;
-    struct {
-        char* line_beg;
-        char* multi_beg;
-        char* multi_end;
-    } comments;
+    SyntaxRule* rules;
 } SyntaxDef;
 
 typedef struct SyntaxSpan {
