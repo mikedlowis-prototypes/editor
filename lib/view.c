@@ -103,12 +103,16 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
+
     /* synchronize, scan for, and apply highlighted regions */
+    if (!view->syntax) return;
+
     size_t first = (view->nrows ? view->rows[0]->off : 0),
            last  = buf_end(&(view->buffer));
     if (view->nrows)
         last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     view->spans = colors_rewind(view->spans, first);
+    first = (view->spans ? view->spans->end : 0);
     view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), first, last+1);
     apply_colors(view);
 }
@@ -674,7 +678,16 @@ static void sync_line_numbers(View* view) {
 }
 
 static void apply_colors(View* view) {
+    /* fast forward the span list to the first span that ends on screen if there
+       is one. We take care to not go past the last item because we need to
+       ensure newly scanned items are poperly appended next time around */
+    size_t first = (view->nrows ? view->rows[0]->off : 0);
     SyntaxSpan* curr = view->spans;
+    for (; curr && curr->next && curr->end < first; curr = curr->next);
+    view->spans = curr;
+
+    /* ok, now for each row, scan the columns and apply the colors for the span
+       that each rune is a member of. */
     for (size_t r = 0; curr && r < view->nrows; r++) {
         Row* row = view->rows[r];
         size_t off = row->off, col = 0;
@@ -693,5 +706,4 @@ static void apply_colors(View* view) {
                 col++;
         }
     }
-
 }
