@@ -7,13 +7,21 @@ static bool matches(Buf* buf, size_t* off, char* str);
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span);
 
 enum {
-    Comment = 2,
-    Literal = 14,
+    /* standard colors */
+    Normal   = 4,
+    Comment  = 2,
+    Literal  = 14,
+
+    /* diff colors */
+    Added    = 15,
+    Deleted  = 10,
+    Location = 14,
+    Info     = 8,
 };
 
 static SyntaxDef Syntaxes[] = {
-    {
-        .name = "Text",
+    { /* this is also the default syntax if no match is found */
+        .name = "text",
         .extensions = (char*[]){ 0 },
         .rules = (SyntaxRule[]){
             { .color = 2, .oneol = END,  .beg = "#" },
@@ -21,7 +29,7 @@ static SyntaxDef Syntaxes[] = {
         }
     },
     {
-        .name = "C",
+        .name = "c",
         .extensions = (char*[]){
             ".c", ".h", ".C", ".cpp", ".CPP", ".hpp", ".cc", ".c++", ".cxx", 0 },
         .rules = (SyntaxRule[]){
@@ -31,7 +39,21 @@ static SyntaxDef Syntaxes[] = {
             { .color = Comment, .oneol = CONT, .beg = "/*", .end = "*/" },
             {0,0,0,0}
         }
-    }
+    },
+    {
+        .name = "diff",
+        .extensions = (char*[]){ ".diff", ".patch", 0 },
+        .rules = (SyntaxRule[]){
+            { .color = Location, .oneol = END, .beg = "@@" },
+            { .color = Info,     .oneol = END, .beg = "Index:" },
+            { .color = Info,     .oneol = END, .beg = "---" },
+            { .color = Info,     .oneol = END, .beg = "+++" },
+            { .color = Deleted,  .oneol = END, .beg = "-" },
+            { .color = Added,    .oneol = END, .beg = "+" },
+            { .color = Normal,   .oneol = END, .beg = ""  },
+            {0,0,0,0}
+        }
+    },
 };
 
 SyntaxDef* colors_find(char* path) {
@@ -123,4 +145,3 @@ static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span) 
         span->next = newspan;
     return newspan;
 }
-

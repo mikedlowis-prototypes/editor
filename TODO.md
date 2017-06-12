@@ -2,9 +2,7 @@
 
 Up Next:
 
-* highlight strings and characters
 * highlight classes of identifiers
-* higlight current line in gutter
 * ^A shortcut should set implicit mark
 
 * move by words is inconsistent. Example:
