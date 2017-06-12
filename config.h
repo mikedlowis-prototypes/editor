@@ -81,9 +81,6 @@ unsigned int ColorPalette[16] = {
 };
 
 #define COLOR_PAIR(bg, fg) (((bg) << 8) | (fg))
-int CLR_NormalText   = COLOR_PAIR(0,4);
-int CLR_GutterText   = COLOR_PAIR(0,3);
-int CLR_SelectedText = COLOR_PAIR(4,0);
 int CLR_TagsBkg      = 1;  // Background color for the tags region
 int CLR_EditBkg      = 0;  // Background color for the edit region
 int CLR_ScrollBkg    = 3;  // Background color for the scroll region
@@ -93,8 +90,12 @@ int CLR_VerBorder    = 2;  // Vertical border color
 int CLR_Ruler        = 1;  // Ruler color
 int CLR_Cursor       = 7;  // Cursor color
 
-int CLR_CurrentLine  = 13; // Current Line Number
-int CLR_Comment      = 2;  // Comment color
+/* Text Color Attributes           BG, FG */
+int CLR_NormalText   = COLOR_PAIR(  0,  4 );
+int CLR_SelectedText = COLOR_PAIR(  4,  0 );
+int CLR_GutterText   = COLOR_PAIR(  0,  3 );
+int CLR_CurrentLine  = COLOR_PAIR( 11,  7 );  // Current Line Number
+int CLR_Comment      = COLOR_PAIR(  0,  2 );  // Comment color
 
 #undef INCLUDE_DEFS
 #endif

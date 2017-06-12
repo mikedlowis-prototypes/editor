@@ -236,13 +236,11 @@ static void onredraw(int width, int height) {
         size_t gcols = gutter_cols();
         for (size_t line = 0, y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
-            if (line != row->line)
-                draw_line_num(
-                    (y == Regions[i].csry),
-                    Regions[i].x - (gcols * fwidth) - 5,
-                    Regions[i].y + ((y+1) * fheight),
-                    gcols,
-                    row->line);
+            draw_line_num( (y == Regions[i].csry),
+                           Regions[i].x - (gcols * fwidth) - 5,
+                           Regions[i].y + ((y+1) * fheight),
+                           gcols,
+                           (line != row->line ? row->line : 0) );
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
             line = row->line;
         }
