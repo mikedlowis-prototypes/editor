@@ -12,7 +12,7 @@ static void onmousedrag(int state, int x, int y);
 static void onmousebtn(int btn, bool pressed, int x, int y);
 static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col);
 static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col);
-static void draw_line_num(size_t x, size_t y, size_t gcols, size_t num);
+static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
 
@@ -237,7 +237,12 @@ static void onredraw(int width, int height) {
         for (size_t line = 0, y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
             if (line != row->line)
-                draw_line_num(Regions[i].x - (gcols * fwidth) - 5, Regions[i].y + ((y+1) * fheight), gcols, row->line);
+                draw_line_num(
+                    (y == Regions[i].csry),
+                    Regions[i].x - (gcols * fwidth) - 5,
+                    Regions[i].y + ((y+1) * fheight),
+                    gcols,
+                    row->line);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
             line = row->line;
         }
@@ -366,11 +371,12 @@ static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
     view_scroll(win_view(id), +ScrollLines);
 }
 
-static void draw_line_num(size_t x, size_t y, size_t gcols, size_t num) {
+static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num) {
     if (ShowLineNumbers) {
+        int color = (current ? CLR_CurrentLine : CLR_GutterText);
         UGlyph glyphs[gcols];
         for (int i = gcols-1; i >= 0; i--) {
-            glyphs[i].attr = CLR_GutterText;
+            glyphs[i].attr = color;
             if (num > 0) {
                 glyphs[i].rune = ((num % 10) + '0');
                 num /= 10;

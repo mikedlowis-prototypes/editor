@@ -4,7 +4,7 @@ extern unsigned int ColorPalette[16];
 extern char *ShellCmd[], *SedCmd[], *PickFileCmd[], *PickTagCmd[], *OpenCmd[];
 extern int CLR_NormalText, CLR_GutterText, CLR_SelectedText, CLR_TagsBkg,
            CLR_EditBkg, CLR_HorBorder, CLR_VerBorder, CLR_Ruler, CLR_ScrollBkg,
-           CLR_ThumbBkg, CLR_Cursor, CLR_Comment;
+           CLR_ThumbBkg, CLR_Cursor, CLR_CurrentLine, CLR_Comment;
 
 /* OS-Specific Config
  ******************************************************************************/
@@ -92,7 +92,8 @@ int CLR_HorBorder    = 2;  // Horizontal border color
 int CLR_VerBorder    = 2;  // Vertical border color
 int CLR_Ruler        = 1;  // Ruler color
 int CLR_Cursor       = 7;  // Cursor color
-int CLR_Comment      = 2; // Comment color
+int CLR_CurrentLine  = 13; // Current Line Number
+int CLR_Comment      = 2;  // Comment color
 
 #undef INCLUDE_DEFS
 #endif
