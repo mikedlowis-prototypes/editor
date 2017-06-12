@@ -6,12 +6,17 @@
 static bool matches(Buf* buf, size_t* off, char* str);
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span);
 
+enum {
+    Comment = 2,
+    Literal = 14,
+};
+
 static SyntaxDef Syntaxes[] = {
     {
         .name = "Text",
         .extensions = (char*[]){ 0 },
         .rules = (SyntaxRule[]){
-            { .oneol = END,  .beg = "#" },
+            { .color = 2, .oneol = END,  .beg = "#" },
             {0,0,0}
         }
     },
@@ -20,29 +25,13 @@ static SyntaxDef Syntaxes[] = {
         .extensions = (char*[]){
             ".c", ".h", ".C", ".cpp", ".CPP", ".hpp", ".cc", ".c++", ".cxx", 0 },
         .rules = (SyntaxRule[]){
-            { .color = 14, .oneol = END,  .beg = "\"", .end = "\"" },
-            { .color = 14, .oneol = END,  .beg = "'", .end = "'" },
-            { .color =  2, .oneol = END,  .beg = "//" },
-            { .color =  2, .oneol = CONT, .beg = "/*", .end = "*/" },
-            {0,0,0}
+            { .color = Literal, .oneol = END,  .beg = "\"", .end = "\"" },
+            { .color = Literal, .oneol = END,  .beg = "'",  .end = "'" },
+            { .color = Comment, .oneol = END,  .beg = "//" },
+            { .color = Comment, .oneol = CONT, .beg = "/*", .end = "*/" },
+            {0,0,0,0}
         }
-
-//        .comments = {
-//            .line_beg = "//", .multi_beg = "/*", .multi_end = "*/" }
-
-    },
-
-//    {
-//        .name = "Ruby",
-//        .extensions = (char*[]){ ".rb", 0 },
-//        .comments = { .line_beg = "#" }
-//    },
-//    {
-//        .name = "Shell",
-//        .extensions = (char*[]){ ".sh", 0 },
-//        .comments = { .line_beg = "#" }
-//    }
-
+    }
 };
 
 SyntaxDef* colors_find(char* path) {
