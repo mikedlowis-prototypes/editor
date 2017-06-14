@@ -4,13 +4,12 @@ Up Next:
 
 * highlight classes of identifiers
 * ^A shortcut should set implicit mark
-
-* move by words is inconsistent. Example:
-    var infoId = 'readerinfo'+reader.id;
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * implement X resources config file
+* move by words is inconsistent. Example:
+    var infoId = 'readerinfo'+reader.id;
 
 The Future:
 
@@ -55,6 +54,30 @@ Maybe think about addressing these later:
 * File browser
 * Acme-like window manager
 
+# Regular Expressions
+
+Operators:
+
+    c       Literal character
+    ^       Start of string
+    $       End of string
+    .       Any char
+    [ ]     Any character in the set
+    [^ ]    Any character not in the reange
+    ( )     Grouping/matching
+
+    ?       Zero or one
+    *       Zero or more
+    +       One or more
+
+    {n,m}   From n to m matches
+    |       Alternative
+
 # Syntax Highlighting
 
 Label, Conditional, Repeat, Character, Number, PreProc, Float, Operator, Structure
+
+Keyword GROUP [WORD...]
+Match   GROUP REGEX
+Region  GROUP start=REGEX skip=REGEX end=REGEX
+
