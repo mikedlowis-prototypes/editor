@@ -22,7 +22,7 @@ static unsigned scroll_up(View* view);
 static unsigned scroll_dn(View* view);
 static void sync_center(View* view, size_t csr);
 static size_t getoffset(View* view, size_t row, size_t col);
-static void sync_line_numbers(View* view);
+static void sync_line_numbers(View* view, size_t pos);
 static void apply_colors(View* view);
 
 void view_init(View* view, char* file, void (*errfn)(char*)) {
@@ -106,7 +106,6 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
 
     /* synchronize, scan for, and apply highlighted regions */
     if (!view->syntax) return;
-
     size_t first = (view->nrows ? view->rows[0]->off : 0),
            last  = buf_end(&(view->buffer));
     if (view->nrows)
@@ -213,7 +212,6 @@ void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && rune < 0x20)
         return;
-    sync_line_numbers(view);
     if (num_selected(view->selection)) {
         Sel sel = view->selection;
         selswap(&sel);
@@ -221,16 +219,17 @@ void view_insert(View* view, bool indent, Rune rune) {
         view->selection = sel;
     }
     unsigned newpos = buf_insert(&(view->buffer), indent, view->selection.end, rune);
+    sync_line_numbers(view, newpos);
     move_to(view, false, newpos);
 }
 
 void view_delete(View* view, int dir, bool byword) {
-    sync_line_numbers(view);
     Sel* sel = &(view->selection);
     if (sel->beg == sel->end)
         (byword ? view_byword : view_byrune)(view, dir, true);
     selswap(sel);
     unsigned newpos = buf_delete(&(view->buffer), sel->beg, sel->end);
+    sync_line_numbers(view, newpos);
     move_to(view, false, newpos);
 }
 
@@ -276,14 +275,14 @@ void view_undo(View* view) {
     buf_undo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
     view->sync_center = !selection_visible(view);
-    view->sync_lines  = true;
+    sync_line_numbers(view, 0);
 }
 
 void view_redo(View* view) {
     buf_redo(&(view->buffer), &(view->selection));
     view_jumpto(view, true, view->selection.end);
     view->sync_center = !selection_visible(view);
-    view->sync_lines  = true;
+    sync_line_numbers(view, 0);
 }
 
 void view_putstr(View* view, char* str) {
@@ -670,11 +669,13 @@ static size_t getoffset(View* view, size_t row, size_t col) {
     return pos;
 }
 
-static void sync_line_numbers(View* view) {
-    if (!view->nrows ||
-        view->selection.beg <= view->rows[0]->off ||
-        view->selection.end <= view->rows[0]->off)
+static void sync_line_numbers(View* view, size_t newpos) {
+    if (!view->nrows || newpos <= view->rows[0]->off) {
         view->sync_lines = true;
+        if (view->nrows)
+            view->rows[0]->off = buf_bol(&(view->buffer), newpos);
+    }
+
 }
 
 static void apply_colors(View* view) {

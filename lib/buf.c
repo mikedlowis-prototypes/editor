@@ -411,16 +411,22 @@ void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
 }
 
 size_t buf_setln(Buf* buf, size_t line) {
-    size_t off = 0;
-    while (line > 1 && off < buf_end(buf))
-        line--, off = buf_byline(buf, off, DOWN);
-    return off;
+    size_t curr = 0, end = buf_end(buf);
+    while (line > 1 && curr < end) {
+        size_t next = buf_byline(buf, curr, DOWN);
+        if (curr == next) break;
+        line--, curr = next;
+    }
+    return curr;
 }
 
 size_t buf_getln(Buf* buf, size_t off) {
     size_t line = 1, curr = 0, end = buf_end(buf);
-    while (curr < off && curr < end)
-        line++, curr = buf_byline(buf, curr, DOWN);
+    while (curr < off && curr < end-1) {
+        size_t next = buf_byline(buf, curr, DOWN);
+        if (curr == next) break;
+        line++, curr = next;
+    }
     return line;
 }
 
