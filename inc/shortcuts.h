@@ -6,8 +6,8 @@ static void select_line(void) {
 
 static void select_all(void) {
     View* view = win_view(FOCUSED);
+    view_jumpto(view, false, buf_end(&(view->buffer)));
     view->selection.beg = 0;
-    view->selection.end = buf_end(&(view->buffer));
 }
 
 static void join_lines(void) {
