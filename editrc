@@ -1,5 +1,21 @@
 #!/bin/bash
 
+edit(){
+    # setup editor env
+    export PATH="$HOME/.config/edit/tools:$PATH"
+    export EDITRCFILE="$HOME/.config/edit/editrc"
+    export BASH_ENV="$EDITRCFILE"
+    [[ -f "$EDITRCFILE" ]] && . "$EDITRCFILE"
+
+    # Now figure out the correct editor to execute
+    if [[ -z "$DISPLAY" ]]; then
+        "$EDITOR" "$@"
+    else
+        # Launch in the background and disown
+        { tide "$@" & disown; } &> /dev/null
+    fi
+}
+
 # Tag Lines
 #------------------------------------------------------------------------------
 
