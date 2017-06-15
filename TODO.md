@@ -2,11 +2,15 @@
 
 Up Next:
 
+* Update click time to 500ms
+* ignore the menu key or map it to control
+* clicking or dragging the mouse out of bounds should still update the selection
+* implement transaction control in buf.c
+* implement X resources config file
 * highlight classes of identifiers
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
 * add command line flags to toggle options (Tabs, Indent, etc..)
-* implement X resources config file
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 

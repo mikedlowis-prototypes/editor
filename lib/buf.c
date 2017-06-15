@@ -146,7 +146,6 @@ size_t buf_end(Buf* buf) {
 size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
     bool is_eol = (rune == '\n' || rune == RUNE_CRLF);
     buf->modified = true;
-    if (is_eol) buf->nlines++;
     if (fmt && buf->expand_tabs && rune == '\t') {
         size_t n = (TabWidth - ((off - buf_bol(buf, off)) % TabWidth));
         log_insert(buf, &(buf->undo), off, off+n);
@@ -174,7 +173,6 @@ size_t buf_delete(Buf* buf, size_t beg, size_t end) {
     for (size_t i = end-beg; i > 0; i--) {
         Rune r = buf_get(buf, beg);
         bool is_eol = (r == '\n' || r == RUNE_CRLF);
-        if (is_eol) buf->nlines--;
         log_delete(buf, &(buf->undo), beg, &r, 1);
         delete(buf, beg);
     }
@@ -551,6 +549,9 @@ static void buf_resize(Buf* buf, size_t sz) {
 }
 
 static void delete(Buf* buf, size_t off) {
+    Rune rune = buf_get(buf, off);
+    if (rune == RUNE_CRLF || rune == '\n')
+        buf->nlines--;
     syncgap(buf, off);
     buf->gapend++;
 }
@@ -558,6 +559,7 @@ static void delete(Buf* buf, size_t off) {
 static size_t insert(Buf* buf, size_t off, Rune rune) {
     size_t rcount = 1;
     syncgap(buf, off);
+    if (rune == '\n') buf->nlines++;
     if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
         rcount = 0;
         *(buf->gapstart-1) = RUNE_CRLF;
