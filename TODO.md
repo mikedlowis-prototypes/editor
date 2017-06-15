@@ -3,7 +3,6 @@
 Up Next:
 
 * highlight classes of identifiers
-* ^A shortcut should set implicit mark
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
 * add command line flags to toggle options (Tabs, Indent, etc..)
