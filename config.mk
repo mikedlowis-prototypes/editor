@@ -24,8 +24,17 @@ LDFLAGS = $(LIBS) -lX11 -lXft -lfontconfig -lutil
 AR = ar
 ARFLAGS = rcs
 
-# Treat all  warnings as errors (poor man's lint?)
-#CFLAGS += -Wall -Wextra -Werror
+# Set the variables below or set them on the command line to enable the
+# corresponding feature
+WERROR = 0
+DEBUG  = 0
+GPROF  = 0
+GCOV   = 0
+
+# Treat all warnings as errors (poor man's lint?)
+ifeq ($(WERROR), 1)
+	CFLAGS += -Wall -Wextra -Werror
+endif
 
 # GCC Debugging
 ifeq ($(DEBUG), 1)
