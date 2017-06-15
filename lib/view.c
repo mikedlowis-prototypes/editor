@@ -272,17 +272,25 @@ void view_setln(View* view, size_t line) {
 }
 
 void view_undo(View* view) {
+    view->prev_csr = view->selection.end;
     buf_undo(&(view->buffer), &(view->selection));
-    view_jumpto(view, true, view->selection.end);
-    view->sync_center = !selection_visible(view);
-    sync_line_numbers(view, 0);
+    view->sync_lines = true;
+    if (!selection_visible(view)) {
+        view->sync_center = true;
+        if (view->nrows)
+            view->rows[0]->off = buf_bol(&(view->buffer), view->selection.beg);
+    }
 }
 
 void view_redo(View* view) {
+    view->prev_csr = view->selection.end;
     buf_redo(&(view->buffer), &(view->selection));
-    view_jumpto(view, true, view->selection.end);
-    view->sync_center = !selection_visible(view);
-    sync_line_numbers(view, 0);
+    view->sync_lines = true;
+    if (!selection_visible(view)) {
+        view->sync_center = true;
+        if (view->nrows)
+            view->rows[0]->off = buf_bol(&(view->buffer), view->selection.beg);
+    }
 }
 
 void view_putstr(View* view, char* str) {
