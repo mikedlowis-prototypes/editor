@@ -256,6 +256,7 @@ void view_bol(View* view, bool extsel) {
 
 void view_eol(View* view, bool extsel) {
     move_to(view, extsel, buf_eol(&(view->buffer), view->selection.end));
+    view->selection.col = -1; // Peg cursor to line end
 }
 
 void view_bof(View* view, bool extsel) {
