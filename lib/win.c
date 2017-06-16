@@ -343,9 +343,9 @@ static void onmousedrag(int state, int x, int y) {
 }
 
 static void onmousebtn(int btn, bool pressed, int x, int y) {
-    if (x < Regions[Focused].x)
-        x = Regions[Focused].x;
     WinRegion id = getregion(x, y);
+    if (id == FOCUSED && x < Regions[Focused].x)
+        id = Focused, x = Regions[Focused].x;
     size_t row = (y-Regions[id].y) / x11_font_height(Font);
     size_t col = (x-Regions[id].x) / x11_font_width(Font);
 
