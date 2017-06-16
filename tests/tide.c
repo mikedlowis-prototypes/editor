@@ -776,13 +776,13 @@ TEST_SUITE(UnitTests) {
         CHECK(verify_text(TAGS, "File is modified. Repeat action twice quickly to quit."));
     }
 
-    TEST(Quit should discard changes if quit executed twice in less than 250 ms) {
+    TEST(Quit should discard changes if quit executed twice in less than DblClickTime) {
         //IGNORE("Failing on the first quit call");
         setup_view(TAGS, "", CRLF, 0);
         setup_view(EDIT, "", CRLF, 0);
         win_buf(EDIT)->modified = true;
         ExitCode = 42;
-        usleep(251 * 1000);
+        usleep((DblClickTime+1) * 1000);
         EXPECT_EXIT {
             exec("Quit");
             CHECK(ExitCode == 42);
