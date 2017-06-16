@@ -105,11 +105,8 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     find_cursor(view, csrx, csry);
 
     /* synchronize, scan for, and apply highlighted regions */
-    if (!view->syntax) return;
-    size_t first = (view->nrows ? view->rows[0]->off : 0),
-           last  = buf_end(&(view->buffer));
-    if (view->nrows)
-        last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    size_t first = view->rows[0]->off,
+           last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     view->spans = colors_rewind(view->spans, first);
     first = (view->spans ? view->spans->end : 0);
     view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), first, last+1);
@@ -275,23 +272,17 @@ void view_setln(View* view, size_t line) {
 void view_undo(View* view) {
     view->prev_csr = view->selection.end;
     buf_undo(&(view->buffer), &(view->selection));
-    view->sync_lines = true;
-    if (!selection_visible(view)) {
-        view->sync_center = true;
-        if (view->nrows)
-            view->rows[0]->off = buf_bol(&(view->buffer), view->selection.beg);
-    }
+    view->sync_needed = true;
+    view->sync_lines  = true;
+    view->sync_center = !selection_visible(view);
 }
 
 void view_redo(View* view) {
     view->prev_csr = view->selection.end;
     buf_redo(&(view->buffer), &(view->selection));
-    view->sync_lines = true;
-    if (!selection_visible(view)) {
-        view->sync_center = true;
-        if (view->nrows)
-            view->rows[0]->off = buf_bol(&(view->buffer), view->selection.beg);
-    }
+    view->sync_needed = true;
+    view->sync_lines  = true;
+    view->sync_center = !selection_visible(view);
 }
 
 void view_putstr(View* view, char* str) {
@@ -514,12 +505,11 @@ static bool in_selection(Sel sel, size_t off) {
 
 static bool selection_visible(View* view) {
     if (!view->nrows) return true;
-    Sel sel = view->selection;
-    selswap(&sel);
+    size_t csr = view->selection.end;
     size_t beg = view->rows[0]->off;
     size_t end = view->rows[view->nrows-1]->off +
                  view->rows[view->nrows-1]->rlen;
-    return (sel.beg >= beg && sel.end <= end);
+    return (beg <= csr && csr <= end);
 }
 
 static void find_cursor(View* view, size_t* csrx, size_t* csry) {

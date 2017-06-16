@@ -2,6 +2,8 @@
 
 Up Next:
 
+* add a cap to the distance from last span to first char on screen
+* Ctrl+/ shortcut to comment/uncomment based on syntax
 * Update click time to 500ms
 * ignore the menu key or map it to control
 * clicking or dragging the mouse out of bounds should still update the selection
