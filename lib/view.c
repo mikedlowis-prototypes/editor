@@ -103,12 +103,13 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
-
     /* synchronize, scan for, and apply highlighted regions */
     size_t first = view->rows[0]->off,
            last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     view->spans = colors_rewind(view->spans, first);
-    first = (view->spans ? view->spans->end : 0);
+    size_t start = (view->spans ? view->spans->end : 0);
+    if (first-start > MaxScanDistance)
+        start = first - MaxScanDistance;
     view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), first, last+1);
     apply_colors(view);
 }

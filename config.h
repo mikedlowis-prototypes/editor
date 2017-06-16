@@ -19,22 +19,23 @@ extern int CLR_NormalText, CLR_GutterText, CLR_SelectedText, CLR_TagsBkg,
 /* General Config
  ******************************************************************************/
 enum {
-    Width          = 640,     /* default window width */
-    Height         = 480,     /* default window height */
-    ExpandTabs     = 1,       /* Tabs will be expanded to spaces */
-    TabWidth       = 4,       /* maximum number of spaces used to represent a tab */
-    ScrollLines    = 4,       /* number of lines to scroll by for mouse wheel scrolling */
-    BufSize        = 8192,    /* default buffer size */
-    EventTimeout   = 50,      /* Maximum blocking wait time for events */
-    TrimOnSave     = 1,       /* Enable trimming of trailing whitespace on save */
-    DefaultCRLF    = 0,       /* Default to Unix line endings */
-    DefaultCharset = UTF_8,   /* We assume UTF-8 because nothing else matters */
-    FontCacheSize  = 16,      /* Maximum number of fonts allowed in the font cache */
-    LineSpacing    = LNSPACE, /* Set the vertical spacing between lines */
-    DblClickTime   = 250,     /* Millisecond time for detecting double clicks */
-    RulePosition   = 80,      /* Column in which the vertical ruler appears */
-    CopyIndent     = 1,       /* New lines will inherit the indent of the preceding line */
-    LineNumbers    = 1,       /* Enable line numbers by default or not */
+    Width           = 640,     /* default window width */
+    Height          = 480,     /* default window height */
+    ExpandTabs      = 1,       /* Tabs will be expanded to spaces */
+    TabWidth        = 4,       /* maximum number of spaces used to represent a tab */
+    ScrollLines     = 4,       /* number of lines to scroll by for mouse wheel scrolling */
+    BufSize         = 8192,    /* default buffer size */
+    EventTimeout    = 50,      /* Maximum blocking wait time for events */
+    TrimOnSave      = 1,       /* Enable trimming of trailing whitespace on save */
+    DefaultCRLF     = 0,       /* Default to Unix line endings */
+    DefaultCharset  = UTF_8,   /* We assume UTF-8 because nothing else matters */
+    FontCacheSize   = 16,      /* Maximum number of fonts allowed in the font cache */
+    LineSpacing     = LNSPACE, /* Set the vertical spacing between lines */
+    DblClickTime    = 250,     /* Millisecond time for detecting double clicks */
+    RulePosition    = 80,      /* Column in which the vertical ruler appears */
+    CopyIndent      = 1,       /* New lines will inherit the indent of the preceding line */
+    LineNumbers     = 1,       /* Enable line numbers by default or not */
+    MaxScanDistance = 16384,   /* Maximum distance to scan before visible lines for syntax higlighting */
 };
 
 #ifdef INCLUDE_DEFS
