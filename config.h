@@ -31,7 +31,7 @@ enum {
     DefaultCharset  = UTF_8,   /* We assume UTF-8 because nothing else matters */
     FontCacheSize   = 16,      /* Maximum number of fonts allowed in the font cache */
     LineSpacing     = LNSPACE, /* Set the vertical spacing between lines */
-    DblClickTime    = 250,     /* Millisecond time for detecting double clicks */
+    DblClickTime    = 500,     /* Millisecond time for detecting double clicks */
     RulePosition    = 80,      /* Column in which the vertical ruler appears */
     CopyIndent      = 1,       /* New lines will inherit the indent of the preceding line */
     LineNumbers     = 1,       /* Enable line numbers by default or not */
