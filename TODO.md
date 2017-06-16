@@ -5,7 +5,6 @@ Up Next:
 * add a cap to the distance from last span to first char on screen
 * Ctrl+/ shortcut to comment/uncomment based on syntax
 * ignore the menu key or map it to control
-* clicking or dragging the mouse out of bounds should still update the selection
 * implement transaction control in buf.c
 * implement X resources config file
 * highlight classes of identifiers

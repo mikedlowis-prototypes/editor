@@ -334,14 +334,17 @@ static void scroll_actions(int btn, bool pressed, int x, int y) {
 }
 
 static void onmousedrag(int state, int x, int y) {
-    WinRegion id = getregion(x, y);
-    size_t row = (y-Regions[id].y) / x11_font_height(Font);
-    size_t col = (x-Regions[id].x) / x11_font_width(Font);
-    if (id == Focused && win_btnpressed(MouseLeft))
-        view_selext(win_view(id), row, col);
+    if (x < Regions[Focused].x) x = Regions[Focused].x;
+    if (y < Regions[Focused].y) y = Regions[Focused].y;
+    size_t row = (y-Regions[Focused].y) / x11_font_height(Font);
+    size_t col = (x-Regions[Focused].x) / x11_font_width(Font);
+    if (win_btnpressed(MouseLeft))
+        view_selext(win_view(Focused), row, col);
 }
 
 static void onmousebtn(int btn, bool pressed, int x, int y) {
+    if (x < Regions[Focused].x)
+        x = Regions[Focused].x;
     WinRegion id = getregion(x, y);
     size_t row = (y-Regions[id].y) / x11_font_height(Font);
     size_t col = (x-Regions[id].x) / x11_font_width(Font);
