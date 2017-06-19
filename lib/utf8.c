@@ -1,7 +1,6 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
-#include <config.h>
 #define __USE_XOPEN
 #include <wchar.h>
 #include <ctype.h>

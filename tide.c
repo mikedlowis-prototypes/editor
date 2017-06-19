@@ -7,9 +7,6 @@
 #include <shortcuts.h>
 #include <unistd.h>
 
-#define INCLUDE_DEFS
-#include "config.h"
-
 typedef struct {
     char* tag;
     union {
@@ -22,6 +19,21 @@ static Tag Builtins[];
 static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
 static size_t Marks[10] = {0};
+
+/* The shell: Filled in with $SHELL. Used to execute commands */
+char* ShellCmd[] = { NULL, "-c", NULL, NULL };
+
+/* Sed command used to execute commands marked with ':' sigil */
+char* SedCmd[] = { "sed", "-e", NULL, NULL };
+
+/* Fuzzy Picker for files in the current directory and subdirectories */
+char* PickFileCmd[] = { "pickfile", ".", NULL };
+
+/* Fuzzy picker for tags in a ctags database. */
+char* PickTagCmd[] = { "picktag", NULL, "tags", NULL, NULL };
+
+/* Open a new instance of the editor */
+char* OpenCmd[] = { "tide", NULL, NULL };
 
 /* Tag/Cmd Execution
  ******************************************************************************/

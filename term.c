@@ -7,9 +7,6 @@
 
 static int ShellFD;
 
-#define INCLUDE_DEFS
-#include "config.h"
-
 void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
 }
 

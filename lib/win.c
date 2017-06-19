@@ -4,7 +4,6 @@
 #include <x11.h>
 #include <win.h>
 #include <ctype.h>
-#include <config.h>
 
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);

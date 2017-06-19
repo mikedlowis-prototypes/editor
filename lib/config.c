@@ -28,12 +28,13 @@ struct {
     [EventTimeout] = { "tide.ui.timeout",      INTEGER, { .num = 50   } },
 
     /* input related options */
-    [CopyIndent]   = { "tide.input.copy_indent",  BOOLEAN, { .opt = true  } },
-    [TrimOnSave]   = { "tide.input.trim_on_save", BOOLEAN, { .opt = false } },
-    [ExpandTabs]   = { "tide.input.expand_tabs",  BOOLEAN, { .opt = true  } },
-    [TabWidth]     = { "tide.input.tab_width",    INTEGER, { .num = 4     } },
-    [ScrollLines]  = { "tide.input.scroll_lines", INTEGER, { .num = 4     } },
-    [DblClickTime] = { "tide.input.click_time",   INTEGER, { .num = 500   } },
+    [CopyIndent]   = { "tide.input.copy_indent",   BOOLEAN, { .opt = true  } },
+    [TrimOnSave]   = { "tide.input.trim_on_save",  BOOLEAN, { .opt = false } },
+    [ExpandTabs]   = { "tide.input.expand_tabs",   BOOLEAN, { .opt = true  } },
+    [TabWidth]     = { "tide.input.tab_width",     INTEGER, { .num = 4     } },
+    [ScrollLines]  = { "tide.input.scroll_lines",  INTEGER, { .num = 4     } },
+    [DblClickTime] = { "tide.input.click_time",    INTEGER, { .num = 500   } },
+    [MaxScanDist]  = { "tide.input.max_scan_dist", INTEGER, { .num = 8192  } },
 
     /* default color palette definition */
     [Color00] = { "tide.palette.00", INTEGER, { .num = 0xff002b36 } },

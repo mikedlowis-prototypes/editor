@@ -2,26 +2,24 @@
 
 Up Next:
 
-* add a cap to the distance from last span to first char on screen
-* Ctrl+/ shortcut to comment/uncomment based on syntax
-* ignore the menu key or map it to control
-* implement transaction control in buf.c
-* implement X resources config file
+* highlight all matches of search term
 * highlight classes of identifiers
+* implement transaction control in buf.c
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
+* ignore the menu key or map it to control
 
 The Future:
 
+* Ctrl+/ shortcut to comment/uncomment based on syntax
 * Case insensitive search
 * Ctrl+Up,Down requires two undos to revert.
 * Ctrl+Up,Down with non line selection should track column
 * Scrolling line offset
 * Ctrl+Shift+Enter copies indent of wrong line
-* highlight all matches of search term
 * Make Fn keys execute nth command in the tags buffers
 * jump to previous or next line with less indent
 * use transaction ids to only mark buffer dirty when it really is

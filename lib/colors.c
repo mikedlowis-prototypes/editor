@@ -1,7 +1,6 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
-#include <config.h>
 
 static bool matches(Buf* buf, size_t* off, char* str);
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span);

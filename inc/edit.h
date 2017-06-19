@@ -239,7 +239,7 @@ char* cmdwriteread(char** cmd, char* text, char** err);
 enum {
     FontString = 0, TagString, WinWidth, WinHeight, LineSpacing, LineNumbers,
     RulerColumn, EventTimeout, CopyIndent, TrimOnSave, ExpandTabs, TabWidth,
-    ScrollLines, DblClickTime,
+    ScrollLines, DblClickTime, MaxScanDist,
     Color00, Color01, Color02, Color03, Color04, Color05, Color06, Color07,
     Color08, Color09, Color10, Color11, Color12, Color13, Color14, Color15,
     BkgRuler, BkgGutter, BkgTags, BkgEdit, BkgScroll, BkgThumb, BkgBorder,

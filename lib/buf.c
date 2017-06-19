@@ -4,7 +4,6 @@
 #include <edit.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <config.h>
 
 size_t buf_setln(Buf* buf, size_t line);
 size_t buf_getcol(Buf* buf, size_t pos);
@@ -35,9 +34,9 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
     buf->modified    = false;
     buf->expand_tabs = config_get_bool(ExpandTabs);
     buf->copy_indent = config_get_bool(CopyIndent);
-    buf->charset     = DefaultCharset;
-    buf->crlf        = DefaultCRLF;
-    buf->bufsize     = BufSize;
+    buf->charset     = UTF_8;
+    buf->crlf        = 0;
+    buf->bufsize     = 8192;
     buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
     buf->bufend      = buf->bufstart + buf->bufsize;
     buf->gapstart    = buf->bufstart;

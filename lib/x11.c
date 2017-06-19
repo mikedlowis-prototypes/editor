@@ -5,10 +5,11 @@
 #include <x11.h>
 #include <utf.h>
 #include <edit.h>
-#include <config.h>
 #include <locale.h>
 #include <sys/time.h>
 #include <sys/types.h>
+
+enum { FontCacheSize = 16 };
 
 static struct XSel* selfetch(Atom atom);
 static void selclear(XEvent* evnt);
