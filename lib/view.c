@@ -387,7 +387,7 @@ void view_scrollpage(View* view, int move) {
 
 void view_indent(View* view, int dir) {
     Buf* buf = &(view->buffer);
-    unsigned indoff = (buf->expand_tabs ? TabWidth : 1);
+    unsigned indoff = (buf->expand_tabs ? config_get_int(TabWidth) : 1);
     selswap(&(view->selection));
     view->selection.beg = buf_bol(buf, view->selection.beg);
     view->selection.end = buf_eol(buf, view->selection.end);
@@ -571,7 +571,9 @@ static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line) {
     }
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (in_selection(view->selection, pos) ? CLR_SelectedText : CLR_NormalText);
+        uint32_t attr = (in_selection(view->selection, pos)
+                            ? config_get_int(TxtSelected)
+                            : config_get_int(TxtNormal));
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {

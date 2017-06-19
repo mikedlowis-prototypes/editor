@@ -63,7 +63,8 @@ static struct XSel {
     { .name = "CLIPBOARD" },
 };
 
-static void xftcolor(XftColor* xc, uint32_t c) {
+static void xftcolor(XftColor* xc, int id) {
+    uint32_t c = config_get_int(id + Color00);
     xc->color.alpha = 0xFF | ((c & 0xFF000000) >> 16);
     xc->color.red   = 0xFF | ((c & 0x00FF0000) >> 8);
     xc->color.green = 0xFF | ((c & 0x0000FF00));
@@ -97,6 +98,7 @@ void x11_init(XConfig* cfg) {
     SelTarget = XInternAtom(X.display, "UTF8_STRING", 0);
     if (SelTarget == None)
         SelTarget = XInternAtom(X.display, "STRING", 0);
+    config_init(X.display);
 }
 
 int x11_keybtnstate(void) {
@@ -119,7 +121,7 @@ void x11_window(char* name, int width, int height) {
         X.width,
         X.height,
         0, X.depth,
-        ColorPalette[0]);
+        config_get_int(Color00));
 
     /* register interest in the delete window message */
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
@@ -415,7 +417,7 @@ size_t x11_font_descent(XFont fnt) {
 
 void x11_draw_rect(int color, int x, int y, int width, int height) {
     XftColor clr;
-    xftcolor(&clr, ColorPalette[color]);
+    xftcolor(&clr, color);
     XftDrawRect(X.xft, &clr, x, y, width, height);
     XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
@@ -492,13 +494,13 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
         XGlyphInfo extent;
         XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
         int w = extent.xOff;
-        int h = (font->height - font->descent) + LineSpacing;
-        xftcolor(&bgc, ColorPalette[bg]);
+        int h = (font->height - font->descent) + config_get_int(LineSpacing);
+        xftcolor(&bgc, bg);
         size_t width = specs[nspecs-1].x - specs[0].x + w;
-        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + LineSpacing);
+        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + config_get_int(LineSpacing));
         XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
-    xftcolor(&fgc, ColorPalette[fg]);
+    xftcolor(&fgc, fg);
     XftDrawGlyphFontSpec(X.xft, &fgc, (XftGlyphFontSpec*)specs, nspecs);
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }

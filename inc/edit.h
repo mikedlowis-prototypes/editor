@@ -19,6 +19,7 @@ char* dirname(char* path);
 bool try_chdir(char* fpath);
 char* strconcat(char* dest, ...);
 bool file_exists(char* path);
+char* strmcat(char* first, ...);
 
 /* Buffer management functions
  *****************************************************************************/
@@ -232,3 +233,26 @@ int cmdrun(char** cmd, char** err);
 char* cmdread(char** cmd, char** err);
 void cmdwrite(char** cmd, char* text, char** err);
 char* cmdwriteread(char** cmd, char* text, char** err);
+
+/* Configuration Data
+ *****************************************************************************/
+enum {
+    FontString = 0, TagString, WinWidth, WinHeight, LineSpacing, LineNumbers,
+    RulerColumn, EventTimeout, CopyIndent, TrimOnSave, ExpandTabs, TabWidth,
+    ScrollLines, DblClickTime,
+    Color00, Color01, Color02, Color03, Color04, Color05, Color06, Color07,
+    Color08, Color09, Color10, Color11, Color12, Color13, Color14, Color15,
+    BkgRuler, BkgGutter, BkgTags, BkgEdit, BkgScroll, BkgThumb, BkgBorder,
+    TxtCursor, TxtNormal, TxtSelected, TxtGutter, TxtCurrentLine,
+    SynNormal, SynComment, SynConstant, SynString, SynChar, SynNumber,
+    SynBoolean, SynFloat, SynVariable, SynFunction, SynKeyword, SynOperator,
+    SynPreProc, SynType, SynStatement, SynSpecial
+};
+
+void config_init(void* disp);
+void config_set_int(int key, int val);
+void config_set_bool(int key, bool val);
+void config_set_str(int key, char* val);
+int config_get_int(int key);
+bool config_get_bool(int key);
+char* config_get_str(int key);

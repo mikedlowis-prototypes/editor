@@ -76,7 +76,8 @@ bool utf8decode(Rune* rune, size_t* length, int byte) {
 }
 
 int runewidth(unsigned col, Rune r) {
-    if (r == '\t') return (TabWidth - (col % TabWidth));
+    size_t tabwidth = config_get_int(TabWidth);
+    if (r == '\t') return (tabwidth - (col % tabwidth));
     int width = wcwidth(r);
     if (width < 0) width = 1;
     return width;

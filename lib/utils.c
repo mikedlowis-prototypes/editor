@@ -148,3 +148,24 @@ bool file_exists(char* path) {
     struct stat st;
     return (stat(path, &st) < 0);
 }
+
+char* strmcat(char* first, ...) {
+    va_list args;
+    /* calculate the length of the final string */
+    size_t len = strlen(first);
+    va_start(args, first);
+    for (char* s = NULL; (s = va_arg(args, char*));)
+        len += strlen(s);
+    va_end(args);
+
+    /* allocate the final string and copy the args into it */
+    char *str  = malloc(len+1), *curr = str;
+    while (first && *first) *(curr++) = *(first++);
+    va_start(args, first);
+    for (char* s = NULL; (s = va_arg(args, char*));)
+        while (s && *s) *(curr++) = *(s++);
+    va_end(args);
+    /* null terminate and return */
+    *curr = '\0';
+    return str;
+}

@@ -782,7 +782,7 @@ TEST_SUITE(UnitTests) {
         setup_view(EDIT, "", CRLF, 0);
         win_buf(EDIT)->modified = true;
         ExitCode = 42;
-        usleep((DblClickTime+1) * 1000);
+        usleep((config_get_int(DblClickTime)+1) * 1000);
         EXPECT_EXIT {
             exec("Quit");
             CHECK(ExitCode == 42);

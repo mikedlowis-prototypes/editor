@@ -24,7 +24,7 @@ static SyntaxDef Syntaxes[] = {
         .name = "text",
         .extensions = (char*[]){ 0 },
         .rules = (SyntaxRule[]){
-            { .color = 2, .oneol = END,  .beg = "#" },
+            { .color = SynComment, .oneol = END,  .beg = "#" },
             {0,0,0}
         }
     },
@@ -33,10 +33,10 @@ static SyntaxDef Syntaxes[] = {
         .extensions = (char*[]){
             ".c", ".h", ".C", ".cpp", ".CPP", ".hpp", ".cc", ".c++", ".cxx", 0 },
         .rules = (SyntaxRule[]){
-            { .color = Literal, .oneol = END,  .beg = "\"", .end = "\"" },
-            { .color = Literal, .oneol = END,  .beg = "'",  .end = "'" },
-            { .color = Comment, .oneol = END,  .beg = "//" },
-            { .color = Comment, .oneol = CONT, .beg = "/*", .end = "*/" },
+            { .color = SynConstant, .oneol = END,  .beg = "\"", .end = "\"" },
+            { .color = SynConstant, .oneol = END,  .beg = "'",  .end = "'" },
+            { .color = SynComment,  .oneol = END,  .beg = "//" },
+            { .color = SynComment,  .oneol = CONT, .beg = "/*", .end = "*/" },
             {0,0,0,0}
         }
     },
@@ -44,13 +44,13 @@ static SyntaxDef Syntaxes[] = {
         .name = "diff",
         .extensions = (char*[]){ ".diff", ".patch", 0 },
         .rules = (SyntaxRule[]){
-            { .color = Location, .oneol = END, .beg = "@@" },
-            { .color = Info,     .oneol = END, .beg = "Index:" },
-            { .color = Info,     .oneol = END, .beg = "---" },
-            { .color = Info,     .oneol = END, .beg = "+++" },
-            { .color = Deleted,  .oneol = END, .beg = "-" },
-            { .color = Added,    .oneol = END, .beg = "+" },
-            { .color = Normal,   .oneol = END, .beg = ""  },
+            { .color = SynPreProc,   .oneol = END, .beg = "@@"     },
+            { .color = SynType,      .oneol = END, .beg = "Index:" },
+            { .color = SynStatement, .oneol = END, .beg = "---"    },
+            { .color = SynType,      .oneol = END, .beg = "+++"    },
+            { .color = SynSpecial,   .oneol = END, .beg = "-"      },
+            { .color = SynVariable,  .oneol = END, .beg = "+"      },
+            { .color = SynNormal,    .oneol = END, .beg = ""       },
             {0,0,0,0}
         }
     },
@@ -80,7 +80,7 @@ bool apply_rule(SyntaxRule* rule, Buf* buf, size_t* off, int* color) {
                 break;
             *off = *off + 1;
         }
-        *color = rule->color;
+        *color = config_get_int(rule->color);
     }
     return ret;
 }
@@ -90,7 +90,7 @@ SyntaxSpan* colors_scan(SyntaxDef* syntax, SyntaxSpan* spans, Buf* buf, size_t b
     SyntaxSpan* currspan  = spans;
 
     if (!syntax) return firstspan;
-    int color = CLR_Comment;
+    int color = config_get_int(SynComment);
     for (size_t off = beg; off < end; off++) {
         size_t start = off;
         for (SyntaxRule* rules = syntax->rules; rules && rules->beg; rules++)

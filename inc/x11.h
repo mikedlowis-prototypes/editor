@@ -115,6 +115,7 @@ enum {
 
 void x11_init(XConfig* cfg);
 void x11_deinit(void);
+char* x11_cfg_get(char* opt);
 int x11_keybtnstate(void);
 bool x11_keymodsset(int mask);
 void x11_window(char* name, int width, int height);
@@ -146,4 +147,5 @@ void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 
 bool x11_sel_get(int selid, void(*cbfn)(char*));
 bool x11_sel_set(int selid, char* str);
+
 

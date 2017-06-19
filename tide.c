@@ -112,7 +112,7 @@ static void ondiagmsg(char* msg) {
 
 static void trim_whitespace(void) {
     Buf* buf = win_buf(EDIT);
-    if (TrimOnSave && buf_end(buf) > 0) {
+    if (config_get_bool(TrimOnSave) && buf_end(buf) > 0) {
         View* view = win_view(EDIT);
         unsigned off = 0, prev = 1;
         /* loop through the buffer till we hit the end or we stop advancing */
@@ -136,7 +136,7 @@ static void trim_whitespace(void) {
 static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= DblClickTime) {
+    if (!win_buf(EDIT)->modified || (now-before) <= config_get_int(DblClickTime)) {
         #ifndef TEST
         x11_deinit();
         #else
@@ -177,7 +177,7 @@ void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
     static uint64_t before = 0;
     if (!pressed) return;
     uint64_t now = getmillis();
-    count = ((now-before) <= DblClickTime ? count+1 : 1);
+    count = ((now-before) <= config_get_int(DblClickTime) ? count+1 : 1);
     before = now;
 
     if (count == 1) {
@@ -592,9 +592,9 @@ int main(int argc, char** argv) {
     /* Create the window and enter the event loop */
     win_window("tide", ondiagmsg);
     char* tags = getenv("EDITTAGS");
-    win_settext(TAGS, (tags ? tags : DefaultTags));
-    win_setruler(RulePosition);
-    win_setlinenums((bool)LineNumbers);
+    win_settext(TAGS, (tags ? tags : config_get_str(TagString)));
+    win_setruler(config_get_int(RulerColumn));
+    win_setlinenums(config_get_bool(LineNumbers));
     /* open the first file in this instance */
     if (argc > 1)
         edit_relative(argv[1]);
