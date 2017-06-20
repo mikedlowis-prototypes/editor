@@ -14,15 +14,22 @@ struct {
         char* str;
     } value;
 } Options[] = {
-    [FontString] = { "tide.ui.font", STRING, {
-        .str = "Liberation Mono:pixelsize=14:antialias=true:autohint=true" } },
     [TagString] = { "tide.ui.tags", STRING, {
         .str = "Quit Save Undo Redo Cut Copy Paste | Find " } },
+
+#ifdef __MACH__
+    [FontString] = { "tide.ui.font", STRING, {
+        .str = "Monaco:size=10:antialias=true:autohint=true" } },
+    [LineSpacing]  = { "tide.ui.line_spacing", INTEGER, { .num = 0    } },
+#else
+    [FontString] = { "tide.ui.font", STRING, {
+        .str = "Liberation Mono:pixelsize=14:antialias=true:autohint=true" } },
+    [LineSpacing]  = { "tide.ui.line_spacing", INTEGER, { .num = 2    } },
+#endif
 
     /* user interface related options */
     [WinWidth]     = { "tide.ui.width",        INTEGER, { .num = 640  } },
     [WinHeight]    = { "tide.ui.height",       INTEGER, { .num = 480  } },
-    [LineSpacing]  = { "tide.ui.line_spacing", INTEGER, { .num = 0    } },
     [LineNumbers]  = { "tide.ui.line_numbers", BOOLEAN, { .opt = true } },
     [RulerColumn]  = { "tide.ui.ruler_column", INTEGER, { .num = 80   } },
     [EventTimeout] = { "tide.ui.timeout",      INTEGER, { .num = 50   } },

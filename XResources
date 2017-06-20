@@ -1,9 +1,15 @@
 ! UI Settings
+
+#ifdef __MACH__
+tide.ui.font:         Monaco:size=10:antialias=true:autohint=true
+tide.ui.line_spacing: 0
+#else
 tide.ui.font:         Liberation Mono:pixelsize=14:antialias=true:autohint=true
+tide.ui.line_spacing: 2
+#endif
 tide.ui.tags:         'Quit Save Undo Redo Cut Copy Paste | Find '
 tide.ui.width:        640
 tide.ui.height:       480
-tide.ui.line_spacing: 2
 tide.ui.line_numbers: true
 tide.ui.ruler_column: 80
 tide.ui.timeout:      50
