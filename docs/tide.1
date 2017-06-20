@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "TIDE" "1" "May 2017" "" ""
+.TH "TIDE" "1" "June 2017" "" ""
 .
 .SH "NAME"
 \fBtide\fR \- a text editor inspired by acme(1) from Plan 9 and Inferno
@@ -274,7 +274,11 @@ Execute the selected text as described in \fBCOMMAND EXECUTION\fR\. If no text i
 .
 .TP
 \fBCtrl+o\fR
-Launch pickfile(1) to choose a file from a recursive list of files in the current deirectory and sub directories\. This file will be opened in a new instance of \fBtide\fR\.
+Launch pickfile(1) to choose a file from a recursive list of files in the current directory and sub directories\. This file will be opened in a new instance of \fBtide\fR\.
+.
+.TP
+\fBCtrl+Shift+o\fR
+Launch pickfile(1) to choose a file from a recursive list of files in the current directory and sub directories\. This file will be opened in the current instance of \fBtide\fR replacing the currently open file\. In the event that the current instance of \fBtide\fR has modifications, the file will be opened in a new instance\.
 .
 .TP
 \fBCtrl+p\fR

@@ -284,8 +284,9 @@ static void open_file(void) {
     char* file = cmdread(PickFileCmd, NULL);
     if (file) {
         file = chomp(file);
-        if (!win_buf(EDIT)->path && !win_buf(EDIT)->modified) {
-            buf_load(win_buf(EDIT), file);
+        if ((!win_buf(EDIT)->path || x11_keymodsset(ModShift)) && 
+            !win_buf(EDIT)->modified) {
+            view_init(win_view(EDIT), file, ondiagmsg);
         } else {
             OpenCmd[1] = file;
             cmdrun(OpenCmd, NULL);
@@ -490,7 +491,7 @@ static KeyBinding Bindings[] = {
     { ModCtrl,      'h',        highlight    },
     { ModOneOrMore, 'f',        search       },
     { ModCtrl,      'd',        execute      },
-    { ModCtrl,      'o',        open_file    },
+    { ModOneOrMore, 'o',        open_file    },
     { ModCtrl,      'p',        pick_ctag    },
     { ModOneOrMore, 'g',        goto_ctag    },
     { ModCtrl,      'n',        new_win      },

@@ -5,19 +5,6 @@
 static bool matches(Buf* buf, size_t* off, char* str);
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span);
 
-enum {
-    /* standard colors */
-    Normal   = 4,
-    Comment  = 2,
-    Literal  = 14,
-
-    /* diff colors */
-    Added    = 15,
-    Deleted  = 10,
-    Location = 14,
-    Info     = 8,
-};
-
 static SyntaxDef Syntaxes[] = {
     { /* this is also the default syntax if no match is found */
         .name = "text",

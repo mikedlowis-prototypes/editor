@@ -306,9 +306,16 @@ search operation to be applied in the opposite direction of the previous.
 
 * `Ctrl+o`:
     Launch pickfile(1) to choose a file from a recursive list of files in the
-    current deirectory and sub directories. This file will be opened in a
-    new instance of `tide`.
-
+    current directory and sub directories. This file will be opened in a new 
+    instance of `tide`.
+    
+* `Ctrl+Shift+o`:
+    Launch pickfile(1) to choose a file from a recursive list of files in the
+    current directory and sub directories. This file will be opened in the 
+    current instance of `tide` replacing the currently open file. In the event 
+    that the current instance of `tide` has modifications, the file will be 
+    opened in a new instance.
+    
 * `Ctrl+p`:
     Launch picktag(1) to select a tag from a ctags(1) generated index file.
     `tide` will jump to the selected ctag definition in the current window if
