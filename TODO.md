@@ -2,6 +2,7 @@
 
 Up Next:
 
+* highlighting is broken for comments partially off screen (again)
 * implement transaction control in buf.c
 * highlight all matches of search term
 * highlight classes of identifiers
@@ -11,7 +12,7 @@ Up Next:
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
 * ignore the menu key or map it to control
-   
+
 The Future:
 
 * Ctrl+/ shortcut to comment/uncomment based on syntax

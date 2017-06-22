@@ -20,13 +20,13 @@ static void set_buffer_text(char* str) {
 
 static bool buf_text_eq(char* str) {
     for (unsigned i = 0; i < buf_end(&TestBuf); i++) {
-        printf("'%c'", buf_get(&TestBuf, i));
+        //printf("'%c'", buf_get(&TestBuf, i));
         if ((Rune)*(str++) != buf_get(&TestBuf, i)) {
-            printf("\n");
+            //printf("\n");
             return false;
         }
     }
-    printf("\n");
+    //printf("\n");
     return true;
 }
 
@@ -51,7 +51,7 @@ TEST_SUITE(BufferTests) {
         CHECK(buf.errfn       == (void*)0x12345678);
         CHECK(buf.nlines      == 0);
     }
-    
+
     TEST(buf_init shoud free old buffer and reinitialize) {
         Buf buf = {0};
         buf_init(&buf, onerror);
@@ -72,7 +72,7 @@ TEST_SUITE(BufferTests) {
         CHECK(buf.errfn       == (void*)0x12345678);
         CHECK(buf.nlines      == 0);
     }
-    
+
     /* Loading
      *************************************************************************/
     TEST(buf_load should load a UTF-8 file from disk) {
@@ -91,7 +91,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.nlines      == 998);
         CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
     }
-    
+
     TEST(buf_load should load a non UTF-8 file from disk) {
         buf_init(&TestBuf, NULL);
         size_t pos = buf_load(&TestBuf, "testdocs/waf");
@@ -108,7 +108,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.nlines      == 169);
         CHECK(!strcmp(TestBuf.path, "testdocs/waf"));
     }
-    
+
     TEST(buf_load should load a file from disk and jump to a specific line) {
         buf_init(&TestBuf, NULL);
         size_t pos = buf_load(&TestBuf, "testdocs/lorem.txt:2");
@@ -125,7 +125,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.nlines      == 998);
         CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
     }
-    
+
     TEST(buf_load should remove ./ from file path) {
         buf_init(&TestBuf, NULL);
         size_t pos = buf_load(&TestBuf, "./testdocs/lorem.txt");
@@ -142,7 +142,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.nlines      == 998);
         CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
     }
-    
+
     TEST(buf_reload should reload the file from disk) {
         buf_init(&TestBuf, NULL);
         buf_load(&TestBuf, "testdocs/waf");
@@ -160,7 +160,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.nlines      == 998);
         CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
     }
-    
+
     /* Saving
      *************************************************************************/
     TEST(buf_save should save a UTF-8 file to disk) {
@@ -170,7 +170,7 @@ TEST_SUITE(BufferTests) {
         buf_save(&TestBuf);
         CHECK(TestBuf.modified == false);
     }
-    
+
     TEST(buf_save should save a non UTF-8 file to disk) {
         buf_init(&TestBuf, NULL);
         buf_load(&TestBuf, "testdocs/waf");
@@ -178,7 +178,7 @@ TEST_SUITE(BufferTests) {
         buf_save(&TestBuf);
         CHECK(TestBuf.modified == false);
     }
-    
+
     TEST(buf_save should save a file to disk with unix line endings) {
         buf_init(&TestBuf, NULL);
         buf_load(&TestBuf, "testdocs/lf.txt");
@@ -186,7 +186,7 @@ TEST_SUITE(BufferTests) {
         buf_save(&TestBuf);
         CHECK(TestBuf.modified == false);
     }
-    
+
     TEST(buf_save should save a file to disk with dos line endings) {
         buf_init(&TestBuf, NULL);
         buf_load(&TestBuf, "testdocs/crlf.txt");
@@ -194,7 +194,7 @@ TEST_SUITE(BufferTests) {
         buf_save(&TestBuf);
         CHECK(TestBuf.modified == false);
     }
-    
+
     TEST(buf_save should make sure unix file ends witn newline) {
         buf_init(&TestBuf, NULL);
         buf_load(&TestBuf, "testdocs/lf.txt");
@@ -269,7 +269,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.modified == true);
         CHECK(TestBuf.redo == NULL);
     }
-    
+
     TEST(buf_insert should expand tabs) {
         set_buffer_text("");
         TestBuf.expand_tabs = true;
@@ -278,7 +278,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.modified == true);
         CHECK(TestBuf.redo == NULL);
     }
-    
+
     TEST(buf_insert should copy indent) {
         set_buffer_text("    ");
         TestBuf.copy_indent = true;
@@ -298,7 +298,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.modified == true);
         CHECK(TestBuf.redo == NULL);
     }
-    
+
     TEST(buf_delete should delete second char) {
         set_buffer_text("abc");
         buf_delete(&TestBuf, 1, 2);
@@ -306,7 +306,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.modified == true);
         CHECK(TestBuf.redo == NULL);
     }
-    
+
     TEST(buf_delete should delete third char) {
         set_buffer_text("abc");
         buf_delete(&TestBuf, 2, 3);
@@ -337,7 +337,7 @@ TEST_SUITE(BufferTests) {
         CHECK(TestBuf.redo != NULL);
         CHECK(TestBuf.undo == NULL);
     }
-    
+
     TEST(buf_undo should undo a delete) {
         Sel sel;
         set_buffer_text("a");
