@@ -2,7 +2,7 @@
 
 Up Next:
 
-* highlighting is broken for comments partially off screen (again)
+* moving fromtags to the gutter does not trasnfer focus to edit like one would expect
 * implement transaction control in buf.c
 * highlight all matches of search term
 * highlight classes of identifiers

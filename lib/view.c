@@ -109,7 +109,7 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     size_t start = (view->spans ? view->spans->end : 0);
     if (first-start > config_get_int(MaxScanDist))
         start = first - config_get_int(MaxScanDist);
-    view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), first, last+1);
+    view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), start, last+1);
     apply_colors(view);
 }
 
