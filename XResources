@@ -5,7 +5,7 @@ tide.ui.font:         Monaco:size=10:antialias=true:autohint=true
 tide.ui.line_spacing: 0
 #else
 tide.ui.font:         Liberation Mono:pixelsize=14:antialias=true:autohint=true
-tide.ui.line_spacing: 2
+tide.ui.line_spacing: 1
 #endif
 tide.ui.tags:         'Quit Save Undo Redo Cut Copy Paste | Find '
 tide.ui.width:        640
@@ -23,32 +23,50 @@ tide.input.scroll_lines:  4
 tide.input.click_time:    500
 tide.input.max_scan_dist: 8192
 
-! Color Palette Definition
-tide.palette.00: 0xff002b36
-tide.palette.01: 0xff073642
-tide.palette.02: 0xff586e75
-tide.palette.03: 0xff657b83
-tide.palette.04: 0xff839496
-tide.palette.05: 0xff93a1a1
-tide.palette.06: 0xffeee8d5
-tide.palette.07: 0xfffdf6e3
-tide.palette.08: 0xffb58900
-tide.palette.09: 0xffcb4b16
-tide.palette.10: 0xffdc322f
-tide.palette.11: 0xffd33682
-tide.palette.12: 0xff6c71c4
-tide.palette.13: 0xff268bd2
-tide.palette.14: 0xff2aa198
-tide.palette.15: 0xff859900
+! Color Palette Definition (Solarized Dark)
+tide.palette.00: 0xff002b36 ! 00 (0) - Base03
+tide.palette.01: 0xff073642 ! 01 (1) - Base02
+tide.palette.02: 0xff586e75 ! 02 (2) - Base01
+tide.palette.03: 0xff657b83 ! 03 (3) - Base00
+tide.palette.04: 0xff839496 ! 04 (4) - Base0
+tide.palette.05: 0xff93a1a1 ! 05 (5) - Base1
+tide.palette.06: 0xffeee8d5 ! 06 (6) - Base2
+tide.palette.07: 0xfffdf6e3 ! 07 (7) - Base3
+tide.palette.08: 0xffb58900 ! 08 (8) - Yellow
+tide.palette.09: 0xffcb4b16 ! 09 (9) - Orange
+tide.palette.10: 0xffdc322f ! 10 (A) - Red
+tide.palette.11: 0xffd33682 ! 11 (B) - Magenta
+tide.palette.12: 0xff6c71c4 ! 12 (C) - Violet
+tide.palette.13: 0xff268bd2 ! 13 (D) - Blue
+tide.palette.14: 0xff2aa198 ! 14 (E) - Cyan
+tide.palette.15: 0xff859900 ! 15 (F) - Green
+
+!! Color Palette Definition (Solarized Light)
+!tide.palette.00: 0xfffdf6e3 ! 00 (0) - Base03
+!tide.palette.01: 0xffeee8d5 ! 01 (1) - Base02
+!tide.palette.02: 0xff93a1a1 ! 02 (2) - Base01
+!tide.palette.03: 0xff839496 ! 03 (3) - Base00
+!tide.palette.04: 0xff657b83 ! 04 (4) - Base0
+!tide.palette.05: 0xff586e75 ! 05 (5) - Base1
+!tide.palette.06: 0xff073642 ! 06 (6) - Base2
+!tide.palette.07: 0xff002b36 ! 07 (7) - Base3
+!tide.palette.08: 0xffb58900 ! 08 (8) - Yellow
+!tide.palette.09: 0xffcb4b16 ! 09 (9) - Orange
+!tide.palette.10: 0xffdc322f ! 10 (A) - Red
+!tide.palette.11: 0xffd33682 ! 11 (B) - Magenta
+!tide.palette.12: 0xff6c71c4 ! 12 (C) - Violet
+!tide.palette.13: 0xff268bd2 ! 13 (D) - Blue
+!tide.palette.14: 0xff2aa198 ! 14 (E) - Cyan
+!tide.palette.15: 0xff859900 ! 15 (F) - Green
 
 ! Background and UI Colors
-tide.colors.ruler:      0x01
-tide.colors.gutter:     0x01
-tide.colors.bkg_tags:   0x01
-tide.colors.bkg_edit:   0x00
-tide.colors.bkg_scroll: 0x03
-tide.colors.bkg_thumb:  0x00
-tide.colors.border:     0x03
+tide.colors.ruler:      0x1
+tide.colors.gutter:     0x1
+tide.colors.bkg_tags:   0x1
+tide.colors.bkg_edit:   0x0
+tide.colors.bkg_scroll: 0x3
+tide.colors.bkg_thumb:  0x0
+tide.colors.border:     0x3
 
 ! Base Text Colors
 tide.colors.text.cursor:   0x0007
@@ -57,7 +75,7 @@ tide.colors.text.selected: 0x0400
 tide.colors.text.gutter:   0x0003
 tide.colors.text.currline: 0x0D07
 
-! Syntax Colors
+! Syntax Highlighting Colors
 tide.colors.syntax.normal:       0x0004
 tide.colors.syntax.comment:      0x0002
 tide.colors.syntax.constant:     0x000E

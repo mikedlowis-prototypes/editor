@@ -20,19 +20,205 @@ static void set_buffer_text(char* str) {
 
 static bool buf_text_eq(char* str) {
     for (unsigned i = 0; i < buf_end(&TestBuf); i++) {
-        if ((Rune)*(str++) != buf_get(&TestBuf, i))
+        printf("'%c'", buf_get(&TestBuf, i));
+        if ((Rune)*(str++) != buf_get(&TestBuf, i)) {
+            printf("\n");
             return false;
+        }
     }
+    printf("\n");
     return true;
 }
 
 TEST_SUITE(BufferTests) {
     /* Initializing
      *************************************************************************/
+    TEST(buf_init should initialize an empty buffer) {
+        Buf buf = {0};
+        buf_init(&buf, (void*)0x12345678);
+        CHECK(buf.modified    == false);
+        CHECK(buf.expand_tabs == config_get_bool(ExpandTabs));
+        CHECK(buf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(buf.charset     == UTF_8);
+        CHECK(buf.crlf        == 0);
+        CHECK(buf.bufsize     == 8192);
+        CHECK(buf.bufstart    != NULL);
+        CHECK(buf.bufend      == buf.bufstart + buf.bufsize);
+        CHECK(buf.gapstart    == buf.bufstart);
+        CHECK(buf.gapend      == buf.bufend);
+        CHECK(buf.undo        == NULL);
+        CHECK(buf.redo        == NULL);
+        CHECK(buf.errfn       == (void*)0x12345678);
+        CHECK(buf.nlines      == 0);
+    }
+    
+    TEST(buf_init shoud free old buffer and reinitialize) {
+        Buf buf = {0};
+        buf_init(&buf, onerror);
+        buf_insert(&buf, false, 0, 'a');
+        buf_init(&buf, (void*)0x12345678);
+        CHECK(buf.modified    == false);
+        CHECK(buf.expand_tabs == config_get_bool(ExpandTabs));
+        CHECK(buf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(buf.charset     == UTF_8);
+        CHECK(buf.crlf        == 0);
+        CHECK(buf.bufsize     == 8192);
+        CHECK(buf.bufstart    != NULL);
+        CHECK(buf.bufend      == buf.bufstart + buf.bufsize);
+        CHECK(buf.gapstart    == buf.bufstart);
+        CHECK(buf.gapend      == buf.bufend);
+        CHECK(buf.undo        == NULL);
+        CHECK(buf.redo        == NULL);
+        CHECK(buf.errfn       == (void*)0x12345678);
+        CHECK(buf.nlines      == 0);
+    }
+    
     /* Loading
      *************************************************************************/
+    TEST(buf_load should load a UTF-8 file from disk) {
+        buf_init(&TestBuf, NULL);
+        size_t pos = buf_load(&TestBuf, "testdocs/lorem.txt");
+        CHECK(pos                 == 0);
+        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.expand_tabs == true);
+        CHECK(TestBuf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(TestBuf.charset     == UTF_8);
+        CHECK(TestBuf.crlf        == 0);
+        CHECK(TestBuf.bufsize     == 65536);
+        CHECK(TestBuf.undo        == NULL);
+        CHECK(TestBuf.redo        == NULL);
+        CHECK(TestBuf.errfn       == NULL);
+        CHECK(TestBuf.nlines      == 998);
+        CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
+    }
+    
+    TEST(buf_load should load a non UTF-8 file from disk) {
+        buf_init(&TestBuf, NULL);
+        size_t pos = buf_load(&TestBuf, "testdocs/waf");
+        CHECK(pos                 == 0);
+        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.expand_tabs == false);
+        CHECK(TestBuf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(TestBuf.charset     == BINARY);
+        CHECK(TestBuf.crlf        == 0);
+        CHECK(TestBuf.bufsize     == 131072);
+        CHECK(TestBuf.undo        == NULL);
+        CHECK(TestBuf.redo        == NULL);
+        CHECK(TestBuf.errfn       == NULL);
+        CHECK(TestBuf.nlines      == 169);
+        CHECK(!strcmp(TestBuf.path, "testdocs/waf"));
+    }
+    
+    TEST(buf_load should load a file from disk and jump to a specific line) {
+        buf_init(&TestBuf, NULL);
+        size_t pos = buf_load(&TestBuf, "testdocs/lorem.txt:2");
+        CHECK(pos                 == 70);
+        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.expand_tabs == true);
+        CHECK(TestBuf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(TestBuf.charset     == UTF_8);
+        CHECK(TestBuf.crlf        == 0);
+        CHECK(TestBuf.bufsize     == 65536);
+        CHECK(TestBuf.undo        == NULL);
+        CHECK(TestBuf.redo        == NULL);
+        CHECK(TestBuf.errfn       == NULL);
+        CHECK(TestBuf.nlines      == 998);
+        CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
+    }
+    
+    TEST(buf_load should remove ./ from file path) {
+        buf_init(&TestBuf, NULL);
+        size_t pos = buf_load(&TestBuf, "./testdocs/lorem.txt");
+        CHECK(pos                 == 0);
+        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.expand_tabs == true);
+        CHECK(TestBuf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(TestBuf.charset     == UTF_8);
+        CHECK(TestBuf.crlf        == 0);
+        CHECK(TestBuf.bufsize     == 65536);
+        CHECK(TestBuf.undo        == NULL);
+        CHECK(TestBuf.redo        == NULL);
+        CHECK(TestBuf.errfn       == NULL);
+        CHECK(TestBuf.nlines      == 998);
+        CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
+    }
+    
+    TEST(buf_reload should reload the file from disk) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/waf");
+        TestBuf.path = "testdocs/lorem.txt";
+        buf_reload(&TestBuf);
+        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.expand_tabs == true);
+        CHECK(TestBuf.copy_indent == config_get_bool(CopyIndent));
+        CHECK(TestBuf.charset     == UTF_8);
+        CHECK(TestBuf.crlf        == 0);
+        CHECK(TestBuf.bufsize     == 65536);
+        CHECK(TestBuf.undo        == NULL);
+        CHECK(TestBuf.redo        == NULL);
+        CHECK(TestBuf.errfn       == NULL);
+        CHECK(TestBuf.nlines      == 998);
+        CHECK(!strcmp(TestBuf.path, "testdocs/lorem.txt"));
+    }
+    
     /* Saving
      *************************************************************************/
+    TEST(buf_save should save a UTF-8 file to disk) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/lorem.txt");
+        TestBuf.modified = true;
+        buf_save(&TestBuf);
+        CHECK(TestBuf.modified == false);
+    }
+    
+    TEST(buf_save should save a non UTF-8 file to disk) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/waf");
+        TestBuf.modified = true;
+        buf_save(&TestBuf);
+        CHECK(TestBuf.modified == false);
+    }
+    
+    TEST(buf_save should save a file to disk with unix line endings) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/lf.txt");
+        TestBuf.modified = true;
+        buf_save(&TestBuf);
+        CHECK(TestBuf.modified == false);
+    }
+    
+    TEST(buf_save should save a file to disk with dos line endings) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/crlf.txt");
+        TestBuf.modified = true;
+        buf_save(&TestBuf);
+        CHECK(TestBuf.modified == false);
+    }
+    
+    TEST(buf_save should make sure unix file ends witn newline) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/lf.txt");
+        TestBuf.modified = true;
+        size_t end = buf_end(&TestBuf);
+        buf_delete(&TestBuf, end-1, end);
+        CHECK(end-1 == buf_end(&TestBuf));
+        buf_save(&TestBuf);
+        CHECK(end == buf_end(&TestBuf));
+        CHECK(TestBuf.modified == false);
+    }
+
+    TEST(buf_save should make sure dos file ends witn newline) {
+        buf_init(&TestBuf, NULL);
+        buf_load(&TestBuf, "testdocs/crlf.txt");
+        TestBuf.modified = true;
+        size_t end = buf_end(&TestBuf);
+        buf_delete(&TestBuf, end-1, end);
+        CHECK(end-1 == buf_end(&TestBuf));
+        buf_save(&TestBuf);
+        CHECK(end == buf_end(&TestBuf));
+        CHECK(TestBuf.modified == false);
+    }
+
     /* Resizing
      *************************************************************************/
     /* Insertions
@@ -41,6 +227,8 @@ TEST_SUITE(BufferTests) {
         buf_init(&TestBuf, onerror);
         buf_insert(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("a"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
     }
 
     TEST(buf_insert should insert at 0) {
@@ -48,6 +236,8 @@ TEST_SUITE(BufferTests) {
         buf_insert(&TestBuf, false, 0, 'b');
         buf_insert(&TestBuf, false, 0, 'a');
         CHECK(buf_text_eq("ab"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
     }
 
     TEST(buf_insert should insert at 1) {
@@ -55,6 +245,8 @@ TEST_SUITE(BufferTests) {
         buf_insert(&TestBuf, false, 0, 'a');
         buf_insert(&TestBuf, false, 1, 'b');
         CHECK(buf_text_eq("ab"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
     }
 
     TEST(buf_insert should insert at 1) {
@@ -63,25 +255,102 @@ TEST_SUITE(BufferTests) {
         buf_insert(&TestBuf, false, 1, 'c');
         buf_insert(&TestBuf, false, 1, 'b');
         CHECK(buf_text_eq("abc"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
     }
 
     TEST(buf_insert should sentence in larger text) {
         set_buffer_text(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-        );
-
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit." );
         buf_insert(&TestBuf, false, 5, ' ');
         buf_insert(&TestBuf, false, 6, 'a');
-
         CHECK(buf_text_eq(
-            "Lorem a ipsum dolor sit amet, consectetur adipiscing elit."
-        ));
+            "Lorem a ipsum dolor sit amet, consectetur adipiscing elit." ));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
+    }
+    
+    TEST(buf_insert should expand tabs) {
+        set_buffer_text("");
+        TestBuf.expand_tabs = true;
+        buf_insert(&TestBuf, true, 0, '\t');
+        CHECK(buf_text_eq("    "));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
+    }
+    
+    TEST(buf_insert should copy indent) {
+        set_buffer_text("    ");
+        TestBuf.copy_indent = true;
+        TestBuf.crlf = 0;
+        buf_insert(&TestBuf, true, 4, '\n');
+        CHECK(buf_text_eq("    \n    "));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
     }
 
     /* Deletions
      *************************************************************************/
+    TEST(buf_delete should delete first char) {
+        set_buffer_text("abc");
+        buf_delete(&TestBuf, 0, 1);
+        CHECK(buf_text_eq("bc"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
+    }
+    
+    TEST(buf_delete should delete second char) {
+        set_buffer_text("abc");
+        buf_delete(&TestBuf, 1, 2);
+        CHECK(buf_text_eq("ac"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
+    }
+    
+    TEST(buf_delete should delete third char) {
+        set_buffer_text("abc");
+        buf_delete(&TestBuf, 2, 3);
+        CHECK(buf_text_eq("ab"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
+    }
+
+    TEST(buf_delete should delete more than one char) {
+        set_buffer_text("abcdef");
+        buf_delete(&TestBuf, 1, 5);
+        CHECK(buf_text_eq("af"));
+        CHECK(TestBuf.modified == true);
+        CHECK(TestBuf.redo == NULL);
+    }
+
     /* Undo/Redo
      *************************************************************************/
+    TEST(buf_undo should undo an insert) {
+        Sel sel;
+        set_buffer_text("");
+        buf_insert(&TestBuf, true, 0, 'a');
+        CHECK(buf_text_eq("a"));
+        CHECK(TestBuf.redo == NULL);
+        CHECK(TestBuf.undo != NULL);
+        buf_undo(&TestBuf, &sel);
+        CHECK(buf_text_eq(""));
+        CHECK(TestBuf.redo != NULL);
+        CHECK(TestBuf.undo == NULL);
+    }
+    
+    TEST(buf_undo should undo a delete) {
+        Sel sel;
+        set_buffer_text("a");
+        buf_delete(&TestBuf, 0, 1);
+        CHECK(buf_text_eq(""));
+        CHECK(TestBuf.redo == NULL);
+        CHECK(TestBuf.undo != NULL);
+        buf_undo(&TestBuf, &sel);
+        CHECK(buf_text_eq("a"));
+        CHECK(TestBuf.redo != NULL);
+        CHECK(TestBuf.undo != NULL);
+    }
+
     /* Accessors
      *************************************************************************/
     // buf_get

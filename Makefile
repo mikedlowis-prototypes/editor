@@ -32,6 +32,7 @@ docs:
 
 clean:
 	find . -name '*.[oad]' -delete
+	find . \( -name '*.gcno' -o -name '*.gcda' \) -delete
 	$(RM) pick tide xcpd term tests/libedit
 	$(RM) $(TEST_BINS)
 

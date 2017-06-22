@@ -24,7 +24,7 @@ struct {
 #else
     [FontString] = { "tide.ui.font", STRING, {
         .str = "Liberation Mono:pixelsize=14:antialias=true:autohint=true" } },
-    [LineSpacing]  = { "tide.ui.line_spacing", INTEGER, { .num = 2    } },
+    [LineSpacing]  = { "tide.ui.line_spacing", INTEGER, { .num = 1    } },
 #endif
 
     /* user interface related options */

@@ -94,7 +94,6 @@ void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
 size_t buf_byrune(Buf* buf, size_t pos, int count);
 size_t buf_byword(Buf* buf, size_t pos, int count);
 size_t buf_byline(Buf* buf, size_t pos, int count);
-void buf_find(Buf* buf, int dir, size_t* beg, size_t* end);
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
 void buf_lastins(Buf* buf, size_t* beg, size_t* end);
 size_t buf_setln(Buf* buf, size_t line);
@@ -236,7 +235,7 @@ char* cmdwriteread(char** cmd, char* text, char** err);
 
 /* Configuration Data
  *****************************************************************************/
-enum {
+enum { /* Configuration Variables */
     FontString = 0, TagString, WinWidth, WinHeight, LineSpacing, LineNumbers,
     RulerColumn, EventTimeout, CopyIndent, TrimOnSave, ExpandTabs, TabWidth,
     ScrollLines, DblClickTime, MaxScanDist,

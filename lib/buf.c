@@ -345,25 +345,6 @@ size_t buf_byline(Buf* buf, size_t pos, int count) {
     return pos;
 }
 
-void buf_find(Buf* buf, int dir, size_t* beg, size_t* end) {
-    size_t dbeg = *beg, dend = *end;
-    size_t mbeg = dbeg+dir, mend = dend+dir;
-    size_t mlen = dend - dbeg;
-    while (true) {
-        if ((buf_get(buf, mbeg)   == buf_get(buf, dbeg)) &&
-            (buf_get(buf, mend-1) == buf_get(buf, dend-1)) &&
-            (0 == range_match(buf, dbeg, dend, mbeg, mend)))
-        {
-            *beg = mbeg;
-            *end = mend;
-            break;
-        }
-        mbeg += dir, mend += dir;
-        if (mend > buf_end(buf))
-            mbeg = (dir < 0 ? buf_end(buf)-mlen : 0), mend = mbeg+mlen;
-    }
-}
-
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end) {
     if (!str) return;
     Rune* runes = charstorunes(str);
