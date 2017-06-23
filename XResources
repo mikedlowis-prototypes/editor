@@ -1,5 +1,4 @@
 ! UI Settings
-
 #ifdef __MACH__
 tide.ui.font:         Monaco:size=10:antialias=true:autohint=true
 tide.ui.line_spacing: 0
@@ -42,14 +41,14 @@ tide.palette.14: 0xff2aa198 ! 14 (E) - Cyan
 tide.palette.15: 0xff859900 ! 15 (F) - Green
 
 !! Color Palette Definition (Solarized Light)
-!tide.palette.00: 0xfffdf6e3 ! 00 (0) - Base03
-!tide.palette.01: 0xffeee8d5 ! 01 (1) - Base02
-!tide.palette.02: 0xff93a1a1 ! 02 (2) - Base01
-!tide.palette.03: 0xff839496 ! 03 (3) - Base00
-!tide.palette.04: 0xff657b83 ! 04 (4) - Base0
-!tide.palette.05: 0xff586e75 ! 05 (5) - Base1
-!tide.palette.06: 0xff073642 ! 06 (6) - Base2
-!tide.palette.07: 0xff002b36 ! 07 (7) - Base3
+!tide.palette.00: 0xfffdf6e3 ! 00 (0) - Base3
+!tide.palette.01: 0xffeee8d5 ! 01 (1) - Base2
+!tide.palette.02: 0xff93a1a1 ! 02 (2) - Base1
+!tide.palette.03: 0xff839496 ! 03 (3) - Base0
+!tide.palette.04: 0xff657b83 ! 04 (4) - Base00
+!tide.palette.05: 0xff586e75 ! 05 (5) - Base01
+!tide.palette.06: 0xff073642 ! 06 (6) - Base02
+!tide.palette.07: 0xff002b36 ! 07 (7) - Base03
 !tide.palette.08: 0xffb58900 ! 08 (8) - Yellow
 !tide.palette.09: 0xffcb4b16 ! 09 (9) - Orange
 !tide.palette.10: 0xffdc322f ! 10 (A) - Red
@@ -75,20 +74,20 @@ tide.colors.text.selected: 0x0400
 tide.colors.text.gutter:   0x0003
 tide.colors.text.currline: 0x0D07
 
-! Syntax Highlighting Colors
-tide.colors.syntax.normal:       0x0004
-tide.colors.syntax.comment:      0x0002
-tide.colors.syntax.constant:     0x000E
-tide.colors.syntax.string:       0x000E
-tide.colors.syntax.character:    0x000E
-tide.colors.syntax.number:       0x000E
-tide.colors.syntax.booleean:     0x000E
-tide.colors.syntax.float:        0x000E
-tide.colors.syntax.variable:     0x000F
-tide.colors.syntax.function:     0x000E
-tide.colors.syntax.keyword:      0x000E
-tide.colors.syntax.operator:     0x000E
-tide.colors.syntax.preprocessor: 0x000D
-tide.colors.syntax.type:         0x0009
-tide.colors.syntax.statement:    0x000E
-tide.colors.syntax.special:      0x000A
+! Syntax Highlighting Colors               BG      FG
+tide.colors.syntax.normal:       0x0004  ! Base03  Base0
+tide.colors.syntax.comment:      0x0002  ! Base03  Base01
+tide.colors.syntax.constant:     0x000E  ! Base03  Cyan
+tide.colors.syntax.string:       0x000E  ! Base03  Cyan
+tide.colors.syntax.character:    0x000E  ! Base03  Cyan
+tide.colors.syntax.number:       0x000E  ! Base03  Cyan
+tide.colors.syntax.boolean:      0x000E  ! Base03  Cyan
+tide.colors.syntax.float:        0x000E  ! Base03  Cyan
+tide.colors.syntax.variable:     0x000D  ! Base03  Blue
+tide.colors.syntax.function:     0x000D  ! Base03  Blue
+tide.colors.syntax.keyword:      0x000F  ! Base03  Green
+tide.colors.syntax.operator:     0x000F  ! Base03  Green
+tide.colors.syntax.preprocessor: 0x0009  ! Base03  Orange
+tide.colors.syntax.type:         0x0008  ! Base03  Yellow
+tide.colors.syntax.statement:    0x000F  ! Base03  Green
+tide.colors.syntax.special:      0x000A  ! Base03  Red

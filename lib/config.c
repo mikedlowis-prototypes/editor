@@ -84,7 +84,7 @@ struct {
     [SynString]    = { "tide.colors.syntax.string",       INTEGER, { .num = 0x000E } },
     [SynChar]      = { "tide.colors.syntax.character",    INTEGER, { .num = 0x000E } },
     [SynNumber]    = { "tide.colors.syntax.number",       INTEGER, { .num = 0x000E } },
-    [SynBoolean]   = { "tide.colors.syntax.booleean",     INTEGER, { .num = 0x000E } },
+    [SynBoolean]   = { "tide.colors.syntax.boolean",      INTEGER, { .num = 0x000E } },
     [SynFloat]     = { "tide.colors.syntax.float",        INTEGER, { .num = 0x000E } },
     [SynVariable]  = { "tide.colors.syntax.variable",     INTEGER, { .num = 0x000F } },
     [SynFunction]  = { "tide.colors.syntax.function",     INTEGER, { .num = 0x000E } },
