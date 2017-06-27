@@ -41,7 +41,7 @@ struct {
     [TabWidth]     = { "tide.input.tab_width",     INTEGER, { .num = 4     } },
     [ScrollLines]  = { "tide.input.scroll_lines",  INTEGER, { .num = 4     } },
     [DblClickTime] = { "tide.input.click_time",    INTEGER, { .num = 500   } },
-    [MaxScanDist]  = { "tide.input.max_scan_dist", INTEGER, { .num = 8192  } },
+    [MaxScanDist]  = { "tide.input.max_scan_dist", INTEGER, { .num = 0     } },
 
     /* default color palette definition */
     [Color00] = { "tide.palette.00", INTEGER, { .num = 0xff002b36 } },
