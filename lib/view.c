@@ -41,7 +41,7 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     buf_init(&(view->buffer), errfn);
     if (file) {
         view_jumpto(view, false, buf_load(&(view->buffer), file));
-        view->syntax = colors_find(view->buffer.path);
+        colors_init(view->buffer.path);
     }
 }
 
@@ -110,7 +110,7 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     size_t scandist = config_get_int(MaxScanDist);
     if (scandist && first-start > scandist)
         start = first - scandist;
-    view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), start, last+1);
+    view->spans = colors_scan(view->spans, &(view->buffer), start, last+1);
     apply_colors(view);
 }
 

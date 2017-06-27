@@ -58,12 +58,12 @@ def style_range(spos, epos, style)
 end
 
 def style_match(s)
-  style_range($scan.pos - $scan.matched_size, $scan.pos-1, s)
+  style_range($scan.pos - $scan.matched_size, $scan.pos, s)
 end
 
 def range(start=nil, stop=nil, color=nil)
   rule start do
-    beg = $scan.pos-2
+    beg = $scan.pos - $scan.matched_size
     if not $scan.scan_until stop
     $scan.pos += $scan.rest_size
     end
@@ -77,17 +77,17 @@ end
 
 #-------------------------------------------------------------------------------
 
-Types = Set.new %w[
-  bool short int long unsigned signed char size_t
-  void extern static inline struct typedef
-  int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t
-]
-
-Control = Set.new %w[
-  goto break return continue asm case default if else switch while for do]
-
 language "C" do
-  #match(/[0-9]+/, :Number)
+  Types = Set.new %w[
+    bool short int long unsigned signed char size_t
+    void extern static inline struct typedef union
+    int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t
+  ]
+
+  Control = Set.new %w[
+    goto break return continue asm case default if else switch while for do
+  ]
+
   range start=/\/\*/, stop=/\*\//, :Comment
   match(/\/\/.*$/, :Comment)
   match(/#\s*\w+/, :PreProcessor)
@@ -102,6 +102,7 @@ language "C" do
       style_match(:Keyword)
     end
   end
+  match(/[+-]?[0-9]+[ulUL]*/, :Number)
 end
 
 #-------------------------------------------------------------------------------

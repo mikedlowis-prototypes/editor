@@ -122,19 +122,6 @@ void binsave(Buf* buf, FILE* file);
 
 /* Syntax Highlighting
  *****************************************************************************/
-typedef struct {
-    int color;
-    enum { END, CONT } oneol;
-    char* beg;
-    char* end;
-} SyntaxRule;
-
-typedef struct {
-    char* name;
-    char** extensions;
-    SyntaxRule* rules;
-} SyntaxDef;
-
 typedef struct SyntaxSpan {
     size_t beg;
     size_t end;
@@ -143,8 +130,8 @@ typedef struct SyntaxSpan {
     struct SyntaxSpan* next;
 } SyntaxSpan;
 
-SyntaxDef* colors_find(char* path);
-SyntaxSpan* colors_scan(SyntaxDef* syntax, SyntaxSpan* spans, Buf* buf, size_t beg, size_t end);
+void colors_init(char* path);
+SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end);
 SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first);
 
 /* Screen management functions
@@ -172,7 +159,6 @@ typedef struct {
     Buf buffer;        /* the buffer used to populate the view */
     Sel selection;     /* range of currently selected text */
     size_t prev_csr;   /* previous cursor location */
-    SyntaxDef* syntax; /* syntax rules object */
     SyntaxSpan* spans; /* list of colored regions */
 } View;
 
