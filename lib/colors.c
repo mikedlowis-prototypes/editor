@@ -1,93 +1,67 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
+#include <unistd.h>
 
-static bool matches(Buf* buf, size_t* off, char* str);
+int ChildIn = -1, ChildOut = -1;
+char Buffer[32768];
+char* DataBeg = Buffer;
+char* DataEnd = Buffer;
+
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span);
-
-static SyntaxDef Syntaxes[] = {
-    { /* this is also the default syntax if no match is found */
-        .name = "text",
-        .extensions = (char*[]){ 0 },
-        .rules = (SyntaxRule[]){
-            { .color = SynComment, .oneol = END,  .beg = "#" },
-            {0,0,0}
-        }
-    },
-    {
-        .name = "c",
-        .extensions = (char*[]){
-            ".c", ".h", ".C", ".cpp", ".CPP", ".hpp", ".cc", ".c++", ".cxx", 0 },
-        .rules = (SyntaxRule[]){
-            { .color = SynConstant, .oneol = END,  .beg = "\"", .end = "\"" },
-            { .color = SynConstant, .oneol = END,  .beg = "'",  .end = "'" },
-            { .color = SynComment,  .oneol = END,  .beg = "//" },
-            { .color = SynComment,  .oneol = CONT, .beg = "/*", .end = "*/" },
-            {0,0,0,0}
-        }
-    },
-    {
-        .name = "diff",
-        .extensions = (char*[]){ ".diff", ".patch", 0 },
-        .rules = (SyntaxRule[]){
-            { .color = SynPreProc,   .oneol = END, .beg = "@@"     },
-            { .color = SynType,      .oneol = END, .beg = "Index:" },
-            { .color = SynStatement, .oneol = END, .beg = "---"    },
-            { .color = SynType,      .oneol = END, .beg = "+++"    },
-            { .color = SynSpecial,   .oneol = END, .beg = "-"      },
-            { .color = SynVariable,  .oneol = END, .beg = "+"      },
-            { .color = SynNormal,    .oneol = END, .beg = ""       },
-            {0,0,0,0}
-        }
-    },
-};
+static void dump_chunk(Buf* buf, size_t beg, size_t end);
 
 SyntaxDef* colors_find(char* path) {
     char* ext = strrchr(path, '.');
-    for (int i = 0; i < nelem(Syntaxes); i++) {
-        char** synext = Syntaxes[i].extensions;
-        for (; ext && *synext; synext++) {
-            if (!strcmp(*synext, ext))
-                return &Syntaxes[i];
-        }
-    }
-    return &Syntaxes[0];
+    if (!strcmp(ext,".c") || !strcmp(ext,".h"))
+        cmdspawn((char*[]){ "tide-hl", "C", NULL }, &ChildIn, &ChildOut);
+    return NULL;
 }
 
-bool apply_rule(SyntaxRule* rule, Buf* buf, size_t* off, int* color) {
-    bool ret = false;
-    size_t end = buf_end(buf);
-    if (matches(buf, off, rule->beg)) {
-        ret = true;
-        while (*off < end) {
-            if ((rule->oneol == END || !rule->end) && buf_iseol(buf, *off))
-                break;
-            else if (matches(buf, off, rule->end))
-                break;
-            *off = *off + 1;
-        }
-        *color = config_get_int(rule->color);
+int read_byte(void) {
+    if (DataBeg >= DataEnd) {
+        DataBeg = DataEnd = Buffer;
+        long nread = read(ChildOut, Buffer, sizeof(Buffer));
+        if (nread <= 0) return EOF;
+        DataEnd += nread;
     }
-    return ret;
+    return *(DataBeg++);
+}
+
+size_t read_num(void) {
+    int c;
+    size_t num = 0;
+    while (isdigit(c = read_byte()))
+        num = (num * 10) + (c - '0');
+    return num;
 }
 
 SyntaxSpan* colors_scan(SyntaxDef* syntax, SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
     SyntaxSpan* firstspan = spans;
     SyntaxSpan* currspan  = spans;
+    /* if the engine died, clear all highlights and quit */
+    if (ChildIn < 0)
+        return colors_rewind(spans, 0);
 
-    if (!syntax) return firstspan;
-    int color = config_get_int(SynComment);
-    for (size_t off = beg; off < end; off++) {
-        size_t start = off;
-        for (SyntaxRule* rules = syntax->rules; rules && rules->beg; rules++)
-            if (apply_rule(rules, buf, &off, &color))
-                break;
-        if (start != off)
-            currspan = mkspan(start, --off, color, currspan);
-        if (!firstspan && currspan)
-            firstspan = currspan;
+    /* commence the highlighting */
+    if (buf->path && end-beg) {
+        dump_chunk(buf, beg, end);
+        size_t b = 0, e = 0, c = 0;
+        do {
+            b = read_num();
+            e = read_num();
+            c = read_num();
+            if (e > 0) {
+                c = (c > 15 ? config_get_int(SynNormal + (c >> 4) - 1) : c) & 0xf;
+                currspan = mkspan(beg+b, beg+e, c, currspan);
+            }
+            //printf("(%lu-%lu) %lu,%lu,%lu\n", beg, end, b, e, c);
+            if (!firstspan)
+                firstspan = currspan;
+        } while (e > 0);
+        //printf("done\n");
+        //fflush(stdout);
     }
-
     return firstspan;
 }
 
@@ -107,19 +81,6 @@ SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first) {
     return curr;
 }
 
-static bool matches(Buf* buf, size_t* off, char* str) {
-    size_t curr = *off;
-    if (str) {
-        while (*str && *str == buf_get(buf, curr))
-            curr++, str++;
-        if (*str == '\0') {
-            *off = curr;
-            return true;
-        }
-    }
-    return false;
-}
-
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span) {
     SyntaxSpan* newspan = malloc(sizeof(SyntaxSpan));
     newspan->beg   = beg;
@@ -130,4 +91,29 @@ static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span) 
     if (span)
         span->next = newspan;
     return newspan;
+}
+
+static void dump_chunk(Buf* buf, size_t beg, size_t end) {
+    size_t len = end - beg, wlen = 0;
+    char* wbuf = malloc(64 + len * 6u);
+    if (len && wbuf) {
+        wlen += sprintf(wbuf, "%lu\n", len);
+        for (size_t i = beg; i < end; i++) {
+            Rune r = buf_get(buf, i);
+            if (r == RUNE_CRLF) {
+                wbuf[wlen++] = '\r';
+                wbuf[wlen++] = '\n';
+            } else if (buf->charset == BINARY) {
+                wbuf[wlen++] = (char)r;
+            } else {
+                wlen += utf8encode((char*)&(wbuf[wlen]), r);
+            }
+        }
+        if (write(ChildIn, wbuf, wlen) < 0) {
+            /* child process probably died. shut everything down */
+            close(ChildIn),  ChildIn  = -1;
+            close(ChildOut), ChildOut = -1;
+        }
+    }
+    free(wbuf);
 }

@@ -107,8 +107,9 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
            last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     view->spans = colors_rewind(view->spans, first);
     size_t start = (view->spans ? view->spans->end : 0);
-    if (first-start > config_get_int(MaxScanDist))
-        start = first - config_get_int(MaxScanDist);
+    size_t scandist = config_get_int(MaxScanDist);
+    if (scandist && first-start > scandist)
+        start = first - scandist;
     view->spans = colors_scan(view->syntax, view->spans, &(view->buffer), start, last+1);
     apply_colors(view);
 }

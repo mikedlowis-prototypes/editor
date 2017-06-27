@@ -15,9 +15,9 @@ typedef struct {
     int in;  /* file descriptor for the child process's standard input */
     int out; /* file descriptor for the child process's standard output */
     int err; /* file descriptor for the child process's standard error */
-} Process;
+} Proc;
 
-static int execute(char** cmd, Process* proc) {
+static int execute(char** cmd, Proc* proc) {
     int inpipe[2], outpipe[2], errpipe[2];
     /* create the pipes */
     if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0) || (pipe(errpipe) < 0))
@@ -58,8 +58,19 @@ void cmdreap(void) {
         NumChildren--;
 }
 
+int cmdspawn(char** cmd, int* in, int* out) {
+    Proc proc;
+    if (execute(cmd, &proc) < 0) {
+        perror("failed to execute");
+        return -1;
+    }
+    *in  = proc.in;
+    *out = proc.out;
+    return proc.pid;
+}
+
 int cmdrun(char** cmd, char** err) {
-    Process proc;
+    Proc proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
         return -1;
@@ -73,7 +84,7 @@ int cmdrun(char** cmd, char** err) {
 }
 
 char* cmdread(char** cmd, char** err) {
-    Process proc;
+    Proc proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
         return NULL;
@@ -88,7 +99,7 @@ char* cmdread(char** cmd, char** err) {
 }
 
 void cmdwrite(char** cmd, char* text, char** err) {
-    Process proc;
+    Proc proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
         return;
@@ -105,7 +116,7 @@ void cmdwrite(char** cmd, char* text, char** err) {
 }
 
 char* cmdwriteread(char** cmd, char* text, char** err) {
-    Process proc;
+    Proc proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
         return NULL;

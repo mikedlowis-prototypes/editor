@@ -228,6 +228,7 @@ Rune view_getrune(View* view);
 /* Command Executions
  *****************************************************************************/
 void cmdreap(void);
+int cmdspawn(char** cmd, int* in, int* out);
 int cmdrun(char** cmd, char** err);
 char* cmdread(char** cmd, char** err);
 void cmdwrite(char** cmd, char* text, char** err);

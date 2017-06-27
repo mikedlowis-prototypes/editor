@@ -284,7 +284,7 @@ static void open_file(void) {
     char* file = cmdread(PickFileCmd, NULL);
     if (file) {
         file = chomp(file);
-        if ((!win_buf(EDIT)->path || x11_keymodsset(ModShift)) && 
+        if ((!win_buf(EDIT)->path || x11_keymodsset(ModShift)) &&
             !win_buf(EDIT)->modified) {
             view_init(win_view(EDIT), file, ondiagmsg);
         } else {

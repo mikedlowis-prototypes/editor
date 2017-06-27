@@ -1,6 +1,6 @@
 INCS = -Iinc/
 
-BINS = tide pick xcpd term
+BINS = tide pick xcpd term hl-cpp
 MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
@@ -39,6 +39,7 @@ clean:
 install: all
 	mkdir -p $(PREFIX)/bin
 	cp -f tide $(PREFIX)/bin
+	cp -f tide-hl $(PREFIX)/bin
 	cp -f pick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
 	cp -f pickfile $(PREFIX)/bin
@@ -46,6 +47,7 @@ install: all
 
 uninstall:
 	rm -f $(PREFIX)/bin/tide
+	rm -f $(PREFIX)/bin/tide-hl
 	rm -f $(PREFIX)/bin/pick
 	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/pickfile
@@ -61,6 +63,7 @@ tide: tide.o libedit.a
 pick: pick.o libedit.a
 xcpd: xcpd.o libedit.a
 term: term.o libedit.a
+hl-cpp: hl-cpp.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/tide: tests/tide.o libedit.a
 tests/pick: tests/pick.o libedit.a
