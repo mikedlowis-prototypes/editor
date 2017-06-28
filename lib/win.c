@@ -284,10 +284,10 @@ static void onredraw(int width, int height) {
 
     uint64_t stop = getmillis();
     uint64_t elapsed = stop-start;
-    if (elapsed > maxtime) {
+    //if (elapsed > maxtime) {
         //printf("%llu\n", elapsed);
         maxtime = elapsed;
-    }
+    //}
 }
 
 static void oninput(int mods, Rune key) {

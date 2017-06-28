@@ -15,7 +15,7 @@ static int read_byte(void);
 static int read_num(void);
 
 void colors_init(char* path) {
-    cmdspawn((char*[]){ "./tide-hl", path, NULL }, &ChildIn, &ChildOut);
+    cmdspawn((char*[]){ "tide-hl", path, NULL }, &ChildIn, &ChildOut);
 }
 
 SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
