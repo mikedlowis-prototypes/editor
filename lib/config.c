@@ -36,7 +36,7 @@ struct {
 
     /* input related options */
     [CopyIndent]   = { "tide.input.copy_indent",   BOOLEAN, { .opt = true  } },
-    [TrimOnSave]   = { "tide.input.trim_on_save",  BOOLEAN, { .opt = false } },
+    [TrimOnSave]   = { "tide.input.trim_on_save",  BOOLEAN, { .opt = true  } },
     [ExpandTabs]   = { "tide.input.expand_tabs",   BOOLEAN, { .opt = true  } },
     [TabWidth]     = { "tide.input.tab_width",     INTEGER, { .num = 4     } },
     [ScrollLines]  = { "tide.input.scroll_lines",  INTEGER, { .num = 4     } },
