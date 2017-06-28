@@ -1,6 +1,7 @@
 ! Acme Theme - based on the Acme text editor
 !-------------------------------------------------------------------------------
 ! Setting Tweaks
+tide.ui.syntax_enabled: false
 tide.ui.line_numbers: false
 tide.ui.ruler_column: 80
 

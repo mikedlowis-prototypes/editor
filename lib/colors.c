@@ -15,7 +15,8 @@ static int read_byte(void);
 static int read_num(void);
 
 void colors_init(char* path) {
-    cmdspawn((char*[]){ "tide-hl.rb", path, NULL }, &ChildIn, &ChildOut);
+    if (config_get_bool(SyntaxEnabled))
+        cmdspawn((char*[]){ "tide-hl.rb", path, NULL }, &ChildIn, &ChildOut);
 }
 
 SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {

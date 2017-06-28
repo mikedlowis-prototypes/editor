@@ -6,12 +6,13 @@ tide.ui.line_spacing: 0
 tide.ui.font:         Liberation Mono:pixelsize=14:antialias=true:autohint=true
 tide.ui.line_spacing: 1
 #endif
-tide.ui.tags:         'Quit Save Undo Redo Cut Copy Paste | Find '
-tide.ui.width:        640
-tide.ui.height:       480
-tide.ui.line_numbers: true
-tide.ui.ruler_column: 80
-tide.ui.timeout:      50
+tide.ui.tags:           'Quit Save Undo Redo Cut Copy Paste | Find '
+tide.ui.width:          640
+tide.ui.height:         480
+tide.ui.line_numbers:   true
+tide.ui.syntax_enabled: true
+tide.ui.ruler_column:   80
+tide.ui.timeout:        50
 
 ! Input and Behavior Settings
 tide.input.copy_indent:   true

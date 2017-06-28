@@ -28,11 +28,12 @@ struct {
 #endif
 
     /* user interface related options */
-    [WinWidth]     = { "tide.ui.width",        INTEGER, { .num = 640  } },
-    [WinHeight]    = { "tide.ui.height",       INTEGER, { .num = 480  } },
-    [LineNumbers]  = { "tide.ui.line_numbers", BOOLEAN, { .opt = true } },
-    [RulerColumn]  = { "tide.ui.ruler_column", INTEGER, { .num = 80   } },
-    [EventTimeout] = { "tide.ui.timeout",      INTEGER, { .num = 50   } },
+    [WinWidth]      = { "tide.ui.width",          INTEGER, { .num = 640  } },
+    [WinHeight]     = { "tide.ui.height",         INTEGER, { .num = 480  } },
+    [LineNumbers]   = { "tide.ui.line_numbers",   BOOLEAN, { .opt = true } },
+    [SyntaxEnabled] = { "tide.ui.syntax_enabled", BOOLEAN, { .opt = true } },
+    [RulerColumn]   = { "tide.ui.ruler_column",   INTEGER, { .num = 80   } },
+    [EventTimeout]  = { "tide.ui.timeout",        INTEGER, { .num = 50   } },
 
     /* input related options */
     [CopyIndent]   = { "tide.input.copy_indent",   BOOLEAN, { .opt = true  } },
