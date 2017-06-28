@@ -2,7 +2,7 @@
 
 Up Next:
 
-* moving fromtags to the gutter does not trasnfer focus to edit like one would expect
+* moving from tags to the gutter does not transfer focus to edit region
 * implement transaction control in buf.c
 * highlight all matches of search term
 * highlight classes of identifiers
@@ -82,4 +82,47 @@ Label, Conditional, Repeat, Character, Number, PreProc, Float, Operator, Structu
 Keyword GROUP [WORD...]
 Match   GROUP REGEX
 Region  GROUP start=REGEX skip=REGEX end=REGEX
+
+# Themes
+
+https://www.slant.co/topics/358/~best-color-themes-for-text-editors
+
+* Acme
+* Wily
+* Solarized
+* Gruvbox
+* badwolf
+* jelly beans
+* monokai/molokai
+* tomorrow
+* spacegray
+* base16
+* dracula
+* one dark
+* zenburn
+* ayu
+* railscast
+* material
+* spacemacs
+* inkpot
+* soda light
+* predawn
+* lucario
+* vim desert
+* two firewatch
+* obsidian
+* leuven
+* afterglow
+* apathy
+* vim guru
+* nord
+* plastic code wrap
+* wombat
+* noctilux
+* deep space
+* lean theme
+* cheerfully dark
+* gotham
+
+
 
