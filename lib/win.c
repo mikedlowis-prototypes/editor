@@ -389,7 +389,7 @@ static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t
         if (current) {
             color = config_get_int(TxtCurrentLine);
             size_t fheight = x11_font_height(Font);
-            x11_draw_rect((color >> 8), x-3, y-fheight-1, gutter_size(), fheight);
+            x11_draw_rect((color >> 8), x-3, y-fheight, gutter_size(), fheight);
         }
         UGlyph glyphs[gcols];
         for (int i = gcols-1; i >= 0; i--) {
