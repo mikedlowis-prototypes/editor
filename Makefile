@@ -33,13 +33,13 @@ docs:
 clean:
 	find . -name '*.[oad]' -delete
 	find . \( -name '*.gcno' -o -name '*.gcda' \) -delete
-	$(RM) pick tide xcpd term tests/libedit
+	$(RM) pick tide xcpd term tests/libedit hl-cpp
 	$(RM) $(TEST_BINS)
 
 install: all
 	mkdir -p $(PREFIX)/bin
 	cp -f tide $(PREFIX)/bin
-	cp -f tide-hl $(PREFIX)/bin
+	cp -f tide-hl.rb $(PREFIX)/bin
 	cp -f pick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
 	cp -f pickfile $(PREFIX)/bin
@@ -47,7 +47,7 @@ install: all
 
 uninstall:
 	rm -f $(PREFIX)/bin/tide
-	rm -f $(PREFIX)/bin/tide-hl
+	rm -f $(PREFIX)/bin/tide-hl.rb
 	rm -f $(PREFIX)/bin/pick
 	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/pickfile
