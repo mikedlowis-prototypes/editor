@@ -1,0 +1,87 @@
+! Acme Theme - based on the Acme text editor
+!-------------------------------------------------------------------------------
+! Setting Tweaks
+tide.ui.line_numbers: false
+tide.ui.ruler_column: 80
+
+! Color Palette
+
+! status main  background
+! status text background
+! tags main background
+! tags selection background
+! tags text color
+! edit main background
+! edit selection background
+! edit text color
+
+tide.palette.00: 0xffeaffff ! 00 (0) - tags background
+tide.palette.01: 0xffffffea ! 01 (1) - main background
+tide.palette.02: 0xffeeee9e ! 02 (2) - edit selected background
+tide.palette.03: 0xff99994c ! 03 (3) - scroll background
+tide.palette.04: 0xff000000 ! 04 (4) - text color
+tide.palette.05: 0xff9eeeee ! 05 (5) - tags selection background
+tide.palette.06: 0xff8888cc ! 06 (6)
+tide.palette.07: 0xff000099 ! 07 (7)
+!tide.palette.08: 0xffb58900 ! 08 (8) - Yellow
+!tide.palette.09: 0xffcb4b16 ! 09 (9) - Orange
+!tide.palette.10: 0xffdc322f ! 10 (A) - Red
+!tide.palette.11: 0xffd33682 ! 11 (B) - Magenta
+!tide.palette.12: 0xff6c71c4 ! 12 (C) - Violet
+!tide.palette.13: 0xff268bd2 ! 13 (D) - Blue
+!tide.palette.14: 0xff2aa198 ! 14 (E) - Cyan
+!tide.palette.15: 0xff859900 ! 15 (F) - Green
+
+
+! Background and UI Colors
+tide.colors.ruler:      0x5
+tide.colors.gutter:     0x1
+tide.colors.bkg_tags:   0x0
+tide.colors.bkg_edit:   0x1
+tide.colors.bkg_scroll: 0x3
+tide.colors.bkg_thumb:  0x1
+tide.colors.border:     0x3
+
+! Base Text Colors
+tide.colors.text.cursor:   0x0004
+tide.colors.text.normal:   0x0004
+tide.colors.text.selected: 0x0204
+tide.colors.text.gutter:   0x0004
+tide.colors.text.currline: 0x0204
+
+!tide.colors.bkg.hborder: 0x3
+!tide.colors.bkg.vborder: 0x3
+!tide.colors.bkg.tags:    0x0
+!tide.colors.bkg.edit:    0x1
+!tide.colors.bkg.scroll:  0x3
+!tide.colors.bkg.thumb:   0x1
+!tide.colors.bkg.ruler:   0x5
+!tide.colors.bkg.gutter:  0x1
+
+!tide.colors.text.normal.status: 0x0004
+!tide.colors.text.normal.tags:   0x0004
+!tide.colors.text.normal.edit:   0x0004
+!tide.colors.text.selected.tags: 0x0204
+!tide.colors.text.selected.edit: 0x0204
+!tide.colors.text.cursor.tags:   0x0004
+!tide.colors.text.cursor.edit:   0x0004
+!tide.colors.text.gutter:        0x0004
+!tide.colors.text.currline:      0x0204
+
+! Syntax Highlighting Colors               BG      FG
+tide.colors.syntax.normal:       0x0004  ! Base03  Base0
+tide.colors.syntax.comment:      0x0004  ! Base03  Base01
+tide.colors.syntax.constant:     0x0004  ! Base03  Cyan
+tide.colors.syntax.string:       0x0004  ! Base03  Cyan
+tide.colors.syntax.character:    0x0004  ! Base03  Cyan
+tide.colors.syntax.number:       0x0004  ! Base03  Cyan
+tide.colors.syntax.boolean:      0x0004  ! Base03  Cyan
+tide.colors.syntax.float:        0x0004  ! Base03  Cyan
+tide.colors.syntax.variable:     0x0004  ! Base03  Blue
+tide.colors.syntax.function:     0x0004  ! Base03  Blue
+tide.colors.syntax.keyword:      0x0004  ! Base03  Green
+tide.colors.syntax.operator:     0x0004  ! Base03  Green
+tide.colors.syntax.preprocessor: 0x0004  ! Base03  Orange
+tide.colors.syntax.type:         0x0004  ! Base03  Yellow
+tide.colors.syntax.statement:    0x0004  ! Base03  Green
+tide.colors.syntax.special:      0x0004  ! Base03  Red
