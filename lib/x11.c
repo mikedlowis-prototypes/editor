@@ -65,11 +65,12 @@ static struct XSel {
 };
 
 static void xftcolor(XftColor* xc, int id) {
+    #define COLOR(c) ((c) | ((c) >> 8))
     uint32_t c = config_get_int(id + Color00);
-    xc->color.alpha = 0xFF | ((c & 0xFF000000) >> 16);
-    xc->color.red   = 0xFF | ((c & 0x00FF0000) >> 8);
-    xc->color.green = 0xFF | ((c & 0x0000FF00));
-    xc->color.blue  = 0xFF | ((c & 0x000000FF) << 8);
+    xc->color.alpha = COLOR((c & 0xFF000000) >> 16);
+    xc->color.red   = COLOR((c & 0x00FF0000) >> 8);
+    xc->color.green = COLOR((c & 0x0000FF00));
+    xc->color.blue  = COLOR((c & 0x000000FF) << 8);
     XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
 }
 

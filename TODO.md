@@ -87,9 +87,7 @@ Region  GROUP start=REGEX skip=REGEX end=REGEX
 
 https://www.slant.co/topics/358/~best-color-themes-for-text-editors
 
-* Acme
 * Wily
-* Solarized
 * Gruvbox
 * badwolf
 * jelly beans
@@ -123,6 +121,3 @@ https://www.slant.co/topics/358/~best-color-themes-for-text-editors
 * lean theme
 * cheerfully dark
 * gotham
-
-
-

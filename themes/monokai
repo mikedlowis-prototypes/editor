@@ -1,0 +1,21 @@
+!-------------------------------------------------------------------------------
+! Monokai
+!-------------------------------------------------------------------------------
+
+! 16-color Palette Definition
+tide.palette.00: 0xff272822 ! base00 - Default Background
+tide.palette.01: 0xff383830 ! base01 - Lighter Background (Used for status bars)
+tide.palette.02: 0xff49483e ! base02 - Selection Background
+tide.palette.03: 0xff75715e ! base03 - Comments, Invisibles, Line Highlighting
+tide.palette.04: 0xffa59f85 ! base04 - Dark Foreground (Used for status bars)
+tide.palette.05: 0xfff8f8f2 ! base05 - Default Foreground, Caret, Delimiters, Operators
+tide.palette.06: 0xfff5f4f1 ! base06 - Light Foreground (Not often used)
+tide.palette.07: 0xfff9f8f5 ! base07 - Light Background (Not often used)
+tide.palette.08: 0xfff92672 ! base08 - Variables, Diff Deleted
+tide.palette.09: 0xfffd971f ! base09 - Integers, Boolean, Constants
+tide.palette.10: 0xfff4bf75 ! base0A - Classes, Markup Bold, Search Text Background
+tide.palette.11: 0xffa6e22e ! base0B - Strings, Inherited Class, Markup Code, Diff Inserted
+tide.palette.12: 0xffa1efe4 ! base0C - Support, Regular Expressions, Escape Characters, Markup Quotes
+tide.palette.13: 0xff66d9ef ! base0D - Functions, Methods, Attribute IDs, Headings
+tide.palette.14: 0xffae81ff ! base0E - Keywords, Storage, Selector, Markup Italic, Diff Changed
+tide.palette.15: 0xffcc6633 ! base0F - Deprecated, Opening/Closing Embedded Language Tags e.g.
