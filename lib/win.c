@@ -36,6 +36,8 @@ static bool ShowLineNumbers = false;
 static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL, errfn);
+    x11_init(&Config);
+    Font = x11_font_load(config_get_str(FontString));
     Regions[STATUS].clrnor = config_get_int(ClrStatusNor);
     Regions[SCROLL].clrnor = config_get_int(ClrScrollNor);
     Regions[TAGS].clrnor = config_get_int(ClrTagsNor);
@@ -44,8 +46,6 @@ static void win_init(void (*errfn)(char*)) {
     Regions[EDIT].clrnor = config_get_int(ClrEditNor);
     Regions[EDIT].clrsel = config_get_int(ClrEditSel);
     Regions[EDIT].clrcsr = config_get_int(ClrEditCsr);
-    x11_init(&Config);
-    Font = x11_font_load(config_get_str(FontString));
 }
 
 void win_window(char* name, void (*errfn)(char*)) {
