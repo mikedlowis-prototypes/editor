@@ -27,13 +27,11 @@ tide.palette.14: 0xff000000
 tide.palette.15: 0xff000000
 
 ! override default color pairs and cursors
-tide.colors.edit.selected:   0x0405
 tide.colors.tags.selected:   0x0206
-tide.colors.edit.cursor:     0x05
 tide.colors.tags.cursor:     0x06
+tide.colors.edit.selected:   0x0405
+tide.colors.edit.cursor:     0x05
 tide.colors.borders:         0x0703
-
-!! Colors for UI Elements and Text
-!tide.colors.gutter.normal:   0x0200
-!tide.colors.gutter.selected: 0x0300
-!tide.colors.edit.ruler:      0x06
+tide.colors.edit.ruler:      0x03
+tide.colors.gutter.normal:   0x0300
+tide.colors.gutter.selected: 0x0003
