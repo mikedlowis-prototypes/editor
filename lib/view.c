@@ -86,8 +86,9 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
     view->ncols = ncols;
 }
 
-void view_update(View* view, size_t* csrx, size_t* csry) {
+void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry) {
     if (!view->nrows) return;
+    view->clrnor = clrnor, view->clrsel = clrsel;
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
     size_t pos = view->rows[0]->off, line = view->rows[0]->line;
@@ -571,9 +572,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line) {
     }
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (in_selection(view->selection, pos)
-                            ? config_get_int(TxtSelected)
-                            : config_get_int(TxtNormal));
+        uint32_t attr = (in_selection(view->selection, pos) ? view->clrsel : view->clrnor);
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {

@@ -62,21 +62,19 @@ struct {
     [Color14] = { "tide.palette.14", INTEGER, { .num = 0xff2aa198 } },
     [Color15] = { "tide.palette.15", INTEGER, { .num = 0xff859900 } },
 
-    /* Background and UI Colors */
-    [BkgRuler]  = { "tide.colors.ruler",      INTEGER, { .num = 0x01 } },
-    [BkgGutter] = { "tide.colors.gutter",     INTEGER, { .num = 0x01 } },
-    [BkgTags]   = { "tide.colors.bkg_tags",   INTEGER, { .num = 0x01 } },
-    [BkgEdit]   = { "tide.colors.bkg_edit",   INTEGER, { .num = 0x00 } },
-    [BkgScroll] = { "tide.colors.bkg_scroll", INTEGER, { .num = 0x03 } },
-    [BkgThumb]  = { "tide.colors.bkg_thumb",  INTEGER, { .num = 0x00 } },
-    [BkgBorder] = { "tide.colors.border",     INTEGER, { .num = 0x03 } },
-
-    /* Base Text Colors */
-    [TxtCursor]      = { "tide.colors.text.cursor",   INTEGER, { .num = 0x0007 } },
-    [TxtNormal]      = { "tide.colors.text.normal",   INTEGER, { .num = 0x0004 } },
-    [TxtSelected]    = { "tide.colors.text.selected", INTEGER, { .num = 0x0400 } },
-    [TxtGutter]      = { "tide.colors.text.gutter",   INTEGER, { .num = 0x0003 } },
-    [TxtCurrentLine] = { "tide.colors.text.currline", INTEGER, { .num = 0x0D07 } },
+    /* UI Colors */
+    [ClrScrollNor] = { "tide.colors.scroll.normal",   INTEGER, { .num = 0x0300 } },
+    [ClrGutterNor] = { "tide.colors.gutter.normal",   INTEGER, { .num = 0x0103 } },
+    [ClrGutterSel] = { "tide.colors.gutter.selected", INTEGER, { .num = 0x0D07 } },
+    [ClrStatusNor] = { "tide.colors.status.normal",   INTEGER, { .num = 0x0004 } },
+    [ClrTagsNor]   = { "tide.colors.tags.normal",     INTEGER, { .num = 0x0104 } },
+    [ClrTagsSel]   = { "tide.colors.tags.selected",   INTEGER, { .num = 0x0401 } },
+    [ClrTagsCsr]   = { "tide.colors.tags.cursor",     INTEGER, { .num = 0x07   } },
+    [ClrEditNor]   = { "tide.colors.edit.normal",     INTEGER, { .num = 0x0004 } },
+    [ClrEditSel]   = { "tide.colors.edit.selected",   INTEGER, { .num = 0x0400 } },
+    [ClrEditCsr]   = { "tide.colors.edit.cursor",     INTEGER, { .num = 0x07   } },
+    [ClrEditRul]   = { "tide.colors.edit.ruler",      INTEGER, { .num = 0x01   } },
+    [ClrBorders]   = { "tide.colors.borders",         INTEGER, { .num = 0x0303 } },
 
     /* Syntax Colors */
     [SynNormal]    = { "tide.colors.syntax.normal",       INTEGER, { .num = 0x0004 } },

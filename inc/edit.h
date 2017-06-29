@@ -150,16 +150,17 @@ typedef struct {
 } Row;
 
 typedef struct {
-    bool sync_needed;  /* whether the view needs to be synced with cursor */
-    bool sync_center;  /* cursor should be centered on screen if possible */
-    bool sync_lines;   /* whether the line numbers should be recalculated */
-    size_t nrows;      /* number of rows in the view */
-    size_t ncols;      /* number of columns in the view */
-    Row** rows;        /* array of row data structures */
-    Buf buffer;        /* the buffer used to populate the view */
-    Sel selection;     /* range of currently selected text */
-    size_t prev_csr;   /* previous cursor location */
-    SyntaxSpan* spans; /* list of colored regions */
+    bool sync_needed;   /* whether the view needs to be synced with cursor */
+    bool sync_center;   /* cursor should be centered on screen if possible */
+    bool sync_lines;    /* whether the line numbers should be recalculated */
+    size_t nrows;       /* number of rows in the view */
+    size_t ncols;       /* number of columns in the view */
+    Row** rows;         /* array of row data structures */
+    Buf buffer;         /* the buffer used to populate the view */
+    Sel selection;      /* range of currently selected text */
+    size_t prev_csr;    /* previous cursor location */
+    SyntaxSpan* spans;  /* list of colored regions */
+    int clrnor, clrsel; /* text color pairs for normal and selected text */
 } View;
 
 enum {
@@ -173,7 +174,7 @@ void view_init(View* view, char* file, void (*errfn)(char*));
 void view_reload(View* view);
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
 void view_resize(View* view, size_t nrows, size_t ncols);
-void view_update(View* view, size_t* csrx, size_t* csry);
+void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);
@@ -228,8 +229,14 @@ enum { /* Configuration Variables */
     ScrollLines, DblClickTime, MaxScanDist, SyntaxEnabled,
     Color00, Color01, Color02, Color03, Color04, Color05, Color06, Color07,
     Color08, Color09, Color10, Color11, Color12, Color13, Color14, Color15,
-    BkgRuler, BkgGutter, BkgTags, BkgEdit, BkgScroll, BkgThumb, BkgBorder,
-    TxtCursor, TxtNormal, TxtSelected, TxtGutter, TxtCurrentLine,
+
+    ClrScrollNor, ClrGutterNor, ClrGutterSel, ClrStatusNor, ClrTagsNor,
+    ClrTagsSel, ClrTagsCsr, ClrEditNor, ClrEditSel, ClrEditCsr, ClrEditRul,
+    ClrBorders,
+
+    //BkgRuler, BkgGutter, BkgTags, BkgEdit, BkgScroll, BkgThumb, BkgBorder,
+    //TxtCursor, TxtNormal, TxtSelected, TxtGutter, TxtCurrentLine,
+
     SynNormal, SynComment, SynConstant, SynString, SynChar, SynNumber,
     SynBoolean, SynFloat, SynVariable, SynFunction, SynKeyword, SynOperator,
     SynPreProc, SynType, SynStatement, SynSpecial

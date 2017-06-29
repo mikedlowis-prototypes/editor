@@ -22,12 +22,10 @@ typedef struct {
 } KeyBinding;
 
 typedef struct {
-    size_t x;
-    size_t y;
-    size_t height;
-    size_t width;
-    size_t csrx;
-    size_t csry;
+    size_t x, y;
+    size_t height, width;
+    size_t csrx, csry;
+    int clrnor, clrsel, clrcsr;
     bool warp_ptr;
     View view;
 } Region;
