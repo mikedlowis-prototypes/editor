@@ -699,7 +699,7 @@ static void apply_colors(View* view) {
             if (!curr) { r = -1; break; } // Break both loops if we're done
 
             /* check if we're in the current region */
-            if (curr->beg <= off && off <= curr->end && !(row->cols[col].attr & 0xFF00)) {
+            if (curr->beg <= off && off <= curr->end) {
                 uint32_t attr = row->cols[col].attr;
                 row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
             }

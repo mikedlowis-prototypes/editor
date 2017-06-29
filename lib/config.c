@@ -53,47 +53,46 @@ struct {
     [Color05] = { "tide.palette.05", INTEGER, { .num = 0xff93a1a1 } },
     [Color06] = { "tide.palette.06", INTEGER, { .num = 0xffeee8d5 } },
     [Color07] = { "tide.palette.07", INTEGER, { .num = 0xfffdf6e3 } },
-    [Color08] = { "tide.palette.08", INTEGER, { .num = 0xffdc322f } },
-    [Color09] = { "tide.palette.09", INTEGER, { .num = 0xffcb4b16 } },
-    [Color10] = { "tide.palette.10", INTEGER, { .num = 0xffb58900 } },
-    [Color11] = { "tide.palette.11", INTEGER, { .num = 0xff859900 } },
-    [Color12] = { "tide.palette.12", INTEGER, { .num = 0xff2aa198 } },
-    [Color13] = { "tide.palette.13", INTEGER, { .num = 0xff268bd2 } },
-    [Color14] = { "tide.palette.14", INTEGER, { .num = 0xff6c71c4 } },
-    [Color15] = { "tide.palette.15", INTEGER, { .num = 0xffd33682 } },
+    [Color08] = { "tide.palette.08", INTEGER, { .num = 0xffb58900 } }, // Yellow
+    [Color09] = { "tide.palette.09", INTEGER, { .num = 0xffcb4b16 } }, // Orange
+    [Color10] = { "tide.palette.10", INTEGER, { .num = 0xffdc322f } }, // Red
+    [Color11] = { "tide.palette.11", INTEGER, { .num = 0xffd33682 } }, // Magenta
+    [Color12] = { "tide.palette.12", INTEGER, { .num = 0xff6c71c4 } }, // Violet
+    [Color13] = { "tide.palette.13", INTEGER, { .num = 0xff268bd2 } }, // Blue
+    [Color14] = { "tide.palette.14", INTEGER, { .num = 0xff2aa198 } }, // Cyan
+    [Color15] = { "tide.palette.15", INTEGER, { .num = 0xff859900 } }, // Green
 
     /* UI Colors */
     [ClrScrollNor] = { "tide.colors.scroll.normal",   INTEGER, { .num = 0x0300 } },
-    [ClrGutterNor] = { "tide.colors.gutter.normal",   INTEGER, { .num = 0x0103 } },
-    [ClrGutterSel] = { "tide.colors.gutter.selected", INTEGER, { .num = 0x0D07 } },
+    [ClrGutterNor] = { "tide.colors.gutter.normal",   INTEGER, { .num = 0x0104 } },
+    [ClrGutterSel] = { "tide.colors.gutter.selected", INTEGER, { .num = 0x0207 } },
     [ClrStatusNor] = { "tide.colors.status.normal",   INTEGER, { .num = 0x0005 } },
     [ClrTagsNor]   = { "tide.colors.tags.normal",     INTEGER, { .num = 0x0105 } },
-    [ClrTagsSel]   = { "tide.colors.tags.selected",   INTEGER, { .num = 0x0501 } },
+    [ClrTagsSel]   = { "tide.colors.tags.selected",   INTEGER, { .num = 0x0205 } },
     [ClrTagsCsr]   = { "tide.colors.tags.cursor",     INTEGER, { .num = 0x07   } },
     [ClrEditNor]   = { "tide.colors.edit.normal",     INTEGER, { .num = 0x0005 } },
-    [ClrEditSel]   = { "tide.colors.edit.selected",   INTEGER, { .num = 0x0500 } },
+    [ClrEditSel]   = { "tide.colors.edit.selected",   INTEGER, { .num = 0x0205 } },
     [ClrEditCsr]   = { "tide.colors.edit.cursor",     INTEGER, { .num = 0x07   } },
     [ClrEditRul]   = { "tide.colors.edit.ruler",      INTEGER, { .num = 0x01   } },
     [ClrBorders]   = { "tide.colors.borders",         INTEGER, { .num = 0x0303 } },
 
     /* Syntax Colors */
-    [SynNormal]    = { "tide.colors.syntax.normal",       INTEGER, { .num = 0x0004 } },
+    [SynNormal]    = { "tide.colors.syntax.normal",       INTEGER, { .num = 0x0005 } },
     [SynComment]   = { "tide.colors.syntax.comment",      INTEGER, { .num = 0x0003 } },
-    [SynConstant]  = { "tide.colors.syntax.constant",     INTEGER, { .num = 0x000C } },
-    [SynString]    = { "tide.colors.syntax.string",       INTEGER, { .num = 0x000C } },
-    [SynChar]      = { "tide.colors.syntax.character",    INTEGER, { .num = 0x000C } },
-    [SynNumber]    = { "tide.colors.syntax.number",       INTEGER, { .num = 0x000C } },
-    [SynBoolean]   = { "tide.colors.syntax.boolean",      INTEGER, { .num = 0x000C } },
-    [SynFloat]     = { "tide.colors.syntax.float",        INTEGER, { .num = 0x000C } },
-
-    [SynVariable]  = { "tide.colors.syntax.variable",     INTEGER, { .num = 0x000D } },
-    [SynFunction]  = { "tide.colors.syntax.function",     INTEGER, { .num = 0x000D } },
-    [SynKeyword]   = { "tide.colors.syntax.keyword",      INTEGER, { .num = 0x000B } },
-    [SynOperator]  = { "tide.colors.syntax.operator",     INTEGER, { .num = 0x000A } },
+    [SynConstant]  = { "tide.colors.syntax.constant",     INTEGER, { .num = 0x000E } },
+    [SynNumber]    = { "tide.colors.syntax.number",       INTEGER, { .num = 0x000E } },
+    [SynBoolean]   = { "tide.colors.syntax.boolean",      INTEGER, { .num = 0x000E } },
+    [SynFloat]     = { "tide.colors.syntax.float",        INTEGER, { .num = 0x000E } },
+    [SynString]    = { "tide.colors.syntax.string",       INTEGER, { .num = 0x000E } },
+    [SynChar]      = { "tide.colors.syntax.character",    INTEGER, { .num = 0x000E } },
     [SynPreProc]   = { "tide.colors.syntax.preprocessor", INTEGER, { .num = 0x0009 } },
-    [SynType]      = { "tide.colors.syntax.type",         INTEGER, { .num = 0x000A } },
-    [SynStatement] = { "tide.colors.syntax.statement",    INTEGER, { .num = 0x000F } },
-    [SynSpecial]   = { "tide.colors.syntax.special",      INTEGER, { .num = 0x000A } },
+    [SynType]      = { "tide.colors.syntax.type",         INTEGER, { .num = 0x0008 } },
+    [SynKeyword]   = { "tide.colors.syntax.keyword",      INTEGER, { .num = 0x000F } },
+    [SynStatement] = { "tide.colors.syntax.statement",    INTEGER, { .num = 0x000A } },
+    [SynFunction]  = { "tide.colors.syntax.function",     INTEGER, { .num = 0x000B } },
+    [SynVariable]  = { "tide.colors.syntax.variable",     INTEGER, { .num = 0x000C } },
+    [SynSpecial]   = { "tide.colors.syntax.special",      INTEGER, { .num = 0x000D } },
+    [SynOperator]  = { "tide.colors.syntax.operator",     INTEGER, { .num = 0x000C } },
 };
 
 void config_init(void* disp) {
