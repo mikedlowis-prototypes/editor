@@ -31,13 +31,18 @@ static void onpaste(char* text) {
 }
 
 static void cut(void) {
+    View* view = win_view(FOCUSED);
     /* select the current line if no selection */
-    if (!view_selsize(win_view(FOCUSED)))
+    if (!view_selsize(view))
         select_line();
     /* now perform the cut */
-    char* str = view_getstr(win_view(FOCUSED), NULL);
+    char* str = view_getstr(view, NULL);
     x11_sel_set(CLIPBOARD, str);
-    if (str && *str) delete();
+    if (str && *str) {
+        delete();
+        if (view->selection.end == buf_end(&(view->buffer)))
+            view_delete(view, LEFT, false);
+    }
 }
 
 static void paste(void) {
