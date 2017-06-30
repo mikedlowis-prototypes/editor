@@ -102,7 +102,7 @@ end
 #-------------------------------------------------------------------------------
 
 languages({
-  "Ruby" => Set.new(%w[Rakefile Rakefile.rb .rb]),
+  "Ruby" => Set.new(%w[Rakefile Rakefile.rb .rb gpkgfile]),
   "C"    => Set.new(%w[.c .h .cpp .hpp .cc .c++ .cxx]),
 })
 
