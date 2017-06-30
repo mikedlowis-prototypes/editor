@@ -109,7 +109,7 @@ languages({
 language "C" do
   types = Set.new %w[
     bool short int long unsigned signed char size_t
-    void extern static inline struct typedef union volatile auto const
+    void extern static inline struct enum typedef union volatile auto const
     int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t
   ]
 
