@@ -416,10 +416,13 @@ static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
     XGlyphSpec specs[rlen];
     size_t i = 0;
+    bool eol = false;
     while (rlen && i < ncols) {
         int numspecs = 0;
         uint32_t attr = glyphs[i].attr;
         while (i < ncols && glyphs[i].attr == attr) {
+            if (glyphs[i].rune == '\n')
+                glyphs[i].rune = ' ', eol = true;
             x11_font_getglyph(Font, &(specs[numspecs]), glyphs[i].rune);
             specs[numspecs].x = x;
             specs[numspecs].y = y - x11_font_descent(Font);
@@ -433,8 +436,8 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
         /* Draw the glyphs with the proper colors */
         uint8_t bg = attr >> 8;
         uint8_t fg = attr & 0xFF;
-        x11_draw_glyphs(fg, bg, specs, numspecs);
-        rlen -= numspecs;
+        x11_draw_glyphs(fg, bg, specs, numspecs, eol);
+        eol = false, rlen -= numspecs;
     }
 }
 

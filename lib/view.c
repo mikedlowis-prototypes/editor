@@ -548,7 +548,9 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     int ncols = runewidth(col, r);
     /* write the rune to the screen buf */
     scrrow->cols[col].attr = attr;
-    if (r == '\t' || r == '\n' || r == RUNE_CRLF)
+    if (r == RUNE_CRLF)
+        scrrow->cols[col].rune = '\n';
+    else if (r == '\t')
         scrrow->cols[col].rune = ' ';
     else
         scrrow->cols[col].rune = r;

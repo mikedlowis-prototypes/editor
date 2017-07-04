@@ -142,7 +142,7 @@ size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFon
 
 void x11_draw_rect(int color, int x, int y, int width, int height);
 void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
-void x11_draw_glyphs(int fg, int bg, XGlyphSpec* glyphs, size_t nglyphs);
+void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol);
 void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 
 bool x11_sel_get(int selid, void(*cbfn)(char*));

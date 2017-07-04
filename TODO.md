@@ -88,17 +88,10 @@ Region  GROUP start=REGEX skip=REGEX end=REGEX
 https://www.slant.co/topics/358/~best-color-themes-for-text-editors
 
 * Wily
-* Gruvbox
 * badwolf
 * jelly beans
-* monokai/molokai
-* tomorrow
-* spacegray
-* base16
-* dracula
 * one dark
 * zenburn
-* ayu
 * railscast
 * material
 * spacemacs
@@ -106,13 +99,9 @@ https://www.slant.co/topics/358/~best-color-themes-for-text-editors
 * soda light
 * predawn
 * lucario
-* vim desert
-* two firewatch
 * obsidian
 * leuven
 * afterglow
-* apathy
-* vim guru
 * nord
 * plastic code wrap
 * wombat

@@ -436,7 +436,7 @@ void x11_font_getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
     /* Otherwise check the cache */
     for (int f = 0; f < font->ncached; f++) {
         glyphidx = XftCharIndex(X.display, font->cache[f].font, rune);
-        /* Fond a suitable font or found a default font */
+        /* Found a suitable font or found a default font */
         if (glyphidx || (!glyphidx && font->cache[f].unicodep == rune)) {
             spec->font  = font->cache[f].font;
             spec->glyph = glyphidx;
@@ -488,10 +488,11 @@ size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFon
     return numspecs;
 }
 
-void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
+void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol) {
     if (!nspecs) return;
     XftFont* font = specs[0].font;
     XftColor fgc, bgc;
+
     if (bg > 0) {
         XGlyphInfo extent;
         XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
@@ -499,6 +500,7 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs) {
         int h = (font->height - font->descent) + config_get_int(LineSpacing);
         xftcolor(&bgc, bg);
         size_t width = specs[nspecs-1].x - specs[0].x + w;
+        if (eol) width = X.width - specs[0].x;
         x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + config_get_int(LineSpacing));
         XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
@@ -519,7 +521,7 @@ void x11_draw_utf8(XFont fnt, int fg, int bg, int x, int y, char* str) {
         nspecs++;
         str++;
     }
-    x11_draw_glyphs(fg, bg, (XGlyphSpec*)specs, nspecs);
+    x11_draw_glyphs(fg, bg, (XGlyphSpec*)specs, nspecs, false);
 }
 
 /* Selection Handling

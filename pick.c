@@ -146,7 +146,7 @@ void onupdate(void) {
             view_insert(view, false, *str);
         view_insert(view, false, '\n');
         if (ChoiceIdx == i+off) {
-            selection.beg = view->selection.end-1;
+            selection.beg = view->selection.end;
             selection.end = beg;
         }
     }
