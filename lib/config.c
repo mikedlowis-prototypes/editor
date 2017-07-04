@@ -47,7 +47,7 @@ struct {
     /* default color palette definition */
     [Color00] = { "tide.palette.00", INTEGER, { .num = 0xff002b36 } },
     [Color01] = { "tide.palette.01", INTEGER, { .num = 0xff073642 } },
-    [Color02] = { "tide.palette.02", INTEGER, { .num = 0xff586e75 } },
+    [Color02] = { "tide.palette.02", INTEGER, { .num = 0xff30464d } },
     [Color03] = { "tide.palette.03", INTEGER, { .num = 0xff657b83 } },
     [Color04] = { "tide.palette.04", INTEGER, { .num = 0xff839496 } },
     [Color05] = { "tide.palette.05", INTEGER, { .num = 0xff93a1a1 } },
