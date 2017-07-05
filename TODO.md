@@ -82,31 +82,3 @@ Label, Conditional, Repeat, Character, Number, PreProc, Float, Operator, Structu
 Keyword GROUP [WORD...]
 Match   GROUP REGEX
 Region  GROUP start=REGEX skip=REGEX end=REGEX
-
-# Themes
-
-https://www.slant.co/topics/358/~best-color-themes-for-text-editors
-
-* Wily
-* badwolf
-* jelly beans
-* one dark
-* zenburn
-* railscast
-* material
-* spacemacs
-* inkpot
-* soda light
-* predawn
-* lucario
-* obsidian
-* leuven
-* afterglow
-* nord
-* plastic code wrap
-* wombat
-* noctilux
-* deep space
-* lean theme
-* cheerfully dark
-* gotham

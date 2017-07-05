@@ -159,9 +159,8 @@ void win_setscroll(double offset, double visible) {
 }
 
 static size_t gutter_cols(void) {
-    size_t len   = (ShowLineNumbers ? 1 : 0),
-           lines = win_buf(EDIT)->nlines;
-    while (ShowLineNumbers && lines > 9)
+    size_t len = 0, lines = win_buf(EDIT)->nlines + 1;
+    while (ShowLineNumbers && lines)
         lines /= 10, len++;
     return len;
 }
