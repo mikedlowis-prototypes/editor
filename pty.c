@@ -25,7 +25,8 @@ int pty_spawn(char** argv) {
             break;
 
         case 0: // Child Process
-            execvp(argv[0], argv);
+            if (execvp(argv[0], argv) < 0)
+                die("execvp('%s', ...) :", argv[0]);
             exit(EXIT_FAILURE);
             break;
 

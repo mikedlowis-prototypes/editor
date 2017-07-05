@@ -66,10 +66,12 @@ uint64_t getmillis(void) {
 void die(const char* msgfmt, ...) {
     va_list args;
     va_start(args, msgfmt);
-    fprintf(stderr, "Error: ");
+    fprintf(stderr, "error: ");
     vfprintf(stderr, msgfmt, args);
-    fprintf(stderr, "\n");
     va_end(args);
+    if (*msgfmt && msgfmt[strlen(msgfmt)-1] == ':')
+        fprintf(stderr, " %s", strerror(errno));
+    fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
 }
 
