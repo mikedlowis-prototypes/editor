@@ -52,3 +52,4 @@ tide
 pick
 tests/pick
 hl-cpp
+pty
