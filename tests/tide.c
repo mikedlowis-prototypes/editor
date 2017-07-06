@@ -25,8 +25,7 @@ static void initialize(void) {
     ShellCmd[0] = "/bin/sh";
     win_window("edit", ondiagmsg);
     XDisplay = XOpenDisplay(NULL);
-    win_setkeys(Bindings);
-    //win_setmouse(&MouseHandlers);
+    win_setkeys(Bindings, NULL);
 }
 
 /* Helper Functions

@@ -548,6 +548,10 @@ void onshutdown(void) {
     quit();
 }
 
+bool update_needed(void) {
+    return false;
+}
+
 void edit_relative(char* path) {
     char *currdir = NULL, *currpath = NULL, *relpath = NULL;
     char* origdir = getcurrdir();
@@ -617,7 +621,7 @@ int main(int argc, char** argv) {
         cmdrun(OpenCmd, NULL);
     }
     /* now create the window and start the event loop */
-    win_setkeys(Bindings);
+    win_setkeys(Bindings, NULL);
     win_loop();
     return 0;
 }

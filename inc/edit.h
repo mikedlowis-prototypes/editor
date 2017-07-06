@@ -234,9 +234,6 @@ enum { /* Configuration Variables */
     ClrTagsSel, ClrTagsCsr, ClrEditNor, ClrEditSel, ClrEditCsr, ClrEditRul,
     ClrBorders,
 
-    //BkgRuler, BkgGutter, BkgTags, BkgEdit, BkgScroll, BkgThumb, BkgBorder,
-    //TxtCursor, TxtNormal, TxtSelected, TxtGutter, TxtCurrentLine,
-
     SynNormal, SynComment, SynConstant, SynString, SynChar, SynNumber,
     SynBoolean, SynFloat, SynVariable, SynFunction, SynKeyword, SynOperator,
     SynPreProc, SynType, SynStatement, SynSpecial

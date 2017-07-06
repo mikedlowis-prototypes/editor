@@ -41,7 +41,7 @@ static struct {
     Colormap colormap;
     unsigned depth;
     int screen;
-    /* assume a single window for now. these are it's attributes */
+    /* assume a single window for now. these are its attributes */
     Window window;
     XftDraw* xft;
     Pixmap pixmap;

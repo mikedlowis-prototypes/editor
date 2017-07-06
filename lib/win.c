@@ -11,6 +11,7 @@ static void onmousedrag(int state, int x, int y);
 static void onmousebtn(int btn, bool pressed, int x, int y);
 static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col);
 static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col);
+static bool update_focus(void);
 static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
@@ -31,6 +32,7 @@ static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
+static void (*InputFunc)(Rune);
 static bool ShowLineNumbers = false;
 
 static void win_init(void (*errfn)(char*)) {
@@ -58,27 +60,13 @@ void win_dialog(char* name, void (*errfn)(char*)) {
     x11_dialog(name, config_get_int(WinWidth), config_get_int(WinHeight));
 }
 
-static bool update_focus(void) {
-    static int prev_x = 0, prev_y = 0;
-    int ptr_x, ptr_y;
-    bool changed = false;
-    /* dont change focus if any mouse buttons are pressed */
-    if ((x11_keybtnstate() & 0x1f00) == 0) {
-        x11_mouse_get(&ptr_x, &ptr_y);
-        if (prev_x != ptr_x || prev_y != ptr_y)
-            changed = win_setregion(getregion(ptr_x, ptr_y));
-        prev_x = ptr_x, prev_y = ptr_y;
-    }
-    return changed;
-}
-
 void win_loop(void) {
     x11_show();
     x11_flip();
     while (x11_running()) {
         bool pending = x11_events_await(config_get_int(EventTimeout));
         int nevents  = x11_events_queued();
-        if (update_focus() || pending || nevents) {
+        if (update_focus() || pending || nevents || update_needed()) {
             x11_events_take();
             if (x11_running())
                 x11_flip();
@@ -114,8 +102,9 @@ Rune win_getkey(void) {
     return LastKey;
 }
 
-void win_setkeys(KeyBinding* bindings) {
+void win_setkeys(KeyBinding* bindings, void (*inputfn)(Rune)) {
     Keys = bindings;
+    InputFunc = inputfn;
 }
 
 bool win_btnpressed(int btn) {
@@ -319,9 +308,13 @@ static void oninput(int mods, Rune key) {
     /* fallback to just inserting the rune if it doesn't fall in the private use area.
      * the private use area is used to encode special keys */
     if (key < 0xE000 || key > 0xF8FF) {
-        if (key == '\n' && win_view(FOCUSED)->buffer.crlf)
-            key = RUNE_CRLF;
-        view_insert(win_view(FOCUSED), true, key);
+        if (InputFunc) {
+            InputFunc(key);
+        } else {
+            if (key == '\n' && win_view(FOCUSED)->buffer.crlf)
+                key = RUNE_CRLF;
+            view_insert(win_view(FOCUSED), true, key);
+        }
     }
 }
 
@@ -388,6 +381,20 @@ static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col) {
 static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
     if (!pressed) return;
     view_scroll(win_view(id), +(config_get_int(ScrollLines)));
+}
+
+static bool update_focus(void) {
+    static int prev_x = 0, prev_y = 0;
+    int ptr_x, ptr_y;
+    bool changed = false;
+    /* dont change focus if any mouse buttons are pressed */
+    if ((x11_keybtnstate() & 0x1f00) == 0) {
+        x11_mouse_get(&ptr_x, &ptr_y);
+        if (prev_x != ptr_x || prev_y != ptr_y)
+            changed = win_setregion(getregion(ptr_x, ptr_y));
+        prev_x = ptr_x, prev_y = ptr_y;
+    }
+    return changed;
 }
 
 static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num) {

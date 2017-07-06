@@ -46,7 +46,7 @@ void win_setlinenums(bool enable);
 bool win_getlinenums(void);
 void win_setruler(size_t ruler);
 Rune win_getkey(void);
-void win_setkeys(KeyBinding* bindings);
+void win_setkeys(KeyBinding* bindings, void (*inputfn)(Rune));
 void win_setmouse(MouseConfig* mconfig);
 void win_warpptr(WinRegion id);
 View* win_view(WinRegion id);
@@ -67,4 +67,5 @@ void onscroll(double percent);
 void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col);
 void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col);
 void onmouseright(WinRegion id, bool pressed, size_t row, size_t col);
+bool update_needed(void);
 
