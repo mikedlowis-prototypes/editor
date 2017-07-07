@@ -1,11 +1,20 @@
+#define _XOPEN_SOURCE 700
 #include <stdc.h>
 #include <x11.h>
 #include <utf.h>
 #include <edit.h>
-#include <ctype.h>
 #include <win.h>
 #include <shortcuts.h>
+#include <ctype.h>
 #include <unistd.h>
+#include <sys/select.h>
+//#include <termios.h>
+//#include <sys/types.h>
+#ifdef __MACH__
+    #include <util.h>
+#else
+    #include <pty.h>
+#endif
 
 typedef struct {
     char* tag;
@@ -15,6 +24,7 @@ typedef struct {
     } action;
 } Tag;
 
+static int CmdFD = -1;
 static Tag Builtins[];
 static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
@@ -529,6 +539,20 @@ void onupdate(void) {
     strncat(status, path, remlen);
     win_settext(STATUS, status_bytes);
     win_view(STATUS)->selection = (Sel){0,0,0};
+
+    /* Read from command if we have one */
+    long n = 0, r = 0, i = 0;
+    static char cmdbuf[8192];
+    if (!update_needed()) return;
+    if ((n = read(CmdFD, cmdbuf, sizeof(cmdbuf))) < 0)
+        CmdFD = -1;
+    while (i < n) {
+        Rune rune = 0;
+        size_t length = 0;
+        while (!utf8decode(&rune, &length, cmdbuf[i++]));
+        view_insert(win_view(EDIT), false, rune);
+    }
+    win_buf(EDIT)->outpoint = win_view(EDIT)->selection.end;
 }
 
 void onlayout(void) {
@@ -549,7 +573,54 @@ void onshutdown(void) {
 }
 
 bool update_needed(void) {
-    return false;
+    if (CmdFD < 0) return false;
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(CmdFD, &fds);
+    struct timeval tv = { .tv_usec = 0 };
+    return (select(CmdFD+1, &fds, NULL, NULL, &tv) > 0);
+}
+
+static void oninput(Rune rune) {
+    view_insert(win_view(FOCUSED), false, rune);
+    if (win_getregion() == EDIT) {
+        size_t point = win_buf(EDIT)->outpoint;
+        size_t pos   = win_view(EDIT)->selection.end;
+        if (rune == '\n' && pos > point) {
+            Sel range = { .beg = point, .end = pos };
+            char* str = view_getstr(win_view(EDIT), &range);
+            if (write(CmdFD, str, strlen(str)-1) < 0)
+                CmdFD = -1;
+            free(str);
+        }
+    }
+}
+
+int pty_spawn(char** argv) {
+    int fd;
+    struct termios tio;
+    pid_t pid;
+    putenv("TERM=dumb");
+    switch ( (pid = forkpty(&fd, NULL, NULL, NULL)) ) {
+        case -1: // Failed
+            die("forkpty() :");
+            break;
+
+        case 0: // Child Process
+            if (execvp(argv[0], argv) < 0)
+                die("execvp('%s', ...) :", argv[0]);
+            exit(EXIT_FAILURE);
+            break;
+
+        default: // Parent Process
+            tcgetattr(fd, &tio);
+            tio.c_lflag      &= ~(ECHO | ECHONL);
+            tio.c_cc[ VMIN ]  = 1;
+            tio.c_cc[ VTIME ] = 0;
+            tcsetattr(fd, TCSANOW, &tio);
+            break;
+    }
+    return fd;
 }
 
 void edit_relative(char* path) {
@@ -601,27 +672,44 @@ void edit_relative(char* path) {
     free(origdir);
 }
 
+void edit_command(char** cmd) {
+    char* shellcmd[] = { ShellCmd[0], NULL };
+    win_buf(EDIT)->crlf = 1;
+    config_set_int(TabWidth, 8);
+    CmdFD = pty_spawn(*cmd ? cmd : shellcmd);
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
     /* setup the shell */
     if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
+
     /* Create the window and enter the event loop */
     win_window("tide", ondiagmsg);
     char* tags = getenv("EDITTAGS");
     win_settext(TAGS, (tags ? tags : config_get_str(TagString)));
     win_setruler(config_get_int(RulerColumn));
     win_setlinenums(config_get_bool(LineNumbers));
-    /* open the first file in this instance */
-    if (argc > 1)
-        edit_relative(argv[1]);
-    /* spawn a new instance for each remaining file */
-    for (int i = 2; i < argc; i++) {
-        OpenCmd[1] = argv[i];
+
+    /* open all but the last file in new instances */
+    for (argc--, argv++; argc > 1; argc--, argv++) {
+        if (!strcmp(*argv, "--")) break;
+        OpenCmd[1] = *argv;
         cmdrun(OpenCmd, NULL);
     }
+
+    /* if we still have args left we're going to open it in this instance */
+    if (*argv) {
+        /* if it's a command we treat that specially */
+        if (!strcmp(*argv, "--"))
+            edit_command(argv+1);
+        else
+            edit_relative(*argv);
+    }
+
     /* now create the window and start the event loop */
-    win_setkeys(Bindings, NULL);
+    win_setkeys(Bindings, oninput);
     win_loop();
     return 0;
 }
