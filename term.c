@@ -19,7 +19,6 @@
 
 int CmdFD = -1;
 char* ShellCmd[] = { NULL, NULL };
-size_t Point = 0;
 static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
 
@@ -54,16 +53,13 @@ void onupdate(void) {
     if (!fdready(CmdFD)) return;
     if ((n = read(CmdFD, buf, sizeof(buf))) < 0)
         die("read() subprocess :");
-
     while (i < n) {
         Rune rune = 0;
         size_t length = 0;
         while (!utf8decode(&rune, &length, buf[i++]));
-//        buf_insert(win_buf(EDIT), false, Point++, rune), r++;
-        view_insert(win_view(EDIT), false, rune), r++;
+        view_insert(win_view(EDIT), false, rune);
     }
-//    win_view(EDIT)->selection.beg += r;
-//    win_view(EDIT)->selection.end += r;
+    win_buf(EDIT)->outpoint = win_view(EDIT)->selection.end;
 }
 
 void onshutdown(void) {
@@ -119,17 +115,13 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
 static void oninput(Rune rune) {
     view_insert(win_view(FOCUSED), false, rune);
     if (win_getregion() == EDIT) {
-        Point++;
-        size_t bend  = win_view(EDIT)->selection.end;
-        size_t point = buf_end(win_buf(EDIT)) - Point;
-        if (rune == '\n' && bend > point) {
-            Sel range = { .beg = point, .end = bend };
+        size_t point = win_buf(EDIT)->outpoint;
+        size_t pos   = win_view(EDIT)->selection.end;
+        if (rune == '\n' && pos > point) {
+            Sel range = { .beg = point, .end = pos };
             char* str = view_getstr(win_view(EDIT), &range);
             write(CmdFD, str, strlen(str)-1);
             free(str);
-            Point -= (range.end - range.beg);
-        } else if (bend <= point) {
-            Point--;
         }
     }
 }
