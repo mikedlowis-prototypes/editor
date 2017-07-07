@@ -15,17 +15,19 @@
 #include <edit.h>
 #include <ctype.h>
 #include <win.h>
+#include <shortcuts.h>
 
 int CmdFD = -1;
 char* ShellCmd[] = { NULL, NULL };
+size_t Point = 0;
+static int SearchDir = DOWN;
+static char* SearchTerm = NULL;
 
 bool fdready(int fd);
 
 /* unused functions */
 void onfocus(bool focused) {}
-
-void onerror(char* msg) {
-}
+void onerror(char* msg) {}
 
 void onscroll(double percent) {
     size_t bend = buf_end(win_buf(EDIT));
@@ -47,17 +49,21 @@ void onlayout(void) {
 }
 
 void onupdate(void) {
+    long n = 0, r = 0, i = 0;
     static char buf[8192];
-    long n;
     if (!fdready(CmdFD)) return;
     if ((n = read(CmdFD, buf, sizeof(buf))) < 0)
         die("read() subprocess :");
-    for (long i = 0; i < n;) {
+
+    while (i < n) {
         Rune rune = 0;
         size_t length = 0;
         while (!utf8decode(&rune, &length, buf[i++]));
-        view_insert(win_view(EDIT), false, rune);
+//        buf_insert(win_buf(EDIT), false, Point++, rune), r++;
+        view_insert(win_view(EDIT), false, rune), r++;
     }
+//    win_view(EDIT)->selection.beg += r;
+//    win_view(EDIT)->selection.end += r;
 }
 
 void onshutdown(void) {
@@ -65,18 +71,67 @@ void onshutdown(void) {
 }
 
 void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
+    static int count = 0;
+    static uint64_t before = 0;
+    if (!pressed) return;
+    uint64_t now = getmillis();
+    count = ((now-before) <= config_get_int(DblClickTime) ? count+1 : 1);
+    before = now;
+
+    if (count == 1) {
+        if (x11_keymodsset(ModShift))
+            view_selext(win_view(id), row, col);
+        else
+            view_setcursor(win_view(id), row, col);
+    } else if (count == 2) {
+        view_select(win_view(id), row, col);
+    } else if (count == 3) {
+        view_selword(win_view(id), row, col);
+    }
 }
 
 void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (pressed) return;
+    if (win_btnpressed(MouseLeft)) {
+        cut();
+    } else {
+        char* str = view_fetch(win_view(id), row, col);
+        //if (str) exec(str);
+        free(str);
+    }
 }
 
 void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (pressed) return;
+    if (win_btnpressed(MouseLeft)) {
+        paste();
+    } else {
+        SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+        free(SearchTerm);
+        SearchTerm = view_fetch(win_view(id), row, col);
+        if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
+            win_setregion(EDIT);
+            win_warpptr(EDIT);
+        }
+    }
 }
 
 static void oninput(Rune rune) {
-    char c = (char)rune;
-    write(CmdFD, &c, 1);
     view_insert(win_view(FOCUSED), false, rune);
+    if (win_getregion() == EDIT) {
+        Point++;
+        size_t bend  = win_view(EDIT)->selection.end;
+        size_t point = buf_end(win_buf(EDIT)) - Point;
+        if (rune == '\n' && bend > point) {
+            Sel range = { .beg = point, .end = bend };
+            char* str = view_getstr(win_view(EDIT), &range);
+            write(CmdFD, str, strlen(str)-1);
+            free(str);
+            Point -= (range.end - range.beg);
+        } else if (bend <= point) {
+            Point--;
+        }
+    }
 }
 
 bool update_needed(void) {
@@ -122,14 +177,65 @@ int pty_spawn(char** argv) {
 
 /******************************************************************************/
 
+static void quit(void) {
+    x11_deinit();
+}
+
+static KeyBinding Bindings[] = {
+    /* Cursor Movements */
+    { ModAny,  KEY_HOME,  cursor_home  },
+    { ModAny,  KEY_END,   cursor_end   },
+    { ModAny,  KEY_UP,    cursor_up    },
+    { ModAny,  KEY_DOWN,  cursor_dn    },
+    { ModAny,  KEY_LEFT,  cursor_left  },
+    { ModAny,  KEY_RIGHT, cursor_right },
+    { ModCtrl, ';',       cursor_warp  },
+
+    /* Standard Unix Shortcuts */
+    { ModCtrl, 'u', del_to_bol  },
+    { ModCtrl, 'k', del_to_eol  },
+    { ModCtrl, 'w', del_to_bow  },
+    { ModCtrl, 'a', cursor_bol  },
+    { ModCtrl, 'e', cursor_eol  },
+
+    /* Standard Text Editing Shortcuts */
+//    { ModCtrl,          's', save        },
+    { ModCtrl,          'z', undo        },
+    { ModCtrl,          'y', redo        },
+    { ModCtrl,          'x', cut         },
+    { ModCtrl,          'c', copy        },
+    { ModCtrl,          'v', paste       },
+    { ModCtrl,          'j', join_lines  },
+    { ModCtrl,          'l', select_line },
+    { ModCtrl|ModShift, 'a', select_all  },
+
+    /* Common Special Keys */
+    { ModNone, KEY_PGUP,      page_up   },
+    { ModNone, KEY_PGDN,      page_dn   },
+    { ModAny,  KEY_DELETE,    delete    },
+    { ModAny,  KEY_BACKSPACE, backspace },
+
+    /* Implementation Specific */
+    { ModNone,      KEY_ESCAPE, select_prev  },
+    { ModCtrl,      't',        change_focus },
+    { ModCtrl,      'q',        quit         },
+//    { ModCtrl,      'h',        highlight    },
+//    { ModOneOrMore, 'f',        search       },
+//    { ModCtrl,      'd',        execute      },
+//    { ModCtrl,      'n',        new_win      },
+    { 0, 0, 0 }
+};
+
+
 #ifndef TEST
 int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
     CmdFD = pty_spawn(argc > 1 ? argv+1 : ShellCmd);
     win_window("term", onerror);
-    win_setkeys(NULL, oninput);
+    win_setkeys(Bindings, oninput);
     win_buf(EDIT)->crlf = 1;
+    config_set_int(TabWidth, 8);
     win_loop();
     return 0;
 }
