@@ -153,6 +153,10 @@ end
 
 #-------------------------------------------------------------------------------
 
+# bail if theres nothing to highlight
+if $language.nil? then exit
+
+# otherwise start doing the job
 while (not $stdin.eof?) do
   # Read in the input chunk
   $buf = StringIO.new
