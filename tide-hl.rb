@@ -154,7 +154,7 @@ end
 #-------------------------------------------------------------------------------
 
 # bail if theres nothing to highlight
-if $language.nil? then exit
+exit 0 if $language.nil?
 
 # otherwise start doing the job
 while (not $stdin.eof?) do
