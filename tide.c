@@ -582,7 +582,7 @@ bool update_needed(void) {
 }
 
 static void oninput(Rune rune) {
-    view_insert(win_view(FOCUSED), false, rune);
+    view_insert(win_view(FOCUSED), (CmdFD == -1), rune);
     if (win_getregion() == EDIT) {
         size_t point = win_buf(EDIT)->outpoint;
         size_t pos   = win_view(EDIT)->selection.end;
@@ -676,6 +676,8 @@ void edit_command(char** cmd) {
     char* shellcmd[] = { ShellCmd[0], NULL };
     win_buf(EDIT)->crlf = 1;
     config_set_int(TabWidth, 8);
+    win_setlinenums(false);
+    win_setruler(0);
     CmdFD = pty_spawn(*cmd ? cmd : shellcmd);
 }
 
