@@ -8,8 +8,6 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/select.h>
-//#include <termios.h>
-//#include <sys/types.h>
 #ifdef __MACH__
     #include <util.h>
 #else
@@ -539,20 +537,6 @@ void onupdate(void) {
     strncat(status, path, remlen);
     win_settext(STATUS, status_bytes);
     win_view(STATUS)->selection = (Sel){0,0,0};
-
-    /* Read from command if we have one */
-    long n = 0, r = 0, i = 0;
-    static char cmdbuf[8192];
-    if (!update_needed()) return;
-    if ((n = read(CmdFD, cmdbuf, sizeof(cmdbuf))) < 0)
-        CmdFD = -1;
-    while (i < n) {
-        Rune rune = 0;
-        size_t length = 0;
-        while (!utf8decode(&rune, &length, cmdbuf[i++]));
-        view_insert(win_view(EDIT), false, rune);
-    }
-    win_buf(EDIT)->outpoint = win_view(EDIT)->selection.end;
 }
 
 void onlayout(void) {
@@ -573,12 +557,7 @@ void onshutdown(void) {
 }
 
 bool update_needed(void) {
-    if (CmdFD < 0) return false;
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(CmdFD, &fds);
-    struct timeval tv = { .tv_usec = 0 };
-    return (select(CmdFD+1, &fds, NULL, NULL, &tv) > 0);
+    return false;
 }
 
 static void oninput(Rune rune) {
@@ -621,6 +600,21 @@ int pty_spawn(char** argv) {
             break;
     }
     return fd;
+}
+
+void pty_update(int fd, void* data) {
+    /* Read from command if we have one */
+    long n = 0, r = 0, i = 0;
+    static char cmdbuf[8192];
+    if ((n = read(CmdFD, cmdbuf, sizeof(cmdbuf))) < 0)
+        CmdFD = -1;
+    while (i < n) {
+        Rune rune = 0;
+        size_t length = 0;
+        while (!utf8decode(&rune, &length, cmdbuf[i++]));
+        view_insert(win_view(EDIT), false, rune);
+    }
+    win_buf(EDIT)->outpoint = win_view(EDIT)->selection.end;
 }
 
 void edit_relative(char* path) {
@@ -679,6 +673,8 @@ void edit_command(char** cmd) {
     win_setlinenums(false);
     win_setruler(0);
     CmdFD = pty_spawn(*cmd ? cmd : shellcmd);
+    event_watchfd(CmdFD, INPUT, pty_update, NULL);
+
 }
 
 #ifndef TEST

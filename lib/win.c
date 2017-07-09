@@ -60,18 +60,20 @@ void win_dialog(char* name, void (*errfn)(char*)) {
     x11_dialog(name, config_get_int(WinWidth), config_get_int(WinHeight));
 }
 
+static void win_update(int xfd, void* data) {
+    if (x11_events_queued())
+        x11_events_take();
+    x11_flush();
+}
+
 void win_loop(void) {
     x11_show();
     x11_flip();
+    int ms = config_get_int(EventTimeout);
+    event_watchfd(x11_connfd(), INPUT, win_update, NULL);
     while (x11_running()) {
-        bool pending = x11_events_await(config_get_int(EventTimeout));
-        int nevents  = x11_events_queued();
-        if (update_focus() || pending || nevents || update_needed()) {
-            x11_events_take();
-            if (x11_running())
-                x11_flip();
-        }
-        x11_flush();
+        if (event_poll(ms) || update_focus() || x11_running())
+            x11_flip();
     }
     x11_finish();
 }

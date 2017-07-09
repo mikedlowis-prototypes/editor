@@ -21,6 +21,15 @@ char* strconcat(char* dest, ...);
 bool file_exists(char* path);
 char* strmcat(char* first, ...);
 
+
+enum { INPUT, OUTPUT, NOTIFY };
+
+typedef void (*event_cbfn_t)(int fd, void* data);
+
+bool event_poll(int ms);
+void event_watchfd(int fd, int iodir, event_cbfn_t fn, void* data);
+
+
 /* Buffer management functions
  *****************************************************************************/
 /* undo/redo list item */

@@ -103,6 +103,10 @@ void x11_init(XConfig* cfg) {
     config_init(X.display);
 }
 
+int x11_connfd(void) {
+    return ConnectionNumber(X.display);
+}
+
 int x11_keybtnstate(void) {
     return KeyBtnState;
 }

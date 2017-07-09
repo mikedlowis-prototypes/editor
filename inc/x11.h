@@ -115,6 +115,7 @@ enum {
 
 void x11_init(XConfig* cfg);
 void x11_deinit(void);
+int x11_connfd(void);
 char* x11_cfg_get(char* opt);
 int x11_keybtnstate(void);
 bool x11_keymodsset(int mask);
