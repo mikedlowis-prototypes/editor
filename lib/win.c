@@ -72,8 +72,14 @@ void win_loop(void) {
     int ms = config_get_int(EventTimeout);
     event_watchfd(x11_connfd(), INPUT, win_update, NULL);
     while (x11_running()) {
-        if (event_poll(ms) || update_focus() || x11_running())
-            x11_flip();
+        bool pending = event_poll(ms);
+        int nevents  = x11_events_queued();
+        if (update_focus() || pending || nevents) {
+            x11_events_take();
+            if (x11_running())
+                x11_flip();
+        }
+        x11_flush();
     }
     x11_finish();
 }
@@ -204,10 +210,9 @@ static void layout(int width, int height) {
 
 static void onredraw(int width, int height) {
     static uint64_t maxtime = 0;
+    uint64_t start = getmillis();
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-
-    uint64_t start = getmillis();
 
     layout(width, height);
     onupdate(); // Let the user program update the status and other content
@@ -282,10 +287,7 @@ static void onredraw(int width, int height) {
 
     uint64_t stop = getmillis();
     uint64_t elapsed = stop-start;
-    //if (elapsed > maxtime) {
-        //printf("%llu\n", elapsed);
-        maxtime = elapsed;
-    //}
+    //printf("%llu\n", elapsed);
 }
 
 static void oninput(int mods, Rune key) {

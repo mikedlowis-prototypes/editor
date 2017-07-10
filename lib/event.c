@@ -19,6 +19,7 @@ bool event_poll(int ms) {
     /* poll for new events */
     long n = poll(Descriptors, NumDescriptors, ms);
     if (n < 0) die("poll() :");
+    if (n == 0) return false;
 
     /* Handle any events that occurred */
     for (int i = 0; i < NumDescriptors; i++) {
@@ -42,7 +43,7 @@ bool event_poll(int ms) {
         }
     }
 
-    return (n > 0);
+    return true;
 }
 
 void event_watchfd(int fd, int iodir, event_cbfn_t fn, void* data) {
