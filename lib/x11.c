@@ -344,16 +344,6 @@ int x11_events_queued(void) {
     return XEventsQueued(X.display, QueuedAfterFlush);
 }
 
-bool x11_events_await(unsigned int ms) {
-    fd_set fds;
-    int xfd = ConnectionNumber(X.display), redraw = 1;
-    /* configure for 100ms timeout */
-    struct timeval tv = { .tv_usec = ms * 1000 };
-    FD_ZERO(&fds);
-    FD_SET(xfd, &fds);
-    return (select(xfd+1, &fds, NULL, NULL, &tv) > 0);
-}
-
 void x11_events_take(void) {
     XEvent e;
     int nevents;
