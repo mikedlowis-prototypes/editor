@@ -1,6 +1,6 @@
 INCS = -Iinc/
 
-BINS = tide pick xcpd term pty hl-cpp
+BINS = tide pick xcpd hl-cpp
 MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
@@ -16,10 +16,9 @@ LIBEDIT_OBJS =     \
 	lib/config.o   \
 	lib/event.o
 
-TEST_BINS =      \
+TEST_BINS =     \
 	tests/tide  \
 	tests/pick  \
-	tests/term   \
 	tests/libedit
 
 include config.mk
@@ -63,13 +62,10 @@ libedit.a: $(LIBEDIT_OBJS)
 tide: tide.o libedit.a
 pick: pick.o libedit.a
 xcpd: xcpd.o libedit.a
-term: term.o libedit.a
-pty: pty.o libedit.a
 hl-cpp: hl-cpp.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/tide: tests/tide.o libedit.a
 tests/pick: tests/pick.o libedit.a
-tests/term: tests/term.o libedit.a
 
 # define implicit rule for building binaries
 %: %.o
