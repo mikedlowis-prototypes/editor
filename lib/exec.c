@@ -2,6 +2,7 @@
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
+#include <win.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -132,4 +133,80 @@ char* cmdwriteread(char** cmd, char* text, char** err) {
     close(proc.err);
     waitpid(proc.pid, NULL, 0);
     return str;
+}
+
+/******************************************************************************/
+
+typedef struct Job Job;
+
+typedef struct {
+    View* view;
+    char nbytes;
+    char bytes[6];
+} Recvr;
+
+struct Job {
+    Job* next;       /* Pointer to previous job in the job list */
+    Job* prev;       /* Pointer to next job in the job list */
+    size_t ndata;    /* number of bytes to write to stdout */
+    size_t nwrite;   /* number of bytes written to stdout so far */
+    char* data;      /* data to write to stdout */
+    Recvr err_recvr; /* view in which the error output will be placed */
+    Recvr out_recvr; /* view in which the output will be placed */
+    int pid;         /* process id of the running job */
+};
+
+static Job* JobList = NULL;
+
+static void send_data(int fd, void* data) {
+    Job* job = data;
+    long nwrite = write(fd, (job->data + job->nwrite), job->ndata);
+    if (nwrite < 0) { free(job->data); close(fd); return; }
+    job->ndata  -= nwrite;
+    job->nwrite += nwrite;
+    if (job->ndata <= 0) { free(job->data); close(fd); return; }
+}
+
+static void recv_data(int fd, void* data) {
+    static char buf[4096];
+    long i = 0, nread = read(fd, buf, sizeof(buf));
+    Recvr* rcvr = data;
+    if (nread <= 0) { close(fd); return; }
+    for (; i < nread;) {
+        Rune r;
+        size_t len = 0;
+        while (!utf8decode(&r, &len, buf[i++]));
+        view_insert(rcvr->view, false, r);
+    }
+}
+
+static void watch_or_close(bool valid, int dir, int fd, void* data) {
+    event_cbfn_t fn = (dir == OUTPUT ? send_data : recv_data);
+    if (valid)
+        event_watchfd(fd, dir, fn, data);
+    else
+        close(fd);
+}
+
+void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
+    Proc proc;
+    Job* job = calloc(1, sizeof(Job));
+    job->pid = execute(cmd, &proc);
+    if (job->pid < 0) {
+        die("job_start() :");
+    } else {
+        /* add the job to the job list */
+        job->err_recvr.view = win_view(TAGS);
+        job->out_recvr.view = dest;
+        job->ndata  = ndata;
+        job->nwrite = 0;
+        job->data   = data;
+        job->next   = JobList;
+        if (JobList) JobList->prev = job;
+        JobList = job;
+        /* register watch events for file descriptors */
+        watch_or_close((job->data != NULL), OUTPUT, proc.in, job);
+        watch_or_close((dest != NULL), INPUT, proc.out, &(job->out_recvr));
+        watch_or_close(true, INPUT, proc.err, &(job->err_recvr));
+    }
 }

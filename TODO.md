@@ -4,6 +4,7 @@ Up Next:
 
 * Send tag to send commands or data to the subprocess
 * Middle click executes send when in command mode and edit region
+* AutoSave feature?
 
 * moving from tags to the gutter does not transfer focus to edit region
 * implement transaction control in buf.c

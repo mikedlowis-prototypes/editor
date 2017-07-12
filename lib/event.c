@@ -33,15 +33,21 @@ bool event_poll(int ms) {
         }
 
         /* if the desriptor is done or errored, throw it out */
-        if (Descriptors[i].revents & (POLLERR|POLLHUP)) {
+        if (Descriptors[i].revents & (POLLNVAL|POLLERR|POLLHUP)) {
             close(Descriptors[i].fd);
-            for (int x = i+1; x < NumDescriptors; x++) {
-                Descriptors[x-1] = Descriptors[x];
-                EventData[x-1]   = EventData[x];
-            }
-            NumDescriptors--;
+            Descriptors[i].fd = -1;
         }
     }
+
+    /* remove any closed or invalid descriptors */
+    size_t nfds = 0;
+    for (int i = 0; i < NumDescriptors; i++) {
+        if (Descriptors[i].fd != -1) {
+            Descriptors[nfds] = Descriptors[i];
+            EventData[nfds++] = EventData[i];
+        }
+    }
+    NumDescriptors = nfds;
 
     return true;
 }
@@ -53,11 +59,8 @@ void event_watchfd(int fd, int iodir, event_cbfn_t fn, void* data) {
     if (!Descriptors || !EventData)
         die("event_Watchfd() : out of memory\n");
     Descriptors[idx].fd = fd;
+    Descriptors[idx].revents = 0;
+    Descriptors[idx].events = (iodir == INPUT ? POLLIN : POLLOUT);
     EventData[idx].data = data;
     EventData[idx].fn   = fn;
-    switch (iodir) {
-        case INPUT:  Descriptors[idx].events = POLLIN; break;
-        case OUTPUT: Descriptors[idx].events = POLLOUT; break;
-        case NOTIFY: Descriptors[idx].events = (POLLIN|POLLOUT); break;
-    }
 }

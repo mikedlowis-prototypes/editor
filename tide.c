@@ -67,6 +67,37 @@ static void tag_exec(Tag* tag, char* arg) {
 }
 
 static void cmd_exec(char* cmd) {
+#if 1
+
+    /* parse the command sigils */
+    char op = '\0', **execcmd = NULL;
+    if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
+        op = *cmd, cmd++;
+    execcmd = (op == ':' ? SedCmd : ShellCmd);
+    execcmd[2] = cmd;
+
+    /* get the selection that the command will operate on */
+    if (op && op != '<' && op != '!' && 0 == view_selsize(win_view(EDIT)))
+        win_view(EDIT)->selection = (Sel){ .beg = 0, .end = buf_end(win_buf(EDIT)) };
+    char* input = view_getstr(win_view(EDIT), NULL);
+    size_t len  = (input ? strlen(input) : 0);
+    View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
+
+    /* execute the job */
+    printf("sigil: '%c'\n", op);
+    printf("data: %d '%s'\n", len, input);
+    if (op == '!') {
+        free(input);
+        exec_job(execcmd, NULL, 0, NULL);
+    } else if (op == '>') {
+        exec_job(execcmd, input, len, tags);
+    } else if (op == '|' || op == ':') {
+        exec_job(execcmd, input, len, edit);
+    } else {
+        exec_job(execcmd, input, len, (op != '<' ? curr : edit));
+    }
+
+#else
     char op = '\0';
     if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
         op = *cmd, cmd++;
@@ -107,6 +138,7 @@ static void cmd_exec(char* cmd) {
     free(input);
     free(output);
     free(error);
+#endif
 }
 
 static void exec(char* cmd) {
@@ -674,7 +706,6 @@ void edit_command(char** cmd) {
     win_setruler(0);
     CmdFD = pty_spawn(*cmd ? cmd : shellcmd);
     event_watchfd(CmdFD, INPUT, pty_update, NULL);
-
 }
 
 #ifndef TEST

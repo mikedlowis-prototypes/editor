@@ -22,7 +22,7 @@ bool file_exists(char* path);
 char* strmcat(char* first, ...);
 
 
-enum { INPUT, OUTPUT, NOTIFY };
+enum { INPUT, OUTPUT };
 
 typedef void (*event_cbfn_t)(int fd, void* data);
 
@@ -230,6 +230,7 @@ int cmdrun(char** cmd, char** err);
 char* cmdread(char** cmd, char** err);
 void cmdwrite(char** cmd, char* text, char** err);
 char* cmdwriteread(char** cmd, char* text, char** err);
+void exec_job(char** cmd, char* data, size_t ndata, View* dest);
 
 /* Configuration Data
  *****************************************************************************/
