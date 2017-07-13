@@ -67,8 +67,6 @@ static void tag_exec(Tag* tag, char* arg) {
 }
 
 static void cmd_exec(char* cmd) {
-#if 1
-
     /* parse the command sigils */
     char op = '\0', **execcmd = NULL;
     if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
@@ -92,49 +90,6 @@ static void cmd_exec(char* cmd) {
         exec_job(execcmd, input, len, edit);
     else
         exec_job(execcmd, input, len, (op != '<' ? curr : edit));
-
-#else
-    char op = '\0';
-    if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
-        op = *cmd, cmd++;
-    ShellCmd[2] = cmd;
-    /* execute the command */
-    char *input = NULL, *output = NULL, *error = NULL;
-    WinRegion dest = EDIT;
-    if (op && op != '<' && op != '!' && 0 == view_selsize(win_view(EDIT)))
-        win_view(EDIT)->selection = (Sel){ .beg = 0, .end = buf_end(win_buf(EDIT)) };
-    input = view_getstr(win_view(EDIT), NULL);
-
-    if (op == '!') {
-        cmdrun(ShellCmd, NULL);
-    } else if (op == '>') {
-        dest = TAGS;
-        output = cmdwriteread(ShellCmd, input, &error);
-    } else if (op == '|') {
-        output = cmdwriteread(ShellCmd, input, &error);
-    } else if (op == ':') {
-        SedCmd[2] = cmd;
-        output = cmdwriteread(SedCmd, input, &error);
-    } else {
-        if (op != '<') dest = win_getregion();
-        output = cmdread(ShellCmd, &error);
-    }
-
-    if (error)
-        view_append(win_view(TAGS), chomp(error));
-
-    if (output) {
-        if (op == '>')
-            view_append(win_view(dest), chomp(output));
-        else
-            view_putstr(win_view(dest), output);
-        win_setregion(dest);
-    }
-    /* cleanup */
-    free(input);
-    free(output);
-    free(error);
-#endif
 }
 
 static void exec(char* cmd) {
