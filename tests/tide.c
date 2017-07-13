@@ -695,6 +695,7 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, ":s/foo/bar/", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 11 };
         send_keys(ModCtrl, XK_d);
+        do { event_poll(50); } while (exec_reap());
         #ifdef __MACH__
         CHECK(verify_text(EDIT, "bar\r\n"));
         #else
@@ -708,6 +709,7 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, "|sed -e 's/foo/bar/'", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 20 };
         send_keys(ModCtrl, XK_d);
+        do { event_poll(50); } while (exec_reap());
         #ifdef __MACH__
         CHECK(verify_text(EDIT, "bar\r\n"));
         #else
@@ -721,6 +723,7 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, "!ls", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 3 };
         send_keys(ModCtrl, XK_d);
+        do { event_poll(50); } while (exec_reap());
         CHECK(verify_text(EDIT, "foo"));
     }
 
@@ -730,6 +733,7 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, ">cat", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 4 };
         send_keys(ModCtrl, XK_d);
+        do { event_poll(50); } while (exec_reap());
         CHECK(verify_text(EDIT, "foo"));
     }
 
@@ -739,6 +743,7 @@ TEST_SUITE(UnitTests) {
         setup_view(TAGS, "<echo bar", CRLF, 0);
         win_view(TAGS)->selection = (Sel){ .beg = 0, .end = 9 };
         send_keys(ModCtrl, XK_d);
+        do { event_poll(50); } while (exec_reap());
         CHECK(verify_text(EDIT, "bar\r\n"));
     }
 
@@ -746,6 +751,7 @@ TEST_SUITE(UnitTests) {
         setup_view(EDIT, "echo foo", CRLF, 0);
         win_view(EDIT)->selection = (Sel){ .beg = 0, .end = 8 };
         send_keys(ModCtrl, XK_d);
+        do { event_poll(50); } while (exec_reap());
         CHECK(verify_text(EDIT, "foo\r\n"));
     }
 
@@ -776,7 +782,6 @@ TEST_SUITE(UnitTests) {
     }
 
     TEST(Quit should discard changes if quit executed twice in less than DblClickTime) {
-        //IGNORE("Failing on the first quit call");
         setup_view(TAGS, "", CRLF, 0);
         setup_view(EDIT, "", CRLF, 0);
         win_buf(EDIT)->modified = true;

@@ -56,7 +56,8 @@ bool exec_reap(void) {
                 job->prev->next = job->next;
                 job->next->prev = job->prev;
             } else {
-                JobList = job->next;
+                for (; job && job->prev; job = job->prev);
+                JobList = (JobList == job ? NULL : job);
             }
             free(job);
         }
