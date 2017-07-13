@@ -21,7 +21,6 @@ char* strconcat(char* dest, ...);
 bool file_exists(char* path);
 char* strmcat(char* first, ...);
 
-
 enum { INPUT, OUTPUT };
 
 typedef void (*event_cbfn_t)(int fd, void* data);
@@ -88,6 +87,7 @@ size_t buf_end(Buf* buf);
 size_t buf_insert(Buf* buf, bool indent, size_t off, Rune rune);
 size_t buf_delete(Buf* buf, size_t beg, size_t end);
 size_t buf_change(Buf* buf, size_t beg, size_t end);
+void buf_chomp(Buf* buf);
 void buf_undo(Buf* buf, Sel* sel);
 void buf_redo(Buf* buf, Sel* sel);
 void buf_loglock(Buf* buf);

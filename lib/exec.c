@@ -136,6 +136,7 @@ typedef struct Job Job;
 
 typedef struct {
     View* view;   /* destination view */
+    size_t beg;   /* start of output */
     size_t count; /* number of bytes written */
 } Rcvr;
 
@@ -156,6 +157,7 @@ static Job* JobList = NULL;
 static void send_data(int fd, void* data);
 static void recv_data(int fd, void* data);
 static void watch_or_close(bool valid, int dir, int fd, void* data);
+static void rcvr_finish(Rcvr* rcvr);
 
 void exec_reap(void) {
     int pid;
@@ -163,6 +165,8 @@ void exec_reap(void) {
         Job* job = JobList;
         for (; job && job->pid != pid; job = job->next);
         if (job && job->pid == pid) {
+            rcvr_finish(&(job->out_rcvr));
+            rcvr_finish(&(job->err_rcvr));
             if (job->prev) {
                 job->prev->next = job->next;
                 job->next->prev = job->prev;
@@ -210,21 +214,31 @@ static void send_data(int fd, void* data) {
 }
 
 static void recv_data(int fd, void* data) {
-    static char buf[4096];
-    long i = 0, nread = read(fd, buf, sizeof(buf));
+    static char buffer[4096];
+    long i = 0, nread = read(fd, buffer, sizeof(buffer));
     Rcvr* rcvr = data;
+    View* view = rcvr->view;
+    Buf* buf = &(rcvr->view->buffer);
+    Sel sel = view->selection;
     if (nread > 0) {
+        if (!rcvr->count) {
+            if (sel.end < sel.beg) {
+                size_t temp = sel.beg;
+                sel.beg = sel.end, sel.end = temp;
+            }
+            rcvr->beg = sel.beg = sel.end = buf_change(buf, sel.beg, sel.end);
+            view->selection = sel;
+            buf_loglock(buf);
+        }
         for (; i < nread;) {
             Rune r;
             size_t len = 0;
-            while (!utf8decode(&r, &len, buf[i++]));
+            while (!utf8decode(&r, &len, buffer[i++]));
             view_insert(rcvr->view, false, r);
             rcvr->count++;
         }
     } else {
         close(fd);
-        if (rcvr->count)
-            view_selprev(rcvr->view);
     }
 }
 
@@ -234,4 +248,15 @@ static void watch_or_close(bool valid, int dir, int fd, void* data) {
         event_watchfd(fd, dir, fn, data);
     else
         close(fd);
+}
+
+static void rcvr_finish(Rcvr* rcvr) {
+    if (rcvr->count) {
+        View* view = rcvr->view;
+        Buf* buf = &(rcvr->view->buffer);
+        if (rcvr->view == win_view(TAGS))
+            buf_chomp(buf), rcvr->count--;
+        view->selection.beg = rcvr->beg;
+        view->selection.end = rcvr->beg + rcvr->count;
+    }
 }
