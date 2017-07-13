@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-static uint NumChildren = 0;
-
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
@@ -17,120 +15,6 @@ typedef struct {
     int out; /* file descriptor for the child process's standard output */
     int err; /* file descriptor for the child process's standard error */
 } Proc;
-
-static int execute(char** cmd, Proc* proc) {
-    int inpipe[2], outpipe[2], errpipe[2];
-    /* create the pipes */
-    if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0) || (pipe(errpipe) < 0))
-        return -1;
-    /* create the process */
-    proc->pid = fork();
-    if (proc->pid < 0) {
-        /* signal that we failed to fork */
-        proc->in  = -1;
-        proc->out = -1;
-        proc->err = -1;
-    } else if (0 == proc->pid) {
-        /* redirect child process's io to the pipes */
-        if ((dup2(inpipe[PIPE_READ], STDIN_FILENO) < 0)    ||
-            (dup2(outpipe[PIPE_WRITE], STDOUT_FILENO) < 0) ||
-            (dup2(errpipe[PIPE_WRITE], STDERR_FILENO) < 0)) {
-            perror("failed to pipe");
-            exit(1);
-        }
-        /* execute the process */
-        close(inpipe[PIPE_WRITE]);
-        close(outpipe[PIPE_READ]);
-        close(errpipe[PIPE_READ]);
-        exit(execvp(cmd[0], cmd));
-    } else {
-        close(inpipe[PIPE_READ]);
-        close(outpipe[PIPE_WRITE]);
-        close(errpipe[PIPE_WRITE]);
-        proc->in   = inpipe[PIPE_WRITE];
-        proc->out  = outpipe[PIPE_READ];
-        proc->err  = errpipe[PIPE_READ];
-    }
-    return proc->pid;
-}
-
-int cmdspawn(char** cmd, int* in, int* out) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return -1;
-    }
-    *in  = proc.in;
-    *out = proc.out;
-    return proc.pid;
-}
-
-int cmdrun(char** cmd, char** err) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return -1;
-    }
-    NumChildren++;
-    if (err) *err = fdgets(proc.err);
-    close(proc.in);
-    close(proc.out);
-    close(proc.err);
-    return proc.pid;
-}
-
-char* cmdread(char** cmd, char** err) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return NULL;
-    }
-    close(proc.in);
-    char* str = fdgets(proc.out);
-    close(proc.out);
-    if (err) *err = fdgets(proc.err);
-    close(proc.err);
-    waitpid(proc.pid, NULL, 0);
-    return str;
-}
-
-void cmdwrite(char** cmd, char* text, char** err) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return;
-    }
-    if (text && write(proc.in, text, strlen(text)) < 0) {
-        perror("failed to write");
-        return;
-    }
-    close(proc.in);
-    if (err) *err = fdgets(proc.err);
-    close(proc.err);
-    close(proc.out);
-    waitpid(proc.pid, NULL, 0);
-}
-
-char* cmdwriteread(char** cmd, char* text, char** err) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return NULL;
-    }
-    if (text && write(proc.in, text, strlen(text)) < 0) {
-        perror("failed to write");
-        return NULL;
-    }
-    close(proc.in);
-    char* str = fdgets(proc.out);
-    close(proc.out);
-    if (err) *err = fdgets(proc.err);
-    close(proc.err);
-    waitpid(proc.pid, NULL, 0);
-    return str;
-}
-
-/******************************************************************************/
 
 typedef struct Job Job;
 
@@ -158,8 +42,9 @@ static void send_data(int fd, void* data);
 static void recv_data(int fd, void* data);
 static void watch_or_close(bool valid, int dir, int fd, void* data);
 static void rcvr_finish(Rcvr* rcvr);
+static int execute(char** cmd, Proc* proc);
 
-void exec_reap(void) {
+bool exec_reap(void) {
     int pid;
     while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
         Job* job = JobList;
@@ -176,6 +61,7 @@ void exec_reap(void) {
             free(job);
         }
     }
+    return (JobList != NULL);
 }
 
 void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
@@ -202,6 +88,39 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
         watch_or_close(need_out, INPUT,  proc.out, &(job->out_rcvr));
         watch_or_close(need_err, INPUT,  proc.err, &(job->err_rcvr));
     }
+}
+
+void exec_cmd(char** cmd, char* text, char** out, char** err) {
+    Proc proc;
+    if (execute(cmd, &proc) < 0) {
+        perror("failed to execute");
+        return;
+    }
+    /* send the input to stdin of the command */
+    if (text && write(proc.in, text, strlen(text)) < 0) {
+        perror("failed to write");
+        return;
+    }
+    close(proc.in);
+    /* read the stderr of the command */
+    if (err) *err = fdgets(proc.err);
+    close(proc.err);
+    /* read the stdout of the command */
+    if (out) *out = fdgets(proc.out);
+    close(proc.out);
+    /* wait for the process to finish */
+    waitpid(proc.pid, NULL, 0);
+}
+
+int exec_spawn(char** cmd, int* in, int* out) {
+    Proc proc;
+    if (execute(cmd, &proc) < 0) {
+        perror("failed to execute");
+        return -1;
+    }
+    *in  = proc.in;
+    *out = proc.out;
+    return proc.pid;
 }
 
 static void send_data(int fd, void* data) {
@@ -259,4 +178,40 @@ static void rcvr_finish(Rcvr* rcvr) {
         view->selection.beg = rcvr->beg;
         view->selection.end = rcvr->beg + rcvr->count;
     }
+}
+
+static int execute(char** cmd, Proc* proc) {
+    int inpipe[2], outpipe[2], errpipe[2];
+    /* create the pipes */
+    if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0) || (pipe(errpipe) < 0))
+        return -1;
+    /* create the process */
+    proc->pid = fork();
+    if (proc->pid < 0) {
+        /* signal that we failed to fork */
+        proc->in  = -1;
+        proc->out = -1;
+        proc->err = -1;
+    } else if (0 == proc->pid) {
+        /* redirect child process's io to the pipes */
+        if ((dup2(inpipe[PIPE_READ], STDIN_FILENO) < 0)    ||
+            (dup2(outpipe[PIPE_WRITE], STDOUT_FILENO) < 0) ||
+            (dup2(errpipe[PIPE_WRITE], STDERR_FILENO) < 0)) {
+            perror("failed to pipe");
+            exit(1);
+        }
+        /* execute the process */
+        close(inpipe[PIPE_WRITE]);
+        close(outpipe[PIPE_READ]);
+        close(errpipe[PIPE_READ]);
+        exit(execvp(cmd[0], cmd));
+    } else {
+        close(inpipe[PIPE_READ]);
+        close(outpipe[PIPE_WRITE]);
+        close(errpipe[PIPE_WRITE]);
+        proc->in   = inpipe[PIPE_WRITE];
+        proc->out  = outpipe[PIPE_READ];
+        proc->err  = errpipe[PIPE_READ];
+    }
+    return proc->pid;
 }

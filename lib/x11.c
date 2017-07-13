@@ -198,7 +198,7 @@ void x11_finish(void) {
     XCloseDisplay(X.display);
     /* we're exiting now. If we own the clipboard, make sure it persists */
     if (Selections[CLIPBOARD].text)
-        cmdwrite((char*[]){ "xcpd", NULL }, Selections[CLIPBOARD].text, NULL);
+        exec_cmd((char*[]){ "xcpd", NULL }, Selections[CLIPBOARD].text, NULL, NULL);
 }
 
 /******************************************************************************/

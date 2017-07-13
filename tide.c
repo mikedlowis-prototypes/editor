@@ -272,7 +272,8 @@ static void find(char* arg) {
 }
 
 static void open_file(void) {
-    char* file = cmdread(PickFileCmd, NULL);
+    char* file = NULL;
+    exec_cmd(PickFileCmd, NULL, &file, NULL);
     if (file) {
         file = chomp(file);
         if ((!win_buf(EDIT)->path || x11_keymodsset(ModShift)) &&
@@ -280,7 +281,7 @@ static void open_file(void) {
             view_init(win_view(EDIT), file, ondiagmsg);
         } else {
             OpenCmd[1] = file;
-            cmdrun(OpenCmd, NULL);
+            exec_job(OpenCmd,0,0,0);
         }
     }
     free(file);
@@ -289,7 +290,8 @@ static void open_file(void) {
 static void pick_symbol(char* symbol) {
     PickTagCmd[1] = "fetch";
     PickTagCmd[3] = symbol;
-    char* pick = cmdread(PickTagCmd, NULL);
+    char* pick = NULL;
+    exec_cmd(PickTagCmd, NULL, &pick, NULL);
     if (pick) {
         Buf* buf = win_buf(EDIT);
         if (buf->path && 0 == strncmp(buf->path, pick, strlen(buf->path))) {
@@ -300,7 +302,8 @@ static void pick_symbol(char* symbol) {
                 view_init(win_view(EDIT), pick, ondiagmsg);
             } else {
                 OpenCmd[1] = chomp(pick);
-                cmdrun(OpenCmd, NULL);
+                exec_job(OpenCmd,0,0,0);
+
             }
         }
     }
@@ -316,7 +319,8 @@ static void complete(void) {
     view->selection.end = buf_byrune(&(view->buffer), view->selection.end, RIGHT);
     PickTagCmd[1] = "print";
     PickTagCmd[3] = view_getstr(view, NULL);
-    char* pick = cmdread(PickTagCmd, NULL);
+    char* pick = NULL;
+    exec_cmd(PickTagCmd, NULL, &pick, NULL);
     if (pick)
         view_putstr(view, chomp(pick));
     free(PickTagCmd[3]);
@@ -676,7 +680,7 @@ int main(int argc, char** argv) {
     for (argc--, argv++; argc > 1; argc--, argv++) {
         if (!strcmp(*argv, "--")) break;
         OpenCmd[1] = *argv;
-        cmdrun(OpenCmd, NULL);
+        exec_job(OpenCmd,0,0,0);
     }
 
     /* if we still have args left we're going to open it in this instance */

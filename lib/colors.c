@@ -16,7 +16,7 @@ static int read_num(void);
 
 void colors_init(char* path) {
     if (config_get_bool(SyntaxEnabled))
-        cmdspawn((char*[]){ "tide-hl.rb", path, NULL }, &ChildIn, &ChildOut);
+        exec_spawn((char*[]){ "tide-hl.rb", path, NULL }, &ChildIn, &ChildOut);
 }
 
 SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
@@ -37,13 +37,10 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
             if (e > 0 && c > 0) {
                 c = (c > 15 ? config_get_int(SynNormal + (c >> 4) - 1) : c) & 0xf;
                 currspan = mkspan(beg+b, beg+e-1, c, currspan);
-                //printf("(%lu-%lu) %lu,%lu,%lu\n", beg, end, b, e, c);
             }
             if (!firstspan)
                 firstspan = currspan;
         } while (e > 0);
-        //printf("left: %lu\n", DataEnd-DataBeg);
-        //printf("done\n\n");
         fflush(stdout);
         DataBeg = DataEnd = Buffer;
     }
@@ -94,9 +91,7 @@ static void write_chunk(Buf* buf, size_t beg, size_t end) {
             }
         }
         long nwrite = write(ChildIn, wbuf, wlen);
-        //printf("write: %lu -> %d\n", wlen, nwrite);
         if (nwrite < 0) {
-            //perror("write failed:");
             /* child process probably died. shut everything down */
             close(ChildIn),  ChildIn  = -1;
             close(ChildOut), ChildOut = -1;

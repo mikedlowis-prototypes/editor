@@ -224,13 +224,10 @@ Rune view_getrune(View* view);
 
 /* Command Executions
  *****************************************************************************/
-int cmdspawn(char** cmd, int* in, int* out);
-int cmdrun(char** cmd, char** err);
-char* cmdread(char** cmd, char** err);
-void cmdwrite(char** cmd, char* text, char** err);
-char* cmdwriteread(char** cmd, char* text, char** err);
-void exec_reap(void);
+bool exec_reap(void);
 void exec_job(char** cmd, char* data, size_t ndata, View* dest);
+void exec_cmd(char** cmd, char* text, char** out, char** err);
+int exec_spawn(char** cmd, int* in, int* out);
 
 /* Configuration Data
  *****************************************************************************/
