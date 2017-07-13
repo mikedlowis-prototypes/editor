@@ -80,6 +80,7 @@ void win_loop(void) {
                 x11_flip();
         }
         x11_flush();
+        exec_reap();
     }
     x11_finish();
 }

@@ -54,11 +54,6 @@ static int execute(char** cmd, Proc* proc) {
     return proc->pid;
 }
 
-void cmdreap(void) {
-    while(NumChildren && (waitpid(-1, NULL, WNOHANG) > 0))
-        NumChildren--;
-}
-
 int cmdspawn(char** cmd, int* in, int* out) {
     Proc proc;
     if (execute(cmd, &proc) < 0) {
@@ -140,23 +135,70 @@ char* cmdwriteread(char** cmd, char* text, char** err) {
 typedef struct Job Job;
 
 typedef struct {
-    View* view;
-    char nbytes;
-    char bytes[6];
-} Recvr;
+    View* view;   /* destination view */
+    size_t count; /* number of bytes written */
+} Rcvr;
 
 struct Job {
-    Job* next;       /* Pointer to previous job in the job list */
-    Job* prev;       /* Pointer to next job in the job list */
-    size_t ndata;    /* number of bytes to write to stdout */
-    size_t nwrite;   /* number of bytes written to stdout so far */
-    char* data;      /* data to write to stdout */
-    Recvr err_recvr; /* view in which the error output will be placed */
-    Recvr out_recvr; /* view in which the output will be placed */
-    int pid;         /* process id of the running job */
+    Job* next;     /* Pointer to previous job in the job list */
+    Job* prev;     /* Pointer to next job in the job list */
+    int pid;       /* process id of the running job */
+    size_t ndata;  /* number of bytes to write to stdout */
+    size_t nwrite; /* number of bytes written to stdout so far */
+    char* data;    /* data to write to stdout */
+    Rcvr err_rcvr; /* reciever for the error output of the job */
+    Rcvr out_rcvr; /* receiver for the normal output of the job */
+    View* dest;    /* destination view where output will be placed */
 };
 
 static Job* JobList = NULL;
+
+static void send_data(int fd, void* data);
+static void recv_data(int fd, void* data);
+static void watch_or_close(bool valid, int dir, int fd, void* data);
+
+void exec_reap(void) {
+    int pid;
+    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+        Job* job = JobList;
+        for (; job && job->pid != pid; job = job->next);
+        if (job && job->pid == pid) {
+            if (job->prev) {
+                job->prev->next = job->next;
+                job->next->prev = job->prev;
+            } else {
+                JobList = job->next;
+            }
+            free(job);
+        }
+    }
+}
+
+void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
+    Proc proc;
+    Job* job = calloc(1, sizeof(Job));
+    job->pid = execute(cmd, &proc);
+    if (job->pid < 0) {
+        die("job_start() :");
+    } else {
+        /* add the job to the job list */
+        job->err_rcvr.view = win_view(TAGS);
+        job->out_rcvr.view = dest;
+        job->ndata  = ndata;
+        job->nwrite = 0;
+        job->data   = data;
+        job->next   = JobList;
+        if (JobList) JobList->prev = job;
+        JobList = job;
+        /* register watch events for file descriptors */
+        bool need_in  = (job->data != NULL),
+             need_out = (dest != NULL),
+             need_err = (need_in || need_out);
+        watch_or_close(need_in,  OUTPUT, proc.in,  job);
+        watch_or_close(need_out, INPUT,  proc.out, &(job->out_rcvr));
+        watch_or_close(need_err, INPUT,  proc.err, &(job->err_rcvr));
+    }
+}
 
 static void send_data(int fd, void* data) {
     Job* job = data;
@@ -170,13 +212,19 @@ static void send_data(int fd, void* data) {
 static void recv_data(int fd, void* data) {
     static char buf[4096];
     long i = 0, nread = read(fd, buf, sizeof(buf));
-    Recvr* rcvr = data;
-    if (nread <= 0) { close(fd); return; }
-    for (; i < nread;) {
-        Rune r;
-        size_t len = 0;
-        while (!utf8decode(&r, &len, buf[i++]));
-        view_insert(rcvr->view, false, r);
+    Rcvr* rcvr = data;
+    if (nread > 0) {
+        for (; i < nread;) {
+            Rune r;
+            size_t len = 0;
+            while (!utf8decode(&r, &len, buf[i++]));
+            view_insert(rcvr->view, false, r);
+            rcvr->count++;
+        }
+    } else {
+        close(fd);
+        if (rcvr->count)
+            view_selprev(rcvr->view);
     }
 }
 
@@ -186,27 +234,4 @@ static void watch_or_close(bool valid, int dir, int fd, void* data) {
         event_watchfd(fd, dir, fn, data);
     else
         close(fd);
-}
-
-void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
-    Proc proc;
-    Job* job = calloc(1, sizeof(Job));
-    job->pid = execute(cmd, &proc);
-    if (job->pid < 0) {
-        die("job_start() :");
-    } else {
-        /* add the job to the job list */
-        job->err_recvr.view = win_view(TAGS);
-        job->out_recvr.view = dest;
-        job->ndata  = ndata;
-        job->nwrite = 0;
-        job->data   = data;
-        job->next   = JobList;
-        if (JobList) JobList->prev = job;
-        JobList = job;
-        /* register watch events for file descriptors */
-        watch_or_close((job->data != NULL), OUTPUT, proc.in, job);
-        watch_or_close((dest != NULL), INPUT, proc.out, &(job->out_recvr));
-        watch_or_close(true, INPUT, proc.err, &(job->err_recvr));
-    }
 }

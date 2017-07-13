@@ -84,18 +84,14 @@ static void cmd_exec(char* cmd) {
     View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
 
     /* execute the job */
-    printf("sigil: '%c'\n", op);
-    printf("data: %d '%s'\n", len, input);
-    if (op == '!') {
-        free(input);
-        exec_job(execcmd, NULL, 0, NULL);
-    } else if (op == '>') {
+    if (op == '!')
+        free(input), exec_job(execcmd, NULL, 0, NULL);
+    else if (op == '>')
         exec_job(execcmd, input, len, tags);
-    } else if (op == '|' || op == ':') {
+    else if (op == '|' || op == ':')
         exec_job(execcmd, input, len, edit);
-    } else {
+    else
         exec_job(execcmd, input, len, (op != '<' ? curr : edit));
-    }
 
 #else
     char op = '\0';

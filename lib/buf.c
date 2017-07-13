@@ -183,12 +183,12 @@ size_t buf_delete(Buf* buf, size_t beg, size_t end) {
 size_t buf_change(Buf* buf, size_t beg, size_t end) {
     /* delete the range first */
     size_t off = buf_delete(buf, beg, end);
-    /* now create a new insert item of length 0 witht he same transaction id as
+    /* now create a new insert item of length 0 with the same transaction id as
        the delete. This will cause subsequent inserts to be coalesced into the
        same transaction */
     Log* dellog = buf->undo;
     Log* inslog = (Log*)calloc(sizeof(Log), 1);
-    inslog->transid = dellog->transid;
+    inslog->transid = (dellog ? dellog->transid : buf->transid);
     inslog->insert = true;
     inslog->data.ins.beg = beg;
     inslog->data.ins.end = beg;
