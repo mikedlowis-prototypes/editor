@@ -197,8 +197,12 @@ void x11_flush(void) {
 void x11_finish(void) {
     XCloseDisplay(X.display);
     /* we're exiting now. If we own the clipboard, make sure it persists */
-    if (Selections[CLIPBOARD].text)
-        exec_cmd((char*[]){ "xcpd", NULL }, Selections[CLIPBOARD].text, NULL, NULL);
+    if (Selections[CLIPBOARD].text) {
+        char* text = Selections[CLIPBOARD].text;
+        size_t len = strlen(text);
+        exec_job((char*[]){ "xcpd", NULL }, text, len, NULL);
+        while (event_poll(100));
+    }
 }
 
 /******************************************************************************/
@@ -305,11 +309,8 @@ static void handle_mouse(XEvent* e) {
 }
 
 static void set_focus(bool focused) {
-    if (focused) {
-        if (X.xic) XSetICFocus(X.xic);
-    } else {
-        if (X.xic) XUnsetICFocus(X.xic);
-    }
+    if (X.xic)
+        (focused ? XSetICFocus : XUnsetICFocus)(X.xic);
     Config->set_focus(focused);
 }
 

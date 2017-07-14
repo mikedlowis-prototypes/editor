@@ -61,6 +61,7 @@ void win_dialog(char* name, void (*errfn)(char*)) {
 }
 
 static void win_update(int xfd, void* data) {
+    if (xfd < 0) return;
     if (x11_events_queued())
         x11_events_take();
     x11_flush();
