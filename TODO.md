@@ -46,6 +46,7 @@ Possible Shortcuts:
 
 Maybe think about addressing these later:
 
+* switch buf.c to using a mmap buffer of utf-8/binary data
 * add current dir to path
 * add support for guidefiles
 * Shift+Insert should insert primary selection

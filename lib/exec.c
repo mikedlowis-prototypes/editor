@@ -19,6 +19,7 @@ typedef struct {
 typedef struct Job Job;
 
 typedef struct {
+    Job* job;     /* pointer to the job teh receiver belongs to */
     View* view;   /* destination view */
     size_t beg;   /* start of output */
     size_t count; /* number of bytes written */
@@ -27,7 +28,7 @@ typedef struct {
 struct Job {
     Job* next;     /* Pointer to previous job in the job list */
     Job* prev;     /* Pointer to next job in the job list */
-    int pid;       /* process id of the running job */
+    Proc proc;     /* Process id and descriptors */
     size_t ndata;  /* number of bytes to write to stdout */
     size_t nwrite; /* number of bytes written to stdout so far */
     char* data;    /* data to write to stdout */
@@ -38,43 +39,41 @@ struct Job {
 
 static Job* JobList = NULL;
 
+static void job_closefd(Job* job, int fd);
+static bool job_done(Job* job);
+static Job* job_finish(Job* job);
 static void send_data(int fd, void* data);
 static void recv_data(int fd, void* data);
-static void watch_or_close(bool valid, int dir, int fd, void* data);
+static int watch_or_close(bool valid, int dir, int fd, void* data);
 static void rcvr_finish(Rcvr* rcvr);
 static int execute(char** cmd, Proc* proc);
 
 bool exec_reap(void) {
-    int pid;
-    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-        Job* job = JobList;
-        for (; job && job->pid != pid; job = job->next);
-        if (job && job->pid == pid) {
+    Job* job = JobList;
+    while (job) {
+        if (job_done(job)) {
             rcvr_finish(&(job->out_rcvr));
             rcvr_finish(&(job->err_rcvr));
-            if (job->prev) {
-                job->prev->next = job->next;
-                job->next->prev = job->prev;
-            } else {
-                for (; job && job->prev; job = job->prev);
-                JobList = (JobList == job ? NULL : job);
-            }
-            free(job);
+            job = job_finish(job);
+        } else {
+            job = job->next;
         }
     }
+    while (waitpid(-1, NULL, WNOHANG) > 0);
     return (JobList != NULL);
 }
 
 void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
-    Proc proc;
     Job* job = calloc(1, sizeof(Job));
-    job->pid = execute(cmd, &proc);
-    if (job->pid < 0) {
+    job->proc.pid = execute(cmd, &(job->proc));
+    if (job->proc.pid < 0) {
         die("job_start() :");
     } else {
         /* add the job to the job list */
         job->err_rcvr.view = win_view(TAGS);
+        job->err_rcvr.job = job;
         job->out_rcvr.view = dest;
+        job->out_rcvr.job = job;
         job->ndata  = ndata;
         job->nwrite = 0;
         job->data   = data;
@@ -85,9 +84,9 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
         bool need_in  = (job->data != NULL),
              need_out = (dest != NULL),
              need_err = (need_in || need_out);
-        watch_or_close(need_in,  OUTPUT, proc.in,  job);
-        watch_or_close(need_out, INPUT,  proc.out, &(job->out_rcvr));
-        watch_or_close(need_err, INPUT,  proc.err, &(job->err_rcvr));
+        job->proc.in  = watch_or_close(need_in,  OUTPUT, job->proc.in,  job);
+        job->proc.out = watch_or_close(need_out, INPUT,  job->proc.out, &(job->out_rcvr));
+        job->proc.err = watch_or_close(need_err, INPUT,  job->proc.err, &(job->err_rcvr));
     }
 }
 
@@ -124,50 +123,87 @@ int exec_spawn(char** cmd, int* in, int* out) {
     return proc.pid;
 }
 
+static void job_closefd(Job* job, int fd) {
+    if (fd >= 0) close(fd), fd = -fd;
+    if (job->proc.in  == -fd) job->proc.in  = fd;
+    if (job->proc.out == -fd) job->proc.out = fd;
+    if (job->proc.err == -fd) job->proc.err = fd;
+}
+
+static bool job_done(Job* job) {
+    return ((job->proc.in < 0) && (job->proc.out < 0) && (job->proc.err < 0));
+}
+
+static Job* job_finish(Job* job) {
+    Job* next = job->next;
+    if (job->prev) {
+        job->prev->next = job->next;
+        job->next->prev = job->prev;
+    } else {
+        JobList = job->next;
+    }
+    free(job->data);
+    free(job);
+    return next;
+}
+
 static void send_data(int fd, void* data) {
     Job* job = data;
-    long nwrite = write(fd, (job->data + job->nwrite), job->ndata);
-    if (nwrite < 0) { free(job->data); close(fd); return; }
-    job->ndata  -= nwrite;
-    job->nwrite += nwrite;
-    if (job->ndata <= 0) { free(job->data); close(fd); return; }
+    if (fd >= 0) {
+        long nwrite = write(fd, (job->data + job->nwrite), job->ndata);
+        if (nwrite >= 0) {
+            job->ndata  -= nwrite;
+            job->nwrite += nwrite;
+        }
+        if  (nwrite < 0 || job->ndata <= 0)
+            job_closefd(job, fd);
+    } else {
+        job_closefd(job, fd);
+    }
 }
 
 static void recv_data(int fd, void* data) {
     static char buffer[4096];
-    long i = 0, nread = read(fd, buffer, sizeof(buffer));
     Rcvr* rcvr = data;
+    Job* job = rcvr->job;
     View* view = rcvr->view;
     Buf* buf = &(rcvr->view->buffer);
     Sel sel = view->selection;
-    if (nread > 0) {
-        if (!rcvr->count) {
-            if (sel.end < sel.beg) {
-                size_t temp = sel.beg;
-                sel.beg = sel.end, sel.end = temp;
+
+    if (fd >= 0) {
+        long i = 0, nread = read(fd, buffer, sizeof(buffer));
+        if (nread > 0) {
+            if (!rcvr->count) {
+                if (sel.end < sel.beg) {
+                    size_t temp = sel.beg;
+                    sel.beg = sel.end, sel.end = temp;
+                }
+                rcvr->beg = sel.beg = sel.end = buf_change(buf, sel.beg, sel.end);
+                view->selection = sel;
             }
-            rcvr->beg = sel.beg = sel.end = buf_change(buf, sel.beg, sel.end);
-            view->selection = sel;
-            buf_loglock(buf);
-        }
-        for (; i < nread;) {
-            Rune r;
-            size_t len = 0;
-            while (!utf8decode(&r, &len, buffer[i++]));
-            view_insert(rcvr->view, false, r);
-            rcvr->count++;
+            for (; i < nread;) {
+                Rune r;
+                size_t len = 0;
+                while (!utf8decode(&r, &len, buffer[i++]));
+                view_insert(rcvr->view, false, r);
+                rcvr->count++;
+            }
+        } else {
+            close(fd);
+            job_closefd(job, -fd);
         }
     } else {
-        close(fd);
+        job_closefd(job, fd);
     }
 }
 
-static void watch_or_close(bool valid, int dir, int fd, void* data) {
+static int watch_or_close(bool valid, int dir, int fd, void* data) {
     event_cbfn_t fn = (dir == OUTPUT ? send_data : recv_data);
     if (valid)
         event_watchfd(fd, dir, fn, data);
     else
-        close(fd);
+        close(fd), fd = -fd;
+    return fd;
 }
 
 static void rcvr_finish(Rcvr* rcvr) {

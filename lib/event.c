@@ -35,14 +35,15 @@ bool event_poll(int ms) {
         /* if the desriptor is done or errored, throw it out */
         if (Descriptors[i].revents & (POLLNVAL|POLLERR|POLLHUP)) {
             close(Descriptors[i].fd);
-            Descriptors[i].fd = -1;
+            Descriptors[i].fd = -Descriptors[i].fd;
+            EventData[i].fn(Descriptors[i].fd, EventData[i].data);
         }
     }
 
     /* remove any closed or invalid descriptors */
     size_t nfds = 0;
     for (int i = 0; i < NumDescriptors; i++) {
-        if (Descriptors[i].fd != -1) {
+        if (Descriptors[i].fd >= 0) {
             Descriptors[nfds] = Descriptors[i];
             EventData[nfds++] = EventData[i];
         }

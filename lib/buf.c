@@ -200,9 +200,12 @@ size_t buf_change(Buf* buf, size_t beg, size_t end) {
 void buf_chomp(Buf* buf) {
     size_t end = buf_end(buf);
     if (!end) return;
-    delete(buf, end-1);
-    if (buf->undo->insert && buf->undo->data.ins.end == end)
-        buf->undo->data.ins.end--;
+    Rune r = buf_get(buf, end-1);
+    if (r == RUNE_CRLF || r == '\n') {
+        delete(buf, end-1);
+        if (buf->undo->insert && buf->undo->data.ins.end == end)
+            buf->undo->data.ins.end--;
+    }
 }
 
 void buf_undo(Buf* buf, Sel* sel) {

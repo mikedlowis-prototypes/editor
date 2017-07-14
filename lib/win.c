@@ -73,6 +73,7 @@ void win_loop(void) {
     event_watchfd(x11_connfd(), INPUT, win_update, NULL);
     while (x11_running()) {
         bool pending = event_poll(ms);
+        exec_reap();
         int nevents  = x11_events_queued();
         if (update_focus() || pending || nevents) {
             x11_events_take();
@@ -80,7 +81,6 @@ void win_loop(void) {
                 x11_flip();
         }
         x11_flush();
-        exec_reap();
     }
     x11_finish();
 }
