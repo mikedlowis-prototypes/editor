@@ -139,7 +139,7 @@ static void trim_whitespace(void) {
 static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= config_get_int(DblClickTime)) {
+    if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)config_get_int(DblClickTime)) {
         #ifndef TEST
         x11_deinit();
         #else
@@ -180,7 +180,7 @@ void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
     static uint64_t before = 0;
     if (!pressed) return;
     uint64_t now = getmillis();
-    count = ((now-before) <= config_get_int(DblClickTime) ? count+1 : 1);
+    count = ((now-before) <= (uint64_t)config_get_int(DblClickTime) ? count+1 : 1);
     before = now;
 
     if (count == 1) {
@@ -591,7 +591,7 @@ int pty_spawn(char** argv) {
 
 void pty_update(int fd, void* data) {
     /* Read from command if we have one */
-    long n = 0, r = 0, i = 0;
+    long n = 0, i = 0;
     static char cmdbuf[8192];
     if ((n = read(CmdFD, cmdbuf, sizeof(cmdbuf))) < 0)
         CmdFD = -1;

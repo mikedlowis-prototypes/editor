@@ -8,7 +8,7 @@ enum {
 };
 
 /* Represents a unicode code point */
-typedef uint32_t Rune;
+typedef int32_t Rune;
 
 size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);

@@ -156,7 +156,7 @@ static void send_data(int fd, void* data) {
             job->nwrite += nwrite;
         }
         if  (nwrite < 0 || job->ndata <= 0)
-            job_closefd(job, fd);
+            close(fd);
     } else {
         job_closefd(job, fd);
     }
@@ -190,7 +190,6 @@ static void recv_data(int fd, void* data) {
             }
         } else {
             close(fd);
-            job_closefd(job, -fd);
         }
     } else {
         job_closefd(job, fd);

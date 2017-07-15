@@ -123,7 +123,7 @@ char* getcurrdir(void) {
 char* dirname(char* path) {
     path = stringdup(path);
     char* end = strrchr(path, '/');
-    if (!end) return NULL;
+    if (!end) return (free(path), NULL);
     *end = '\0';
     return path;
 }

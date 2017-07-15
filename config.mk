@@ -33,7 +33,7 @@ GCOV   = 0
 
 # Treat all warnings as errors (poor man's lint?)
 ifeq ($(WERROR), 1)
-	CFLAGS += -Wall -Wextra -Werror
+	CFLAGS += -Wall -Wextra -Wno-unused-parameter
 endif
 
 # GCC Debugging

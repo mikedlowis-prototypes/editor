@@ -13,10 +13,8 @@ static void log_clear(Log** list);
 static void log_insert(Buf* buf, Log** list, size_t beg, size_t end);
 static void log_delete(Buf* buf, Log** list, size_t off, Rune* r, size_t len);
 static void syncgap(Buf* buf, size_t off);
-static void buf_resize(Buf* buf, size_t sz);
 static void delete(Buf* buf, size_t off);
 static size_t insert(Buf* buf, size_t off, Rune rune);
-static int range_match(Buf* buf, size_t dbeg, size_t dend, size_t mbeg, size_t mend);
 static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes);
 static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel);
 static size_t next_size(size_t curr);
@@ -173,7 +171,6 @@ size_t buf_delete(Buf* buf, size_t beg, size_t end) {
     log_clear(&(buf->redo));
     for (size_t i = end-beg; i > 0; i--) {
         Rune r = buf_get(buf, beg);
-        bool is_eol = (r == '\n' || r == RUNE_CRLF);
         log_delete(buf, &(buf->undo), beg, &r, 1);
         delete(buf, beg);
     }
@@ -279,7 +276,7 @@ void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel) {
 
 void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
     int balance = 0, dir;
-    size_t beg = sel->end, end = sel->end, off;
+    size_t beg, end = sel->end;
 
     /* figure out which end of the block we're starting at */
     if (buf_get(buf, end) == first)
@@ -538,7 +535,7 @@ static void buf_resize(Buf* buf, size_t sz) {
         *(copy.gapstart++) = *(curr);
     /* free the buffer and commit the changes */
     free(buf->bufstart);
-    *buf = copy;
+    memcpy(buf, &copy, sizeof(Buf));
 }
 
 static void delete(Buf* buf, size_t off) {
@@ -564,16 +561,6 @@ static size_t insert(Buf* buf, size_t off, Rune rune) {
         *(buf->gapstart++) = rune;
     }
     return rcount;
-}
-
-static int range_match(Buf* buf, size_t dbeg, size_t dend, size_t mbeg, size_t mend) {
-    size_t n1 = dend-dbeg, n2 = mend-mbeg;
-    if (n1 != n2) return n1-n2;
-    for (; n1 > 0; n1--, dbeg++, mbeg++) {
-        int cmp = buf_get(buf, dbeg) - buf_get(buf, mbeg);
-        if (cmp != 0) return cmp;
-    }
-    return 0;
 }
 
 static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes) {

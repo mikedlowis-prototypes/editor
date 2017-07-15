@@ -44,7 +44,7 @@ typedef intptr_t  intptr;
 
 /* Generic Death Function
  *****************************************************************************/
-void die(const char* msgfmt, ...);
+void die(const char* msgfmt, ...) __attribute__((__noreturn__));
 
 /* Option Parsing
  *

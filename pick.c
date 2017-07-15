@@ -61,6 +61,8 @@ static void load_choices(void) {
             choice.length = strlen(choice_text);
             choice.score  = 1.0;
             vec_push_back(&Choices, &choice);
+        } else {
+            free(choice_text);
         }
     }
     vec_sort(&Choices, by_score);

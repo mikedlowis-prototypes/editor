@@ -211,8 +211,6 @@ static void layout(int width, int height) {
 }
 
 static void onredraw(int width, int height) {
-    static uint64_t maxtime = 0;
-    uint64_t start = getmillis();
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
 
@@ -286,10 +284,6 @@ static void onredraw(int width, int height) {
         size_t y = Regions[Focused].y + (Regions[Focused].csry * fheight) + (fheight/2);
         x11_mouse_set(x, y);
     }
-
-    uint64_t stop = getmillis();
-    uint64_t elapsed = stop-start;
-    //printf("%llu\n", elapsed);
 }
 
 static void oninput(int mods, Rune key) {
@@ -326,7 +320,6 @@ static void oninput(int mods, Rune key) {
 
 static void scroll_actions(int btn, bool pressed, int x, int y) {
     size_t row = (y-Regions[SCROLL].y) / x11_font_height(Font);
-    size_t col = (x-Regions[SCROLL].x) / x11_font_width(Font);
     switch (btn) {
         case MouseLeft:
             if (pressed)
@@ -405,24 +398,23 @@ static bool update_focus(void) {
 
 static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num) {
     int color = config_get_int(ClrGutterNor);
-    if (ShowLineNumbers) {
-        if (current) {
-            color = config_get_int(ClrGutterSel);;
-            size_t fheight = x11_font_height(Font);
-            x11_draw_rect((color >> 8), x-3, y-fheight, gutter_size(), fheight);
-        }
-        UGlyph glyphs[gcols];
-        for (int i = gcols-1; i >= 0; i--) {
-            glyphs[i].attr = color & 0xFF;
-            if (num > 0) {
-                glyphs[i].rune = ((num % 10) + '0');
-                num /= 10;
-            } else {
-                glyphs[i].rune = ' ';
-            }
-        }
-        draw_glyphs(x, y, glyphs, gcols, gcols);
+    if (!gcols) return;
+    if (current) {
+        color = config_get_int(ClrGutterSel);;
+        size_t fheight = x11_font_height(Font);
+        x11_draw_rect((color >> 8), x-3, y-fheight, gutter_size(), fheight);
     }
+    UGlyph glyphs[gcols];
+    for (int i = gcols-1; i >= 0; i--) {
+        glyphs[i].attr = color & 0xFF;
+        if (num > 0) {
+            glyphs[i].rune = ((num % 10) + '0');
+            num /= 10;
+        } else {
+            glyphs[i].rune = ' ';
+        }
+    }
+    draw_glyphs(x, y, glyphs, gcols, gcols);
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {

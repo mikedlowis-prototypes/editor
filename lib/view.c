@@ -66,11 +66,10 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
 }
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
-    size_t line = 1, off = 0;
+    size_t off = 0;
     if (view->nrows == nrows && view->ncols == ncols) return;
     /* free the old row data */
     if (view->nrows) {
-        line = view->rows[0]->line;
         off  = view->rows[0]->off;
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
@@ -701,10 +700,8 @@ static void apply_colors(View* view) {
             if (!curr) { r = -1; break; } // Break both loops if we're done
 
             /* check if we're in the current region */
-            if (curr->beg <= off && off <= curr->end) {
-                uint32_t attr = row->cols[col].attr;
+            if (curr->beg <= off && off <= curr->end)
                 row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
-            }
             off++, col++;
             while (col < row->len && row->cols[col].rune == '\0')
                 col++;
