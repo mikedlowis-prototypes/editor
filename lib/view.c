@@ -208,7 +208,7 @@ bool view_findstr(View* view, int dir, char* str) {
 
 void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
-    if (!isspace(rune) && rune < 0x20)
+    if (!isspace(rune) && (rune >= 0 && rune < 0x20))
         return;
     if (num_selected(view->selection)) {
         Sel sel = view->selection;

@@ -305,16 +305,17 @@ static void oninput(int mods, Rune key) {
         }
     }
 
+    /* translate to crlf if needed */
+    if (key == '\n' && win_view(FOCUSED)->buffer.crlf)
+        key = RUNE_CRLF;
+
     /* fallback to just inserting the rune if it doesn't fall in the private use area.
      * the private use area is used to encode special keys */
     if (key < 0xE000 || key > 0xF8FF) {
-        if (InputFunc) {
+        if (InputFunc)
             InputFunc(key);
-        } else {
-            if (key == '\n' && win_view(FOCUSED)->buffer.crlf)
-                key = RUNE_CRLF;
+        else
             view_insert(win_view(FOCUSED), true, key);
-        }
     }
 }
 

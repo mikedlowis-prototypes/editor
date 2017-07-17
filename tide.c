@@ -552,7 +552,7 @@ static void oninput(Rune rune) {
     if (win_getregion() == EDIT) {
         size_t point = win_buf(EDIT)->outpoint;
         size_t pos   = win_view(EDIT)->selection.end;
-        if (rune == '\n' && pos > point) {
+        if ((rune == '\n' || rune == RUNE_CRLF) && pos > point) {
             Sel range = { .beg = point, .end = pos };
             char* str = view_getstr(win_view(EDIT), &range);
             if (write(CmdFD, str, strlen(str)-1) < 0)

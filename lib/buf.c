@@ -551,7 +551,7 @@ static size_t insert(Buf* buf, size_t off, Rune rune) {
     size_t rcount = 1;
     syncgap(buf, off);
     if (off < buf->outpoint) buf->outpoint++;
-    if (rune == '\n') buf->nlines++;
+    if (rune == '\n' || rune == RUNE_CRLF) buf->nlines++;
     if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
         rcount = 0;
         *(buf->gapstart-1) = RUNE_CRLF;

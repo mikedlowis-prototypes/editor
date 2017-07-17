@@ -33,7 +33,6 @@ static void initialize(void) {
 #define EXPECT_EXIT \
     if ((ExitExpected = true, 0 == setjmp(ExitPad)))
 
-
 void setup_view(WinRegion id, char* text, int crlf, unsigned cursor) {
     win_setregion(id);
     win_buf(id)->crlf = crlf;
@@ -82,7 +81,7 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 1);
     }
 
-    TEST(input \n chould result in RUNE_CRLF if in crlf mode) {
+    TEST(input \n should result in RUNE_CRLF if in crlf mode) {
         setup_view(EDIT, "", CRLF, 0);
         win_buf(EDIT)->crlf = 1;
         send_keys(ModNone, XK_Return);
@@ -99,7 +98,6 @@ TEST_SUITE(UnitTests) {
         CHECK(win_sel(EDIT)->end == 1);
         CHECK('\n' == buf_get(win_buf(EDIT), 0));
     }
-
     /* Key Handling - Cursor Movement - Basic
      *************************************************************************/
     TEST(left should do nothing for empty buffer) {

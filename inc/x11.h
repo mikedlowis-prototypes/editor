@@ -1,6 +1,6 @@
 typedef struct {
     void (*redraw)(int width, int height);
-    void (*handle_key)(int mods, uint32_t rune);
+    void (*handle_key)(int mods, int32_t rune);
     void (*shutdown)(void);
     void (*set_focus)(bool focus);
     void (*mouse_drag)(int state, int x, int y);
