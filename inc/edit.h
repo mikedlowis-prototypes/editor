@@ -228,6 +228,15 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest);
 void exec_cmd(char** cmd, char* text, char** out, char** err);
 int exec_spawn(char** cmd, int* in, int* out);
 
+/* Pseudo-Terminal Handling
+ *****************************************************************************/
+bool pty_active(void);
+void pty_spawn(char** argv);
+void pty_send(char* cmd);
+void pty_send_intr(void);
+void pty_send_eof(void);
+void pty_send_susp(void);
+
 /* Configuration Data
  *****************************************************************************/
 enum { /* Configuration Variables */

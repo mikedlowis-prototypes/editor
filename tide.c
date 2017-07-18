@@ -1,4 +1,3 @@
-#define _XOPEN_SOURCE 700
 #include <stdc.h>
 #include <x11.h>
 #include <utf.h>
@@ -7,12 +6,6 @@
 #include <shortcuts.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <sys/select.h>
-#ifdef __MACH__
-    #include <util.h>
-#else
-    #include <pty.h>
-#endif
 
 typedef struct {
     char* tag;
@@ -22,7 +15,6 @@ typedef struct {
     } action;
 } Tag;
 
-static int CmdFD = -1;
 static Tag Builtins[];
 static int SearchDir = DOWN;
 static char* SearchTerm = NULL;
@@ -492,6 +484,12 @@ static KeyBinding Bindings[] = {
     { ModCtrl,      'n',        new_win      },
     { ModOneOrMore, '\n',       newline      },
     { ModCtrl,      ' ',        complete     },
+
+    /* Pseudo-terminal control shortcuts */
+    { ModCtrl|ModShift, 'c', pty_send_intr },
+    { ModCtrl|ModShift, 'd', pty_send_eof  },
+    { ModCtrl|ModShift, 'z', pty_send_susp },
+
     { 0, 0, 0 }
 };
 
@@ -548,60 +546,17 @@ bool update_needed(void) {
 }
 
 static void oninput(Rune rune) {
-    view_insert(win_view(FOCUSED), (CmdFD == -1), rune);
+    view_insert(win_view(FOCUSED), !pty_active(), rune);
     if (win_getregion() == EDIT) {
         size_t point = win_buf(EDIT)->outpoint;
         size_t pos   = win_view(EDIT)->selection.end;
         if ((rune == '\n' || rune == RUNE_CRLF) && pos > point) {
             Sel range = { .beg = point, .end = pos };
             char* str = view_getstr(win_view(EDIT), &range);
-            if (write(CmdFD, str, strlen(str)-1) < 0)
-                CmdFD = -1;
+            pty_send(str);
             free(str);
         }
     }
-}
-
-int pty_spawn(char** argv) {
-    int fd;
-    struct termios tio;
-    pid_t pid;
-    putenv("TERM=dumb");
-    switch ( (pid = forkpty(&fd, NULL, NULL, NULL)) ) {
-        case -1: // Failed
-            die("forkpty() :");
-            break;
-
-        case 0: // Child Process
-            if (execvp(argv[0], argv) < 0)
-                die("execvp('%s', ...) :", argv[0]);
-            exit(EXIT_FAILURE);
-            break;
-
-        default: // Parent Process
-            tcgetattr(fd, &tio);
-            tio.c_lflag      &= ~(ECHO | ECHONL);
-            tio.c_cc[ VMIN ]  = 1;
-            tio.c_cc[ VTIME ] = 0;
-            tcsetattr(fd, TCSANOW, &tio);
-            break;
-    }
-    return fd;
-}
-
-void pty_update(int fd, void* data) {
-    /* Read from command if we have one */
-    long n = 0, i = 0;
-    static char cmdbuf[8192];
-    if ((n = read(CmdFD, cmdbuf, sizeof(cmdbuf))) < 0)
-        CmdFD = -1;
-    while (i < n) {
-        Rune rune = 0;
-        size_t length = 0;
-        while (!utf8decode(&rune, &length, cmdbuf[i++]));
-        view_insert(win_view(EDIT), false, rune);
-    }
-    win_buf(EDIT)->outpoint = win_view(EDIT)->selection.end;
 }
 
 void edit_relative(char* path) {
@@ -659,8 +614,7 @@ void edit_command(char** cmd) {
     config_set_int(TabWidth, 8);
     win_setlinenums(false);
     win_setruler(0);
-    CmdFD = pty_spawn(*cmd ? cmd : shellcmd);
-    event_watchfd(CmdFD, INPUT, pty_update, NULL);
+    pty_spawn(*cmd ? cmd : shellcmd);
 }
 
 #ifndef TEST
