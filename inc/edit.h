@@ -28,7 +28,6 @@ typedef void (*event_cbfn_t)(int fd, void* data);
 bool event_poll(int ms);
 void event_watchfd(int fd, int iodir, event_cbfn_t fn, void* data);
 
-
 /* Buffer management functions
  *****************************************************************************/
 /* undo/redo list item */
@@ -160,17 +159,17 @@ typedef struct {
 } Row;
 
 typedef struct {
-    bool sync_needed;   /* whether the view needs to be synced with cursor */
-    bool sync_center;   /* cursor should be centered on screen if possible */
-    bool sync_lines;    /* whether the line numbers should be recalculated */
-    size_t nrows;       /* number of rows in the view */
-    size_t ncols;       /* number of columns in the view */
-    Row** rows;         /* array of row data structures */
     Buf buffer;         /* the buffer used to populate the view */
     Sel selection;      /* range of currently selected text */
     size_t prev_csr;    /* previous cursor location */
+    size_t nrows;       /* number of rows in the view */
+    size_t ncols;       /* number of columns in the view */
+    Row** rows;         /* array of row data structures */
     SyntaxSpan* spans;  /* list of colored regions */
     int clrnor, clrsel; /* text color pairs for normal and selected text */
+    bool sync_needed;   /* whether the view needs to be synced with cursor */
+    bool sync_center;   /* cursor should be centered on screen if possible */
+    bool sync_lines;    /* whether the line numbers should be recalculated */
 } View;
 
 enum {

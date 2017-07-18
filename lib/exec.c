@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#define PIPE_READ 0
+#define PIPE_READ  0
 #define PIPE_WRITE 1
 
 typedef struct {
@@ -19,7 +19,7 @@ typedef struct {
 typedef struct Job Job;
 
 typedef struct {
-    Job* job;     /* pointer to the job teh receiver belongs to */
+    Job* job;     /* pointer to the job the receiver belongs to */
     View* view;   /* destination view */
     size_t beg;   /* start of output */
     size_t count; /* number of bytes written */
@@ -173,15 +173,9 @@ static void recv_data(int fd, void* data) {
     if (fd >= 0) {
         long i = 0, nread = read(fd, buffer, sizeof(buffer));
         if (nread > 0) {
-            if (!rcvr->count) {
-                if (sel.end < sel.beg) {
-                    size_t temp = sel.beg;
-                    sel.beg = sel.end, sel.end = temp;
-                }
-                rcvr->beg = sel.beg = sel.end = buf_change(buf, sel.beg, sel.end);
-                view->selection = sel;
-            }
-            for (; i < nread;) {
+            if (!rcvr->count)
+                rcvr->beg = min(sel.beg, sel.end);
+            while (i < nread) {
                 Rune r;
                 size_t len = 0;
                 while (!utf8decode(&r, &len, buffer[i++]));

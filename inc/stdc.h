@@ -195,3 +195,13 @@ static inline char* _getopt_(int* p_argc, char*** p_argv) {
     #define static_assert(expr) \
         typedef char unique_id[( expr )?1:-1]
 #endif
+
+#ifndef min
+    #define min(x,y) \
+        ((x) < (y) ? (x) : (y))
+#endif
+
+#ifndef max
+    #define max(x,y) \
+        ((x) > (y) ? (x) : (y))
+#endif
