@@ -53,7 +53,8 @@ void pty_spawn(char** argv) {
 void pty_send(char* str) {
     if (!str) return;
     view_eof(win_view(EDIT), false);
-    bool has_eol = (str[strlen(str)-1] == '\n');
+    size_t sz = strlen(str);
+    bool has_eol = (str[sz-1] == '\n');
     while (*str) {
         Rune rune = 0;
         size_t length = 0;
@@ -74,6 +75,7 @@ void pty_send_rune(Rune rune) {
         if (write(PtyFD, str, strlen(str)-1) < 0)
             PtyFD = -1;
         free(str);
+        win_buf(EDIT)->outpoint = pos;
     }
 }
 
