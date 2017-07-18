@@ -233,6 +233,7 @@ int exec_spawn(char** cmd, int* in, int* out);
 bool pty_active(void);
 void pty_spawn(char** argv);
 void pty_send(char* cmd);
+void pty_send_rune(Rune rune);
 void pty_send_intr(void);
 void pty_send_eof(void);
 void pty_send_susp(void);

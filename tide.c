@@ -93,6 +93,8 @@ static void exec(char* cmd) {
     if (tag) {
         while (*cmd && !isspace(*cmd++));
         tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
+    } else if (pty_active()) {
+        pty_send(cmd);
     } else {
         cmd_exec(cmd);
     }
@@ -415,6 +417,7 @@ static Tag Builtins[] = {
     { .tag = "Reload",    .action.noarg = reload    },
     { .tag = "Save",      .action.noarg = save      },
     { .tag = "SaveAs",    .action.arg   = saveas    },
+    { .tag = "Send",      .action.arg   = pty_send  },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
     { .tag = "LineNums",  .action.noarg = tag_lnnum },
@@ -546,17 +549,10 @@ bool update_needed(void) {
 }
 
 static void oninput(Rune rune) {
-    view_insert(win_view(FOCUSED), !pty_active(), rune);
-    if (win_getregion() == EDIT) {
-        size_t point = win_buf(EDIT)->outpoint;
-        size_t pos   = win_view(EDIT)->selection.end;
-        if ((rune == '\n' || rune == RUNE_CRLF) && pos > point) {
-            Sel range = { .beg = point, .end = pos };
-            char* str = view_getstr(win_view(EDIT), &range);
-            pty_send(str);
-            free(str);
-        }
-    }
+    if (win_getregion() == EDIT && pty_active())
+        pty_send_rune(rune);
+    else
+        view_insert(win_view(FOCUSED), true, rune);
 }
 
 void edit_relative(char* path) {

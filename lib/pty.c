@@ -51,8 +51,30 @@ void pty_spawn(char** argv) {
 }
 
 void pty_send(char* str) {
-    if (write(PtyFD, str, strlen(str)-1) < 0)
-        PtyFD = -1;
+    if (!str) return;
+    view_eof(win_view(EDIT), false);
+    bool has_eol = (str[strlen(str)-1] == '\n');
+    while (*str) {
+        Rune rune = 0;
+        size_t length = 0;
+        while (!utf8decode(&rune, &length, *str++));
+        pty_send_rune(rune);
+    }
+    if (!has_eol)
+        pty_send_rune('\n');
+}
+
+void pty_send_rune(Rune rune) {
+    view_insert(win_view(EDIT), false, rune);
+    size_t point = win_buf(EDIT)->outpoint;
+    size_t pos   = win_view(EDIT)->selection.end;
+    if ((rune == '\n' || rune == RUNE_CRLF) && pos > point) {
+        Sel range = { .beg = point, .end = pos };
+        char* str = view_getstr(win_view(EDIT), &range);
+        if (write(PtyFD, str, strlen(str)-1) < 0)
+            PtyFD = -1;
+        free(str);
+    }
 }
 
 static void update(int fd, void* data) {
