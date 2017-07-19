@@ -41,6 +41,7 @@ install: all
 	mkdir -p $(PREFIX)/bin
 	cp -f tide $(PREFIX)/bin
 	cp -f tide-hl.rb $(PREFIX)/bin
+	cp -f tide-fetch.rb $(PREFIX)/bin
 	cp -f pick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
 	cp -f pickfile $(PREFIX)/bin
@@ -49,6 +50,7 @@ install: all
 uninstall:
 	rm -f $(PREFIX)/bin/tide
 	rm -f $(PREFIX)/bin/tide-hl.rb
+	rm -f $(PREFIX)/bin/tide-fetch.rb
 	rm -f $(PREFIX)/bin/pick
 	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/pickfile

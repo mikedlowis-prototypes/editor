@@ -35,6 +35,9 @@ char* PickTagCmd[] = { "picktag", NULL, "tags", NULL, NULL };
 /* Open a new instance of the editor */
 char* OpenCmd[] = { "tide", NULL, NULL };
 
+/* Try to fetch the text with tide-fetch */
+char* FetchCmd[] = { "tide-fetch.rb", NULL, NULL };
+
 /* Tag/Cmd Execution
  ******************************************************************************/
 static Tag* tag_lookup(char* cmd) {
@@ -197,7 +200,7 @@ void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
     if (win_btnpressed(MouseLeft)) {
         cut();
     } else {
-        char* str = view_fetch(win_view(id), row, col);
+        char* str = view_fetch(win_view(id), row, col, riscmd);
         if (str) exec(str);
         free(str);
     }
@@ -208,12 +211,18 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
     if (win_btnpressed(MouseLeft)) {
         paste();
     } else {
-        SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
-        free(SearchTerm);
-        SearchTerm = view_fetch(win_view(id), row, col);
-        if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
-            win_setregion(EDIT);
-            win_warpptr(EDIT);
+        char* text = view_fetch(win_view(id), row, col, risfile);
+        FetchCmd[1] = text;
+        if (exec_cmd(FetchCmd, NULL, NULL, NULL) != 0) {
+            SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+            free(SearchTerm);
+            SearchTerm = view_fetch(win_view(id), row, col, risfile);
+            if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
+                win_setregion(EDIT);
+                win_warpptr(EDIT);
+            }
+        } else {
+            free(text);
         }
     }
 }

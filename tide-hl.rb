@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 if not ARGV[0] then
-  $stderr.puts "Usage: tide-hl [FILE]"
+  $stderr.puts "Usage: tide-hl.rb [FILE]"
   exit 1
 end
 
@@ -136,7 +136,7 @@ end
 
 language "Ruby" do
   keywords = Set.new %w[
-    if not then else elsif end def do exit nil
+    if not then else elsif end def do exit nil begin rescue raise pass class
     goto break return continue case default switch while for
   ]
 

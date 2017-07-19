@@ -178,7 +178,7 @@ size_t view_selsize(View* view) {
     return num_selected(view->selection);
 }
 
-char* view_fetch(View* view, size_t row, size_t col) {
+char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
    char* str = NULL;
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
@@ -186,7 +186,7 @@ char* view_fetch(View* view, size_t row, size_t col) {
         if (in_selection(view->selection, off)) {
             sel = view->selection;
         } else {
-            buf_getword(&(view->buffer), riscmd, &sel);
+            buf_getword(&(view->buffer), isword, &sel);
             sel.end++;
         }
         str = view_getstr(view, &sel);

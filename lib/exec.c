@@ -90,16 +90,16 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
     }
 }
 
-void exec_cmd(char** cmd, char* text, char** out, char** err) {
+int exec_cmd(char** cmd, char* text, char** out, char** err) {
     Proc proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
-        return;
+        return -1;
     }
     /* send the input to stdin of the command */
     if (text && write(proc.in, text, strlen(text)) < 0) {
         perror("failed to write");
-        return;
+        return -1;
     }
     close(proc.in);
     /* read the stderr of the command */
@@ -109,7 +109,9 @@ void exec_cmd(char** cmd, char* text, char** out, char** err) {
     if (out) *out = fdgets(proc.out);
     close(proc.out);
     /* wait for the process to finish */
-    waitpid(proc.pid, NULL, 0);
+    int status;
+    waitpid(proc.pid, &status, 0);
+    return status;
 }
 
 int exec_spawn(char** cmd, int* in, int* out) {
@@ -167,7 +169,6 @@ static void recv_data(int fd, void* data) {
     Rcvr* rcvr = data;
     Job* job = rcvr->job;
     View* view = rcvr->view;
-    Buf* buf = &(rcvr->view->buffer);
     Sel sel = view->selection;
 
     if (fd >= 0) {

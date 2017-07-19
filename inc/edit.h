@@ -188,7 +188,7 @@ Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);
 void view_byline(View* view, int move, bool extsel);
-char* view_fetch(View* view, size_t row, size_t col);
+char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune));
 bool view_findstr(View* view, int dir, char* str);
 void view_insert(View* view, bool indent, Rune rune);
 void view_delete(View* view, int dir, bool byword);
@@ -225,7 +225,7 @@ Rune view_getrune(View* view);
  *****************************************************************************/
 bool exec_reap(void);
 void exec_job(char** cmd, char* data, size_t ndata, View* dest);
-void exec_cmd(char** cmd, char* text, char** out, char** err);
+int exec_cmd(char** cmd, char* text, char** out, char** err);
 int exec_spawn(char** cmd, int* in, int* out);
 
 /* Pseudo-Terminal Handling
