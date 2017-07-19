@@ -27,14 +27,19 @@ def match(regex)
   end
 end
 
+def spawn(cmd)
+  job = fork { exec cmd }
+  Process.detach(job)
+end
+
 def open_file
-  system("xdg-open #{$item}")
+  spawn("xdg-open #{$item}")
 end
 
 def open_with(app)
   app = Apps[app] || ENV[app.to_s.upcase]
   raise RuleError.new() if not app
-  system("#{app} #{$item}")
+  spawn("#{app} #{$item}")
 end
 
 def find_files(file)
