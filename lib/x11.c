@@ -253,6 +253,7 @@ static uint32_t special_keys(uint32_t key) {
         case XK_Super_R:
         case XK_Hyper_L:
         case XK_Hyper_R:
+        case XK_Menu:
             return RUNE_ERR;
 
         /* if it ain't special, don't touch it */

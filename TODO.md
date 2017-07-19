@@ -5,7 +5,6 @@ Up Next:
 * B2+B1 click executes command with selection as argument
 * right click to fetch file or line
 * Run commands in the background and don't block the main thread.
-* ignore the menu key or map it to control
 * Add a separate config option for pty tags
 * update man pages with new functionality
 
