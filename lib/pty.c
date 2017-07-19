@@ -50,19 +50,26 @@ void pty_spawn(char** argv) {
     event_watchfd(PtyFD, INPUT, update, NULL);
 }
 
-void pty_send(char* str) {
-    if (!str) return;
-    view_eof(win_view(EDIT), false);
+void send_string(char* str) {
     size_t sz = strlen(str);
-    bool has_eol = (str[sz-1] == '\n');
+    if (str[sz-1] == '\n') str[sz-1] = '\0';
     while (*str) {
         Rune rune = 0;
         size_t length = 0;
         while (!utf8decode(&rune, &length, *str++));
         pty_send_rune(rune);
     }
-    if (!has_eol)
-        pty_send_rune('\n');
+}
+
+void pty_send(char* cmd, char* arg) {
+    if (!cmd) return;
+    view_eof(win_view(EDIT), false);
+    send_string(cmd);
+    if (arg) {
+        pty_send_rune(' ');
+        send_string(arg);
+    }
+    pty_send_rune('\n');
 }
 
 void pty_send_rune(Rune rune) {

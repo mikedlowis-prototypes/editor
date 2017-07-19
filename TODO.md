@@ -2,43 +2,42 @@
 
 Up Next:
 
+* B2+B1 click executes command with selection as argument
+* right click to fetch file or line
+* Run commands in the background and don't block the main thread.
+* ignore the menu key or map it to control
+* Add a separate config option for pty tags
+* update man pages with new functionality
+
 * moving from tags to the gutter does not transfer focus to edit region
 * implement transaction control in buf.c
-* highlight all matches of search term
-* highlight classes of identifiers
 * Add a way to CD using a builtin (buffers will track original dir)
 * shortcut to jump to previous edit
 * add command line flags to toggle options (Tabs, Indent, etc..)
 * move by words is inconsistent. Example:
     var infoId = 'readerinfo'+reader.id;
-* ignore the menu key or map it to control
 
 The Future:
 
-* Ctrl+/ shortcut to comment/uncomment based on syntax
 * Case insensitive search
 * Ctrl+Up,Down requires two undos to revert.
 * Ctrl+Up,Down with non line selection should track column
-* Scrolling line offset
 * Ctrl+Shift+Enter copies indent of wrong line
-* Make Fn keys execute nth command in the tags buffers
-* jump to previous or next line with less indent
 * use transaction ids to only mark buffer dirty when it really is
 * refactor selection handling to buf.c to prepare for multiple selections.
 * 100% coverage with unit and unit-integration tests
-* right click to fetch file or line
 * tab inserts dont coalesce like one would expect
-* Run commands in the background and don't block the main thread.
-* shortcut to repeat previous operation
 * implement command diffing logic to optimize the undo/redo log
 * Status line should omit characters from beginning of path to make file path fit
 * pickfile directory traversal when no tags file
 
 Possible Shortcuts:
 
+* Ctrl+/   - to comment/uncomment based on syntax
 * Ctrl+{,} - Move to start or end brace of block
 * Ctrl+(,) - Move to start or end of paragraph
 * Ctrl+'   - Move to matching brace, bracket, or paren
+* Ctrl+.   - repeat previous operation
 
 Maybe think about addressing these later:
 
@@ -75,6 +74,15 @@ Operators:
 
     {n,m}   From n to m matches
     |       Alternative
+
+# tcmd Tags
+
+build
+fetch
+ls
+cat
+cd
+
 
 # Syntax Highlighting
 

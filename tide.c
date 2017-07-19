@@ -94,7 +94,10 @@ static void exec(char* cmd) {
         while (*cmd && !isspace(*cmd++));
         tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
     } else if (pty_active()) {
-        pty_send(cmd);
+        char* arg = view_getstr(win_view(TAGS), NULL);
+        if (!arg) arg = view_getstr(win_view(EDIT), NULL);
+        pty_send(cmd, arg);
+        free(arg);
     } else {
         cmd_exec(cmd);
     }
@@ -401,6 +404,10 @@ static void jumpmark(void) {
         view_jumpto(win_view(FOCUSED), false, Marks[mark]);
 }
 
+static void tag_send(char* cmd) {
+    pty_send(cmd, NULL);
+}
+
 /* Main Routine
  ******************************************************************************/
 static Tag Builtins[] = {
@@ -417,7 +424,7 @@ static Tag Builtins[] = {
     { .tag = "Reload",    .action.noarg = reload    },
     { .tag = "Save",      .action.noarg = save      },
     { .tag = "SaveAs",    .action.arg   = saveas    },
-    { .tag = "Send",      .action.arg   = pty_send  },
+    { .tag = "Send",      .action.arg   = tag_send  },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
     { .tag = "LineNums",  .action.noarg = tag_lnnum },
