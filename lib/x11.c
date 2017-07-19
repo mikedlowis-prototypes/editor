@@ -263,7 +263,7 @@ static uint32_t special_keys(uint32_t key) {
 }
 
 static uint32_t getkey(XEvent* e) {
-    uint32_t rune = RUNE_ERR;
+    int32_t rune = RUNE_ERR;
     size_t len = 0;
     char buf[8];
     KeySym key;

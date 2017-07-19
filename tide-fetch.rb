@@ -43,7 +43,11 @@ def open_with(app)
 end
 
 def find_files(file)
-  files = Dir.glob("./**/#{file}").sort_by(&:length)
+  if file.match(/^\.?\//)
+    files = [file]
+  else
+    files = Dir.glob("**/#{file}").sort_by(&:length)
+  end
   raise RuleError.new() if files.length == 0
   files
 end
@@ -53,7 +57,7 @@ def find_file(file)
 end
 
 def mimetype(regex)
-  mtype = `file -i #{$item} | cut -d' ' -f2`
+  mtype = `file --mime-type #{$item} | cut -d' ' -f2`
   if not mtype.match(regex) then
     raise RuleError.new()
   end
