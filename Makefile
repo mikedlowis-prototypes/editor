@@ -39,6 +39,7 @@ clean:
 
 install: all
 	mkdir -p $(PREFIX)/bin
+	cp -f tcmd $(PREFIX)/bin
 	cp -f tide $(PREFIX)/bin
 	cp -f tide-hl.rb $(PREFIX)/bin
 	cp -f tide-fetch.rb $(PREFIX)/bin
@@ -48,6 +49,7 @@ install: all
 	cp -f picktag $(PREFIX)/bin
 
 uninstall:
+	rm -f $(PREFIX)/bin/tcmd
 	rm -f $(PREFIX)/bin/tide
 	rm -f $(PREFIX)/bin/tide-hl.rb
 	rm -f $(PREFIX)/bin/tide-fetch.rb
