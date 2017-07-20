@@ -5,10 +5,12 @@ export PS1=":; "
 export PATH="$HOME/.config/tide/tools:$PATH"
 export EDITRCFILE="$HOME/.config/edit/editrc"
 export BASH_ENV="$EDITRCFILE"
+export PROMPT_COMMAND='tide_cd "$PWD"'
 
-function cd(){
-    command cd "$@" && echo -en "\033P$PWD\0"
-}
+# Override
+function tide_cd(){ echo -en "\033P$PWD\0"; }
+export -f tide_cd
+function cd(){ cd "$@" && tide_cd "$@"; }
 export -f cd
 
 edit(){
