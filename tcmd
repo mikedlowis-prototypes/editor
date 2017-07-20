@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# setup editor env
+export PS1=":; "
+export PATH="$HOME/.config/tide/tools:$PATH"
+export EDITRCFILE="$HOME/.config/edit/editrc"
+export BASH_ENV="$EDITRCFILE"
+
+function cd(){
+    command cd "$@" && echo -en "\033P$PWD\0"
+}
+export -f cd
+
+edit(){
+    [[ -f "$EDITRCFILE" ]] && . "$EDITRCFILE"
+
+    # Now figure out the correct editor to execute
+    if [[ -z "$DISPLAY" ]]; then
+        "$EDITOR" "$@"
+    else
+        bkg tide "$@"
+    fi
+}
+export -f edit
+
+exec tide --
