@@ -42,18 +42,13 @@ def open_with(app)
   spawn("#{app} #{$item}")
 end
 
-def find_files(file)
-  if file.match(/^\.?\//)
-    files = [file]
-  else
-    files = Dir.glob("**/#{file}").sort_by(&:length)
-  end
-  raise RuleError.new() if files.length == 0
-  files
-end
-
 def find_file(file)
-  find_files(file).first
+  file = file.gsub(/^~/, ENV["HOME"])
+  if not file.match(/^\.?\//)
+    file = `find . -path '*#{file}' -print -quit`.chomp
+  end
+  raise RuleError.new() if (file.length == 0 || (not File.exist?(file)))
+  file
 end
 
 def mimetype(regex)
