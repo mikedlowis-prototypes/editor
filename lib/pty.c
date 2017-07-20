@@ -86,17 +86,29 @@ void pty_send_rune(Rune rune) {
     }
 }
 
+static void read_escape(char* data, long* i, long n) {
+    /* only one escape code supported and that is to change the working dir */
+    if (data[*i] != 'P') return;
+    size_t sz = strlen(&data[*i + 1]);
+    chdir(&data[*i + 1]);
+    *i = *i + 1 + sz;
+}
+
 static void update(int fd, void* data) {
     /* Read from command if we have one */
     long n = 0, i = 0;
     static char cmdbuf[8192];
-    if ((n = read(PtyFD, cmdbuf, sizeof(cmdbuf))) < 0)
+    if ((n = read(PtyFD, cmdbuf, sizeof(cmdbuf)-1)) < 0)
         PtyFD = -1;
+    cmdbuf[n] = '\0';
     while (i < n) {
         Rune rune = 0;
         size_t length = 0;
         while (!utf8decode(&rune, &length, cmdbuf[i++]));
-        view_insert(win_view(EDIT), false, rune);
+        if (rune == '\033')
+            read_escape(cmdbuf, &i, n);
+        else
+            view_insert(win_view(EDIT), false, rune);
     }
     win_buf(EDIT)->outpoint = win_view(EDIT)->selection.end;
 }
