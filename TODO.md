@@ -5,7 +5,6 @@ Up Next:
 * B2+B1 click executes command with selection as argument
 * right click to fetch file or line
 * Run commands in the background and don't block the main thread.
-* Add a separate config option for pty tags
 * update man pages with new functionality
 
 * moving from tags to the gutter does not transfer focus to edit region

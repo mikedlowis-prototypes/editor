@@ -38,7 +38,6 @@ end
 
 def open_with(app)
   app = Apps[app] || ENV[app.to_s.upcase]
-  puts "app: " + app
   raise RuleError.new() if not app
   spawn("#{app} #{$item}")
 end

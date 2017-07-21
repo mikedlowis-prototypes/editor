@@ -41,6 +41,8 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     buf_init(&(view->buffer), errfn);
     if (file) {
         view_jumpto(view, false, buf_load(&(view->buffer), file));
+        view_eol(view, false);
+        view_selctx(view);
         colors_init(view->buffer.path);
     }
 }
