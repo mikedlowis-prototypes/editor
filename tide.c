@@ -624,8 +624,6 @@ void edit_command(char** cmd) {
     char* shellcmd[] = { ShellCmd[0], NULL };
     win_buf(EDIT)->crlf = 1;
     config_set_int(TabWidth, 8);
-    win_setlinenums(false);
-    win_setruler(0);
     pty_spawn(*cmd ? cmd : shellcmd);
 }
 
@@ -635,12 +633,8 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
 
-    /* Create the window and enter the event loop */
+    /* create the window */
     win_window("tide", ondiagmsg);
-    char* tags = getenv("EDITTAGS");
-    win_settext(TAGS, (tags ? tags : config_get_str(TagString)));
-    win_setruler(config_get_int(RulerColumn));
-    win_setlinenums(config_get_bool(LineNumbers));
 
     /* open all but the last file in new instances */
     for (argc--, argv++; argc > 1; argc--, argv++) {
@@ -659,6 +653,15 @@ int main(int argc, char** argv) {
     }
 
     /* now create the window and start the event loop */
+    if (!pty_active()) {
+        win_settext(TAGS, config_get_str(EditTagString));
+        win_setruler(config_get_int(RulerColumn));
+        win_setlinenums(config_get_bool(LineNumbers));
+    } else {
+        win_settext(TAGS, config_get_str(CmdTagString));
+        win_setruler(0);
+        win_setlinenums(false);
+    }
     win_setkeys(Bindings, oninput);
     win_loop();
     return 0;

@@ -82,6 +82,17 @@ ls
 cat
 cd
 
+# Fetch Rule Syntax
+
+include [FILE]
+set [NAME] [VALUE]
+unset [NAME] [VALUE]
+is [NAME] [VALUE]
+isdir [VALUE]
+isfile [VALUE]
+findfile [VALUE]
+matches [NAME] [REGEX]
+exec [CMD] [ARGS...]
 
 # Syntax Highlighting
 

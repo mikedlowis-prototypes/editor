@@ -38,6 +38,7 @@ end
 
 def open_with(app)
   app = Apps[app] || ENV[app.to_s.upcase]
+  puts "app: " + app
   raise RuleError.new() if not app
   spawn("#{app} #{$item}")
 end
@@ -45,7 +46,7 @@ end
 def find_file(file)
   file = file.gsub(/^~/, ENV["HOME"])
   if not file.match(/^\.?\//)
-    file = `find . -path '*#{file}' -print -quit`.chomp
+    file = `find . -ipath '*/build/*' -prune -o -path '*#{file}' -print -quit`.chomp
   end
   raise RuleError.new() if (file.length == 0 || (not File.exist?(file)))
   file
@@ -53,9 +54,8 @@ end
 
 def mimetype(regex)
   mtype = `file --mime-type #{$item} | cut -d' ' -f2`
-  if not mtype.match(regex) then
-    raise RuleError.new()
-  end
+  raise RuleError.new() if not mtype.match(regex)
+  mtype
 end
 
 # Builtin Rules

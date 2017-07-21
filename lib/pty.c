@@ -89,6 +89,8 @@ void pty_send_rune(Rune rune) {
 static void read_escape(char* data, long* i, long n) {
     /* only one escape code supported and that is to change the working dir */
     if (data[*i] != 'P') return;
+    for (long x = *i; x < n && data[x]; x++)
+        if (data[x] == '\a') data[x] = '\0';
     size_t sz = strlen(&data[*i + 1]);
     chdir(&data[*i + 1]);
     *i = *i + 1 + sz;

@@ -241,9 +241,9 @@ void pty_send_susp(void);
 /* Configuration Data
  *****************************************************************************/
 enum { /* Configuration Variables */
-    FontString = 0, TagString, WinWidth, WinHeight, LineSpacing, LineNumbers,
-    RulerColumn, EventTimeout, CopyIndent, TrimOnSave, ExpandTabs, TabWidth,
-    ScrollLines, DblClickTime, MaxScanDist, SyntaxEnabled,
+    FontString = 0, EditTagString, CmdTagString, WinWidth, WinHeight,
+    LineSpacing, LineNumbers, RulerColumn, EventTimeout, CopyIndent, TrimOnSave,
+    ExpandTabs, TabWidth, ScrollLines, DblClickTime, MaxScanDist, SyntaxEnabled,
     Color00, Color01, Color02, Color03, Color04, Color05, Color06, Color07,
     Color08, Color09, Color10, Color11, Color12, Color13, Color14, Color15,
 

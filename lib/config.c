@@ -14,8 +14,10 @@ struct {
         char* str;
     } value;
 } Options[] = {
-    [TagString] = { "tide.ui.tags", STRING, {
+    [EditTagString] = { "tide.ui.tags.edit", STRING, {
         .str = "Quit Save Undo Redo Cut Copy Paste | Find " } },
+    [CmdTagString] = { "tide.ui.tags.cmd", STRING, {
+        .str = "Quit Undo Redo Cut Copy Paste | Send Find " } },
 
 #ifdef __MACH__
     [FontString] = { "tide.ui.font", STRING, {

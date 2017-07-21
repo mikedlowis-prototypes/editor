@@ -7,11 +7,10 @@ export EDITRCFILE="$HOME/.config/edit/editrc"
 export BASH_ENV="$EDITRCFILE"
 export PROMPT_COMMAND='tide_cd "$PWD"'
 
-# Override
-function tide_cd(){ echo -en "\033P$PWD\0"; }
+# Provide a cd function to change tide's working directory manually. This could
+# be aliased or defined to cd but that interferes with some programs like rbenv.
+function tide_cd(){ echo -en "\033P$PWD\a"; }
 export -f tide_cd
-function cd(){ cd "$@" && tide_cd "$@"; }
-export -f cd
 
 edit(){
     [[ -f "$EDITRCFILE" ]] && . "$EDITRCFILE"
