@@ -40,9 +40,12 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     /* load the file and jump to the address returned from the load function */
     buf_init(&(view->buffer), errfn);
     if (file) {
-        view_jumpto(view, false, buf_load(&(view->buffer), file));
-        view_eol(view, false);
-        view_selctx(view);
+        size_t pos = buf_load(&(view->buffer), file);
+        if (pos > 0) {
+            view_jumpto(view, false, pos);
+            view_eol(view, false);
+            view_selctx(view);
+        }
         colors_init(view->buffer.path);
     }
 }
@@ -679,7 +682,6 @@ static void sync_line_numbers(View* view, size_t newpos) {
         if (view->nrows)
             view->rows[0]->off = buf_bol(&(view->buffer), newpos);
     }
-
 }
 
 static void apply_colors(View* view) {
