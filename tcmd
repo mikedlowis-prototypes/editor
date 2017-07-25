@@ -2,7 +2,7 @@
 
 # setup editor env
 export PS1=":; "
-export PATH="$HOME/.config/tide/tools:$PATH"
+export PATH="$HOME/.config/tide/tools:$HOME/bin:$PATH"
 export EDITRCFILE="$HOME/.config/edit/editrc"
 export BASH_ENV="$EDITRCFILE"
 export PROMPT_COMMAND='tide_cd "$PWD"'

@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <regex.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #ifdef __MACH__
     #define OPENCMD "open"
@@ -42,6 +44,12 @@ Rule* BuiltinRules[] = {
         { ISFILE, "$data", NULL },
         { EXEC, "file --mime '$file' | grep -q 'text/'", NULL },
         { LAUNCH, "$EDITOR '$file'", NULL },
+        { COMPLETE, NULL, NULL }
+    },
+    (Rule[]){ // Look it up in ctags database
+        { ISFILE, "tags", NULL },
+        { EXEC, "grep -q '^$data' tags", NULL },
+        { LAUNCH, "tide `picktag fetch tags '$data'`", NULL },
         { COMPLETE, NULL, NULL }
     },
     (Rule[]){ // If it's an existing directory, open it with system default
@@ -212,12 +220,15 @@ int main(int argc, char** argv) {
     if (argc != 2) usage(argv[0]);
     setenv("data", argv[1], 1);
     for (int i = 0; i < nelem(BuiltinRules); i++) {
-        for (Rule* rule = BuiltinRules[i]; true; rule++) {
+        Rule* rule = BuiltinRules[i];
+        for (; rule->type != COMPLETE; rule++) {
             //printf("%d '%s' '%s'\n", rule->type, rule->arg1, rule->arg2);
             if (!apply_rule(rule))
                 break;
         }
         //puts("");
+        if (rule->type == COMPLETE)
+            exit(0);
     }
     return 1;
 }
