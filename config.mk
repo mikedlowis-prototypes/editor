@@ -1,7 +1,8 @@
 # Customize this file to fit your system
 
 # Install location
-PREFIX = $(HOME)
+#PREFIX = $(HOME)
+PREFIX = /usr/local
 
 # OSX X11 Flags
 INCS += -I/usr/X11/include           \
