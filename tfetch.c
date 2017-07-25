@@ -47,9 +47,10 @@ Rule* BuiltinRules[] = {
         { COMPLETE, NULL, NULL }
     },
     (Rule[]){ // Look it up in ctags database
+        { ISSET, "EDITOR", NULL },
         { ISFILE, "tags", NULL },
-        { EXEC, "grep -q '^$data' tags", NULL },
-        { LAUNCH, "tide `picktag fetch tags '$data'`", NULL },
+        { EXEC, "grep -q '^$data\\s\\+' tags", NULL },
+        { LAUNCH, "picktag fetch tags '$data' | xargs -r tide", NULL },
         { COMPLETE, NULL, NULL }
     },
     (Rule[]){ // If it's an existing directory, open it with system default
