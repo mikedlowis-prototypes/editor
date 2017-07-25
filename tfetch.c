@@ -15,7 +15,7 @@
 typedef struct {
     enum {
         COMPLETE=0, MATCHES, IS, ISSET, ISDIR, ISFILE,
-        SET, UNSET, FINDFILE, EXEC, LAUNCH, CHECK
+        SET, UNSET, FINDFILE, EXEC, LAUNCH
     } type;
     char* arg1;
     char* arg2;
@@ -40,7 +40,7 @@ Rule* BuiltinRules[] = {
     (Rule[]){ // If it's an existing text file, open it with editor
         { ISSET, "EDITOR", NULL },
         { ISFILE, "$data", NULL },
-        { CHECK, "file --mime '$file' | grep -q 'text/'", NULL },
+        { EXEC, "file --mime '$file' | grep -q 'text/'", NULL },
         { LAUNCH, "$EDITOR '$file'", NULL },
         { COMPLETE, NULL, NULL }
     },
@@ -124,7 +124,7 @@ bool var_isdir(char* var) {
     if ((stat(path, &st) < 0) && (errno == ENOENT)) {
         return false;
     } else if (S_ISDIR(st.st_mode)) {
-        setenv("file", var, 1);
+        setenv("dir", var, 1);
         return true;
     } else {
         return false;
@@ -137,6 +137,7 @@ bool var_isfile(char* var) {
     if ((stat(eval(var), &st) < 0) && (errno == ENOENT)) {
         return false;
     } else if (!S_ISDIR(st.st_mode)) {
+        setenv("file", path, 1);
         return true;
     } else {
         return false;
@@ -155,24 +156,31 @@ bool find_file(char* file) {
     return false;
 }
 
+void runcmd(char* cmd) {
+    char* shellcmd[] = { getvar("SHELL"), "-c", NULL, NULL };
+    if (!shellcmd[0]) shellcmd[0] = "/bin/sh";
+    shellcmd[2] = eval(cmd);
+    _exit(execvp(shellcmd[0], shellcmd));
+}
+
 bool exec(char* cmd) {
+    int pid, status, outpipe[2];
+    if ((pid = fork()) < 0) return false;
+    if (pid == 0) {
+        runcmd(cmd);
+    } else {
+        waitpid(pid, &status, 0);
+        return (status == 0);
+    }
     return false;
 }
 
 bool launch(char* cmd) {
     int pid = fork();
-    if (pid > 0) {
+    if (pid > 0)
         return true;
-    } else if (pid == 0) {
-        char* shellcmd[] = { getvar("SHELL"), "-c", NULL, NULL };
-        if (!shellcmd[0]) shellcmd[0] = "/bin/sh";
-        shellcmd[2] = eval(cmd);
-        exit(execvp(shellcmd[0], shellcmd));
-    }
-    return false;
-}
-
-bool checkcmd(char* cmd) {
+    else if (pid == 0)
+        runcmd(cmd);
     return false;
 }
 
@@ -189,7 +197,6 @@ bool apply_rule(Rule* rule) {
         case FINDFILE: return find_file(rule->arg1);
         case EXEC:     return exec(rule->arg1);
         case LAUNCH:   return launch(rule->arg1);
-        case CHECK:    return checkcmd(rule->arg1);
     }
     return false;
 }
@@ -210,7 +217,7 @@ int main(int argc, char** argv) {
             if (!apply_rule(rule))
                 break;
         }
-        puts("");
+        //puts("");
     }
     return 1;
 }

@@ -36,7 +36,7 @@ char* PickTagCmd[] = { "picktag", NULL, "tags", NULL, NULL };
 char* OpenCmd[] = { "tide", NULL, NULL };
 
 /* Try to fetch the text with tide-fetch */
-char* FetchCmd[] = { "tide-fetch.rb", NULL, NULL };
+char* FetchCmd[] = { "tfetch", NULL, NULL };
 
 /* Tag/Cmd Execution
  ******************************************************************************/
