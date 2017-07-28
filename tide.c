@@ -105,7 +105,7 @@ static void exec(char* cmd) {
     if (tag) {
         while (*cmd && !isspace(*cmd++));
         tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
-    } else if (pty_active()) {
+    } else if (pty_active() && !rissigil(*cmd)) {
         pty_send(cmd, NULL);
     } else {
         cmd_exec(cmd);
