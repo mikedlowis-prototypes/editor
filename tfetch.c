@@ -26,6 +26,14 @@ typedef struct {
 char* Matches[10];
 
 Rule* BuiltinRules[] = {
+    (Rule[]){ // Look up .c or .h files in Code/
+        { ISSET, "EDITOR", NULL },
+        { MATCHES, "data", "\\.[ch]$" },
+        { ISDIR, "Code", NULL },
+        { EXEC, "[[ $(find Code -type f -name '*$data') ]]", NULL },
+        { LAUNCH, "find Code -type f -name '*$data' | xargs -r $EDITOR", NULL },
+        { COMPLETE, NULL, NULL }
+    },
     (Rule[]){ // Match URLS and open them with the browser
         { ISSET, "BROWSER", NULL },
         { MATCHES, "data", "^(https?|ftp)://.*" },
