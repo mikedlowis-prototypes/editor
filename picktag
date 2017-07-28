@@ -21,7 +21,7 @@ printtags(){
 }
 
 print(){
-    printtags | pick "$TAG"
+    printf "%s" "$(printtags | pick "$TAG")"
 }
 
 fetch(){
@@ -38,7 +38,7 @@ fetch(){
         gsub(/\*/, "\\*", matchstr)
         print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
     }
-    ' "$TAGFILE" | /bin/sh | pick
+    ' "$TAGFILE" | /bin/sh | pick | xargs -r tide
 }
 
 export PICKTITLE="Pick CTag ($PWD)"
@@ -47,5 +47,3 @@ case "$ACTION" in
     "fetch") fetch ;;
     *) usage ;;
 esac
-
-

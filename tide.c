@@ -26,17 +26,19 @@ char* ShellCmd[] = { NULL, "-c", NULL, NULL };
 /* Sed command used to execute commands marked with ':' sigil */
 char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
-/* Fuzzy Picker for files in the current directory and subdirectories */
-char* PickFileCmd[] = { "pickfile", ".", NULL };
-
 /* Fuzzy picker for tags in a ctags database. */
 char* PickTagCmd[] = { "picktag", NULL, "tags", NULL, NULL };
 
-/* Open a new instance of the editor */
-char* OpenCmd[] = { "tide", NULL, NULL };
-
 /* Try to fetch the text with tide-fetch */
 char* FetchCmd[] = { "tfetch", NULL, NULL };
+
+#define CMD_TIDE     "!tide"
+#define CMD_PICKFILE "!pickfile ."
+#define CMD_TO_DOS   "|unix2dos"
+#define CMD_TO_UNIX  "|dos2unix"
+#define CMD_COMPLETE "<picktag print tags"
+#define CMD_GOTO_TAG "!picktag fetch tags"
+#define CMD_FETCH    "tfetch"
 
 /* Tag/Cmd Execution
  ******************************************************************************/
@@ -87,6 +89,13 @@ static void cmd_exec(char* cmd) {
         exec_job(execcmd, input, len, (op != '<' ? curr : edit));
 }
 
+static void cmd_execwitharg(char* cmd, char* arg) {
+    cmd = (arg ? strmcat(cmd, " '", arg, "'", 0) : strmcat(cmd));
+    cmd_exec(cmd);
+    free(cmd);
+}
+
+
 static void exec(char* cmd) {
     /* skip leading space */
     for (; *cmd && isspace(*cmd); cmd++);
@@ -97,10 +106,7 @@ static void exec(char* cmd) {
         while (*cmd && !isspace(*cmd++));
         tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
     } else if (pty_active()) {
-        char* arg = view_getstr(win_view(TAGS), NULL);
-        if (!arg) arg = view_getstr(win_view(EDIT), NULL);
-        pty_send(cmd, arg);
-        free(arg);
+        pty_send(cmd, NULL);
     } else {
         cmd_exec(cmd);
     }
@@ -278,41 +284,11 @@ static void find(char* arg) {
 }
 
 static void open_file(void) {
-    char* file = NULL;
-    exec_cmd(PickFileCmd, NULL, &file, NULL);
-    if (file) {
-        file = chomp(file);
-        if ((!win_buf(EDIT)->path || x11_keymodsset(ModShift)) &&
-            !win_buf(EDIT)->modified) {
-            view_init(win_view(EDIT), file, ondiagmsg);
-        } else {
-            OpenCmd[1] = file;
-            exec_job(OpenCmd,0,0,0);
-        }
-    }
-    free(file);
+    cmd_exec(CMD_PICKFILE);
 }
 
 static void pick_symbol(char* symbol) {
-    PickTagCmd[1] = "fetch";
-    PickTagCmd[3] = symbol;
-    char* pick = NULL;
-    exec_cmd(PickTagCmd, NULL, &pick, NULL);
-    if (pick) {
-        Buf* buf = win_buf(EDIT);
-        if (buf->path && 0 == strncmp(buf->path, pick, strlen(buf->path))) {
-            view_setln(win_view(EDIT), strtoul(strrchr(pick, ':')+1, NULL, 0));
-            win_setregion(EDIT);
-        } else {
-            if (!buf->path && !buf->modified) {
-                view_init(win_view(EDIT), pick, ondiagmsg);
-            } else {
-                OpenCmd[1] = chomp(pick);
-                exec_job(OpenCmd,0,0,0);
-
-            }
-        }
-    }
+    cmd_execwitharg(CMD_GOTO_TAG, symbol);
 }
 
 static void pick_ctag(void) {
@@ -323,13 +299,7 @@ static void complete(void) {
     View* view = win_view(FOCUSED);
     buf_getword(&(view->buffer), risword, &(view->selection));
     view->selection.end = buf_byrune(&(view->buffer), view->selection.end, RIGHT);
-    PickTagCmd[1] = "print";
-    PickTagCmd[3] = view_getstr(view, NULL);
-    char* pick = NULL;
-    exec_cmd(PickTagCmd, NULL, &pick, NULL);
-    if (pick)
-        view_putstr(view, chomp(pick));
-    free(PickTagCmd[3]);
+    cmd_execwitharg(CMD_COMPLETE, view_getstr(view, NULL));
 }
 
 static void jump_to(char* arg) {
@@ -378,11 +348,11 @@ static void eol_mode(void) {
     int crlf = win_buf(EDIT)->crlf;
     win_buf(EDIT)->crlf = !crlf;
     win_buf(TAGS)->crlf = !crlf;
-    exec(crlf ? "|dos2unix" : "|unix2dos");
+    cmd_exec(crlf ? CMD_TO_UNIX : CMD_TO_DOS);
 }
 
 static void new_win(void) {
-    cmd_exec("!tide");
+    cmd_exec(CMD_TIDE);
 }
 
 static void newline(void) {
@@ -639,8 +609,7 @@ int main(int argc, char** argv) {
     /* open all but the last file in new instances */
     for (argc--, argv++; argc > 1; argc--, argv++) {
         if (!strcmp(*argv, "--")) break;
-        OpenCmd[1] = *argv;
-        exec_job(OpenCmd,0,0,0);
+        cmd_execwitharg(CMD_TIDE, *argv);
     }
 
     /* if we still have args left we're going to open it in this instance */
