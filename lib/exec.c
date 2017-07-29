@@ -26,15 +26,16 @@ typedef struct {
 } Rcvr;
 
 struct Job {
-    Job* next;     /* Pointer to previous job in the job list */
-    Job* prev;     /* Pointer to next job in the job list */
-    Proc proc;     /* Process id and descriptors */
-    size_t ndata;  /* number of bytes to write to stdout */
-    size_t nwrite; /* number of bytes written to stdout so far */
-    char* data;    /* data to write to stdout */
-    Rcvr err_rcvr; /* reciever for the error output of the job */
-    Rcvr out_rcvr; /* receiver for the normal output of the job */
-    View* dest;    /* destination view where output will be placed */
+    Job* next;           /* Pointer to previous job in the job list */
+    Job* prev;           /* Pointer to next job in the job list */
+    Proc proc;           /* Process id and descriptors */
+    size_t ndata;        /* number of bytes to write to stdout */
+    size_t nwrite;       /* number of bytes written to stdout so far */
+    char* data;          /* data to write to stdout */
+    Rcvr err_rcvr;       /* reciever for the error output of the job */
+    Rcvr out_rcvr;       /* receiver for the normal output of the job */
+    View* dest;          /* destination view where output will be placed */
+    void (*donefn)(int); /* function called with return status of the job */
 };
 
 static Job* JobList = NULL;
@@ -49,21 +50,25 @@ static void rcvr_finish(Rcvr* rcvr);
 static int execute(char** cmd, Proc* proc);
 
 bool exec_reap(void) {
+    int status;
     Job* job = JobList;
     while (job) {
         if (job_done(job)) {
             rcvr_finish(&(job->out_rcvr));
             rcvr_finish(&(job->err_rcvr));
+            waitpid(job->proc.pid, &status, WNOHANG);
+            if (job->donefn) job->donefn(status);
             job = job_finish(job);
         } else {
             job = job->next;
         }
     }
-    while (waitpid(-1, NULL, WNOHANG) > 0);
+    if (JobList == NULL)
+        while (waitpid(-1, &status, WNOHANG) > 0);
     return (JobList != NULL);
 }
 
-void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
+void exec_job(char** cmd, char* data, size_t ndata, View* dest, void (*donefn)(int)) {
     Job* job = calloc(1, sizeof(Job));
     job->proc.pid = execute(cmd, &(job->proc));
     if (job->proc.pid < 0) {
@@ -78,6 +83,7 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
         job->nwrite = 0;
         job->data   = data;
         job->next   = JobList;
+        job->donefn = donefn;
         if (JobList) JobList->prev = job;
         JobList = job;
         /* register watch events for file descriptors */

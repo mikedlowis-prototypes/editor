@@ -5,4 +5,5 @@ if [ "$#" -ne 1 ]; then
 fi
 
 export PICKTITLE="Pick File ($PWD)"
-find $1 -not -path '*/\.*' -type f | sed "s|^\./||" | pick | xargs -r tide
+file="$(find $1 -not -path '*/\.*' -type f | sed 's|^\./||' | pick)"
+tide "$file"

@@ -80,13 +80,13 @@ static void cmd_exec(char* cmd) {
 
     /* execute the job */
     if (op == '!')
-        free(input), exec_job(execcmd, NULL, 0, NULL);
+        free(input), exec_job(execcmd, NULL, 0, NULL, NULL);
     else if (op == '>')
-        exec_job(execcmd, input, len, tags);
+        exec_job(execcmd, input, len, tags, NULL);
     else if (op == '|' || op == ':')
-        exec_job(execcmd, input, len, edit);
+        exec_job(execcmd, input, len, edit, NULL);
     else
-        exec_job(execcmd, input, len, (op != '<' ? curr : edit));
+        exec_job(execcmd, input, len, (op != '<' ? curr : edit), NULL);
 }
 
 static void cmd_execwitharg(char* cmd, char* arg) {
@@ -94,7 +94,6 @@ static void cmd_execwitharg(char* cmd, char* arg) {
     cmd_exec(cmd);
     free(cmd);
 }
-
 
 static void exec(char* cmd) {
     /* skip leading space */
