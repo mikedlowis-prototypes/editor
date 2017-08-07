@@ -26,9 +26,6 @@ char* ShellCmd[] = { NULL, "-c", NULL, NULL };
 /* Sed command used to execute commands marked with ':' sigil */
 char* SedCmd[] = { "sed", "-e", NULL, NULL };
 
-/* Fuzzy picker for tags in a ctags database. */
-char* PickTagCmd[] = { "picktag", NULL, "tags", NULL, NULL };
-
 /* Try to fetch the text with tide-fetch */
 char* FetchCmd[] = { "tfetch", NULL, NULL };
 

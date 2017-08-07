@@ -95,12 +95,6 @@ char* fdgets(int fd) {
     return str;
 }
 
-char* chomp(char* in) {
-    char* pos = strrchr(in, '\n');
-    if (pos) *pos = '\0';
-    return in;
-}
-
 uint64_t modtime(char* path) {
     struct stat status;
     if (stat(path, &status) < 0)
