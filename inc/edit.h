@@ -20,7 +20,10 @@ bool try_chdir(char* fpath);
 char* strconcat(char* dest, ...);
 bool file_exists(char* path);
 char* strmcat(char* first, ...);
+int daemonize(void);
 
+/* File Descriptor Event Handling
+ *****************************************************************************/
 enum { INPUT, OUTPUT };
 
 typedef void (*event_cbfn_t)(int fd, void* data);

@@ -59,16 +59,10 @@ void serve_selection(void) {
 int main(int argc, char** argv) {
     SelText = fdgets(STDIN_FILENO);
     if (SelText) {
-        int pid = fork();
-        if (pid == 0) {
-            close(STDIN_FILENO);
-            close(STDOUT_FILENO);
-            close(STDERR_FILENO);
-            chdir("/");
+        if (daemonize() == 0)
             serve_selection();
-        } else if (pid < 0) {
-            die("fork() failed");
-        }
+        else
+            die("daemonize() failed");
     }
     return 0;
 }

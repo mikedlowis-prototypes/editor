@@ -165,3 +165,17 @@ char* strmcat(char* first, ...) {
     *curr = '\0';
     return str;
 }
+
+int daemonize(void) {
+    pid_t pid;
+    if (chdir("/") < 0) return -1;
+    close(0), close(1), close(2);
+    pid = fork();
+    if (pid < 0) return -1;
+    if (pid > 0) _exit(0);
+    if (setsid() < 0) return -1;
+    pid = fork();
+    if (pid < 0) return -1;
+    if (pid > 0) _exit(0);
+    return 0;
+}
