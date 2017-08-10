@@ -1,6 +1,6 @@
 INCS = -Iinc/
 
-BINS = tide pick xcpd hl-cpp tfetch
+BINS = tide tfetch tctl pick xcpd hl-cpp
 MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
@@ -34,8 +34,7 @@ docs:
 clean:
 	find . -name '*.[oad]' -delete
 	find . \( -name '*.gcno' -o -name '*.gcda' \) -delete
-	$(RM) pick tide xcpd term tests/libedit hl-cpp
-	$(RM) $(TEST_BINS)
+	$(RM) $(BINS) $(TEST_BINS)
 
 install: all
 	mkdir -p $(PREFIX)/bin
@@ -43,6 +42,7 @@ install: all
 	cp -f tfetch $(PREFIX)/bin
 	cp -f tide $(PREFIX)/bin
 	cp -f tide-hl.rb $(PREFIX)/bin
+	cp -f tctl $(PREFIX)/bin
 	cp -f pick $(PREFIX)/bin
 	cp -f xcpd $(PREFIX)/bin
 	cp -f pickfile $(PREFIX)/bin
@@ -53,6 +53,7 @@ uninstall:
 	rm -f $(PREFIX)/bin/tfetch
 	rm -f $(PREFIX)/bin/tide
 	rm -f $(PREFIX)/bin/tide-hl.rb
+	rm -f $(PREFIX)/bin/tctl
 	rm -f $(PREFIX)/bin/pick
 	rm -f $(PREFIX)/bin/xcpd
 	rm -f $(PREFIX)/bin/pickfile
@@ -69,6 +70,7 @@ pick: pick.o libedit.a
 xcpd: xcpd.o libedit.a
 hl-cpp: hl-cpp.o libedit.a
 tfetch: tfetch.o
+tctl: tctl.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
 tests/tide: tests/tide.o libedit.a
 tests/pick: tests/pick.o libedit.a

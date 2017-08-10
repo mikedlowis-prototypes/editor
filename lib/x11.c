@@ -15,6 +15,7 @@ static struct XSel* selfetch(Atom atom);
 static void selclear(XEvent* evnt);
 static void selnotify(XEvent* evnt);
 static void selrequest(XEvent* evnt);
+static void propnotify(XEvent* evnt);
 
 struct XFont {
     struct {
@@ -42,7 +43,7 @@ static struct {
     unsigned depth;
     int screen;
     /* assume a single window for now. these are its attributes */
-    Window window;
+    Window self;
     XftDraw* xft;
     Pixmap pixmap;
     int width;
@@ -94,6 +95,7 @@ void x11_init(XConfig* cfg) {
     X.colormap = wa.colormap;
     X.screen   = DefaultScreen(X.display);
     X.depth    = DefaultDepth(X.display, X.screen);
+
     /* initialize selection atoms */
     for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
         Selections[i].atom = XInternAtom(X.display, Selections[i].name, 0);
@@ -121,7 +123,7 @@ void x11_window(char* name, int width, int height) {
     X.height = height;
     XWindowAttributes wa;
     XGetWindowAttributes(X.display, X.root, &wa);
-    X.window = XCreateSimpleWindow(X.display, X.root,
+    X.self = XCreateSimpleWindow(X.display, X.root,
         (wa.width  - X.width) / 2,
         (wa.height - X.height) /2,
         X.width,
@@ -131,15 +133,16 @@ void x11_window(char* name, int width, int height) {
 
     /* register interest in the delete window message */
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(X.display, X.window, &wmDeleteMessage, 1);
+    XSetWMProtocols(X.display, X.self, &wmDeleteMessage, 1);
 
     /* setup window attributes and events */
     XSetWindowAttributes swa;
     swa.backing_store = WhenMapped;
     swa.bit_gravity = NorthWestGravity;
-    XChangeWindowAttributes(X.display, X.window, CWBackingStore|CWBitGravity, &swa);
-    XStoreName(X.display, X.window, name);
-    XSelectInput(X.display, X.window,
+    XChangeWindowAttributes(X.display, X.self, CWBackingStore|CWBitGravity, &swa);
+    XStoreName(X.display, X.self, name);
+    XSelectInput(X.display, X.root, PropertyChangeMask);
+    XSelectInput(X.display, X.self,
           StructureNotifyMask
         | ButtonPressMask
         | ButtonReleaseMask
@@ -150,24 +153,30 @@ void x11_window(char* name, int width, int height) {
 
     /* set input methods */
     if ((X.xim = XOpenIM(X.display, 0, 0, 0)))
-        X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.window, XNFocusWindow, X.window, NULL);
+        X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.self, XNFocusWindow, X.self, NULL);
 
     /* initialize pixmap and drawing context */
-    X.pixmap = XCreatePixmap(X.display, X.window, width, height, X.depth);
+    X.pixmap = XCreatePixmap(X.display, X.self, width, height, X.depth);
     X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
 
     /* initialize the graphics context */
     XGCValues gcv;
     gcv.foreground = WhitePixel(X.display, X.screen);
     gcv.graphics_exposures = False;
-    X.gc = XCreateGC(X.display, X.window, GCForeground|GCGraphicsExposures, &gcv);
+    X.gc = XCreateGC(X.display, X.self, GCForeground|GCGraphicsExposures, &gcv);
+
+    /* Create and updtate tide-specific properties */
+    Atom prop = XInternAtom(X.display, "TIDE_WINDOWS", False);
+    XChangeProperty(X.display, X.root, prop, XA_WINDOW, 32, PropModeAppend, (unsigned char*)&X.self, 1);
+    prop = XInternAtom(X.display, "TIDE_COMM", False);
+    XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, "", 0);
 }
 
 void x11_dialog(char* name, int height, int width) {
     x11_window(name, height, width);
     Atom WindowType = XInternAtom(X.display, "_NET_WM_WINDOW_TYPE", False);
     Atom DialogType = XInternAtom(X.display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-    XChangeProperty(X.display, X.window, WindowType, XA_ATOM, 32, PropModeReplace, (unsigned char*)&DialogType, 1);
+    XChangeProperty(X.display, X.self, WindowType, XA_ATOM, 32, PropModeReplace, (unsigned char*)&DialogType, 1);
 }
 
 void x11_show(void) {
@@ -176,8 +185,8 @@ void x11_show(void) {
     ce.type   = ConfigureNotify;
     ce.width  = X.width;
     ce.height = X.height;
-    XSendEvent(X.display, X.window, False, StructureNotifyMask, (XEvent *)&ce);
-    XMapWindow(X.display, X.window);
+    XSendEvent(X.display, X.self, False, StructureNotifyMask, (XEvent *)&ce);
+    XMapWindow(X.display, X.self);
 }
 
 bool x11_running(void) {
@@ -186,7 +195,7 @@ bool x11_running(void) {
 
 void x11_flip(void) {
     Config->redraw(X.width, X.height);
-    XCopyArea(X.display, X.pixmap, X.window, X.gc, 0, 0, X.width, X.height, 0, 0);
+    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
     x11_flush();
 }
 
@@ -327,6 +336,7 @@ void x11_handle_event(XEvent* e) {
         case SelectionClear:   selclear(e);      break;
         case SelectionNotify:  selnotify(e);     break;
         case SelectionRequest: selrequest(e);    break;
+        case PropertyNotify:   propnotify(e);    break;
         case ClientMessage:
             if (e->xclient.data.l[0] == wmDeleteMessage)
                 Config->shutdown();
@@ -335,7 +345,7 @@ void x11_handle_event(XEvent* e) {
             if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
                 X.width  = e->xconfigure.width;
                 X.height = e->xconfigure.height;
-                X.pixmap = XCreatePixmap(X.display, X.window, X.width, X.height, X.depth);
+                X.pixmap = XCreatePixmap(X.display, X.self, X.width, X.height, X.depth);
                 X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
             }
             break;
@@ -349,7 +359,7 @@ int x11_events_queued(void) {
 void x11_events_take(void) {
     XEvent e;
     int nevents;
-    XGetMotionEvents(X.display, X.window, CurrentTime, CurrentTime, &nevents);
+    XGetMotionEvents(X.display, X.self, CurrentTime, CurrentTime, &nevents);
     while (XPending(X.display)) {
         XNextEvent(X.display, &e);
         if (!XFilterEvent(&e, None))
@@ -358,12 +368,12 @@ void x11_events_take(void) {
 }
 
 void x11_mouse_set(int x, int y) {
-    XWarpPointer(X.display, X.window, X.window, 0, 0, X.width, X.height, x, y);
+    XWarpPointer(X.display, X.self, X.self, 0, 0, X.width, X.height, x, y);
 }
 
 void x11_mouse_get(int* ptrx, int* ptry) {
     Window xw; int x; unsigned int ux;
-    XQueryPointer(X.display, X.window, &xw, &xw, &x, &x, ptrx, ptry, &ux);
+    XQueryPointer(X.display, X.self, &xw, &xw, &x, &x, ptrx, ptry, &ux);
 }
 
 XFont x11_font_load(char* name) {
@@ -522,7 +532,6 @@ void x11_draw_utf8(XFont fnt, int fg, int bg, int x, int y, char* str) {
 
 /* Selection Handling
  *****************************************************************************/
-
 static char* readprop(Display* disp, Window win, Atom prop) {
     Atom type;
     int format;
@@ -562,7 +571,7 @@ static void selnotify(XEvent* evnt) {
     if (evnt->xselection.property == None)
         return;
     struct XSel* sel = selfetch( evnt->xselection.selection );
-    char* propdata = readprop(X.display, X.window, sel->atom);
+    char* propdata = readprop(X.display, X.self, sel->atom);
     if (evnt->xselection.target == SelTarget) {
         void(*cbfn)(char*) = sel->callback;
         sel->callback = NULL;
@@ -608,11 +617,11 @@ bool x11_sel_get(int selid, void(*cbfn)(char*)) {
     struct XSel* sel = &(Selections[selid]);
     if (sel->callback) return false;
     Window owner = XGetSelectionOwner(X.display, sel->atom);
-    if (owner == X.window) {
+    if (owner == X.self) {
         cbfn(sel->text);
     } else if (owner != None){
         sel->callback = cbfn;
-        XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.window, CurrentTime);
+        XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.self, CurrentTime);
     }
     return true;
 }
@@ -624,7 +633,12 @@ bool x11_sel_set(int selid, char* str) {
         return false;
     } else {
         sel->text = str;
-        XSetSelectionOwner(X.display, sel->atom, X.window, CurrentTime);
+        XSetSelectionOwner(X.display, sel->atom, X.self, CurrentTime);
         return true;
     }
+}
+
+/* Tide Server Communication
+ *****************************************************************************/
+static void propnotify(XEvent* evnt) {
 }

@@ -232,6 +232,7 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
 /* Keyboard Handling
  ******************************************************************************/
 static void saveas(char* arg) {
+    //win_saveas(stringdup(arg));
     if (arg) {
         char* path = win_buf(EDIT)->path;
         win_buf(EDIT)->path = stringdup(arg);
@@ -573,9 +574,11 @@ void edit_relative(char* path) {
         else
             strconcat(currpath, fname, 0);
         chdir(currdir);
+        //win_open(currpath, ondiagmsg);
         view_init(win_view(EDIT), currpath, ondiagmsg);
     } else {
         chdir(origdir);
+        //win_open(path, ondiagmsg);
         view_init(win_view(EDIT), path, ondiagmsg);
     }
 

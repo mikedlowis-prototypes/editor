@@ -54,3 +54,4 @@ tests/pick
 hl-cpp
 pty
 tfetch
+tserve

@@ -2,6 +2,10 @@
 
 Up Next:
 
+* Implement tab completion
+* Change status to current dir in pty mode.
+* synchronize title with status contents.
+* Implement server daemon for tracking open files
 * B2+B1 click executes command with selection as argument
 * right click to fetch file or line
 * Run commands in the background and don't block the main thread.
