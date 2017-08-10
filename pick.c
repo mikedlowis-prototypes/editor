@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
     char* title = getenv("PICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
-        win_dialog("pick", true, onerror);
+        win_window("pick", true, onerror);
         win_setkeys(Bindings, NULL);
         win_settext(STATUS, (title ? title : "pick"));
         if (argc >= 2) {

@@ -163,7 +163,7 @@ static bool changed_externally(Buf* buf) {
 
 static void overwrite(void) {
     trim_whitespace();
-    buf_save(win_buf(EDIT));
+    win_save(NULL);
 }
 
 static void save(void) {
@@ -232,13 +232,7 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
 /* Keyboard Handling
  ******************************************************************************/
 static void saveas(char* arg) {
-    //win_saveas(stringdup(arg));
-    if (arg) {
-        char* path = win_buf(EDIT)->path;
-        win_buf(EDIT)->path = stringdup(arg);
-        buf_save(win_buf(EDIT));
-        free(path);
-    }
+    win_save(arg);
 }
 
 static void tag_undo(void) {
@@ -570,12 +564,10 @@ void edit_relative(char* path) {
         else
             strconcat(currpath, fname, 0);
         chdir(currdir);
-        //win_open(currpath, ondiagmsg);
-        view_init(win_view(EDIT), currpath, ondiagmsg);
+        win_load(currpath);
     } else {
         chdir(origdir);
-        //win_open(path, ondiagmsg);
-        view_init(win_view(EDIT), path, ondiagmsg);
+        win_load(path);
     }
 
     /* cleanup */

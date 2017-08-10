@@ -65,6 +65,21 @@ static void win_update(int xfd, void* data) {
     x11_flush();
 }
 
+void win_load(char* path) {
+    View* view = win_view(EDIT);
+    view_init(view, path, view->buffer.errfn);
+}
+
+void win_save(char* path) {
+    View* view = win_view(EDIT);
+    if (!path) path = view->buffer.path;
+    if (!path) return;
+    path = stringdup(path);
+    free(view->buffer.path);
+    view->buffer.path = path;
+    buf_save(&(view->buffer));
+}
+
 void win_loop(void) {
     x11_show();
     x11_flip();
