@@ -172,10 +172,6 @@ void onshutdown(void) {
     x11_deinit();
 }
 
-bool update_needed(void) {
-    return false;
-}
-
 /* Main Routine
  *****************************************************************************/
 static void onerror(char* msg) {
@@ -229,7 +225,7 @@ int main(int argc, char** argv) {
     char* title = getenv("PICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
-        win_dialog("pick", onerror);
+        win_dialog("pick", true, onerror);
         win_setkeys(Bindings, NULL);
         win_settext(STATUS, (title ? title : "pick"));
         if (argc >= 2) {

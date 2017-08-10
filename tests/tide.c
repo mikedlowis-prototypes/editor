@@ -23,7 +23,7 @@ Display* XDisplay;
 
 static void initialize(void) {
     ShellCmd[0] = "/bin/sh";
-    win_window("edit", ondiagmsg);
+    win_window("edit", false, ondiagmsg);
     XDisplay = XOpenDisplay(NULL);
     win_setkeys(Bindings, NULL);
 }

@@ -527,10 +527,6 @@ void onshutdown(void) {
     quit();
 }
 
-bool update_needed(void) {
-    return false;
-}
-
 static void oninput(Rune rune) {
     if (win_getregion() == EDIT && pty_active())
         pty_send_rune(rune);
@@ -603,7 +599,7 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
 
     /* create the window */
-    win_window("tide", ondiagmsg);
+    win_window("tide", false, ondiagmsg);
 
     /* open all but the last file in new instances */
     for (argc--, argv++; argc > 1; argc--, argv++) {

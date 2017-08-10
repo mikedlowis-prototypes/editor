@@ -38,8 +38,7 @@ typedef struct {
     MouseFunc right;
 } MouseConfig;
 
-void win_window(char* name, void (*errfn)(char*));
-void win_dialog(char* name, void (*errfn)(char*));
+void win_window(char* name, bool isdialog, void (*errfn)(char*));
 void win_loop(void);
 void win_settext(WinRegion id, char* text);
 void win_setlinenums(bool enable);
@@ -67,5 +66,3 @@ void onscroll(double percent);
 void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col);
 void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col);
 void onmouseright(WinRegion id, bool pressed, size_t row, size_t col);
-bool update_needed(void);
-

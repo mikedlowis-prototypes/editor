@@ -50,14 +50,12 @@ static void win_init(void (*errfn)(char*)) {
     Regions[EDIT].clrcsr = config_get_int(ClrEditCsr);
 }
 
-void win_window(char* name, void (*errfn)(char*)) {
+void win_window(char* name, bool isdialog, void (*errfn)(char*)) {
     win_init(errfn);
-    x11_window(name, config_get_int(WinWidth), config_get_int(WinHeight));
-}
-
-void win_dialog(char* name, void (*errfn)(char*)) {
-    win_init(errfn);
-    x11_dialog(name, config_get_int(WinWidth), config_get_int(WinHeight));
+    if (isdialog)
+        x11_dialog(name, config_get_int(WinWidth), config_get_int(WinHeight));
+    else
+        x11_window(name, config_get_int(WinWidth), config_get_int(WinHeight));
 }
 
 static void win_update(int xfd, void* data) {
