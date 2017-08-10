@@ -147,3 +147,6 @@ void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 
 bool x11_sel_get(int selid, void(*cbfn)(char*));
 bool x11_sel_set(int selid, char* str);
+
+void x11_prop_set(char* name, char* val);
+char* x11_prop_get(char* name);

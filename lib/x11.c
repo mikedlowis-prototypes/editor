@@ -638,7 +638,21 @@ bool x11_sel_set(int selid, char* str) {
     }
 }
 
-/* Tide Server Communication
+/* Tide Server Communication and Property Handling
  *****************************************************************************/
 static void propnotify(XEvent* evnt) {
+}
+
+void x11_prop_set(char* name, char* val) {
+    Atom prop = XInternAtom(X.display, name, False);
+    XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, val, strlen(val)+1);
+}
+
+char* x11_prop_get(char* name) {
+    Atom rtype, prop = XInternAtom(X.display, name, False);
+    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
+    unsigned char* data = NULL;
+    XGetWindowProperty(X.display, X.self, prop, 0, -1, False, XA_STRING, &rtype,
+                       &format, &nitems, &nleft, &data);
+    return data;
 }

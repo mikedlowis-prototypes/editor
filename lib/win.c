@@ -68,6 +68,8 @@ static void win_update(int xfd, void* data) {
 void win_load(char* path) {
     View* view = win_view(EDIT);
     view_init(view, path, view->buffer.errfn);
+    if (path)
+        x11_prop_set("TIDE_FILE", path);
 }
 
 void win_save(char* path) {
@@ -78,6 +80,7 @@ void win_save(char* path) {
     free(view->buffer.path);
     view->buffer.path = path;
     buf_save(&(view->buffer));
+    x11_prop_set("TIDE_FILE", path);
 }
 
 void win_loop(void) {
