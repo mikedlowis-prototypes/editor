@@ -169,7 +169,7 @@ void x11_window(char* name, int width, int height) {
     Atom prop = XInternAtom(X.display, "TIDE_WINDOWS", False);
     XChangeProperty(X.display, X.root, prop, XA_WINDOW, 32, PropModeAppend, (unsigned char*)&X.self, 1);
     prop = XInternAtom(X.display, "TIDE_COMM", False);
-    XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, "", 0);
+    XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, (unsigned char*)"", 0);
 }
 
 void x11_dialog(char* name, int height, int width) {
@@ -645,7 +645,7 @@ static void propnotify(XEvent* evnt) {
 
 void x11_prop_set(char* name, char* val) {
     Atom prop = XInternAtom(X.display, name, False);
-    XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, val, strlen(val)+1);
+    XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, (unsigned char*)val, strlen(val)+1);
 }
 
 char* x11_prop_get(char* name) {
@@ -653,6 +653,6 @@ char* x11_prop_get(char* name) {
     unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
     unsigned char* data = NULL;
     XGetWindowProperty(X.display, X.self, prop, 0, -1, False, XA_STRING, &rtype,
-                       &format, &nitems, &nleft, &data);
-    return data;
+                       (int*)&format, &nitems, &nleft, &data);
+    return (char*)data;
 }

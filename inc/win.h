@@ -39,6 +39,8 @@ typedef struct {
 } MouseConfig;
 
 void win_window(char* name, bool isdialog, void (*errfn)(char*));
+void win_load(char* path);
+void win_save(char* path);
 void win_loop(void);
 void win_settext(WinRegion id, char* text);
 void win_setlinenums(bool enable);
