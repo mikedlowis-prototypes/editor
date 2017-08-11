@@ -65,11 +65,17 @@ static void win_update(int xfd, void* data) {
     x11_flush();
 }
 
+static void set_path_prop(char* path) {
+    char *newpath = calloc(1, PATH_MAX+1),
+         *abspath = realpath(path, newpath);
+    x11_prop_set("TIDE_FILE", abspath);
+    free(newpath);
+}
+
 void win_load(char* path) {
     View* view = win_view(EDIT);
     view_init(view, path, view->buffer.errfn);
-    if (path)
-        x11_prop_set("TIDE_FILE", path);
+    if (path) set_path_prop(path);
 }
 
 void win_save(char* path) {
@@ -80,7 +86,7 @@ void win_save(char* path) {
     free(view->buffer.path);
     view->buffer.path = path;
     buf_save(&(view->buffer));
-    x11_prop_set("TIDE_FILE", path);
+    set_path_prop(path);
 }
 
 void win_loop(void) {

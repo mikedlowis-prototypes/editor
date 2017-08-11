@@ -15,6 +15,11 @@ struct {
 static void* prop_get(Window win, char* propname, Atom type, unsigned long* nitems);
 static void prop_set(Window win, char* propname, Atom type, int format, void* items, unsigned long nitems);
 
+char* abspath(char* path) {
+    char* newpath = calloc(1, PATH_MAX+1);
+    return realpath(path, newpath);
+}
+
 /* Main Routine
  ******************************************************************************/
 int main(int argc, char** argv) {
@@ -28,6 +33,10 @@ int main(int argc, char** argv) {
     Window* windows = prop_get(X.root, "TIDE_WINDOWS", XA_WINDOW, &nwindows);
     printf("Windows: %lu\n", nwindows);
     XUngrabServer(X.display);
+
+    for (int i = 1; i < argc; i++) {
+        printf("abspath: '%s'\n", abspath(argv[i]));
+    }
 
     return 0;
 }
