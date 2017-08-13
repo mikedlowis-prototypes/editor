@@ -125,6 +125,8 @@ static void focus_window(Window w, char* addr) {
     long mask = SubstructureRedirectMask | SubstructureNotifyMask;
 	XSendEvent(X.display, X.root, False, mask, &ev);
     XMapRaised(X.display, w);
+	if (addr && *addr)
+    	prop_set(w, "TIDE_COMM", XA_STRING, 8, addr, strlen(addr));
     XFlush(X.display);
 }
 
@@ -136,4 +138,3 @@ void get_abspath(char* path, char** abspath, char** addr) {
     if (!rpath) rpath = path;
 	*abspath = rpath, *addr = faddr;
 }
-

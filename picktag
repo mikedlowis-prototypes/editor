@@ -40,7 +40,7 @@ fetch(){
             print "grep -Hn", matchstr, $2, "| cut -d: -f1,2"
         }
     ' "$TAGFILE" | /bin/sh | pick)
-    [ "" != "$file" ] && tide "$file"
+    [ "" != "$file" ] && tctl "$file"
 }
 
 export PICKTITLE="Pick CTag ($PWD)"

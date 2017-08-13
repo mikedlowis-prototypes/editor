@@ -5,6 +5,7 @@ typedef struct {
     void (*set_focus)(bool focus);
     void (*mouse_drag)(int state, int x, int y);
     void (*mouse_btn)(int state, bool pressed, int x, int y);
+    void (*cmd_received)(char* cmd);
 } XConfig;
 
 typedef void* XFont;

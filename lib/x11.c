@@ -149,6 +149,7 @@ void x11_window(char* name, int width, int height) {
         | ButtonMotionMask
         | KeyPressMask
         | FocusChangeMask
+        | PropertyChangeMask
     );
 
     /* set input methods */
@@ -641,6 +642,9 @@ bool x11_sel_set(int selid, char* str) {
 /* Tide Server Communication and Property Handling
  *****************************************************************************/
 static void propnotify(XEvent* evnt) {
+    XPropertyEvent* ev = (XPropertyEvent*)evnt;
+    if (ev->atom == XInternAtom(X.display, "TIDE_COMM", False))
+        Config->cmd_received(x11_prop_get("TIDE_COMM"));
 }
 
 void x11_prop_set(char* name, char* val) {

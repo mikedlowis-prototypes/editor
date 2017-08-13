@@ -44,7 +44,7 @@ Rule* BuiltinRules[] = {
         { ISSET, "EDITOR", NULL },
         { MATCHES, "data", "^([^:]+):([0-9]+)" },
         { ISFILE, "$1", NULL },
-        { LAUNCH, "$EDITOR $0", NULL },
+        { LAUNCH, "tctl $0", NULL },
         { COMPLETE, NULL, NULL }
     },
     (Rule[]){ // If it's an existing text file, open it with editor
