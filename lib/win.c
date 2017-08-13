@@ -66,10 +66,9 @@ static void win_update(int xfd, void* data) {
 }
 
 static void set_path_prop(char* path) {
-    char *newpath = calloc(1, PATH_MAX+1),
-         *abspath = realpath(path, newpath);
-    x11_prop_set("TIDE_FILE", abspath);
-    free(newpath);
+    char *abspath = realpath(path, NULL);
+    x11_prop_set("TIDE_FILE", (!abspath ? "" : abspath));
+    free(abspath);
 }
 
 void win_load(char* path) {
