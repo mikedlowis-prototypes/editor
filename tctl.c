@@ -23,7 +23,8 @@ static void* prop_get(Window win, char* propname, Atom type, unsigned long* nite
 static void prop_set(Window win, char* propname, Atom type, int format, void* items, unsigned long nitems);
 static void edit(char* path);
 static Window win_byfile(char* path);
-static void focus_window(Window w);
+static void focus_window(Window w, char* addr);
+static void get_abspath(char* path, char** abspath, char** addr);
 
 /* Main Routine
  ******************************************************************************/
@@ -37,14 +38,17 @@ int main(int argc, char** argv) {
 
     for (int i = 1; i < argc; i++) {
         bool last = (i == argc-1);
-        char* path = realpath(argv[i], NULL);
-        if (!path) path = argv[i];
+        char *orig = argv[i], *path = NULL, *addr = NULL;
+        get_abspath(orig, &path, &addr);
+
         Window win = win_byfile(path);
         if (!win)
-            edit(path);
+            edit(argv[i]);
         else if (last)
-            focus_window(win);
+            focus_window(win, addr);
+        free(path);
     }
+
 	XFlush(X.display);
     return 0;
 }
@@ -111,7 +115,7 @@ static Window win_byfile(char* path) {
     return (Window)0;
 }
 
-static void focus_window(Window w) {
+static void focus_window(Window w, char* addr) {
 	XEvent ev = {0};
 	ev.xclient.type = ClientMessage;
     ev.xclient.send_event = True;
@@ -123,3 +127,13 @@ static void focus_window(Window w) {
     XMapRaised(X.display, w);
     XFlush(X.display);
 }
+
+void get_abspath(char* path, char** abspath, char** addr) {
+	path = stringdup(path);
+	char* faddr = strrchr(path, ':');
+	if (faddr) *(faddr++) = '\0';
+    char* rpath = realpath(path, NULL);
+    if (!rpath) rpath = path;
+	*abspath = rpath, *addr = faddr;
+}
+

@@ -74,6 +74,7 @@ static void set_path_prop(char* path) {
 void win_load(char* path) {
     View* view = win_view(EDIT);
     view_init(view, path, view->buffer.errfn);
+    path = view->buffer.path;
     if (path) set_path_prop(path);
 }
 
