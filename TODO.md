@@ -3,13 +3,12 @@
 Up Next:
 
 * Implement tab completion
-* Change status to current dir in pty mode.
 * synchronize title with status contents.
-* Implement server daemon for tracking open files
 * B2+B1 click executes command with selection as argument
-* right click to fetch file or line
 * Run commands in the background and don't block the main thread.
 * update man pages with new functionality
+* tfetch variable expansion needs to be reworked
+* rename tide to twin and tctl to tide
 
 * moving from tags to the gutter does not transfer focus to edit region
 * implement transaction control in buf.c

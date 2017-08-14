@@ -497,9 +497,15 @@ void onupdate(void) {
     *(status++) = (SearchDir < 0 ? '<' : '>');
     *(status++) = (buf->modified ? '*' : ' ');
     *(status++) = ' ';
-    char* path = (buf->path ? buf->path : "*scratch*");
     size_t remlen = sizeof(status_bytes) - strlen(status_bytes) - 1;
-    strncat(status, path, remlen);
+    if (pty_active()) {
+        char* path = getcurrdir();
+        strncat(status, path, remlen);
+        free(path);
+    } else {
+        char* path = (buf->path ? buf->path : "*scratch*");
+        strncat(status, path, remlen);
+    }
     win_settext(STATUS, status_bytes);
     win_view(STATUS)->selection = (Sel){0,0,0};
 }
