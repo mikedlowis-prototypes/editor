@@ -42,10 +42,13 @@ int main(int argc, char** argv) {
         get_abspath(orig, &path, &addr);
 
         Window win = win_byfile(path);
-        if (!win)
+        if (!win) {
+        	printf("edit(%s)\n", argv[i]);
             edit(argv[i]);
-        else if (last)
+        } else if (last) {
+        	printf("focus(%#x,%s)\n", (int)win, addr);
             focus_window(win, addr);
+        }
         free(path);
     }
 
