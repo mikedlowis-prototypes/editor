@@ -6,4 +6,4 @@ fi
 
 export PICKTITLE="Pick File ($PWD)"
 file="$(find $1 -not -path '*/\.*' -type f | sed 's|^\./||' | pick)"
-tide "$file"
+tctl "$file"

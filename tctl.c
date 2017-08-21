@@ -43,16 +43,16 @@ int main(int argc, char** argv) {
 
         Window win = win_byfile(path);
         if (!win) {
-        	printf("edit(%s)\n", argv[i]);
+            fprintf(stderr, "edit(%s)\n", argv[i]);
             edit(argv[i]);
         } else if (last) {
-        	printf("focus(%#x,%s)\n", (int)win, addr);
+            fprintf(stderr, "focus(%#x,%s)\n", (int)win, addr);
             focus_window(win, addr);
         }
         free(path);
     }
 
-	XFlush(X.display);
+    XFlush(X.display);
     return 0;
 }
 
@@ -108,7 +108,7 @@ static void prop_set(Window win, char* propname, Atom type, int format, void* it
 
 static void edit(char* path) {
     if (fork() == 0)
-    	execv("tide", (char*[]){ "tide", path, NULL });
+        exit(execvp("tide", (char*[]){ "tide", path, NULL }));
 }
 
 static Window win_byfile(char* path) {
@@ -119,25 +119,25 @@ static Window win_byfile(char* path) {
 }
 
 static void focus_window(Window w, char* addr) {
-	XEvent ev = {0};
-	ev.xclient.type = ClientMessage;
+    XEvent ev = {0};
+    ev.xclient.type = ClientMessage;
     ev.xclient.send_event = True;
     ev.xclient.message_type = XInternAtom(X.display, "_NET_ACTIVE_WINDOW", False);
-	ev.xclient.window = w;
-	ev.xclient.format = 32;
+    ev.xclient.window = w;
+    ev.xclient.format = 32;
     long mask = SubstructureRedirectMask | SubstructureNotifyMask;
-	XSendEvent(X.display, X.root, False, mask, &ev);
+    XSendEvent(X.display, X.root, False, mask, &ev);
     XMapRaised(X.display, w);
-	if (addr && *addr)
-    	prop_set(w, "TIDE_COMM", XA_STRING, 8, addr, strlen(addr));
+    if (addr && *addr)
+        prop_set(w, "TIDE_COMM", XA_STRING, 8, addr, strlen(addr));
     XFlush(X.display);
 }
 
 void get_abspath(char* path, char** abspath, char** addr) {
-	path = stringdup(path);
-	char* faddr = strrchr(path, ':');
-	if (faddr) *(faddr++) = '\0';
+    path = stringdup(path);
+    char* faddr = strrchr(path, ':');
+    if (faddr) *(faddr++) = '\0';
     char* rpath = realpath(path, NULL);
     if (!rpath) rpath = path;
-	*abspath = rpath, *addr = faddr;
+    *abspath = rpath, *addr = faddr;
 }

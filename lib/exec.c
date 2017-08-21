@@ -145,10 +145,13 @@ static bool job_done(Job* job) {
 static Job* job_finish(Job* job) {
     Job* next = job->next;
     if (job->prev) {
-        job->prev->next = job->next;
-        job->next->prev = job->prev;
+        job->prev->next = next;
+        if (next)
+            next->prev = job->prev;
     } else {
-        JobList = job->next;
+        if (next)
+            next->prev = NULL;
+        JobList = next;
     }
     free(job->data);
     free(job);

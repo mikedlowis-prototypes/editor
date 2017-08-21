@@ -36,7 +36,7 @@ clean:
 	find . \( -name '*.gcno' -o -name '*.gcda' \) -delete
 	$(RM) $(BINS) $(TEST_BINS)
 
-install: all
+install: 
 	mkdir -p $(PREFIX)/bin
 	cp -f tcmd $(PREFIX)/bin
 	cp -f tfetch $(PREFIX)/bin

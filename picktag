@@ -15,7 +15,7 @@ usage(){
 if [ "" == "$TAGFILE" ] || [ "" == "$ACTION" ]; then
     usage
 fi
-ma
+
 printtags(){
     cat "$TAGFILE" | grep -v '^!' | cut -f1 | uniq
 }
