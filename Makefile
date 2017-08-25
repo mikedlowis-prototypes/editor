@@ -1,6 +1,6 @@
 INCS = -Iinc/
 
-BINS = tide tfetch tctl pick xcpd hl-cpp
+BINS = tide tfetch tctl pick xcpd
 MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
@@ -36,7 +36,7 @@ clean:
 	find . \( -name '*.gcno' -o -name '*.gcda' \) -delete
 	$(RM) $(BINS) $(TEST_BINS)
 
-install: 
+install:
 	mkdir -p $(PREFIX)/bin
 	cp -f tcmd $(PREFIX)/bin
 	cp -f tfetch $(PREFIX)/bin
@@ -68,7 +68,6 @@ libedit.a: $(LIBEDIT_OBJS)
 tide: tide.o libedit.a
 pick: pick.o libedit.a
 xcpd: xcpd.o libedit.a
-hl-cpp: hl-cpp.o libedit.a
 tfetch: tfetch.o
 tctl: tctl.o libedit.a
 tests/libedit: tests/libedit.o tests/lib/buf.o tests/lib/utf8.o libedit.a
