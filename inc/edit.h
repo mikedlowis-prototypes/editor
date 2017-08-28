@@ -52,7 +52,7 @@ typedef struct Log {
 } Log;
 
 /* gap buffer main data structure */
-typedef struct buf {
+typedef struct {
     char* path;           /* the path to the open file */
     uint64_t modtime;     /* modification time of the opened file */
     int charset;          /* the character set of the buffer */

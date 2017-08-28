@@ -16,6 +16,7 @@ static void selclear(XEvent* evnt);
 static void selnotify(XEvent* evnt);
 static void selrequest(XEvent* evnt);
 static void propnotify(XEvent* evnt);
+static char* readprop(Display* disp, Window win, Atom prop);
 
 struct XFont {
     struct {
@@ -516,42 +517,8 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-void x11_draw_utf8(XFont fnt, int fg, int bg, int x, int y, char* str) {
-    struct XFont* font = fnt;
-    static XftGlyphFontSpec specs[256];
-    size_t nspecs = 0;
-    while (*str && nspecs < 256) {
-        x11_font_getglyph(font, (XGlyphSpec*)&(specs[nspecs]), *str);
-        specs[nspecs].x = x;
-        specs[nspecs].y = y;
-        x += font->base.width;
-        nspecs++;
-        str++;
-    }
-    x11_draw_glyphs(fg, bg, (XGlyphSpec*)specs, nspecs, false);
-}
-
 /* Selection Handling
  *****************************************************************************/
-static char* readprop(Display* disp, Window win, Atom prop) {
-    Atom type;
-    int format;
-    unsigned long nitems, nleft;
-    unsigned char* ret = NULL;
-    int nread = 1024;
-
-    // Read the property in progressively larger chunks until the entire
-    // property has been read (nleft == 0)
-    do {
-        if (ret) XFree(ret);
-        XGetWindowProperty(disp, win, prop, 0, nread, False, AnyPropertyType,
-                           &type, &format, &nitems, &nleft,
-                           &ret);
-        nread *= 2;
-    } while (nleft != 0);
-
-    return (char*)ret;
-}
 
 static struct XSel* selfetch(Atom atom) {
     for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
@@ -647,16 +614,20 @@ static void propnotify(XEvent* evnt) {
         Config->cmd_received(x11_prop_get("TIDE_COMM"));
 }
 
+static char* readprop(Display* disp, Window win, Atom prop) {
+    Atom rtype;
+    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
+    unsigned char* data = NULL;
+    XGetWindowProperty(X.display, win, prop, 0, -1, False, AnyPropertyType, &rtype,
+                       (int*)&format, &nitems, &nleft, &data);
+    return (char*)data;
+}
+
 void x11_prop_set(char* name, char* val) {
     Atom prop = XInternAtom(X.display, name, False);
     XChangeProperty(X.display, X.self, prop, XA_STRING, 8, PropModeReplace, (unsigned char*)val, strlen(val)+1);
 }
 
 char* x11_prop_get(char* name) {
-    Atom rtype, prop = XInternAtom(X.display, name, False);
-    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
-    unsigned char* data = NULL;
-    XGetWindowProperty(X.display, X.self, prop, 0, -1, False, XA_STRING, &rtype,
-                       (int*)&format, &nitems, &nleft, &data);
-    return (char*)data;
+    return readprop(X.display, X.self, XInternAtom(X.display, name, False));
 }
