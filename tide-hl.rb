@@ -102,8 +102,9 @@ end
 #-------------------------------------------------------------------------------
 
 languages({
-  "Ruby" => Set.new(%w[Rakefile Rakefile.rb .rb gpkgfile]),
-  "C"    => Set.new(%w[.c .h .cpp .hpp .cc .c++ .cxx]),
+  "Ruby"   => Set.new(%w[Rakefile Rakefile.rb .rb gpkgfile]),
+  "C"      => Set.new(%w[.c .h .cpp .hpp .cc .c++ .cxx]),
+  "OCaml" => Set.new(%w[.ml .mli]),
 })
 
 language "C" do
@@ -149,6 +150,24 @@ language "Ruby" do
   match_sets /[a-z_][0-9a-zA-Z_]*/, :Keyword => keywords
   match /0x[0-9a-fA-F]+/, :Number
   match /[0-9]+/, :Number
+end
+
+language "OCaml" do
+  keywords = Set.new %w[
+    and as assert begin class constraint do done downto else end exception
+    external for fun function functor if in include inherit initializer lazy
+    let match method module mutable new object of open or private rec sig struct
+    then to try type val virtual when while with
+  ]
+  constants = Set.new %w[true false ]
+  range start=/\(\*/, stop=/\*\)/, :Comment
+  match /"(\\"|[^"\n])*"/, :String
+  match /'(\\'|[^'\n])*'/, :String
+  match /[A-Z][0-9a-zA-Z_]*/, :Type
+  match_sets /[a-z_][0-9a-zA-Z_]*/, :Keyword => keywords, :Constant => constants
+  match /0x[0-9a-fA-F]+/, :Number
+  match /[0-9]+/, :Number
+  match /\(\)/, :Constant
 end
 
 #-------------------------------------------------------------------------------
