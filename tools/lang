@@ -1,0 +1,9 @@
+#!/bin/sh
+case "$1" in
+    *.c|*.cpp|*.cc|*.h|*.hpp)
+        echo "C" ;;
+    *.ml) echo "ML" ;;
+    *.py) echo "Python" ;;
+    *.rb) echo "Ruby" ;;
+    *)    echo "Text" ;;
+esac

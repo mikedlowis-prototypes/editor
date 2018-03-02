@@ -1,0 +1,6 @@
+#!/bin/sh
+case "$(lang "$file")" in
+    ML|Python|Ruby)
+        sed 's/^/  /g' "$@" ;;
+    *)  sed 's/^/    /g' "$@" ;;
+esac
