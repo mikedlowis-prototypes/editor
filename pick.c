@@ -222,12 +222,10 @@ static KeyBinding Bindings[] = {
 
 #ifndef TEST
 int main(int argc, char** argv) {
-    char* title = getenv("PICKTITLE");
     load_choices();
     if (vec_size(&Choices) > 1) {
         win_window("pick", true, onerror);
         win_setkeys(Bindings, NULL);
-        win_settext(STATUS, (title ? title : "pick"));
         if (argc >= 2) {
             for (char* str = argv[1]; *str; str++)
                 buf_insert(win_buf(TAGS), false, Pos++, *str);

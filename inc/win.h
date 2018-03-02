@@ -7,12 +7,11 @@ enum {
 };
 
 typedef enum {
-    STATUS   = 0,
-    TAGS     = 1,
-    EDIT     = 2,
-    SCROLL   = 3,
-    NREGIONS = 4,
-    FOCUSED  = 4
+    TAGS     = 0,
+    EDIT     = 1,
+    SCROLL   = 2,
+    NREGIONS = 3,
+    FOCUSED  = 3
 } WinRegion;
 
 typedef struct {

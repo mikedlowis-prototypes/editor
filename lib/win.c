@@ -42,7 +42,6 @@ static void win_init(void (*errfn)(char*)) {
         view_init(&(Regions[i].view), NULL, errfn);
     x11_init(&Config);
     Font = x11_font_load(config_get_str(FontString));
-    Regions[STATUS].clrnor = config_get_int(ClrStatusNor);
     Regions[SCROLL].clrnor = config_get_int(ClrScrollNor);
     Regions[TAGS].clrnor = config_get_int(ClrTagsNor);
     Regions[TAGS].clrsel = config_get_int(ClrTagsSel);
@@ -195,7 +194,6 @@ static size_t gutter_size(void) {
 static void layout(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
-    View* statview = win_view(STATUS);
     View* tagview  = win_view(TAGS);
     View* editview = win_view(EDIT);
 
@@ -209,11 +207,7 @@ static void layout(int width, int height) {
         Regions[i].height = fheight;
     }
 
-    /* place the status region */
-    view_resize(statview, 1, Regions[STATUS].width / fwidth);
-
     /* Place the tag region relative to status */
-    Regions[TAGS].y = 5 + Regions[STATUS].y + Regions[STATUS].height;
     size_t maxtagrows = ((height - Regions[TAGS].y - 5) / 4) / fheight;
     size_t tagcols    = Regions[TAGS].width / fwidth;
     size_t tagrows    = view_limitrows(tagview, maxtagrows, tagcols);
@@ -240,7 +234,6 @@ static void onredraw(int width, int height) {
 
     layout(width, height);
     onupdate(); // Let the user program update the status and other content
-    view_update(win_view(STATUS), Regions[STATUS].clrnor, Regions[STATUS].clrsel, &(Regions[STATUS].csrx), &(Regions[STATUS].csry));
     view_update(win_view(TAGS),   Regions[TAGS].clrnor,   Regions[TAGS].clrsel,   &(Regions[TAGS].csrx),   &(Regions[TAGS].csry));
     view_update(win_view(EDIT),   Regions[EDIT].clrnor,   Regions[EDIT].clrsel,   &(Regions[EDIT].csrx),   &(Regions[EDIT].csry));
     onlayout(); // Let the user program update the scroll bar

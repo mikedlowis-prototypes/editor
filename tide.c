@@ -486,28 +486,6 @@ void onfocus(bool focused) {
 }
 
 void onupdate(void) {
-    static char status_bytes[256];
-    memset(status_bytes, 0, sizeof(status_bytes));
-    char* status = status_bytes;
-    Buf* buf = win_buf(EDIT);
-    *(status++) = (buf->charset == BINARY ? 'B' : 'U');
-    *(status++) = (buf->crlf ? 'C' : 'N');
-    *(status++) = (buf->expand_tabs ? 'S' : 'T');
-    *(status++) = (buf->copy_indent ? 'I' : 'i');
-    *(status++) = (SearchDir < 0 ? '<' : '>');
-    *(status++) = (buf->modified ? '*' : ' ');
-    *(status++) = ' ';
-    size_t remlen = sizeof(status_bytes) - strlen(status_bytes) - 1;
-    if (pty_active()) {
-        char* path = getcurrdir();
-        strncat(status, path, remlen);
-        free(path);
-    } else {
-        char* path = (buf->path ? buf->path : "*scratch*");
-        strncat(status, path, remlen);
-    }
-    win_settext(STATUS, status_bytes);
-    win_view(STATUS)->selection = (Sel){0,0,0};
 }
 
 void onlayout(void) {
