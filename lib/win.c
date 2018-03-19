@@ -1,3 +1,7 @@
+#define _POSIX_C_SOURCE 200809L
+#define _XOPEN_SOURCE   700
+#include <unistd.h>
+#include <limits.h>
 #include <stdc.h>
 #include <utf.h>
 #include <edit.h>
@@ -67,9 +71,11 @@ static void win_update(int xfd, void* data) {
 }
 
 static void set_path_prop(char* path) {
-    char *abspath = realpath(path, NULL);
+    char pathbuf[PATH_MAX] = {0};
+    if (!path) return;
+    char *abspath = realpath(path, pathbuf);
+    if (!abspath) return;
     x11_prop_set("TIDE_FILE", (!abspath ? "" : abspath));
-    free(abspath);
 }
 
 void win_load(char* path) {
