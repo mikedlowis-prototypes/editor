@@ -101,8 +101,6 @@ static void exec(char* cmd) {
     if (tag) {
         while (*cmd && !isspace(*cmd++));
         tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
-    } else if (pty_active() && !rissigil(*cmd)) {
-        pty_send(cmd, NULL);
     } else {
         cmd_exec(cmd);
     }
@@ -374,10 +372,6 @@ static void jumpmark(void) {
         view_jumpto(win_view(FOCUSED), false, Marks[mark]);
 }
 
-static void tag_send(char* cmd) {
-    pty_send(cmd, NULL);
-}
-
 /* Main Routine
  ******************************************************************************/
 static Tag Builtins[] = {
@@ -394,7 +388,6 @@ static Tag Builtins[] = {
     { .tag = "Reload",    .action.noarg = reload    },
     { .tag = "Save",      .action.noarg = save      },
     { .tag = "SaveAs",    .action.arg   = saveas    },
-    { .tag = "Send",      .action.arg   = tag_send  },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
     { .tag = "LineNums",  .action.noarg = tag_lnnum },
@@ -465,11 +458,6 @@ static KeyBinding Bindings[] = {
     { ModOneOrMore, '\n',       newline      },
     { ModCtrl,      ' ',        complete     },
 
-    /* Pseudo-terminal control shortcuts */
-    { ModCtrl|ModShift, 'c', pty_send_intr },
-    { ModCtrl|ModShift, 'd', pty_send_eof  },
-    { ModCtrl|ModShift, 'z', pty_send_susp },
-
     { 0, 0, 0 }
 };
 
@@ -506,10 +494,7 @@ void onshutdown(void) {
 }
 
 static void oninput(Rune rune) {
-    if (win_getregion() == EDIT && pty_active())
-        pty_send_rune(rune);
-    else
-        view_insert(win_view(FOCUSED), true, rune);
+    view_insert(win_view(FOCUSED), true, rune);
 }
 
 void edit_relative(char* path) {
@@ -561,13 +546,6 @@ void edit_relative(char* path) {
     free(origdir);
 }
 
-void edit_command(char** cmd) {
-    char* shellcmd[] = { ShellCmd[0], NULL };
-    win_buf(EDIT)->crlf = 1;
-    config_set_int(TabWidth, 8);
-    pty_spawn(*cmd ? cmd : shellcmd);
-}
-
 #ifndef TEST
 int main(int argc, char** argv) {
     /* setup the shell */
@@ -584,24 +562,12 @@ int main(int argc, char** argv) {
     }
 
     /* if we still have args left we're going to open it in this instance */
-    if (*argv) {
-        /* if it's a command we treat that specially */
-        if (!strcmp(*argv, "--"))
-            edit_command(argv+1);
-        else
-            edit_relative(*argv);
-    }
+    if (*argv) edit_relative(*argv);
 
     /* now create the window and start the event loop */
-    if (!pty_active()) {
-        win_settext(TAGS, config_get_str(EditTagString));
-        win_setruler(config_get_int(RulerColumn));
-        win_setlinenums(config_get_bool(LineNumbers));
-    } else {
-        win_settext(TAGS, config_get_str(CmdTagString));
-        win_setruler(0);
-        win_setlinenums(false);
-    }
+    win_settext(TAGS, config_get_str(EditTagString));
+    win_setruler(config_get_int(RulerColumn));
+    win_setlinenums(config_get_bool(LineNumbers));
     win_setkeys(Bindings, oninput);
     win_loop();
     return 0;

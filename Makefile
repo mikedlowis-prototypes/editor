@@ -14,8 +14,7 @@ LIBEDIT_OBJS =     \
 	lib/win.o      \
 	lib/colors.o   \
 	lib/config.o   \
-	lib/event.o    \
-	lib/pty.o
+	lib/event.o
 
 TEST_BINS =     \
 	tests/tide  \
