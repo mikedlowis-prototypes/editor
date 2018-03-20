@@ -35,7 +35,6 @@ struct Job {
     Rcvr err_rcvr;       /* reciever for the error output of the job */
     Rcvr out_rcvr;       /* receiver for the normal output of the job */
     View* dest;          /* destination view where output will be placed */
-    void (*donefn)(int); /* function called with return status of the job */
 };
 
 static Job* JobList = NULL;
@@ -57,7 +56,6 @@ bool exec_reap(void) {
             rcvr_finish(&(job->out_rcvr));
             rcvr_finish(&(job->err_rcvr));
             waitpid(job->proc.pid, &status, WNOHANG);
-            if (job->donefn) job->donefn(status);
             job = job_finish(job);
         } else {
             job = job->next;
@@ -68,7 +66,7 @@ bool exec_reap(void) {
     return (JobList != NULL);
 }
 
-void exec_job(char** cmd, char* data, size_t ndata, View* dest, void (*donefn)(int)) {
+void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
     Job* job = calloc(1, sizeof(Job));
     job->proc.pid = execute(cmd, &(job->proc));
     if (job->proc.pid < 0) {
@@ -83,7 +81,6 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest, void (*donefn)(i
         job->nwrite = 0;
         job->data   = data;
         job->next   = JobList;
-        job->donefn = donefn;
         if (JobList) JobList->prev = job;
         JobList = job;
         /* register watch events for file descriptors */
@@ -249,9 +246,9 @@ static int execute(char** cmd, Proc* proc) {
         close(inpipe[PIPE_READ]);
         close(outpipe[PIPE_WRITE]);
         close(errpipe[PIPE_WRITE]);
-        proc->in   = inpipe[PIPE_WRITE];
-        proc->out  = outpipe[PIPE_READ];
-        proc->err  = errpipe[PIPE_READ];
+        proc->in  = inpipe[PIPE_WRITE];
+        proc->out = outpipe[PIPE_READ];
+        proc->err = errpipe[PIPE_READ];
     }
     return proc->pid;
 }

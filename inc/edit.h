@@ -227,7 +227,7 @@ Rune view_getrune(View* view);
 /* Command Executions
  *****************************************************************************/
 bool exec_reap(void);
-void exec_job(char** cmd, char* data, size_t ndata, View* dest, void (*donefn)(int));
+void exec_job(char** cmd, char* data, size_t ndata, View* dest);
 int exec_cmd(char** cmd, char* text, char** out, char** err);
 int exec_spawn(char** cmd, int* in, int* out);
 
