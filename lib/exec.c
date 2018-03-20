@@ -13,7 +13,6 @@ typedef struct {
     int pid; /* process id of the child process */
     int in;  /* file descriptor for the child process's standard input */
     int out; /* file descriptor for the child process's standard output */
-    int err; /* file descriptor for the child process's standard error */
 } Proc;
 
 typedef struct Job Job;
@@ -32,7 +31,6 @@ struct Job {
     size_t ndata;        /* number of bytes to write to stdout */
     size_t nwrite;       /* number of bytes written to stdout so far */
     char* data;          /* data to write to stdout */
-    Rcvr err_rcvr;       /* reciever for the error output of the job */
     Rcvr out_rcvr;       /* receiver for the normal output of the job */
     View* dest;          /* destination view where output will be placed */
 };
@@ -54,7 +52,6 @@ bool exec_reap(void) {
     while (job) {
         if (job_done(job)) {
             rcvr_finish(&(job->out_rcvr));
-            rcvr_finish(&(job->err_rcvr));
             waitpid(job->proc.pid, &status, WNOHANG);
             job = job_finish(job);
         } else {
@@ -73,8 +70,6 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
         die("job_start() :");
     } else {
         /* add the job to the job list */
-        job->err_rcvr.view = win_view(TAGS);
-        job->err_rcvr.job = job;
         job->out_rcvr.view = dest;
         job->out_rcvr.job = job;
         job->ndata  = ndata;
@@ -85,11 +80,9 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
         JobList = job;
         /* register watch events for file descriptors */
         bool need_in  = (job->data != NULL),
-             need_out = (dest != NULL),
-             need_err = (need_in || need_out);
+             need_out = (dest != NULL);
         job->proc.in  = watch_or_close(need_in,  OUTPUT, job->proc.in,  job);
         job->proc.out = watch_or_close(need_out, INPUT,  job->proc.out, &(job->out_rcvr));
-        job->proc.err = watch_or_close(need_err, INPUT,  job->proc.err, &(job->err_rcvr));
     }
 }
 
@@ -120,11 +113,10 @@ static void job_closefd(Job* job, int fd) {
     if (fd >= 0) close(fd), fd = -fd;
     if (job->proc.in  == -fd) job->proc.in  = fd;
     if (job->proc.out == -fd) job->proc.out = fd;
-    if (job->proc.err == -fd) job->proc.err = fd;
 }
 
 static bool job_done(Job* job) {
-    return ((job->proc.in < 0) && (job->proc.out < 0) && (job->proc.err < 0));
+    return ((job->proc.in < 0) && (job->proc.out < 0));
 }
 
 static Job* job_finish(Job* job) {
@@ -208,7 +200,7 @@ static void rcvr_finish(Rcvr* rcvr) {
 static int execute(char** cmd, Proc* proc) {
     int inpipe[2], outpipe[2], errpipe[2];
     /* create the pipes */
-    if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0) || (pipe(errpipe) < 0))
+    if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0))
         return -1;
     /* create the process */
     proc->pid = fork();
@@ -216,27 +208,23 @@ static int execute(char** cmd, Proc* proc) {
         /* signal that we failed to fork */
         proc->in  = -1;
         proc->out = -1;
-        proc->err = -1;
     } else if (0 == proc->pid) {
         /* redirect child process's io to the pipes */
         if ((dup2(inpipe[PIPE_READ], STDIN_FILENO) < 0)    ||
             (dup2(outpipe[PIPE_WRITE], STDOUT_FILENO) < 0) ||
-            (dup2(errpipe[PIPE_WRITE], STDERR_FILENO) < 0)) {
+            (dup2(outpipe[PIPE_WRITE], STDERR_FILENO) < 0)) {
             perror("failed to pipe");
             exit(1);
         }
         /* execute the process */
         close(inpipe[PIPE_WRITE]);
         close(outpipe[PIPE_READ]);
-        close(errpipe[PIPE_READ]);
         exit(execvp(cmd[0], cmd));
     } else {
         close(inpipe[PIPE_READ]);
         close(outpipe[PIPE_WRITE]);
-        close(errpipe[PIPE_WRITE]);
         proc->in  = inpipe[PIPE_WRITE];
         proc->out = outpipe[PIPE_READ];
-        proc->err = errpipe[PIPE_READ];
     }
     return proc->pid;
 }
