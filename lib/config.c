@@ -4,6 +4,90 @@
 #include <utf.h>
 #include <edit.h>
 
+#if 0
+enum { OFF = 0, ON = 1 };
+
+#ifdef __MACH__
+    #define FONT "Monaco:size=10:antialias=true:autohint=true"
+    #define LNSPACE 0
+#else
+    #define FONT "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
+    #define LNSPACE 1
+#endif
+
+char Tags[] = "Quit Save Undo Redo Cut Copy Paste | Find ";
+char Font[] = FONT;
+
+int /* Integer config options */
+    WinWidth = 640,
+    WinHeight = 480,
+    LineSpacing = LNSPACE,
+    Ruler = 80,
+    Timeout = 50,
+    TabWidth = 4,
+    ScrollBy = 4,
+    ClickTime = 500,
+    MaxScanDist = 0,
+    LineNums = ON,
+    Syntax = ON,
+    CopyIndent = ON,
+    TrimOnSave = ON,
+    ExpandTabs = ON;
+
+int Palette[16] = {
+    0xff002b36,
+    0xff073642,
+    0xff40565d,
+    0xff657b83,
+    0xff839496,
+    0xff93a1a1,
+    0xffeee8d5,
+    0xfffdf6e3,
+    0xffb58900,
+    0xffcb4b16,
+    0xffdc322f,
+    0xffd33682,
+    0xff6c71c4,
+    0xff268bd2,
+    0xff2aa198,
+    0xff859900
+};
+
+struct { int fg, bg; } Colors[] = {
+    /* UI Colors */
+    [ClrScrollNor] = { .bg = 0, .fg = 0 },
+    [ClrGutterNor] = { .bg = 0, .fg = 0 },
+    [ClrGutterSel] = { .bg = 0, .fg = 0 },
+    [ClrStatusNor] = { .bg = 0, .fg = 0 },
+    [ClrTagsNor]   = { .bg = 0, .fg = 0 },
+    [ClrTagsSel]   = { .bg = 0, .fg = 0 },
+    [ClrTagsCsr]   = { .bg = 0, .fg = 0 },
+    [ClrEditNor]   = { .bg = 0, .fg = 0 },
+    [ClrEditSel]   = { .bg = 0, .fg = 0 },
+    [ClrEditCsr]   = { .bg = 0, .fg = 0 },
+    [ClrEditRul]   = { .bg = 0, .fg = 0 },
+    [ClrBorders]   = { .bg = 0, .fg = 0 },
+    /* Syntax Colors */
+    [SynNormal]    = { .bg = 0, .fg = 0 },
+    [SynComment]   = { .bg = 0, .fg = 0 },
+    [SynConstant]  = { .bg = 0, .fg = 0 },
+    [SynNumber]    = { .bg = 0, .fg = 0 },
+    [SynBoolean]   = { .bg = 0, .fg = 0 },
+    [SynFloat]     = { .bg = 0, .fg = 0 },
+    [SynString]    = { .bg = 0, .fg = 0 },
+    [SynChar]      = { .bg = 0, .fg = 0 },
+    [SynPreProc]   = { .bg = 0, .fg = 0 },
+    [SynType]      = { .bg = 0, .fg = 0 },
+    [SynKeyword]   = { .bg = 0, .fg = 0 },
+    [SynStatement] = { .bg = 0, .fg = 0 },
+    [SynFunction]  = { .bg = 0, .fg = 0 },
+    [SynVariable]  = { .bg = 0, .fg = 0 },
+    [SynSpecial]   = { .bg = 0, .fg = 0 },
+    [SynOperator]  = { .bg = 0, .fg = 0 },
+};
+
+#endif
+
 XrmDatabase DB;
 struct {
     char* name;
