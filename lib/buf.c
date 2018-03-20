@@ -43,7 +43,6 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
     buf->redo        = NULL;
     buf->errfn       = errfn;
     buf->nlines      = 0;
-    buf->outpoint    = 0;
     assert(buf->bufstart);
 }
 
@@ -540,7 +539,6 @@ static void buf_resize(Buf* buf, size_t sz) {
 
 static void delete(Buf* buf, size_t off) {
     Rune rune = buf_get(buf, off);
-    if (off < buf->outpoint) buf->outpoint--;
     if (rune == RUNE_CRLF || rune == '\n')
         buf->nlines--;
     syncgap(buf, off);
@@ -550,7 +548,6 @@ static void delete(Buf* buf, size_t off) {
 static size_t insert(Buf* buf, size_t off, Rune rune) {
     size_t rcount = 1;
     syncgap(buf, off);
-    if (off < buf->outpoint) buf->outpoint++;
     if (rune == '\n' || rune == RUNE_CRLF) buf->nlines++;
     if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
         rcount = 0;

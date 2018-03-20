@@ -70,7 +70,6 @@ typedef struct {
     uint transid;         /* tracks the last used transaction id for log entries */
     void (*errfn)(char*); /* callback for error messages */
     size_t nlines;        /* tracks number of lines in the buffer */
-    size_t outpoint;      /* tracks the point separating output from input for command buffers */
 } Buf;
 
 /* cursor/selection representation */
@@ -230,16 +229,6 @@ bool exec_reap(void);
 void exec_job(char** cmd, char* data, size_t ndata, View* dest);
 int exec_cmd(char** cmd);
 int exec_spawn(char** cmd, int* in, int* out);
-
-/* Pseudo-Terminal Handling
- *****************************************************************************/
-bool pty_active(void);
-void pty_spawn(char** argv);
-void pty_send(char* cmd, char* arg);
-void pty_send_rune(Rune rune);
-void pty_send_intr(void);
-void pty_send_eof(void);
-void pty_send_susp(void);
 
 /* Configuration Data
  *****************************************************************************/
