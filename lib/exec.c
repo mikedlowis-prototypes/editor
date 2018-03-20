@@ -5,14 +5,15 @@
 #include <win.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #define PIPE_READ  0
 #define PIPE_WRITE 1
 
 typedef struct {
     int pid; /* process id of the child process */
-    int in;  /* file descriptor for the child process's standard input */
-    int out; /* file descriptor for the child process's standard output */
+    int fd;  /* file descriptor for the child process's io */
 } Proc;
 
 typedef struct Job Job;
@@ -81,8 +82,17 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
         /* register watch events for file descriptors */
         bool need_in  = (job->data != NULL),
              need_out = (dest != NULL);
-        job->proc.in  = watch_or_close(need_in,  OUTPUT, job->proc.in,  job);
-        job->proc.out = watch_or_close(need_out, INPUT,  job->proc.out, &(job->out_rcvr));
+        watch_or_close(need_in,  OUTPUT, job->proc.fd,  job);
+        watch_or_close(need_out, INPUT,  job->proc.fd, &(job->out_rcvr));
+
+/*
+    event_cbfn_t fn = (dir == OUTPUT ? send_data : recv_data);
+    if (valid)
+        event_watchfd(fd, dir, fn, data);
+    else
+        close(fd), fd = -fd;
+*/
+
     }
 }
 
@@ -104,19 +114,18 @@ int exec_spawn(char** cmd, int* in, int* out) {
         perror("failed to execute");
         return -1;
     }
-    *in  = proc.in;
-    *out = proc.out;
+    *in  = proc.fd;
+    *out = proc.fd;
     return proc.pid;
 }
 
 static void job_closefd(Job* job, int fd) {
     if (fd >= 0) close(fd), fd = -fd;
-    if (job->proc.in  == -fd) job->proc.in  = fd;
-    if (job->proc.out == -fd) job->proc.out = fd;
+    if (job->proc.fd == -fd) job->proc.fd = fd;
 }
 
 static bool job_done(Job* job) {
-    return ((job->proc.in < 0) && (job->proc.out < 0));
+    return (job->proc.fd < 0);
 }
 
 static Job* job_finish(Job* job) {
@@ -143,10 +152,10 @@ static void send_data(int fd, void* data) {
             job->ndata  -= nwrite;
             job->nwrite += nwrite;
         }
-        if  (nwrite < 0 || job->ndata <= 0)
-            close(fd);
+        if (nwrite < 0 || job->ndata <= 0)
+            shutdown(fd, SHUT_WR);
     } else {
-        job_closefd(job, fd);
+        //event_unwatchfd(job, fd);
     }
 }
 
@@ -198,33 +207,24 @@ static void rcvr_finish(Rcvr* rcvr) {
 }
 
 static int execute(char** cmd, Proc* proc) {
-    int inpipe[2], outpipe[2], errpipe[2];
-    /* create the pipes */
-    if ((pipe(inpipe) < 0) || (pipe(outpipe) < 0))
+    int fds[2];
+    /* create the sockets */
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) < 0)
         return -1;
     /* create the process */
-    proc->pid = fork();
-    if (proc->pid < 0) {
-        /* signal that we failed to fork */
-        proc->in  = -1;
-        proc->out = -1;
+    if ((proc->pid = fork()) < 0) {
+        close(fds[0]), close(fds[1]), proc->fd = -1;
     } else if (0 == proc->pid) {
         /* redirect child process's io to the pipes */
-        if ((dup2(inpipe[PIPE_READ], STDIN_FILENO) < 0)    ||
-            (dup2(outpipe[PIPE_WRITE], STDOUT_FILENO) < 0) ||
-            (dup2(outpipe[PIPE_WRITE], STDERR_FILENO) < 0)) {
+        if ((dup2(fds[1], 0) < 0) || (dup2(fds[1], 1) < 0) || (dup2(fds[1], 2) < 0)) {
             perror("failed to pipe");
             exit(1);
         }
         /* execute the process */
-        close(inpipe[PIPE_WRITE]);
-        close(outpipe[PIPE_READ]);
+        close(fds[0]);
         exit(execvp(cmd[0], cmd));
     } else {
-        close(inpipe[PIPE_READ]);
-        close(outpipe[PIPE_WRITE]);
-        proc->in  = inpipe[PIPE_WRITE];
-        proc->out = outpipe[PIPE_READ];
+        close(fds[1]), proc->fd = fds[0];
     }
     return proc->pid;
 }
