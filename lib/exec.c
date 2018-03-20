@@ -93,24 +93,12 @@ void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
     }
 }
 
-int exec_cmd(char** cmd, char* text, char** out, char** err) {
+int exec_cmd(char** cmd) {
     Proc proc;
     if (execute(cmd, &proc) < 0) {
         perror("failed to execute");
         return -1;
     }
-    /* send the input to stdin of the command */
-    if (text && write(proc.in, text, strlen(text)) < 0) {
-        perror("failed to write");
-        return -1;
-    }
-    close(proc.in);
-    /* read the stderr of the command */
-    if (err) *err = fdgets(proc.err);
-    close(proc.err);
-    /* read the stdout of the command */
-    if (out) *out = fdgets(proc.out);
-    close(proc.out);
     /* wait for the process to finish */
     int status;
     waitpid(proc.pid, &status, 0);

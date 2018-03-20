@@ -213,7 +213,7 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
     } else {
         char* text = view_fetch(win_view(id), row, col, risfile);
         FetchCmd[1] = text;
-        if (exec_cmd(FetchCmd, NULL, NULL, NULL) != 0) {
+        if (exec_cmd(FetchCmd) != 0) {
             SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
             free(SearchTerm);
             SearchTerm = view_fetch(win_view(id), row, col, risfile);
