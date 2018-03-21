@@ -115,7 +115,7 @@ static void ondiagmsg(char* msg) {
 
 static void trim_whitespace(void) {
     Buf* buf = win_buf(EDIT);
-    if (config_get_bool(TrimOnSave) && buf_end(buf) > 0) {
+    if (TrimOnSave && buf_end(buf) > 0) {
         View* view = win_view(EDIT);
         unsigned off = 0, prev = 1;
         /* loop through the buffer till we hit the end or we stop advancing */
@@ -139,7 +139,7 @@ static void trim_whitespace(void) {
 static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)config_get_int(DblClickTime)) {
+    if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime) {
         #ifndef TEST
         x11_deinit();
         #else
@@ -180,7 +180,7 @@ void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
     static uint64_t before = 0;
     if (!pressed) return;
     uint64_t now = getmillis();
-    count = ((now-before) <= (uint64_t)config_get_int(DblClickTime) ? count+1 : 1);
+    count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
     before = now;
 
     if (count == 1) {
@@ -565,9 +565,9 @@ int main(int argc, char** argv) {
     if (*argv) edit_relative(*argv);
 
     /* now create the window and start the event loop */
-    win_settext(TAGS, config_get_str(EditTagString));
-    win_setruler(config_get_int(RulerColumn));
-    win_setlinenums(config_get_bool(LineNumbers));
+    win_settext(TAGS, TagString);
+    win_setruler(RulerPos);
+    win_setlinenums(LineNums);
     win_setkeys(Bindings, oninput);
     win_loop();
     return 0;

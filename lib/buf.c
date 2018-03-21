@@ -30,8 +30,8 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
 
     /* reset the state to defaults */
     buf->modified    = false;
-    buf->expand_tabs = config_get_bool(ExpandTabs);
-    buf->copy_indent = config_get_bool(CopyIndent);
+    buf->expand_tabs = ExpandTabs;
+    buf->copy_indent = CopyIndent;
     buf->charset     = UTF_8;
     buf->crlf        = 0;
     buf->bufsize     = 8192;
@@ -144,7 +144,7 @@ size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
     bool is_eol = (rune == '\n' || rune == RUNE_CRLF);
     buf->modified = true;
     if (fmt && buf->expand_tabs && rune == '\t') {
-        size_t tabwidth = config_get_int(TabWidth);
+        size_t tabwidth = TabWidth;
         size_t n = (tabwidth - ((off - buf_bol(buf, off)) % tabwidth));
         log_insert(buf, &(buf->undo), off, off+n);
         for(; n > 0; n--) off += insert(buf, off, ' ');

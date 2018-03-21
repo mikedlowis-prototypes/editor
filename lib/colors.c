@@ -15,7 +15,7 @@ static int read_byte(void);
 static int read_num(void);
 
 void colors_init(char* path) {
-    if (config_get_bool(SyntaxEnabled))
+    if (Syntax)
         exec_spawn((char*[]){ "tide-hl.rb", path, NULL }, &ChildIn, &ChildOut);
 }
 
@@ -25,7 +25,7 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
     /* if the engine died, clear all highlights and quit */
     if (ChildIn < 0 || !buf->path)
         return colors_rewind(spans, 0);
-
+#if 0
     /* commence the highlighting */
     if (beg < end) {
         write_chunk(buf, beg, end);
@@ -44,6 +44,7 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
         fflush(stdout);
         DataBeg = DataEnd = Buffer;
     }
+#endif
     return firstspan;
 }
 

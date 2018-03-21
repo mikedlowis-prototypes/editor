@@ -68,7 +68,7 @@ static struct XSel {
 
 static void xftcolor(XftColor* xc, int id) {
     #define COLOR(c) ((c) | ((c) >> 8))
-    uint32_t c = config_get_int(id + Color00);
+    uint32_t c = Palette[id];
     xc->color.alpha = COLOR((c & 0xFF000000) >> 16);
     xc->color.red   = COLOR((c & 0x00FF0000) >> 8);
     xc->color.green = COLOR((c & 0x0000FF00));
@@ -103,7 +103,6 @@ void x11_init(XConfig* cfg) {
     SelTarget = XInternAtom(X.display, "UTF8_STRING", 0);
     if (SelTarget == None)
         SelTarget = XInternAtom(X.display, "STRING", 0);
-    config_init(X.display);
 }
 
 int x11_connfd(void) {
@@ -130,7 +129,7 @@ void x11_window(char* name, int width, int height) {
         X.width,
         X.height,
         0, X.depth,
-        config_get_int(Color00));
+        Palette[0]);
 
     /* register interest in the delete window message */
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
@@ -505,11 +504,11 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
         XGlyphInfo extent;
         XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
         int w = extent.xOff;
-        int h = (font->height - font->descent) + config_get_int(LineSpacing);
+        int h = (font->height - font->descent) + LineSpacing;
         xftcolor(&bgc, bg);
         size_t width = specs[nspecs-1].x - specs[0].x + w;
         if (eol) width = X.width - specs[0].x;
-        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + config_get_int(LineSpacing));
+        x11_draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + LineSpacing);
         XftColorFree(X.display, X.visual, X.colormap, &bgc);
     }
     xftcolor(&fgc, fg);

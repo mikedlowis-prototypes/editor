@@ -9,6 +9,9 @@
 #include <win.h>
 #include <ctype.h>
 
+static int clrfg(int id) { return Palette[Colors[id].fg]; }
+static int clrbg(int id) { return Palette[Colors[id].bg]; }
+
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
 static void onmousedrag(int state, int x, int y);
@@ -45,22 +48,22 @@ static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL, errfn);
     x11_init(&Config);
-    Font = x11_font_load(config_get_str(FontString));
-    Regions[SCROLL].clrnor = config_get_int(ClrScrollNor);
-    Regions[TAGS].clrnor = config_get_int(ClrTagsNor);
-    Regions[TAGS].clrsel = config_get_int(ClrTagsSel);
-    Regions[TAGS].clrcsr = config_get_int(ClrTagsCsr);
-    Regions[EDIT].clrnor = config_get_int(ClrEditNor);
-    Regions[EDIT].clrsel = config_get_int(ClrEditSel);
-    Regions[EDIT].clrcsr = config_get_int(ClrEditCsr);
+    Font = x11_font_load(FontString);
+    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
+    Regions[TAGS].clrnor = Colors[ClrTagsNor];
+    Regions[TAGS].clrsel = Colors[ClrTagsSel];
+    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
+    Regions[EDIT].clrnor = Colors[ClrEditNor];
+    Regions[EDIT].clrsel = Colors[ClrEditSel];
+    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
 }
 
 void win_window(char* name, bool isdialog, void (*errfn)(char*)) {
     win_init(errfn);
     if (isdialog)
-        x11_dialog(name, config_get_int(WinWidth), config_get_int(WinHeight));
+        x11_dialog(name, WinWidth, WinHeight);
     else
-        x11_window(name, config_get_int(WinWidth), config_get_int(WinHeight));
+        x11_window(name, WinWidth, WinHeight);
 }
 
 static void win_update(int xfd, void* data) {
@@ -99,10 +102,9 @@ void win_save(char* path) {
 void win_loop(void) {
     x11_show();
     x11_flip();
-    int ms = config_get_int(EventTimeout);
     event_watchfd(x11_connfd(), INPUT, win_update, NULL);
     while (x11_running()) {
-        bool pending = event_poll(ms);
+        bool pending = event_poll(Timeout);
         exec_reap();
         int nevents  = x11_events_queued();
         if (update_focus() || pending || nevents) {
@@ -240,29 +242,29 @@ static void onredraw(int width, int height) {
 
     layout(width, height);
     onupdate(); // Let the user program update the status and other content
-    view_update(win_view(TAGS),   Regions[TAGS].clrnor,   Regions[TAGS].clrsel,   &(Regions[TAGS].csrx),   &(Regions[TAGS].csry));
-    view_update(win_view(EDIT),   Regions[EDIT].clrnor,   Regions[EDIT].clrsel,   &(Regions[EDIT].csrx),   &(Regions[EDIT].csry));
+    view_update(win_view(TAGS),   Regions[TAGS].clrnor.bg,   Regions[TAGS].clrsel.bg,   &(Regions[TAGS].csrx),   &(Regions[TAGS].csry));
+    view_update(win_view(EDIT),   Regions[EDIT].clrnor.bg,   Regions[EDIT].clrsel.bg,   &(Regions[EDIT].csrx),   &(Regions[EDIT].csry));
     onlayout(); // Let the user program update the scroll bar
 
-    int clr_hbor   = config_get_int(ClrBorders) >> 8;
-    int clr_vbor   = config_get_int(ClrBorders) & 0xFF;
-    int clr_scroll = config_get_int(ClrScrollNor);
+    int clr_hbor   = Colors[ClrBorders].bg;
+    int clr_vbor   = Colors[ClrBorders].bg;
+    int clr_scroll = Colors[ClrScrollNor].bg;
 
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);
-        x11_draw_rect((Regions[i].clrnor >> 8), 0, Regions[i].y - 3, width, Regions[i].height + 8);
-        x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
+        x11_draw_rect(Palette[Regions[i].clrnor.bg], 0, Regions[i].y - 3, width, Regions[i].height + 8);
+        x11_draw_rect(Palette[clr_hbor], 0, Regions[i].y - 3, width, 1);
 
         if (i == EDIT) {
             size_t gsz = gutter_size();
             if (Ruler)
-                x11_draw_rect( config_get_int(ClrEditRul),
+                x11_draw_rect( Palette[Colors[ClrEditRul].bg],
                                ((Ruler+2) * fwidth) + gsz,
                                Regions[i].y-2,
                                1,
                                Regions[i].height+7 );
             if (ShowLineNumbers)
-                x11_draw_rect( (config_get_int(ClrGutterNor) >> 8),
+                x11_draw_rect( Palette[Colors[ClrGutterNor].bg],
                                Regions[SCROLL].width,
                                Regions[SCROLL].y-2,
                                gsz,
@@ -287,14 +289,14 @@ static void onredraw(int width, int height) {
     size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
     size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
     if (thumbsz < 5) thumbsz = 5;
-    x11_draw_rect(clr_vbor, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
-    x11_draw_rect((clr_scroll >> 8), 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
-    x11_draw_rect((clr_scroll & 0xFF), 0, thumboff, Regions[SCROLL].width, thumbsz);
+    x11_draw_rect(Palette[clr_vbor], Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
+    //x11_draw_rect((clr_scroll >> 8), 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
+    //x11_draw_rect((clr_scroll & 0xFF), 0, thumboff, Regions[SCROLL].width, thumbsz);
 
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
         x11_draw_rect(
-            Regions[Focused].clrcsr,
+            Palette[Regions[Focused].clrcsr.bg],
             Regions[Focused].x + (Regions[Focused].csrx * fwidth),
             Regions[Focused].y + (Regions[Focused].csry * fheight),
             1, fheight);
@@ -359,10 +361,10 @@ static void scroll_actions(int btn, bool pressed, int x, int y) {
                 view_scroll(win_view(EDIT), +row);
             break;
         case MouseWheelUp:
-            view_scroll(win_view(EDIT), -(config_get_int(ScrollLines)));
+            view_scroll(win_view(EDIT), -ScrollBy);
             break;
         case MouseWheelDn:
-            view_scroll(win_view(EDIT), +(config_get_int(ScrollLines)));
+            view_scroll(win_view(EDIT), +ScrollBy);
             break;
     }
 }
@@ -398,12 +400,12 @@ static void onmousebtn(int btn, bool pressed, int x, int y) {
 
 static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col) {
     if (!pressed) return;
-    view_scroll(win_view(id), -(config_get_int(ScrollLines)));
+    view_scroll(win_view(id), -ScrollBy);
 }
 
 static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
     if (!pressed) return;
-    view_scroll(win_view(id), +(config_get_int(ScrollLines)));
+    view_scroll(win_view(id), +ScrollBy);
 }
 
 static void oncommand(char* cmd) {
@@ -432,10 +434,10 @@ static bool update_focus(void) {
 }
 
 static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num) {
-    int color = config_get_int(ClrGutterNor);
+    int color = clrbg(ClrGutterNor);
     if (!gcols) return;
     if (current) {
-        color = config_get_int(ClrGutterSel);;
+        color = clrbg(ClrGutterSel);;
         size_t fheight = x11_font_height(Font);
         x11_draw_rect((color >> 8), x-3, y-fheight, gutter_size(), fheight);
     }

@@ -232,26 +232,19 @@ int exec_spawn(char** cmd, int* in, int* out);
 
 /* Configuration Data
  *****************************************************************************/
-enum { /* Configuration Variables */
-    FontString = 0, EditTagString, CmdTagString, WinWidth, WinHeight,
-    LineSpacing, LineNumbers, RulerColumn, EventTimeout, CopyIndent, TrimOnSave,
-    ExpandTabs, TabWidth, ScrollLines, DblClickTime, MaxScanDist, SyntaxEnabled,
-    Color00, Color01, Color02, Color03, Color04, Color05, Color06, Color07,
-    Color08, Color09, Color10, Color11, Color12, Color13, Color14, Color15,
+typedef struct { int fg, bg; } CPair;
 
-    ClrScrollNor, ClrGutterNor, ClrGutterSel, ClrStatusNor, ClrTagsNor,
+extern char TagString[], FontString[];
+extern int Palette[16];
+extern int WinWidth, WinHeight, LineSpacing, RulerPos, Timeout, TabWidth, ScrollBy,
+    ClickTime, MaxScanDist, LineNums, Syntax, CopyIndent, TrimOnSave, ExpandTabs;
+extern CPair Colors[28];
+
+enum { /* Color Variables */
+    ClrScrollNor = 0, ClrGutterNor, ClrGutterSel, ClrStatusNor, ClrTagsNor,
     ClrTagsSel, ClrTagsCsr, ClrEditNor, ClrEditSel, ClrEditCsr, ClrEditRul,
     ClrBorders,
-
     SynNormal, SynComment, SynConstant, SynString, SynChar, SynNumber,
     SynBoolean, SynFloat, SynVariable, SynFunction, SynKeyword, SynOperator,
     SynPreProc, SynType, SynStatement, SynSpecial
 };
-
-void config_init(void* disp);
-void config_set_int(int key, int val);
-void config_set_bool(int key, bool val);
-void config_set_str(int key, char* val);
-int config_get_int(int key);
-bool config_get_bool(int key);
-char* config_get_str(int key);

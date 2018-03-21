@@ -112,7 +112,7 @@ void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry)
            last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     view->spans = colors_rewind(view->spans, first);
     size_t start = (view->spans ? view->spans->end : 0);
-    size_t scandist = config_get_int(MaxScanDist);
+    size_t scandist = MaxScanDist;
     if (scandist && first-start > scandist)
         start = first - scandist;
     view->spans = colors_scan(view->spans, &(view->buffer), start, last+1);
@@ -392,7 +392,7 @@ void view_scrollpage(View* view, int move) {
 
 void view_indent(View* view, int dir) {
     Buf* buf = &(view->buffer);
-    unsigned indoff = (buf->expand_tabs ? config_get_int(TabWidth) : 1);
+    unsigned indoff = (buf->expand_tabs ? TabWidth : 1);
     selswap(&(view->selection));
     view->selection.beg = buf_bol(buf, view->selection.beg);
     view->selection.end = buf_eol(buf, view->selection.end);
