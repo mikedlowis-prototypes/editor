@@ -9,9 +9,6 @@
 #include <win.h>
 #include <ctype.h>
 
-static int clrfg(int id) { return Palette[Colors[id].fg]; }
-static int clrbg(int id) { return Palette[Colors[id].bg]; }
-
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
 static void onmousedrag(int state, int x, int y);
@@ -242,29 +239,33 @@ static void onredraw(int width, int height) {
 
     layout(width, height);
     onupdate(); // Let the user program update the status and other content
-    view_update(win_view(TAGS),   Regions[TAGS].clrnor.bg,   Regions[TAGS].clrsel.bg,   &(Regions[TAGS].csrx),   &(Regions[TAGS].csry));
-    view_update(win_view(EDIT),   Regions[EDIT].clrnor.bg,   Regions[EDIT].clrsel.bg,   &(Regions[EDIT].csrx),   &(Regions[EDIT].csry));
+    int clrtagnor = (Regions[TAGS].clrnor.bg << 8 | Regions[TAGS].clrnor.fg);
+    int clrtagsel = (Regions[TAGS].clrsel.bg << 8 | Regions[TAGS].clrsel.fg);
+    view_update(win_view(TAGS), clrtagnor, clrtagsel, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
+    int clreditnor = (Regions[EDIT].clrnor.bg << 8 | Regions[EDIT].clrnor.fg);
+    int clreditsel = (Regions[EDIT].clrsel.bg << 8 | Regions[EDIT].clrsel.fg);
+    view_update(win_view(EDIT), clreditnor, clreditsel, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
     onlayout(); // Let the user program update the scroll bar
 
-    int clr_hbor   = Colors[ClrBorders].bg;
-    int clr_vbor   = Colors[ClrBorders].bg;
-    int clr_scroll = Colors[ClrScrollNor].bg;
+    int clr_hbor = Colors[ClrBorders].bg;
+    int clr_vbor = Colors[ClrBorders].bg;
+    CPair clr_scroll = Colors[ClrScrollNor];
 
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);
-        x11_draw_rect(Palette[Regions[i].clrnor.bg], 0, Regions[i].y - 3, width, Regions[i].height + 8);
-        x11_draw_rect(Palette[clr_hbor], 0, Regions[i].y - 3, width, 1);
+        x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
+        x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
 
         if (i == EDIT) {
             size_t gsz = gutter_size();
             if (Ruler)
-                x11_draw_rect( Palette[Colors[ClrEditRul].bg],
+                x11_draw_rect( Colors[ClrEditRul].bg,
                                ((Ruler+2) * fwidth) + gsz,
                                Regions[i].y-2,
                                1,
                                Regions[i].height+7 );
             if (ShowLineNumbers)
-                x11_draw_rect( Palette[Colors[ClrGutterNor].bg],
+                x11_draw_rect( Colors[ClrGutterNor].bg,
                                Regions[SCROLL].width,
                                Regions[SCROLL].y-2,
                                gsz,
@@ -289,14 +290,14 @@ static void onredraw(int width, int height) {
     size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
     size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
     if (thumbsz < 5) thumbsz = 5;
-    x11_draw_rect(Palette[clr_vbor], Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
-    //x11_draw_rect((clr_scroll >> 8), 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
-    //x11_draw_rect((clr_scroll & 0xFF), 0, thumboff, Regions[SCROLL].width, thumbsz);
+    x11_draw_rect(clr_vbor, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
+    x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
+    x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
 
     /* place the cursor on screen */
     if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
         x11_draw_rect(
-            Palette[Regions[Focused].clrcsr.bg],
+            Regions[Focused].clrcsr.fg,
             Regions[Focused].x + (Regions[Focused].csrx * fwidth),
             Regions[Focused].y + (Regions[Focused].csry * fheight),
             1, fheight);
@@ -434,16 +435,16 @@ static bool update_focus(void) {
 }
 
 static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num) {
-    int color = clrbg(ClrGutterNor);
+    int color = (Colors[ClrGutterNor].bg << 8 | Colors[ClrGutterNor].fg);
     if (!gcols) return;
     if (current) {
-        color = clrbg(ClrGutterSel);;
+        color = (Colors[ClrGutterSel].bg << 8 | Colors[ClrGutterSel].fg);
         size_t fheight = x11_font_height(Font);
-        x11_draw_rect((color >> 8), x-3, y-fheight, gutter_size(), fheight);
+        x11_draw_rect(Colors[ClrGutterSel].bg, x-3, y-fheight, gutter_size(), fheight);
     }
     UGlyph glyphs[gcols];
     for (int i = gcols-1; i >= 0; i--) {
-        glyphs[i].attr = color & 0xFF;
+        glyphs[i].attr = color;
         if (num > 0) {
             glyphs[i].rune = ((num % 10) + '0');
             num /= 10;
