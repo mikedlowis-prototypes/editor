@@ -15,7 +15,7 @@ static bool selection_visible(View* view);
 static void find_cursor(View* view, size_t* csrx, size_t* csry);
 static void clearrow(View* view, size_t row);
 static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
-static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line);
+static size_t fill_row(View* view, unsigned row, size_t pos);
 static unsigned prev_screen_line(View* view, unsigned bol, unsigned off);
 static unsigned scroll_up(View* view);
 static unsigned scroll_dn(View* view);
@@ -35,7 +35,6 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     view->selection   = (Sel){ 0 };
     view->sync_needed = true;
     view->sync_center = true;
-    view->sync_lines  = true;
     view->prev_csr    = 0;
     /* load the file and jump to the address returned from the load function */
     buf_init(&(view->buffer), errfn);
@@ -95,14 +94,10 @@ void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry)
     view->clrnor = clrnor, view->clrsel = clrsel;
     size_t csr = view->selection.end;
     /* scroll the view and reflow the screen lines */
-    size_t pos = view->rows[0]->off, line = view->rows[0]->line;
-    if (!line || view->sync_lines) {
-        line = buf_getln(&(view->buffer), buf_bol(&(view->buffer), pos));
-        view->sync_lines = false;
-    }
+    size_t pos = view->rows[0]->off;
     /* fill the view and scroll if needed */
     for (size_t y = 0; y < view->nrows; y++)
-        pos = fill_row(view, y, pos, &line);
+        pos = fill_row(view, y, pos);
     if (view->sync_needed)
         view_scrollto(view, csr);
     /* locate the cursor if visible */
@@ -279,7 +274,6 @@ void view_undo(View* view) {
     view->prev_csr = view->selection.end;
     buf_undo(&(view->buffer), &(view->selection));
     view->sync_needed = true;
-    view->sync_lines  = true;
     view->sync_center = !selection_visible(view);
 }
 
@@ -287,7 +281,6 @@ void view_redo(View* view) {
     view->prev_csr = view->selection.end;
     buf_redo(&(view->buffer), &(view->selection));
     view->sync_needed = true;
-    view->sync_lines  = true;
     view->sync_center = !selection_visible(view);
 }
 
@@ -569,20 +562,14 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     return ncols;
 }
 
-static size_t fill_row(View* view, unsigned row, size_t pos, size_t* line) {
+static size_t fill_row(View* view, unsigned row, size_t pos) {
     view_getrow(view, row)->off  = pos;
-    if (line) {
-        if (pos > buf_end(&(view->buffer)))
-            *line = 0;
-        view_getrow(view, row)->line = *line;
-    }
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
         uint32_t attr = (in_selection(view->selection, pos) ? view->clrsel : view->clrnor);
         Rune r = buf_get(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {
-            if (line) *line += 1;
             break;
         }
     }
@@ -605,7 +592,6 @@ static unsigned scroll_up(View* view) {
     size_t first   = view->rows[0]->off;
     size_t bol     = buf_bol(&(view->buffer), first);
     size_t prevln  = (first == bol ? buf_byline(&(view->buffer), bol, UP) : bol);
-    size_t linenum = (prevln < bol ? view->rows[0]->line-1 : view->rows[0]->line);
     if (!first) return first;
     prevln = prev_screen_line(view, prevln, first);
     /* delete the last row and shift the others */
@@ -613,15 +599,13 @@ static unsigned scroll_up(View* view) {
     memmove(&view->rows[1], &view->rows[0], sizeof(Row*) * (view->nrows-1));
     view->rows[0] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
     view->rows[0]->off = prevln;
-    view->rows[0]->line = linenum;
     /* fill in row content */
-    fill_row(view, 0, view->rows[0]->off, NULL);
+    fill_row(view, 0, view->rows[0]->off);
     return view->rows[0]->off;
 }
 
 static unsigned scroll_dn(View* view) {
     size_t last = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
-    size_t line = view->rows[view->nrows-1]->line;
     if (last >= buf_end(&(view->buffer))) return last;
     /* delete the first row and shift the others */
     if (view->nrows > 1) {
@@ -630,12 +614,11 @@ static unsigned scroll_dn(View* view) {
         view->rows[view->nrows-1] = calloc(1, sizeof(Row) + (view->ncols * sizeof(UGlyph)));
         view->rows[view->nrows-1]->off = (view->rows[view->nrows-2]->off + view->rows[view->nrows-2]->rlen);
         /* fill in row content */
-        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off, NULL);
+        fill_row(view, view->nrows-1, view->rows[view->nrows-1]->off);
     } else {
         view->rows[0]->off += view->rows[0]->rlen;
-        fill_row(view, 0, view->rows[0]->off, NULL);
+        fill_row(view, 0, view->rows[0]->off);
     }
-    view->rows[view->nrows-1]->line = (buf_iseol(&(view->buffer), last) ? line+1 : line);
     return view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen - 1;
 }
 
@@ -678,7 +661,6 @@ static size_t getoffset(View* view, size_t row, size_t col) {
 
 static void sync_line_numbers(View* view, size_t newpos) {
     if (!view->nrows || newpos <= view->rows[0]->off) {
-        view->sync_lines = true;
         if (view->nrows)
             view->rows[0]->off = buf_bol(&(view->buffer), newpos);
     }

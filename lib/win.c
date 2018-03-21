@@ -39,7 +39,6 @@ static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
 static void (*InputFunc)(Rune);
-static bool ShowLineNumbers = false;
 
 static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
@@ -124,14 +123,6 @@ void win_settext(WinRegion id, char* text) {
     buf_logclear(&(view->buffer));
 }
 
-void win_setlinenums(bool enable) {
-    ShowLineNumbers = enable;
-}
-
-bool win_getlinenums(void) {
-    return ShowLineNumbers;
-}
-
 void win_setruler(size_t ruler) {
     Ruler = ruler;
 }
@@ -185,17 +176,6 @@ void win_setscroll(double offset, double visible) {
     ScrollVisible = visible;
 }
 
-static size_t gutter_cols(void) {
-    size_t len = 0, lines = win_buf(EDIT)->nlines + 1;
-    while (ShowLineNumbers && lines)
-        lines /= 10, len++;
-    return len;
-}
-
-static size_t gutter_size(void) {
-    return (gutter_cols() * x11_font_width(Font)) + (ShowLineNumbers ? 5 : 0);
-}
-
 static void layout(int width, int height) {
     size_t fheight = x11_font_height(Font);
     size_t fwidth  = x11_font_width(Font);
@@ -226,11 +206,11 @@ static void layout(int width, int height) {
     Regions[SCROLL].width  = 5 + fwidth;
 
     /* Place the edit region relative to tags */
-    Regions[EDIT].x      = 3 + Regions[SCROLL].width + gutter_size();
+    Regions[EDIT].x      = 3 + Regions[SCROLL].width;
     Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
     Regions[EDIT].height = (height - Regions[EDIT].y - 5);
     Regions[EDIT].width  = width - Regions[SCROLL].width - 5;
-    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth - gutter_cols());
+    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
 static void onredraw(int width, int height) {
@@ -257,31 +237,17 @@ static void onredraw(int width, int height) {
         x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
 
         if (i == EDIT) {
-            size_t gsz = gutter_size();
             if (Ruler)
-                x11_draw_rect( Colors[ClrEditRul].bg,
-                               ((Ruler+2) * fwidth) + gsz,
+                x11_draw_rect( Colors[ClrEditRul].fg,
+                               ((Ruler+2) * fwidth),
                                Regions[i].y-2,
                                1,
                                Regions[i].height+7 );
-            if (ShowLineNumbers)
-                x11_draw_rect( Colors[ClrGutterNor].bg,
-                               Regions[SCROLL].width,
-                               Regions[SCROLL].y-2,
-                               gsz,
-                               Regions[SCROLL].height+7 );
         }
 
-        size_t gcols = gutter_cols();
         for (size_t line = 0, y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
-            draw_line_num( (y == Regions[i].csry),
-                           Regions[i].x - (gcols * fwidth) - 5,
-                           Regions[i].y + ((y+1) * fheight),
-                           gcols,
-                           (line != row->line ? row->line : 0) );
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
-            line = row->line;
         }
     }
 
@@ -432,27 +398,6 @@ static bool update_focus(void) {
         prev_x = ptr_x, prev_y = ptr_y;
     }
     return changed;
-}
-
-static void draw_line_num(bool current, size_t x, size_t y, size_t gcols, size_t num) {
-    int color = (Colors[ClrGutterNor].bg << 8 | Colors[ClrGutterNor].fg);
-    if (!gcols) return;
-    if (current) {
-        color = (Colors[ClrGutterSel].bg << 8 | Colors[ClrGutterSel].fg);
-        size_t fheight = x11_font_height(Font);
-        x11_draw_rect(Colors[ClrGutterSel].bg, x-3, y-fheight, gutter_size(), fheight);
-    }
-    UGlyph glyphs[gcols];
-    for (int i = gcols-1; i >= 0; i--) {
-        glyphs[i].attr = color;
-        if (num > 0) {
-            glyphs[i].rune = ((num % 10) + '0');
-            num /= 10;
-        } else {
-            glyphs[i].rune = ' ';
-        }
-    }
-    draw_glyphs(x, y, glyphs, gcols, gcols);
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {

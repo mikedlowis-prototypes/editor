@@ -241,10 +241,6 @@ static void tag_redo(void) {
     view_redo(win_view(EDIT));
 }
 
-static void tag_lnnum(void) {
-    win_setlinenums(!win_getlinenums());
-}
-
 static void search(void) {
     char* str;
     SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
@@ -390,8 +386,7 @@ static Tag Builtins[] = {
     { .tag = "SaveAs",    .action.arg   = saveas    },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
-    { .tag = "LineNums",  .action.noarg = tag_lnnum },
-    { .tag = NULL,        .action.noarg = NULL      }
+     { .tag = NULL,        .action.noarg = NULL      }
 };
 
 static KeyBinding Bindings[] = {
@@ -567,7 +562,6 @@ int main(int argc, char** argv) {
     /* now create the window and start the event loop */
     win_settext(TAGS, TagString);
     win_setruler(RulerPos);
-    win_setlinenums(LineNums);
     win_setkeys(Bindings, oninput);
     win_loop();
     return 0;

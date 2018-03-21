@@ -69,7 +69,6 @@ typedef struct {
     bool copy_indent;     /* copy the indent level from the previous line on new lines */
     uint transid;         /* tracks the last used transaction id for log entries */
     void (*errfn)(char*); /* callback for error messages */
-    size_t nlines;        /* tracks number of lines in the buffer */
 } Buf;
 
 /* cursor/selection representation */
@@ -153,7 +152,6 @@ typedef struct {
 } UGlyph;
 
 typedef struct {
-    size_t line;   /* the line number of the data in the row */
     size_t off;    /* offset of the first rune in the row */
     size_t rlen;   /* number of runes displayed in the row */
     size_t len;    /* number of screen columns taken up by row */
@@ -171,7 +169,6 @@ typedef struct {
     int clrnor, clrsel; /* text color pairs for normal and selected text */
     bool sync_needed;   /* whether the view needs to be synced with cursor */
     bool sync_center;   /* cursor should be centered on screen if possible */
-    bool sync_lines;    /* whether the line numbers should be recalculated */
 } View;
 
 enum {
@@ -237,7 +234,7 @@ typedef struct { int fg, bg; } CPair;
 extern char TagString[], FontString[];
 extern int Palette[16];
 extern int WinWidth, WinHeight, LineSpacing, RulerPos, Timeout, TabWidth, ScrollBy,
-    ClickTime, MaxScanDist, LineNums, Syntax, CopyIndent, TrimOnSave, ExpandTabs;
+    ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs;
 extern CPair Colors[28];
 
 enum { /* Color Variables */

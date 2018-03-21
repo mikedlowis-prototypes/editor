@@ -42,8 +42,6 @@ void win_load(char* path);
 void win_save(char* path);
 void win_loop(void);
 void win_settext(WinRegion id, char* text);
-void win_setlinenums(bool enable);
-bool win_getlinenums(void);
 void win_setruler(size_t ruler);
 Rune win_getkey(void);
 void win_setkeys(KeyBinding* bindings, void (*inputfn)(Rune));
