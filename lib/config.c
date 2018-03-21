@@ -7,10 +7,10 @@
 enum { OFF = 0, ON = 1 };
 
 #ifdef __MACH__
-    #define FONT "Monaco:size=10:antialias=true:autohint=true"
+    #define FONT "Monaco:size=10"
     #define LNSPACE 0
 #else
-    #define FONT "Liberation Mono:pixelsize=14:antialias=true:autohint=true"
+    #define FONT "Liberation Mono:pixelsize=14"
     #define LNSPACE 1
 #endif
 
