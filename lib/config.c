@@ -28,7 +28,7 @@ int /* Integer config options */
     ClickTime = 500,
     MaxScanDist = 0,
     LineNums = ON,
-    Syntax = OFF,
+    Syntax = ON,
     CopyIndent = ON,
     TrimOnSave = ON,
     ExpandTabs = ON;

@@ -25,7 +25,6 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
     /* if the engine died, clear all highlights and quit */
     if (ChildIn < 0 || !buf->path)
         return colors_rewind(spans, 0);
-#if 0
     /* commence the highlighting */
     if (beg < end) {
         write_chunk(buf, beg, end);
@@ -35,7 +34,7 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
             e = read_num();
             c = read_num();
             if (e > 0 && c > 0) {
-                c = (c > 15 ? config_get_int(SynNormal + (c >> 4) - 1) : c) & 0xf;
+                c = (c > 15 ? Colors[SynNormal + (c >> 4) - 1].fg : c);
                 currspan = mkspan(beg+b, beg+e-1, c, currspan);
             }
             if (!firstspan)
@@ -44,7 +43,6 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
         fflush(stdout);
         DataBeg = DataEnd = Buffer;
     }
-#endif
     return firstspan;
 }
 
