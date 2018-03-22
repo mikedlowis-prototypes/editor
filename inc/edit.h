@@ -22,15 +22,6 @@ bool file_exists(char* path);
 char* strmcat(char* first, ...);
 int daemonize(void);
 
-/* File Descriptor Event Handling
- *****************************************************************************/
-enum { INPUT, OUTPUT };
-
-typedef void (*event_cbfn_t)(int fd, void* data);
-
-bool event_poll(int ms);
-void event_watchfd(int fd, int iodir, event_cbfn_t fn, void* data);
-
 /* Buffer management functions
  *****************************************************************************/
 /* undo/redo list item */
@@ -222,9 +213,21 @@ Rune view_getrune(View* view);
 
 /* Command Executions
  *****************************************************************************/
-bool exec_reap(void);
+
+typedef struct Job Job;
+
+typedef void (*jobfn_t)(Job* job);
+
+struct Job {
+    int pid, fd;
+    void* data;
+    void (*writefn)(Job* job);
+    void (*readfn)(Job* job);
+};
+
+bool exec_poll(int fd, int ms);
+int exec_reap(void);
 void exec_job(char** cmd, char* data, size_t ndata, View* dest);
-int exec_cmd(char** cmd);
 int exec_spawn(char** cmd, int* in, int* out);
 
 /* Configuration Data

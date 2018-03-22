@@ -97,12 +97,10 @@ void win_save(char* path) {
 
 void win_loop(void) {
     x11_show();
-    x11_flip();
-    event_watchfd(x11_connfd(), INPUT, win_update, NULL);
     while (x11_running()) {
-        bool pending = event_poll(Timeout);
+        bool pending = exec_poll(x11_connfd(), Timeout);
         exec_reap();
-        int nevents  = x11_events_queued();
+        int nevents = x11_events_queued();
         if (update_focus() || pending || nevents) {
             x11_events_take();
             if (x11_running())

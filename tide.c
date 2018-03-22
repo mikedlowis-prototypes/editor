@@ -211,18 +211,12 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
     if (win_btnpressed(MouseLeft)) {
         paste();
     } else {
-        char* text = view_fetch(win_view(id), row, col, risfile);
-        FetchCmd[1] = text;
-        if (exec_cmd(FetchCmd) != 0) {
-            SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
-            free(SearchTerm);
-            SearchTerm = view_fetch(win_view(id), row, col, risfile);
-            if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
-                win_setregion(EDIT);
-                win_warpptr(EDIT);
-            }
-        } else {
-            free(text);
+        SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+        free(SearchTerm);
+        SearchTerm = view_fetch(win_view(id), row, col, risfile);
+        if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
+            win_setregion(EDIT);
+            win_warpptr(EDIT);
         }
     }
 }
@@ -386,7 +380,7 @@ static Tag Builtins[] = {
     { .tag = "SaveAs",    .action.arg   = saveas    },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
-     { .tag = NULL,        .action.noarg = NULL      }
+    { .tag = NULL,        .action.noarg = NULL      }
 };
 
 static KeyBinding Bindings[] = {

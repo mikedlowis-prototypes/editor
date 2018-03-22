@@ -7,205 +7,42 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <poll.h>
 
-#define PIPE_READ  0
-#define PIPE_WRITE 1
+#define MAX_JOBS 1024
 
-typedef struct {
-    int pid; /* process id of the child process */
-    int fd;  /* file descriptor for the child process's io */
-} Proc;
+static struct pollfd Jobs[MAX_JOBS];
 
-typedef struct Job Job;
-
-typedef struct {
-    Job* job;     /* pointer to the job the receiver belongs to */
-    View* view;   /* destination view */
-    size_t beg;   /* start of output */
-    size_t count; /* number of bytes written */
-} Rcvr;
-
-struct Job {
-    Job* next;           /* Pointer to previous job in the job list */
-    Job* prev;           /* Pointer to next job in the job list */
-    Proc proc;           /* Process id and descriptors */
-    size_t ndata;        /* number of bytes to write to stdout */
-    size_t nwrite;       /* number of bytes written to stdout so far */
-    char* data;          /* data to write to stdout */
-    Rcvr out_rcvr;       /* receiver for the normal output of the job */
-    View* dest;          /* destination view where output will be placed */
-};
-
-static Job* JobList = NULL;
-
-static void job_closefd(Job* job, int fd);
-static bool job_done(Job* job);
-static Job* job_finish(Job* job);
-static void send_data(int fd, void* data);
-static void recv_data(int fd, void* data);
-static int watch_or_close(bool valid, int dir, int fd, void* data);
-static void rcvr_finish(Rcvr* rcvr);
-static int execute(char** cmd, Proc* proc);
-
-bool exec_reap(void) {
-    int status;
-    Job* job = JobList;
-    while (job) {
-        if (job_done(job)) {
-            rcvr_finish(&(job->out_rcvr));
-            waitpid(job->proc.pid, &status, WNOHANG);
-            job = job_finish(job);
-        } else {
-            job = job->next;
-        }
+bool exec_poll(int fd, int ms) {
+    int njobs = 0;
+    if (fd > 0) {
+        Jobs[0].fd = fd;
+        Jobs[0].events = POLLIN;
+        Jobs[0].revents = 0;
+        njobs = 1;
     }
-    if (JobList == NULL)
-        while (waitpid(-1, &status, WNOHANG) > 0);
-    return (JobList != NULL);
+
+    long ret = poll(Jobs, njobs, ms);
+
+    /* reap zombie processes */
+    for (int status; waitpid(-1, &status, WNOHANG) > 0;);
+
+    return (ret > 0);
 }
 
-void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
-    Job* job = calloc(1, sizeof(Job));
-    job->proc.pid = execute(cmd, &(job->proc));
-    if (job->proc.pid < 0) {
-        die("job_start() :");
-    } else {
-        /* add the job to the job list */
-        job->out_rcvr.view = dest;
-        job->out_rcvr.job = job;
-        job->ndata  = ndata;
-        job->nwrite = 0;
-        job->data   = data;
-        job->next   = JobList;
-        if (JobList) JobList->prev = job;
-        JobList = job;
-        /* register watch events for file descriptors */
-        bool need_in  = (job->data != NULL),
-             need_out = (dest != NULL);
-        watch_or_close(need_in,  OUTPUT, job->proc.fd,  job);
-        watch_or_close(need_out, INPUT,  job->proc.fd, &(job->out_rcvr));
-
-/*
-    event_cbfn_t fn = (dir == OUTPUT ? send_data : recv_data);
-    if (valid)
-        event_watchfd(fd, dir, fn, data);
-    else
-        close(fd), fd = -fd;
-*/
-
-    }
-}
-
-int exec_cmd(char** cmd) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return -1;
-    }
-    /* wait for the process to finish */
-    int status;
-    waitpid(proc.pid, &status, 0);
-    return status;
+int exec_reap(void) {
+    return 0;
 }
 
 int exec_spawn(char** cmd, int* in, int* out) {
-    Proc proc;
-    if (execute(cmd, &proc) < 0) {
-        perror("failed to execute");
-        return -1;
-    }
-    *in  = proc.fd;
-    *out = proc.fd;
-    return proc.pid;
+    return -1;
 }
 
-static void job_closefd(Job* job, int fd) {
-    if (fd >= 0) close(fd), fd = -fd;
-    if (job->proc.fd == -fd) job->proc.fd = fd;
+void exec_job(char** cmd, char* data, size_t ndata, View* dest) {
+
 }
 
-static bool job_done(Job* job) {
-    return (job->proc.fd < 0);
-}
-
-static Job* job_finish(Job* job) {
-    Job* next = job->next;
-    if (job->prev) {
-        job->prev->next = next;
-        if (next)
-            next->prev = job->prev;
-    } else {
-        if (next)
-            next->prev = NULL;
-        JobList = next;
-    }
-    free(job->data);
-    free(job);
-    return next;
-}
-
-static void send_data(int fd, void* data) {
-    Job* job = data;
-    if (fd >= 0) {
-        long nwrite = write(fd, (job->data + job->nwrite), job->ndata);
-        if (nwrite >= 0) {
-            job->ndata  -= nwrite;
-            job->nwrite += nwrite;
-        }
-        if (nwrite < 0 || job->ndata <= 0)
-            shutdown(fd, SHUT_WR);
-    } else {
-        //event_unwatchfd(job, fd);
-    }
-}
-
-static void recv_data(int fd, void* data) {
-    static char buffer[4096];
-    Rcvr* rcvr = data;
-    Job* job = rcvr->job;
-    View* view = rcvr->view;
-    Sel sel = view->selection;
-
-    if (fd >= 0) {
-        long i = 0, nread = read(fd, buffer, sizeof(buffer));
-        if (nread > 0) {
-            if (!rcvr->count)
-                rcvr->beg = min(sel.beg, sel.end);
-            while (i < nread) {
-                Rune r;
-                size_t len = 0;
-                while (!utf8decode(&r, &len, buffer[i++]));
-                view_insert(rcvr->view, false, r);
-                rcvr->count++;
-            }
-        } else {
-            close(fd);
-        }
-    } else {
-        job_closefd(job, fd);
-    }
-}
-
-static int watch_or_close(bool valid, int dir, int fd, void* data) {
-    event_cbfn_t fn = (dir == OUTPUT ? send_data : recv_data);
-    if (valid)
-        event_watchfd(fd, dir, fn, data);
-    else
-        close(fd), fd = -fd;
-    return fd;
-}
-
-static void rcvr_finish(Rcvr* rcvr) {
-    if (rcvr->count) {
-        View* view = rcvr->view;
-        Buf* buf = &(rcvr->view->buffer);
-        if (rcvr->view == win_view(TAGS))
-            buf_chomp(buf), rcvr->count--;
-        view->selection.beg = rcvr->beg;
-        view->selection.end = rcvr->beg + rcvr->count;
-    }
-}
-
+#if 0
 static int execute(char** cmd, Proc* proc) {
     int fds[2];
     /* create the sockets */
@@ -228,3 +65,4 @@ static int execute(char** cmd, Proc* proc) {
     }
     return proc->pid;
 }
+#endif

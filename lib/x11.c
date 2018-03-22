@@ -211,7 +211,7 @@ void x11_finish(void) {
         char* text = Selections[CLIPBOARD].text;
         size_t len = strlen(text);
         exec_job((char*[]){ "xcpd", NULL }, text, len, NULL);
-        while (event_poll(100));
+        while (exec_poll(-1, 100));
     }
 }
 
