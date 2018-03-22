@@ -14,12 +14,19 @@ static void write_chunk(Buf* buf, size_t beg, size_t end);
 static int read_byte(void);
 static int read_num(void);
 
+static void writefn(Job* job) {
+}
+
+static void readfn(Job* job) {
+}
+
 void colors_init(char* path) {
     if (Syntax)
-        exec_spawn((char*[]){ "tide-hl.rb", path, NULL }, &ChildIn, &ChildOut);
+        job_create((char*[]){ "tide-hl.rb", path, NULL }, readfn, writefn, 0);
 }
 
 SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
+#if 0
     SyntaxSpan* firstspan = spans;
     SyntaxSpan* currspan  = spans;
     /* if the engine died, clear all highlights and quit */
@@ -44,9 +51,13 @@ SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {
         DataBeg = DataEnd = Buffer;
     }
     return firstspan;
+#else
+    return spans;
+#endif
 }
 
 SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first) {
+#if 0
     SyntaxSpan *curr = spans, *next = (spans ? spans->next : NULL);
     while (curr && curr->end > first)
         next = curr, curr = curr->prev;
@@ -60,8 +71,12 @@ SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first) {
         free(dead);
     }
     return curr;
+#else
+    return spans;
+#endif
 }
 
+#if 0
 static SyntaxSpan* mkspan(size_t beg, size_t end, size_t clr, SyntaxSpan* span) {
     SyntaxSpan* newspan = malloc(sizeof(SyntaxSpan));
     newspan->beg   = beg;
@@ -115,3 +130,4 @@ static int read_num(void) {
         num = (num * 10) + (c - '0');
     return num;
 }
+#endif

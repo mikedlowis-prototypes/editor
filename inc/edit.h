@@ -219,16 +219,16 @@ typedef struct Job Job;
 typedef void (*jobfn_t)(Job* job);
 
 struct Job {
+    Job *next;
     int pid, fd;
-    void* data;
-    void (*writefn)(Job* job);
-    void (*readfn)(Job* job);
+    void *data;
+    void (*writefn)(Job *job);
+    void (*readfn)(Job *job);
 };
 
-bool exec_poll(int fd, int ms);
-int exec_reap(void);
-void exec_job(char** cmd, char* data, size_t ndata, View* dest);
-int exec_spawn(char** cmd, int* in, int* out);
+bool job_poll(int fd, int ms);
+void job_create(char** cmd, jobfn_t readfn, jobfn_t writefn, void* data);
+void job_start(char** cmd, char* data, size_t ndata, View* dest);
 
 /* Configuration Data
  *****************************************************************************/

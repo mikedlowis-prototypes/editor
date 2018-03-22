@@ -210,8 +210,8 @@ void x11_finish(void) {
     if (Selections[CLIPBOARD].text) {
         char* text = Selections[CLIPBOARD].text;
         size_t len = strlen(text);
-        exec_job((char*[]){ "xcpd", NULL }, text, len, NULL);
-        while (exec_poll(-1, 100));
+        job_start((char*[]){ "xcpd", NULL }, text, len, NULL);
+        while (job_poll(-1, 100));
     }
 }
 
