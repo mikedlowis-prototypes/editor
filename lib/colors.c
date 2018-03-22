@@ -15,9 +15,11 @@ static int read_byte(void);
 static int read_num(void);
 
 static void writefn(Job* job) {
+    job->writefn = NULL;
 }
 
 static void readfn(Job* job) {
+    job->readfn = NULL;
 }
 
 void colors_init(char* path) {

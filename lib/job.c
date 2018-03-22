@@ -37,7 +37,9 @@ bool job_poll(int fd, int ms) {
         if (JobFds[njobs].events) njobs++;
     }
     /* Poll until a job is ready, call the functions based on events */
+    printf("poll(..., %d, %d)", njobs, ms);
     long ret = poll(JobFds, njobs, ms);
+    printf(" => %ld\n", ret);
     for (int i = 1; i < njobs; i++)
         job_process(JobFds[i].fd, JobFds[i].revents);
     /* reap zombie processes */
@@ -65,13 +67,15 @@ void job_start(char** cmd, char* data, size_t ndata, View* dest) {
 }
 
 static void job_process(int fd, int events) {
-    Job* job = NULL; // Get job by fd
+#if 0
+    Job* job = JobList; // Get job by fd
     if (job->readfn && (events & POLLIN))
         job->readfn(job);
     if (job->writefn && (events & POLLOUT))
         job->writefn(job);
     if (!job->readfn && !job->writefn)
         job_finish(job);
+#endif
 }
 
 static void job_finish(Job* job) {

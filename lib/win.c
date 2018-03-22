@@ -70,11 +70,13 @@ static void win_update(int xfd, void* data) {
 }
 
 static void set_path_prop(char* path) {
+#if 0
     char pathbuf[PATH_MAX] = {0};
     if (!path) return;
     char *abspath = realpath(path, pathbuf);
     if (!abspath) return;
-    x11_prop_set("TIDE_FILE", (!abspath ? "" : abspath));
+    x11_prop_set("TIDE_FILE", abspath);
+#endif
 }
 
 void win_load(char* path) {
@@ -384,6 +386,8 @@ static void oncommand(char* cmd) {
 }
 
 static bool update_focus(void) {
+    return false;
+#if 0
     static int prev_x = 0, prev_y = 0;
     int ptr_x, ptr_y;
     bool changed = false;
@@ -395,6 +399,7 @@ static bool update_focus(void) {
         prev_x = ptr_x, prev_y = ptr_y;
     }
     return changed;
+#endif
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
