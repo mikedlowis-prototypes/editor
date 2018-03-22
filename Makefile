@@ -8,7 +8,7 @@ LIBEDIT_OBJS =     \
 	lib/filetype.o \
 	lib/utf8.o     \
 	lib/utils.o    \
-	lib/exec.o     \
+	lib/job.o      \
 	lib/view.o     \
 	lib/x11.o      \
 	lib/win.o      \
