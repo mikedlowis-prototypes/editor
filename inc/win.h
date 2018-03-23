@@ -25,7 +25,6 @@ typedef struct {
     size_t height, width;
     size_t csrx, csry;
     CPair clrnor, clrsel, clrcsr;
-    bool warp_ptr;
     View view;
 } Region;
 

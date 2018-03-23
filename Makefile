@@ -1,6 +1,6 @@
 INCS = -Iinc/
-
-BINS = tide tfetch tctl pick xcpd
+MAKEFLAGS = -j4
+BINS = tide
 MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
@@ -11,7 +11,6 @@ LIBEDIT_OBJS =     \
 	lib/job.o      \
 	lib/view.o     \
 	lib/x11.o      \
-	lib/win.o      \
 	lib/colors.o   \
 	lib/config.o
 
@@ -24,7 +23,7 @@ include config.mk
 
 .PHONY: all docs clean install uninstall test
 
-all: $(BINS) test $(MAN1)
+all: $(BINS) $(MAN1)
 
 docs:
 	ronn --roff docs/*.md

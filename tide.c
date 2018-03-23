@@ -214,10 +214,6 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
         SearchTerm = view_fetch(win_view(id), row, col, risfile);
-        if (view_findstr(win_view(EDIT), SearchDir, SearchTerm)) {
-            win_setregion(EDIT);
-            win_warpptr(EDIT);
-        }
     }
 }
 
@@ -245,10 +241,6 @@ static void search(void) {
     view_findstr(win_view(EDIT), SearchDir, str);
     free(SearchTerm);
     SearchTerm = str;
-    if (view_selsize(win_view(EDIT))) {
-        win_setregion(EDIT);
-        win_warpptr(EDIT);
-    }
 }
 
 static void execute(void) {
