@@ -87,22 +87,11 @@ static size_t Ruler = 0;
 static double ScrollOffset = 0.0;
 static double ScrollVisible = 1.0;
 static XFont CurrFont;
-static XConfig Config = {
-    .redraw       = onredraw,
-    .handle_key   = oninput,
-    .shutdown     = onshutdown,
-    .set_focus    = onfocus,
-    .mouse_drag   = onmousedrag,
-    .mouse_btn    = onmousebtn,
-    .cmd_received = oncommand
-};
 static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
 static void (*InputFunc)(Rune);
-
-
 
 static void xftcolor(XftColor* xc, int id) {
     #define COLOR(c) ((c) | ((c) >> 8))
@@ -222,7 +211,7 @@ bool x11_running(void) {
 }
 
 void x11_flip(void) {
-    Config.redraw(X.width, X.height);
+    onredraw(X.width, X.height);
     XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
     x11_flush();
 }
@@ -327,7 +316,7 @@ static void handle_key(XEvent* event) {
     uint32_t key = getkey(event);
     KeyBtnState = event->xkey.state;
     if (key == RUNE_ERR) return;
-    Config.handle_key(KeyBtnState, key);
+    oninput(KeyBtnState, key);
 }
 
 static void handle_mouse(XEvent* e) {
@@ -336,20 +325,20 @@ static void handle_mouse(XEvent* e) {
     int y = e->xbutton.y;
 
     if (e->type == MotionNotify) {
-        Config.mouse_drag(KeyBtnState, x, y);
+        onmousedrag(KeyBtnState, x, y);
     } else {
         if (e->type == ButtonRelease)
             KeyBtnState &= ~(1 << (e->xbutton.button + 7));
         else
             KeyBtnState |= (1 << (e->xbutton.button + 7));
-        Config.mouse_btn(e->xbutton.button, (e->type == ButtonPress), x, y);
+        onmousebtn(e->xbutton.button, (e->type == ButtonPress), x, y);
     }
 }
 
 static void set_focus(bool focused) {
     if (X.xic)
         (focused ? XSetICFocus : XUnsetICFocus)(X.xic);
-    Config.set_focus(focused);
+    onfocus(focused);
 }
 
 void x11_handle_event(XEvent* e) {
@@ -366,7 +355,7 @@ void x11_handle_event(XEvent* e) {
         case SelectionRequest: selrequest(e);    break;
         case ClientMessage:
             if (e->xclient.data.l[0] == wmDeleteMessage)
-                Config.shutdown();
+                onshutdown();
             break;
         case ConfigureNotify: // Resize the window
             if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
@@ -637,7 +626,7 @@ static char* readprop(Display* disp, Window win, Atom prop) {
 static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL, errfn);
-    x11_init(&Config);
+    x11_init(0);
     CurrFont = x11_font_load(FontString);
     Regions[SCROLL].clrnor = Colors[ClrScrollNor];
     Regions[TAGS].clrnor = Colors[ClrTagsNor];
