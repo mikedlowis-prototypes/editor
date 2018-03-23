@@ -36,6 +36,14 @@ static void selnotify(XEvent* evnt);
 static void selrequest(XEvent* evnt);
 static char* readprop(Display* disp, Window win, Atom prop);
 
+static uint32_t special_keys(uint32_t key);
+static uint32_t getkey(XEvent* e);
+static void handle_key(XEvent* event);
+static void handle_mouse(XEvent* e);
+static void set_focus(bool focused);
+static void xftcolor(XftColor* xc, int id);
+static void win_init(void (*errfn)(char*));
+
 struct XFont {
     struct {
         int height;
@@ -92,16 +100,6 @@ static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
 static void (*InputFunc)(Rune);
-
-static void xftcolor(XftColor* xc, int id) {
-    #define COLOR(c) ((c) | ((c) >> 8))
-    uint32_t c = Palette[id];
-    xc->color.alpha = COLOR((c & 0xFF000000) >> 16);
-    xc->color.red   = COLOR((c & 0x00FF0000) >> 8);
-    xc->color.green = COLOR((c & 0x0000FF00));
-    xc->color.blue  = COLOR((c & 0x000000FF) << 8);
-    XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
-}
 
 void x11_deinit(void) {
     Running = false;
@@ -232,114 +230,6 @@ void x11_finish(void) {
 }
 
 /******************************************************************************/
-
-static uint32_t special_keys(uint32_t key) {
-    switch (key) {
-        case XK_F1:        return KEY_F1;
-        case XK_F2:        return KEY_F2;
-        case XK_F3:        return KEY_F3;
-        case XK_F4:        return KEY_F4;
-        case XK_F5:        return KEY_F5;
-        case XK_F6:        return KEY_F6;
-        case XK_F7:        return KEY_F7;
-        case XK_F8:        return KEY_F8;
-        case XK_F9:        return KEY_F9;
-        case XK_F10:       return KEY_F10;
-        case XK_F11:       return KEY_F11;
-        case XK_F12:       return KEY_F12;
-        case XK_Insert:    return KEY_INSERT;
-        case XK_Delete:    return KEY_DELETE;
-        case XK_Home:      return KEY_HOME;
-        case XK_End:       return KEY_END;
-        case XK_Page_Up:   return KEY_PGUP;
-        case XK_Page_Down: return KEY_PGDN;
-        case XK_Up:        return KEY_UP;
-        case XK_Down:      return KEY_DOWN;
-        case XK_Left:      return KEY_LEFT;
-        case XK_Right:     return KEY_RIGHT;
-        case XK_Escape:    return KEY_ESCAPE;
-        case XK_BackSpace: return '\b';
-        case XK_Tab:       return '\t';
-        case XK_Return:    return '\r';
-        case XK_Linefeed:  return '\n';
-
-        /* modifiers should not trigger key presses */
-        case XK_Scroll_Lock:
-        case XK_Shift_L:
-        case XK_Shift_R:
-        case XK_Control_L:
-        case XK_Control_R:
-        case XK_Caps_Lock:
-        case XK_Shift_Lock:
-        case XK_Meta_L:
-        case XK_Meta_R:
-        case XK_Alt_L:
-        case XK_Alt_R:
-        case XK_Super_L:
-        case XK_Super_R:
-        case XK_Hyper_L:
-        case XK_Hyper_R:
-        case XK_Menu:
-            return RUNE_ERR;
-
-        /* if it ain't special, don't touch it */
-        default:
-            return key;
-    }
-}
-
-static uint32_t getkey(XEvent* e) {
-    int32_t rune = RUNE_ERR;
-    size_t len = 0;
-    char buf[8];
-    KeySym key;
-    Status status;
-    /* Read the key string */
-    if (X.xic)
-        len = Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
-    else
-        len = XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
-    /* if it's ascii, just return it */
-    if (key >= 0x20 && key <= 0x7F)
-        return (uint32_t)key;
-    /* decode it */
-    if (len > 0) {
-        len = 0;
-        for (int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
-    }
-    /* translate special key codes into unicode codepoints */
-    rune = special_keys(key);
-    return rune;
-}
-
-static void handle_key(XEvent* event) {
-    uint32_t key = getkey(event);
-    KeyBtnState = event->xkey.state;
-    if (key == RUNE_ERR) return;
-    oninput(KeyBtnState, key);
-}
-
-static void handle_mouse(XEvent* e) {
-    KeyBtnState = e->xbutton.state;
-    int x = e->xbutton.x;
-    int y = e->xbutton.y;
-
-    if (e->type == MotionNotify) {
-        onmousedrag(KeyBtnState, x, y);
-    } else {
-        if (e->type == ButtonRelease)
-            KeyBtnState &= ~(1 << (e->xbutton.button + 7));
-        else
-            KeyBtnState |= (1 << (e->xbutton.button + 7));
-        onmousebtn(e->xbutton.button, (e->type == ButtonPress), x, y);
-    }
-}
-
-static void set_focus(bool focused) {
-    if (X.xic)
-        (focused ? XSetICFocus : XUnsetICFocus)(X.xic);
-    onfocus(focused);
-}
 
 void x11_handle_event(XEvent* e) {
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
@@ -522,70 +412,6 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-/* Selection Handling
- *****************************************************************************/
-
-static struct XSel* selfetch(Atom atom) {
-    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
-        if (atom == Selections[i].atom)
-            return &Selections[i];
-    return NULL;
-}
-
-static void selclear(XEvent* evnt) {
-    struct XSel* sel = selfetch(evnt->xselectionrequest.selection);
-    if (!sel) return;
-    free(sel->text);
-    sel->text = NULL;
-}
-
-static void selnotify(XEvent* evnt) {
-    /* bail if the selection cannot be converted */
-    if (evnt->xselection.property == None)
-        return;
-    struct XSel* sel = selfetch( evnt->xselection.selection );
-    char* propdata = readprop(X.display, X.self, sel->atom);
-    if (evnt->xselection.target == SelTarget) {
-        void(*cbfn)(char*) = sel->callback;
-        sel->callback = NULL;
-        cbfn(propdata);
-    }
-    /* cleanup */
-    if (propdata) XFree(propdata);
-}
-
-static void selrequest(XEvent* evnt) {
-    XEvent s;
-    struct XSel* sel = selfetch( evnt->xselectionrequest.selection );
-    s.xselection.type      = SelectionNotify;
-    s.xselection.property  = evnt->xselectionrequest.property;
-    s.xselection.requestor = evnt->xselectionrequest.requestor;
-    s.xselection.selection = evnt->xselectionrequest.selection;
-    s.xselection.target    = evnt->xselectionrequest.target;
-    s.xselection.time      = evnt->xselectionrequest.time;
-
-    Atom target    = evnt->xselectionrequest.target;
-    Atom xatargets = XInternAtom(X.display, "TARGETS", 0);
-    Atom xastring  = XInternAtom(X.display, "STRING", 0);
-    if (target == xatargets) {
-        /* respond with the supported type */
-        XChangeProperty(
-            X.display,
-            s.xselection.requestor,
-            s.xselection.property,
-            XA_ATOM, 32, PropModeReplace,
-            (unsigned char*)&SelTarget, 1);
-    } else if (target == SelTarget || target == xastring) {
-        XChangeProperty(
-            X.display,
-            s.xselection.requestor,
-            s.xselection.property,
-            SelTarget, 8, PropModeReplace,
-            (unsigned char*)sel->text, strlen(sel->text));
-    }
-    XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
-}
-
 bool x11_sel_get(int selid, void(*cbfn)(char*)) {
     struct XSel* sel = &(Selections[selid]);
     if (sel->callback) return false;
@@ -612,30 +438,7 @@ bool x11_sel_set(int selid, char* str) {
     }
 }
 
-static char* readprop(Display* disp, Window win, Atom prop) {
-    Atom rtype;
-    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
-    unsigned char* data = NULL;
-    XGetWindowProperty(X.display, win, prop, 0, -1, False, AnyPropertyType, &rtype,
-                       (int*)&format, &nitems, &nleft, &data);
-    return (char*)data;
-}
-
 /******************************************************************************/
-
-static void win_init(void (*errfn)(char*)) {
-    for (int i = 0; i < SCROLL; i++)
-        view_init(&(Regions[i].view), NULL, errfn);
-    x11_init(0);
-    CurrFont = x11_font_load(FontString);
-    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
-    Regions[TAGS].clrnor = Colors[ClrTagsNor];
-    Regions[TAGS].clrsel = Colors[ClrTagsSel];
-    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
-    Regions[EDIT].clrnor = Colors[ClrEditNor];
-    Regions[EDIT].clrsel = Colors[ClrEditSel];
-    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
-}
 
 void win_window(char* name, bool isdialog, void (*errfn)(char*)) {
     win_init(errfn);
@@ -643,13 +446,6 @@ void win_window(char* name, bool isdialog, void (*errfn)(char*)) {
         x11_dialog(name, WinWidth, WinHeight);
     else
         x11_window(name, WinWidth, WinHeight);
-}
-
-static void win_update(int xfd, void* data) {
-    if (xfd < 0) return;
-    if (x11_events_queued())
-        x11_events_take();
-    x11_flush();
 }
 
 void win_load(char* path) {
@@ -740,6 +536,31 @@ Sel* win_sel(WinRegion id) {
 void win_setscroll(double offset, double visible) {
     ScrollOffset  = offset;
     ScrollVisible = visible;
+}
+
+/******************************************************************************/
+
+static char* readprop(Display* disp, Window win, Atom prop) {
+    Atom rtype;
+    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
+    unsigned char* data = NULL;
+    XGetWindowProperty(X.display, win, prop, 0, -1, False, AnyPropertyType, &rtype,
+                       (int*)&format, &nitems, &nleft, &data);
+    return (char*)data;
+}
+
+static void win_init(void (*errfn)(char*)) {
+    for (int i = 0; i < SCROLL; i++)
+        view_init(&(Regions[i].view), NULL, errfn);
+    x11_init(0);
+    CurrFont = x11_font_load(FontString);
+    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
+    Regions[TAGS].clrnor = Colors[ClrTagsNor];
+    Regions[TAGS].clrsel = Colors[ClrTagsSel];
+    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
+    Regions[EDIT].clrnor = Colors[ClrEditNor];
+    Regions[EDIT].clrsel = Colors[ClrEditSel];
+    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
 }
 
 static void layout(int width, int height) {
@@ -981,3 +802,183 @@ static WinRegion getregion(size_t x, size_t y) {
     }
     return NREGIONS;
 }
+
+static uint32_t special_keys(uint32_t key) {
+    switch (key) {
+        case XK_F1:        return KEY_F1;
+        case XK_F2:        return KEY_F2;
+        case XK_F3:        return KEY_F3;
+        case XK_F4:        return KEY_F4;
+        case XK_F5:        return KEY_F5;
+        case XK_F6:        return KEY_F6;
+        case XK_F7:        return KEY_F7;
+        case XK_F8:        return KEY_F8;
+        case XK_F9:        return KEY_F9;
+        case XK_F10:       return KEY_F10;
+        case XK_F11:       return KEY_F11;
+        case XK_F12:       return KEY_F12;
+        case XK_Insert:    return KEY_INSERT;
+        case XK_Delete:    return KEY_DELETE;
+        case XK_Home:      return KEY_HOME;
+        case XK_End:       return KEY_END;
+        case XK_Page_Up:   return KEY_PGUP;
+        case XK_Page_Down: return KEY_PGDN;
+        case XK_Up:        return KEY_UP;
+        case XK_Down:      return KEY_DOWN;
+        case XK_Left:      return KEY_LEFT;
+        case XK_Right:     return KEY_RIGHT;
+        case XK_Escape:    return KEY_ESCAPE;
+        case XK_BackSpace: return '\b';
+        case XK_Tab:       return '\t';
+        case XK_Return:    return '\r';
+        case XK_Linefeed:  return '\n';
+
+        /* modifiers should not trigger key presses */
+        case XK_Scroll_Lock:
+        case XK_Shift_L:
+        case XK_Shift_R:
+        case XK_Control_L:
+        case XK_Control_R:
+        case XK_Caps_Lock:
+        case XK_Shift_Lock:
+        case XK_Meta_L:
+        case XK_Meta_R:
+        case XK_Alt_L:
+        case XK_Alt_R:
+        case XK_Super_L:
+        case XK_Super_R:
+        case XK_Hyper_L:
+        case XK_Hyper_R:
+        case XK_Menu:
+            return RUNE_ERR;
+
+        /* if it ain't special, don't touch it */
+        default:
+            return key;
+    }
+}
+
+static uint32_t getkey(XEvent* e) {
+    int32_t rune = RUNE_ERR;
+    size_t len = 0;
+    char buf[8];
+    KeySym key;
+    Status status;
+    /* Read the key string */
+    if (X.xic)
+        len = Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
+    else
+        len = XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
+    /* if it's ascii, just return it */
+    if (key >= 0x20 && key <= 0x7F)
+        return (uint32_t)key;
+    /* decode it */
+    if (len > 0) {
+        len = 0;
+        for (int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
+    }
+    /* translate special key codes into unicode codepoints */
+    rune = special_keys(key);
+    return rune;
+}
+
+static void handle_key(XEvent* event) {
+    uint32_t key = getkey(event);
+    KeyBtnState = event->xkey.state;
+    if (key == RUNE_ERR) return;
+    oninput(KeyBtnState, key);
+}
+
+static void handle_mouse(XEvent* e) {
+    KeyBtnState = e->xbutton.state;
+    int x = e->xbutton.x;
+    int y = e->xbutton.y;
+
+    if (e->type == MotionNotify) {
+        onmousedrag(KeyBtnState, x, y);
+    } else {
+        if (e->type == ButtonRelease)
+            KeyBtnState &= ~(1 << (e->xbutton.button + 7));
+        else
+            KeyBtnState |= (1 << (e->xbutton.button + 7));
+        onmousebtn(e->xbutton.button, (e->type == ButtonPress), x, y);
+    }
+}
+
+static void set_focus(bool focused) {
+    if (X.xic)
+        (focused ? XSetICFocus : XUnsetICFocus)(X.xic);
+    onfocus(focused);
+}
+
+static void xftcolor(XftColor* xc, int id) {
+    #define COLOR(c) ((c) | ((c) >> 8))
+    uint32_t c = Palette[id];
+    xc->color.alpha = COLOR((c & 0xFF000000) >> 16);
+    xc->color.red   = COLOR((c & 0x00FF0000) >> 8);
+    xc->color.green = COLOR((c & 0x0000FF00));
+    xc->color.blue  = COLOR((c & 0x000000FF) << 8);
+    XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
+}
+
+static struct XSel* selfetch(Atom atom) {
+    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
+        if (atom == Selections[i].atom)
+            return &Selections[i];
+    return NULL;
+}
+
+static void selclear(XEvent* evnt) {
+    struct XSel* sel = selfetch(evnt->xselectionrequest.selection);
+    if (!sel) return;
+    free(sel->text);
+    sel->text = NULL;
+}
+
+static void selnotify(XEvent* evnt) {
+    /* bail if the selection cannot be converted */
+    if (evnt->xselection.property == None)
+        return;
+    struct XSel* sel = selfetch( evnt->xselection.selection );
+    char* propdata = readprop(X.display, X.self, sel->atom);
+    if (evnt->xselection.target == SelTarget) {
+        void(*cbfn)(char*) = sel->callback;
+        sel->callback = NULL;
+        cbfn(propdata);
+    }
+    /* cleanup */
+    if (propdata) XFree(propdata);
+}
+
+static void selrequest(XEvent* evnt) {
+    XEvent s;
+    struct XSel* sel = selfetch( evnt->xselectionrequest.selection );
+    s.xselection.type      = SelectionNotify;
+    s.xselection.property  = evnt->xselectionrequest.property;
+    s.xselection.requestor = evnt->xselectionrequest.requestor;
+    s.xselection.selection = evnt->xselectionrequest.selection;
+    s.xselection.target    = evnt->xselectionrequest.target;
+    s.xselection.time      = evnt->xselectionrequest.time;
+
+    Atom target    = evnt->xselectionrequest.target;
+    Atom xatargets = XInternAtom(X.display, "TARGETS", 0);
+    Atom xastring  = XInternAtom(X.display, "STRING", 0);
+    if (target == xatargets) {
+        /* respond with the supported type */
+        XChangeProperty(
+            X.display,
+            s.xselection.requestor,
+            s.xselection.property,
+            XA_ATOM, 32, PropModeReplace,
+            (unsigned char*)&SelTarget, 1);
+    } else if (target == SelTarget || target == xastring) {
+        XChangeProperty(
+            X.display,
+            s.xselection.requestor,
+            s.xselection.property,
+            SelTarget, 8, PropModeReplace,
+            (unsigned char*)sel->text, strlen(sel->text));
+    }
+    XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
+}
+
