@@ -223,62 +223,7 @@ void x11_dialog(char* name, int height, int width) {
     XChangeProperty(X.display, X.self, WindowType, XA_ATOM, 32, PropModeReplace, (unsigned char*)&DialogType, 1);
 }
 
-void x11_show(void) {
-    /* simulate an initial resize and map the window */
-    XConfigureEvent ce;
-    ce.type   = ConfigureNotify;
-    ce.width  = X.width;
-    ce.height = X.height;
-    XSendEvent(X.display, X.self, False, StructureNotifyMask, (XEvent *)&ce);
-    XMapWindow(X.display, X.self);
-}
-
-bool x11_running(void) {
-    return Running;
-}
-
-void x11_flip(void) {
-    onredraw(X.width, X.height);
-    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
-    x11_flush();
-}
-
-void x11_flush(void) {
-    XFlush(X.display);
-}
-
-void x11_finish(void) {
-    XCloseDisplay(X.display);
-    /* we're exiting now. If we own the clipboard, make sure it persists */
-    if (Selections[CLIPBOARD].text) {
-        char* text = Selections[CLIPBOARD].text;
-        size_t len = strlen(text);
-        job_start((char*[]){ "xcpd", NULL }, text, len, NULL);
-        while (job_poll(-1, 100));
-    }
-}
-
 /******************************************************************************/
-
-void x11_handle_event(XEvent* e) {
-    if (EventHandlers[e->type])
-    	(EventHandlers[e->type])(e);
-}
-
-int x11_events_queued(void) {
-    return XEventsQueued(X.display, QueuedAfterFlush);
-}
-
-void x11_events_take(void) {
-    XEvent e;
-    int nevents;
-    XGetMotionEvents(X.display, X.self, CurrentTime, CurrentTime, &nevents);
-    while (XPending(X.display)) {
-        XNextEvent(X.display, &e);
-        if (!XFilterEvent(&e, None) && EventHandlers[e.type])
-            (EventHandlers[e.type])(&e);
-    }
-}
 
 XFont x11_font_load(char* name) {
     struct XFont* font = calloc(1, sizeof(struct XFont));
@@ -472,18 +417,39 @@ void win_save(char* path) {
 }
 
 void win_loop(void) {
-    x11_show();
-    while (x11_running()) {
+    /* simulate an initial resize and map the window */
+    XConfigureEvent ce;
+    ce.type   = ConfigureNotify;
+    ce.width  = X.width;
+    ce.height = X.height;
+    XSendEvent(X.display, X.self, False, StructureNotifyMask, (XEvent *)&ce);
+    XMapWindow(X.display, X.self);
+
+    while (Running) {
         bool pending = job_poll(ConnectionNumber(X.display), Timeout);
-        int nevents = x11_events_queued();
+        int nevents = XEventsQueued(X.display, QueuedAfterFlush);
         if (pending || nevents) {
-            x11_events_take();
-            if (x11_running())
-                x11_flip();
+            XGetMotionEvents(X.display, X.self, CurrentTime, CurrentTime, &nevents);
+            for (XEvent e; XPending(X.display); ) {
+                XNextEvent(X.display, &e);
+                if (!XFilterEvent(&e, None) && EventHandlers[e.type])
+                    (EventHandlers[e.type])(&e);
+            }
+		    onredraw(X.width, X.height);
+		    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
         }
-        x11_flush();
+    	XFlush(X.display);
     }
-    x11_finish();
+    XCloseDisplay(X.display);
+
+    /* we're exiting now. If we own the clipboard, make sure it persists */
+    if (Selections[CLIPBOARD].text) {
+        char* text = Selections[CLIPBOARD].text;
+        size_t len = strlen(text);
+        job_start((char*[]){ "xcpd", NULL }, text, len, NULL);
+        while (job_poll(-1, 100));
+    }
+
 }
 
 void win_settext(WinRegion id, char* text) {
