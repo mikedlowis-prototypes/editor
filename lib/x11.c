@@ -18,6 +18,41 @@
 #include <X11/Xft/Xft.h>
 #undef Region
 
+/******************************************************************************/
+
+static void xfocus(XEvent* e);
+static void xkeypress(XEvent* e);
+static void xbtnpress(XEvent* e);
+static void xbtnrelease(XEvent* e);
+static void xbtnmotion(XEvent* e);
+static void xselclear(XEvent* e);
+static void xselnotify(XEvent* e);
+static void xselrequest(XEvent* e);
+static void xpropnotify(XEvent* e);
+static void xclientmsg(XEvent* e);
+static void xresize(XEvent* e);
+static void xexpose(XEvent* e);
+
+static void (*EventHandlers[LASTEvent])(XEvent *) = {
+	[FocusIn] = xfocus,
+	[FocusOut] = xfocus,
+	[KeyPress] = xkeypress,
+	[ButtonPress] = xbtnpress,
+	[ButtonRelease] = xbtnrelease,
+	[MotionNotify] = xbtnmotion,
+ 	[SelectionClear] = xselclear,
+	[SelectionNotify] = xselnotify,
+	[SelectionRequest] = xselrequest,
+	[PropertyNotify] = xpropnotify,
+	[ClientMessage] = xclientmsg,
+	[ConfigureNotify] = xresize,
+	[Expose] = xexpose,
+//	[VisibilityNotify] = visibility,
+//	[UnmapNotify] = unmap,
+};
+
+/******************************************************************************/
+
 enum { FontCacheSize = 16 };
 
 static void onredraw(int height, int width);
@@ -31,16 +66,9 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
 static WinRegion getregion(size_t x, size_t y);
 
 static struct XSel* selfetch(Atom atom);
-static void selclear(XEvent* evnt);
-static void selnotify(XEvent* evnt);
-static void selrequest(XEvent* evnt);
-static char* readprop(Display* disp, Window win, Atom prop);
-
 static uint32_t special_keys(uint32_t key);
 static uint32_t getkey(XEvent* e);
-static void handle_key(XEvent* event);
 static void handle_mouse(XEvent* e);
-static void set_focus(bool focused);
 static void xftcolor(XftColor* xc, int id);
 static void win_init(void (*errfn)(char*));
 
@@ -162,14 +190,15 @@ void x11_window(char* name, int width, int height) {
     XChangeWindowAttributes(X.display, X.self, CWBackingStore|CWBitGravity, &swa);
     XStoreName(X.display, X.self, name);
     XSelectInput(X.display, X.root, PropertyChangeMask);
-    XSelectInput(X.display, X.self,
-          StructureNotifyMask
+    XSelectInput(X.display, X.self, 0
+        | FocusChangeMask
+        | KeyPressMask
         | ButtonPressMask
         | ButtonReleaseMask
         | ButtonMotionMask
-        | KeyPressMask
-        | FocusChangeMask
+        | StructureNotifyMask
         | PropertyChangeMask
+        | ExposureMask
     );
 
     /* set input methods */
@@ -232,30 +261,8 @@ void x11_finish(void) {
 /******************************************************************************/
 
 void x11_handle_event(XEvent* e) {
-    Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
-    switch (e->type) {
-        case FocusIn:          set_focus(true);  break;
-        case FocusOut:         set_focus(false); break;
-        case KeyPress:         handle_key(e);    break;
-        case ButtonRelease:    handle_mouse(e);  break;
-        case ButtonPress:      handle_mouse(e);  break;
-        case MotionNotify:     handle_mouse(e);  break;
-        case SelectionClear:   selclear(e);      break;
-        case SelectionNotify:  selnotify(e);     break;
-        case SelectionRequest: selrequest(e);    break;
-        case ClientMessage:
-            if (e->xclient.data.l[0] == wmDeleteMessage)
-                onshutdown();
-            break;
-        case ConfigureNotify: // Resize the window
-            if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
-                X.width  = e->xconfigure.width;
-                X.height = e->xconfigure.height;
-                X.pixmap = XCreatePixmap(X.display, X.self, X.width, X.height, X.depth);
-                X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
-            }
-            break;
-    }
+    if (EventHandlers[e->type])
+    	(EventHandlers[e->type])(e);
 }
 
 int x11_events_queued(void) {
@@ -268,8 +275,8 @@ void x11_events_take(void) {
     XGetMotionEvents(X.display, X.self, CurrentTime, CurrentTime, &nevents);
     while (XPending(X.display)) {
         XNextEvent(X.display, &e);
-        if (!XFilterEvent(&e, None))
-            x11_handle_event(&e);
+        if (!XFilterEvent(&e, None) && EventHandlers[e.type])
+            (EventHandlers[e.type])(&e);
     }
 }
 
@@ -539,15 +546,6 @@ void win_setscroll(double offset, double visible) {
 }
 
 /******************************************************************************/
-
-static char* readprop(Display* disp, Window win, Atom prop) {
-    Atom rtype;
-    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
-    unsigned char* data = NULL;
-    XGetWindowProperty(X.display, win, prop, 0, -1, False, AnyPropertyType, &rtype,
-                       (int*)&format, &nitems, &nleft, &data);
-    return (char*)data;
-}
 
 static void win_init(void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
@@ -882,35 +880,6 @@ static uint32_t getkey(XEvent* e) {
     return rune;
 }
 
-static void handle_key(XEvent* event) {
-    uint32_t key = getkey(event);
-    KeyBtnState = event->xkey.state;
-    if (key == RUNE_ERR) return;
-    oninput(KeyBtnState, key);
-}
-
-static void handle_mouse(XEvent* e) {
-    KeyBtnState = e->xbutton.state;
-    int x = e->xbutton.x;
-    int y = e->xbutton.y;
-
-    if (e->type == MotionNotify) {
-        onmousedrag(KeyBtnState, x, y);
-    } else {
-        if (e->type == ButtonRelease)
-            KeyBtnState &= ~(1 << (e->xbutton.button + 7));
-        else
-            KeyBtnState |= (1 << (e->xbutton.button + 7));
-        onmousebtn(e->xbutton.button, (e->type == ButtonPress), x, y);
-    }
-}
-
-static void set_focus(bool focused) {
-    if (X.xic)
-        (focused ? XSetICFocus : XUnsetICFocus)(X.xic);
-    onfocus(focused);
-}
-
 static void xftcolor(XftColor* xc, int id) {
     #define COLOR(c) ((c) | ((c) >> 8))
     uint32_t c = Palette[id];
@@ -928,39 +897,74 @@ static struct XSel* selfetch(Atom atom) {
     return NULL;
 }
 
-static void selclear(XEvent* evnt) {
-    struct XSel* sel = selfetch(evnt->xselectionrequest.selection);
+/******************************************************************************/
+
+static void xfocus(XEvent* e) {
+    if (X.xic)
+        (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
+    onfocus(e->type == FocusIn);
+}
+
+static void xkeypress(XEvent* e) {
+    uint32_t key = getkey(e);
+    KeyBtnState = e->xkey.state;
+    if (key == RUNE_ERR) return;
+    oninput(KeyBtnState, key);
+}
+
+static void xbtnpress(XEvent* e) {
+    KeyBtnState = e->xbutton.state;
+    KeyBtnState |= (1 << (e->xbutton.button + 7));
+    onmousebtn(e->xbutton.button, true, e->xbutton.x,  e->xbutton.y);
+}
+
+static void xbtnrelease(XEvent* e) {
+    KeyBtnState = e->xbutton.state;
+    KeyBtnState &= ~(1 << (e->xbutton.button + 7));
+    onmousebtn(e->xbutton.button, false, e->xbutton.x,  e->xbutton.y);
+}
+
+static void xbtnmotion(XEvent* e) {
+    KeyBtnState = e->xbutton.state;
+    onmousedrag(KeyBtnState, e->xbutton.x, e->xbutton.y);
+}
+
+static void xselclear(XEvent* e) {
+    struct XSel* sel = selfetch(e->xselectionrequest.selection);
     if (!sel) return;
     free(sel->text);
     sel->text = NULL;
 }
 
-static void selnotify(XEvent* evnt) {
+static void xselnotify(XEvent* e) {
     /* bail if the selection cannot be converted */
-    if (evnt->xselection.property == None)
+    if (e->xselection.property == None)
         return;
-    struct XSel* sel = selfetch( evnt->xselection.selection );
-    char* propdata = readprop(X.display, X.self, sel->atom);
-    if (evnt->xselection.target == SelTarget) {
+    struct XSel* sel = selfetch( e->xselection.selection );
+    Atom rtype;
+    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
+    unsigned char* propdata = NULL;
+    XGetWindowProperty(X.display, X.self, sel->atom, 0, -1, False, AnyPropertyType, &rtype,
+                       (int*)&format, &nitems, &nleft, &propdata);
+    if (e->xselection.target == SelTarget) {
         void(*cbfn)(char*) = sel->callback;
         sel->callback = NULL;
-        cbfn(propdata);
+        cbfn((char*)propdata);
     }
     /* cleanup */
     if (propdata) XFree(propdata);
 }
 
-static void selrequest(XEvent* evnt) {
+static void xselrequest(XEvent* e) {
     XEvent s;
-    struct XSel* sel = selfetch( evnt->xselectionrequest.selection );
+    struct XSel* sel = selfetch( e->xselectionrequest.selection );
     s.xselection.type      = SelectionNotify;
-    s.xselection.property  = evnt->xselectionrequest.property;
-    s.xselection.requestor = evnt->xselectionrequest.requestor;
-    s.xselection.selection = evnt->xselectionrequest.selection;
-    s.xselection.target    = evnt->xselectionrequest.target;
-    s.xselection.time      = evnt->xselectionrequest.time;
-
-    Atom target    = evnt->xselectionrequest.target;
+    s.xselection.property  = e->xselectionrequest.property;
+    s.xselection.requestor = e->xselectionrequest.requestor;
+    s.xselection.selection = e->xselectionrequest.selection;
+    s.xselection.target    = e->xselectionrequest.target;
+    s.xselection.time      = e->xselectionrequest.time;
+    Atom target    = e->xselectionrequest.target;
     Atom xatargets = XInternAtom(X.display, "TARGETS", 0);
     Atom xastring  = XInternAtom(X.display, "STRING", 0);
     if (target == xatargets) {
@@ -979,6 +983,27 @@ static void selrequest(XEvent* evnt) {
             SelTarget, 8, PropModeReplace,
             (unsigned char*)sel->text, strlen(sel->text));
     }
-    XSendEvent(X.display, s.xselection.requestor, True, 0, &s);
+    XSendEvent(X.display, s.xselection.requestor, True,
+0, &s);
 }
 
+static void xpropnotify(XEvent* e) {
+}
+
+static void xclientmsg(XEvent* e) {
+    if (e->xclient.data.l[0] == XInternAtom(X.display, "WM_DELETE_WINDOW", False))
+        onshutdown();
+}
+
+static void xresize(XEvent* e) {
+    if (e->xconfigure.width != X.width || e->xconfigure.height != X.height) {
+        X.width  = e->xconfigure.width;
+        X.height = e->xconfigure.height;
+        X.pixmap = XCreatePixmap(X.display, X.self, X.width, X.height, X.depth);
+        X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
+    }
+}
+
+static void xexpose(XEvent* e) {
+    onredraw(X.width, X.height);
+}
