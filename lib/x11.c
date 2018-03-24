@@ -47,8 +47,6 @@ static void (*EventHandlers[LASTEvent])(XEvent *) = {
 	[ClientMessage] = xclientmsg,
 	[ConfigureNotify] = xresize,
 	[Expose] = xexpose,
-//	[VisibilityNotify] = visibility,
-//	[UnmapNotify] = unmap,
 };
 
 /******************************************************************************/
@@ -68,7 +66,6 @@ static WinRegion getregion(size_t x, size_t y);
 static struct XSel* selfetch(Atom atom);
 static uint32_t special_keys(uint32_t key);
 static uint32_t getkey(XEvent* e);
-static void handle_mouse(XEvent* e);
 static void xftcolor(XftColor* xc, int id);
 static void win_init(void (*errfn)(char*));
 
@@ -119,7 +116,6 @@ static struct XSel {
     { .name = "CLIPBOARD" },
 };
 
-static size_t Ruler = 0;
 static double ScrollOffset = 0.0;
 static double ScrollVisible = 1.0;
 static XFont CurrFont;
@@ -134,7 +130,6 @@ void x11_deinit(void) {
 }
 
 void x11_init(XConfig* cfg) {
-    atexit(x11_deinit);
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
     setlocale(LC_CTYPE, "");
     XSetLocaleModifiers("");
@@ -347,7 +342,6 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
     if (!nspecs) return;
     XftFont* font = specs[0].font;
     XftColor fgc, bgc;
-
     if (bg > 0) {
         XGlyphInfo extent;
         XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
@@ -373,7 +367,6 @@ bool x11_sel_get(int selid, void(*cbfn)(char*)) {
     } else if (owner != None){
         sel->callback = cbfn;
         XConvertSelection(X.display, sel->atom, SelTarget, sel->atom, X.self, CurrentTime);
-
     }
     return true;
 }
@@ -391,14 +384,6 @@ bool x11_sel_set(int selid, char* str) {
 }
 
 /******************************************************************************/
-
-void win_window(char* name, bool isdialog, void (*errfn)(char*)) {
-    win_init(errfn);
-    if (isdialog)
-        x11_dialog(name, WinWidth, WinHeight);
-    else
-        x11_window(name, WinWidth, WinHeight);
-}
 
 void win_load(char* path) {
     View* view = win_view(EDIT);
@@ -429,8 +414,7 @@ void win_loop(void) {
         bool pending = job_poll(ConnectionNumber(X.display), Timeout);
         int nevents = XEventsQueued(X.display, QueuedAfterFlush);
         if (pending || nevents) {
-            XGetMotionEvents(X.display, X.self, CurrentTime, CurrentTime, &nevents);
-            for (XEvent e; XPending(X.display); ) {
+            for (XEvent e; XPending(X.display);) {
                 XNextEvent(X.display, &e);
                 if (!XFilterEvent(&e, None) && EventHandlers[e.type])
                     (EventHandlers[e.type])(&e);
@@ -449,7 +433,6 @@ void win_loop(void) {
         job_start((char*[]){ "xcpd", NULL }, text, len, NULL);
         while (job_poll(-1, 100));
     }
-
 }
 
 void win_settext(WinRegion id, char* text) {
@@ -460,10 +443,6 @@ void win_settext(WinRegion id, char* text) {
     view_putstr(view, text);
     view_selprev(view); // clear the selection
     buf_logclear(&(view->buffer));
-}
-
-void win_setruler(size_t ruler) {
-    Ruler = ruler;
 }
 
 Rune win_getkey(void) {
@@ -492,18 +471,15 @@ bool win_setregion(WinRegion id) {
 }
 
 View* win_view(WinRegion id) {
-    if (id == FOCUSED) id = Focused;
-    return &(Regions[id].view);
+    return &(Regions[id == FOCUSED ? Focused : id].view);
 }
 
 Buf* win_buf(WinRegion id) {
-    if (id == FOCUSED) id = Focused;
-    return &(Regions[id].view.buffer);
+    return &(Regions[id == FOCUSED ? Focused : id].view.buffer);
 }
 
 Sel* win_sel(WinRegion id) {
-    if (id == FOCUSED) id = Focused;
-    return &(Regions[id].view.selection);
+    return &(Regions[id == FOCUSED ? Focused : id].view.selection);
 }
 
 void win_setscroll(double offset, double visible) {
@@ -586,16 +562,6 @@ static void onredraw(int width, int height) {
         View* view = win_view(i);
         x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
         x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
-
-        if (i == EDIT) {
-            if (Ruler)
-                x11_draw_rect( Colors[ClrEditRul].fg,
-                               ((Ruler+2) * fwidth),
-                               Regions[i].y-2,
-                               1,
-                               Regions[i].height+7 );
-        }
-
         for (size_t line = 0, y = 0; y < view->nrows; y++) {
             Row* row = view_getrow(view, y);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);

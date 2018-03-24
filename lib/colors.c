@@ -23,8 +23,8 @@ static void readfn(Job* job) {
 }
 
 void colors_init(char* path) {
-    if (Syntax)
-        job_create((char*[]){ "tide-hl.rb", path, NULL }, readfn, writefn, 0);
+//    if (Syntax)
+//        job_create((char*[]){ "tide-hl.rb", path, NULL }, readfn, writefn, 0);
 }
 
 SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end) {

@@ -534,7 +534,8 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
 
     /* create the window */
-    win_window("tide", false, ondiagmsg);
+    win_init(ondiagmsg);
+    x11_dialog("tide", WinWidth, WinHeight);
 
     /* open all but the last file in new instances */
     for (argc--, argv++; argc > 1; argc--, argv++) {
@@ -547,7 +548,6 @@ int main(int argc, char** argv) {
 
     /* now create the window and start the event loop */
     win_settext(TAGS, TagString);
-    win_setruler(RulerPos);
     win_setkeys(Bindings, oninput);
     win_loop();
     return 0;
