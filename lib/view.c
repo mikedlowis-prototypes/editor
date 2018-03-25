@@ -21,8 +21,6 @@ static unsigned scroll_up(View* view);
 static unsigned scroll_dn(View* view);
 static void sync_center(View* view, size_t csr);
 static size_t getoffset(View* view, size_t row, size_t col);
-static void sync_line_numbers(View* view, size_t pos);
-static void apply_colors(View* view);
 
 void view_init(View* view, char* file, void (*errfn)(char*)) {
     if (view->nrows) {
@@ -45,7 +43,6 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
             view_eol(view, false);
             view_selctx(view);
         }
-        colors_init(view->buffer.path);
     }
 }
 
@@ -102,16 +99,6 @@ void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry)
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
-    /* synchronize, scan for, and apply highlighted regions */
-    size_t first = view->rows[0]->off,
-           last  = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
-    view->spans = colors_rewind(view->spans, first);
-    size_t start = (view->spans ? view->spans->end : 0);
-    size_t scandist = MaxScanDist;
-    if (scandist && first-start > scandist)
-        start = first - scandist;
-    view->spans = colors_scan(view->spans, &(view->buffer), start, last+1);
-    apply_colors(view);
 }
 
 Row* view_getrow(View* view, size_t row) {
@@ -217,7 +204,6 @@ void view_insert(View* view, bool indent, Rune rune) {
         view->selection = sel;
     }
     unsigned newpos = buf_insert(&(view->buffer), indent, view->selection.end, rune);
-    sync_line_numbers(view, newpos);
     move_to(view, false, newpos);
 }
 
@@ -227,7 +213,6 @@ void view_delete(View* view, int dir, bool byword) {
         (byword ? view_byword : view_byrune)(view, dir, true);
     selswap(sel);
     unsigned newpos = buf_delete(&(view->buffer), sel->beg, sel->end);
-    sync_line_numbers(view, newpos);
     move_to(view, false, newpos);
 }
 
@@ -657,40 +642,4 @@ static size_t getoffset(View* view, size_t row, size_t col) {
     if (pos >= buf_end(&(view->buffer)))
         return buf_end(&(view->buffer));
     return pos;
-}
-
-static void sync_line_numbers(View* view, size_t newpos) {
-    if (!view->nrows || newpos <= view->rows[0]->off) {
-        if (view->nrows)
-            view->rows[0]->off = buf_bol(&(view->buffer), newpos);
-    }
-}
-
-static void apply_colors(View* view) {
-    /* fast forward the span list to the first span that ends on screen if there
-       is one. We take care to not go past the last item because we need to
-       ensure newly scanned items are poperly appended next time around */
-    size_t first = (view->nrows ? view->rows[0]->off : 0);
-    SyntaxSpan* curr = view->spans;
-    for (; curr && curr->next && curr->end < first; curr = curr->next);
-    view->spans = curr;
-
-    /* ok, now for each row, scan the columns and apply the colors for the span
-       that each rune is a member of. */
-    for (size_t r = 0; curr && r < view->nrows; r++) {
-        Row* row = view->rows[r];
-        size_t off = row->off, col = 0;
-        while (col < row->len) {
-            /* skip irrelevant highlight regions */
-            for (; curr && curr->end < off; curr = curr->next);
-            if (!curr) { r = -1; break; } // Break both loops if we're done
-
-            /* check if we're in the current region */
-            if (curr->beg <= off && off <= curr->end)
-                row->cols[col].attr = (row->cols[col].attr & 0xFF00) | curr->color;
-            off++, col++;
-            while (col < row->len && row->cols[col].rune == '\0')
-                col++;
-        }
-    }
 }
