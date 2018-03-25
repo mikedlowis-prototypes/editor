@@ -36,6 +36,7 @@ typedef struct {
     MouseFunc right;
 } MouseConfig;
 
+void win_init(void (*errfn)(char*));
 void win_window(char* name, bool isdialog, void (*errfn)(char*));
 void win_load(char* path);
 void win_save(char* path);

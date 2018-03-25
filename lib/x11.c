@@ -67,7 +67,6 @@ static struct XSel* selfetch(Atom atom);
 static uint32_t special_keys(uint32_t key);
 static uint32_t getkey(XEvent* e);
 static void xftcolor(XftColor* xc, int id);
-static void win_init(void (*errfn)(char*));
 
 struct XFont {
     struct {
@@ -209,13 +208,6 @@ void x11_window(char* name, int width, int height) {
     gcv.foreground = WhitePixel(X.display, X.screen);
     gcv.graphics_exposures = False;
     X.gc = XCreateGC(X.display, X.self, GCForeground|GCGraphicsExposures, &gcv);
-}
-
-void x11_dialog(char* name, int height, int width) {
-    x11_window(name, height, width);
-    Atom WindowType = XInternAtom(X.display, "_NET_WM_WINDOW_TYPE", False);
-    Atom DialogType = XInternAtom(X.display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-    XChangeProperty(X.display, X.self, WindowType, XA_ATOM, 32, PropModeReplace, (unsigned char*)&DialogType, 1);
 }
 
 /******************************************************************************/
@@ -385,6 +377,20 @@ bool x11_sel_set(int selid, char* str) {
 
 /******************************************************************************/
 
+void win_init(void (*errfn)(char*)) {
+    for (int i = 0; i < SCROLL; i++)
+        view_init(&(Regions[i].view), NULL, errfn);
+    x11_init(0);
+    CurrFont = x11_font_load(FontString);
+    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
+    Regions[TAGS].clrnor = Colors[ClrTagsNor];
+    Regions[TAGS].clrsel = Colors[ClrTagsSel];
+    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
+    Regions[EDIT].clrnor = Colors[ClrEditNor];
+    Regions[EDIT].clrsel = Colors[ClrEditSel];
+    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
+}
+
 void win_load(char* path) {
     View* view = win_view(EDIT);
     view_init(view, path, view->buffer.errfn);
@@ -488,20 +494,6 @@ void win_setscroll(double offset, double visible) {
 }
 
 /******************************************************************************/
-
-static void win_init(void (*errfn)(char*)) {
-    for (int i = 0; i < SCROLL; i++)
-        view_init(&(Regions[i].view), NULL, errfn);
-    x11_init(0);
-    CurrFont = x11_font_load(FontString);
-    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
-    Regions[TAGS].clrnor = Colors[ClrTagsNor];
-    Regions[TAGS].clrsel = Colors[ClrTagsSel];
-    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
-    Regions[EDIT].clrnor = Colors[ClrEditNor];
-    Regions[EDIT].clrsel = Colors[ClrEditSel];
-    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
-}
 
 static void layout(int width, int height) {
     size_t fheight = x11_font_height(CurrFont);

@@ -345,15 +345,6 @@ static void highlight(void) {
     view_selctx(win_view(FOCUSED));
 }
 
-static void jumpmark(void) {
-    int mark = (win_getkey() - '0');
-    assert(mark < 10);
-    if (x11_keymodsset(ModAlt))
-        Marks[mark] = win_view(FOCUSED)->selection.end;
-    else
-        view_jumpto(win_view(FOCUSED), false, Marks[mark]);
-}
-
 /* Main Routine
  ******************************************************************************/
 static Tag Builtins[] = {
@@ -412,18 +403,6 @@ static KeyBinding Bindings[] = {
     { ModNone, KEY_PGDN,      page_dn   },
     { ModAny,  KEY_DELETE,    delete    },
     { ModAny,  KEY_BACKSPACE, backspace },
-
-    /* Marks Handling */
-    { ModOneOrMore, '0', jumpmark },
-    { ModOneOrMore, '1', jumpmark },
-    { ModOneOrMore, '2', jumpmark },
-    { ModOneOrMore, '3', jumpmark },
-    { ModOneOrMore, '4', jumpmark },
-    { ModOneOrMore, '5', jumpmark },
-    { ModOneOrMore, '6', jumpmark },
-    { ModOneOrMore, '7', jumpmark },
-    { ModOneOrMore, '8', jumpmark },
-    { ModOneOrMore, '9', jumpmark },
 
     /* Implementation Specific */
     { ModNone,      KEY_ESCAPE, select_prev  },
@@ -535,13 +514,11 @@ int main(int argc, char** argv) {
 
     /* create the window */
     win_init(ondiagmsg);
-    x11_dialog("tide", WinWidth, WinHeight);
+    x11_window("tide", WinWidth, WinHeight);
 
     /* open all but the last file in new instances */
-    for (argc--, argv++; argc > 1; argc--, argv++) {
-        if (!strcmp(*argv, "--")) break;
+    for (argc--, argv++; argc > 1; argc--, argv++)
         cmd_execwitharg(CMD_TIDE, *argv);
-    }
 
     /* if we still have args left we're going to open it in this instance */
     if (*argv) edit_relative(*argv);
