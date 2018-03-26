@@ -32,7 +32,7 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
     buf->modified    = false;
     buf->expand_tabs = ExpandTabs;
     buf->copy_indent = CopyIndent;
-    buf->charset     = UTF_8;
+    buf->charset     = BINARY;
     buf->crlf        = 0;
     buf->bufsize     = 8192;
     buf->bufstart    = (Rune*)malloc(buf->bufsize * sizeof(Rune));
@@ -56,20 +56,9 @@ size_t buf_load(Buf* buf, char* path) {
 
     /* load the file and determine the character set */
     FMap file = mmap_readonly(buf->path);
-    filetype(buf, file);
-
-    /* read the file contents into the buffer */
     buf_resize(buf, next_size(file.len));
-    for (size_t i = 0; i < file.len;) {
-        Rune r;
-        if (buf->charset == BINARY) {
-            r = file.buf[i++];
-        } else {
-            size_t len = 0;
-            while (!utf8decode(&r, &len, file.buf[i++]));
-        }
-        buf_insert(buf, false, buf_end(buf), r);
-    }
+    for (size_t i = 0; i < file.len;)
+        buf_insert(buf, false, buf_end(buf), file.buf[i++]);
 
     /* jump to address if we got one */
     if (addr)
@@ -94,7 +83,7 @@ void buf_save(Buf* buf) {
 
     /* text files should  always end in a new line. If we detected a
        binary file or at least a non-utf8 file, skip this part. */
-    if (!buf_iseol(buf, buf_end(buf)-1) && (buf->charset != BINARY))
+    if (!buf_iseol(buf, buf_end(buf)-1))
         buf_insert(buf, false, buf_end(buf), '\n');
 
     size_t wrlen = 0;

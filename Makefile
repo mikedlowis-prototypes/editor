@@ -5,7 +5,6 @@ MAN1 = docs/tide.1 docs/pick.1 docs/picktag.1 docs/pickfile.1
 
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
-	lib/filetype.o \
 	lib/utf8.o     \
 	lib/utils.o    \
 	lib/job.o      \
