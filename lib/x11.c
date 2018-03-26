@@ -416,7 +416,7 @@ void win_loop(void) {
     XMapWindow(X.display, X.self);
     XFlush(X.display);
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
-    while (1) job_poll(-1, Timeout);
+    while (1) job_poll(Timeout);
 }
 
 void win_settext(WinRegion id, char* text) {
@@ -706,63 +706,27 @@ static WinRegion getregion(size_t x, size_t y) {
 }
 
 static uint32_t special_keys(uint32_t key) {
-    switch (key) {
-        case XK_F1:        return KEY_F1;
-        case XK_F2:        return KEY_F2;
-        case XK_F3:        return KEY_F3;
-        case XK_F4:        return KEY_F4;
-        case XK_F5:        return KEY_F5;
-        case XK_F6:        return KEY_F6;
-        case XK_F7:        return KEY_F7;
-        case XK_F8:        return KEY_F8;
-        case XK_F9:        return KEY_F9;
-        case XK_F10:       return KEY_F10;
-        case XK_F11:       return KEY_F11;
-        case XK_F12:       return KEY_F12;
-        case XK_Insert:    return KEY_INSERT;
-        case XK_Delete:    return KEY_DELETE;
-        case XK_Home:      return KEY_HOME;
-        case XK_End:       return KEY_END;
-        case XK_Page_Up:   return KEY_PGUP;
-        case XK_Page_Down: return KEY_PGDN;
-        case XK_Up:        return KEY_UP;
-        case XK_Down:      return KEY_DOWN;
-        case XK_Left:      return KEY_LEFT;
-        case XK_Right:     return KEY_RIGHT;
-        case XK_Escape:    return KEY_ESCAPE;
-        case XK_BackSpace: return '\b';
-        case XK_Tab:       return '\t';
-        case XK_Return:    return '\r';
-        case XK_Linefeed:  return '\n';
-
-        /* modifiers should not trigger key presses */
-        case XK_Scroll_Lock:
-        case XK_Shift_L:
-        case XK_Shift_R:
-        case XK_Control_L:
-        case XK_Control_R:
-        case XK_Caps_Lock:
-        case XK_Shift_Lock:
-        case XK_Meta_L:
-        case XK_Meta_R:
-        case XK_Alt_L:
-        case XK_Alt_R:
-        case XK_Super_L:
-        case XK_Super_R:
-        case XK_Hyper_L:
-        case XK_Hyper_R:
-        case XK_Menu:
-            return RUNE_ERR;
-
-        /* if it ain't special, don't touch it */
-        default:
-            return key;
-    }
+	static uint32_t keymap[256] = {
+		/* Function keys */
+        [0xBE] = KEY_F1, [0xBF] = KEY_F2,  [0xC0] = KEY_F3,  [0xC1] = KEY_F4,
+        [0xC2] = KEY_F5, [0xC3] = KEY_F6,  [0xC4] = KEY_F7,  [0xC5] = KEY_F8,
+        [0xC6] = KEY_F9, [0xC7] = KEY_F10, [0xC8] = KEY_F11, [0xC9] = KEY_F12,
+        /* Navigation keys */
+        [0x50] = KEY_HOME,  [0x51] = KEY_LEFT, [0x52] = KEY_UP,
+        [0x53] = KEY_RIGHT, [0x54] = KEY_DOWN, [0x55] = KEY_PGUP,
+        [0x56] = KEY_PGDN,  [0x57] = KEY_END,
+		/* Control keys */
+        [0x08] = '\b', [0x09] = '\t', [0x0d] = '\r', [0x0a] = '\n',
+        /* Miscellaneous */
+        [0x63] = KEY_INSERT, [0x1B] = KEY_ESCAPE, [0xFF] = KEY_DELETE,
+	};
+	/* lookup the key by keysym */
+	key = ((key & 0xFF00) == 0xFF00 ? keymap[key & 0xFF] : key);
+	return (!key ? RUNE_ERR : key);
 }
 
 static uint32_t getkey(XEvent* e) {
-    int32_t rune = RUNE_ERR;
-    size_t len = 0;
+    size_t i = 0, len = 0;
     char buf[8];
     KeySym key;
     Status status;
@@ -774,14 +738,8 @@ static uint32_t getkey(XEvent* e) {
     /* if it's ascii, just return it */
     if (key >= 0x20 && key <= 0x7F)
         return (uint32_t)key;
-    /* decode it */
-    if (len > 0) {
-        len = 0;
-        for (int i = 0; i < 8 && !utf8decode(&rune, &len, buf[i]); i++);
-    }
     /* translate special key codes into unicode codepoints */
-    rune = special_keys(key);
-    return rune;
+    return special_keys(key);
 }
 
 static void xftcolor(XftColor* xc, int id) {
@@ -909,5 +867,4 @@ static void xresize(XEvent* e) {
 }
 
 static void xexpose(XEvent* e) {
-    onredraw(X.width, X.height);
 }

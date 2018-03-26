@@ -18,15 +18,8 @@ static void job_finish(Job* job);
 static struct pollfd JobFds[MAX_JOBS];
 static Job* JobList = NULL;
 
-bool job_poll(int fd, int ms) {
+bool job_poll(int ms) {
     int njobs = 0;
-    /* add the X11 connection if we have one */
-    if (fd > 0) {
-        JobFds[0].fd = fd;
-        JobFds[0].events = POLLIN;
-        JobFds[0].revents = 0;
-        njobs = 1;
-    }
     /* Add jobs from the job list */
     for (Job *job = JobList; job && njobs < MAX_JOBS; job = job->next) {
         JobFds[njobs].fd = job->fd;
@@ -44,7 +37,6 @@ bool job_poll(int fd, int ms) {
         job_process(JobFds[i].fd, JobFds[i].revents);
     /* reap zombie processes */
     for (int status; waitpid(-1, &status, WNOHANG) > 0;);
-    // TODO: cleanup old jobs here...
     return (ret > 0);
 }
 
@@ -72,6 +64,7 @@ static void job_process(int fd, int events) {
     Job* job = JobList; // Get job by fd
     while (job && job->fd != fd)
         job = job->next;
+    if (!job) return;
     if (job->readfn && (events & POLLIN))
         job->readfn(job);
     if (job->writefn && (events & POLLOUT))
