@@ -107,35 +107,26 @@ Row* view_getrow(View* view, size_t row) {
 
 void view_byrune(View* view, int move, bool extsel) {
     move_selection(view, extsel, &(view->selection), move, buf_byrune);
-    view->sync_needed = true;
 }
 
 void view_byword(View* view, int move, bool extsel) {
     move_selection(view, extsel, &(view->selection), move, buf_byword);
-    view->sync_needed = true;
 }
 
 void view_byline(View* view, int move, bool extsel) {
     move_selection(view, extsel, &(view->selection), move, buf_byline);
-    view->sync_needed = true;
 }
 
-void view_setcursor(View* view, size_t row, size_t col) {
+void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX)
-        view_jumpto(view, false, off);
-}
-
-void view_selext(View* view, size_t row, size_t col) {
-    size_t off = getoffset(view, row, col);
-    if (off != SIZE_MAX)
-        view_jumpto(view, true, off);
+        view_jumpto(view, extsel, off);
 }
 
 void view_selword(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
     if (row != SIZE_MAX && col != SIZE_MAX)
-        view_setcursor(view, row, col);
+        view_setcursor(view, row, col, false);
     Sel sel = view->selection;
     buf_getword(&(view->buffer), risbigword, &(sel));
     sel.end++;
@@ -155,7 +146,7 @@ void view_selprev(View* view) {
 
 void view_select(View* view, size_t row, size_t col) {
     buf_loglock(&(view->buffer));
-    view_setcursor(view, row, col);
+    view_setcursor(view, row, col, false);
     Sel sel = view->selection;
     select_context(view, risword, &sel);
     view->selection = sel;
@@ -421,6 +412,7 @@ void view_scrollto(View* view, size_t csr) {
 }
 
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything) {
+    view->sync_needed = true;
     if (num_selected(*sel) && !extsel) {
         selswap(sel);
         if (move == RIGHT || move == DOWN)

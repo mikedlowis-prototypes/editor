@@ -370,10 +370,7 @@ void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
     before = now;
 
     if (count == 1) {
-        if (x11_keymodsset(ModShift))
-            view_selext(win_view(id), row, col);
-        else
-            view_setcursor(win_view(id), row, col);
+        view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
     } else if (count == 2) {
         view_select(win_view(id), row, col);
     } else if (count == 3) {
@@ -679,10 +676,10 @@ void edit_relative(char* path) {
         else
             strconcat(currpath, fname, 0);
         chdir(currdir);
-        win_load(currpath);
+        view_init(win_view(EDIT), currpath, ondiagmsg);
     } else {
         chdir(origdir);
-        win_load(path);
+        view_init(win_view(EDIT), path, ondiagmsg);
     }
 
     /* cleanup */

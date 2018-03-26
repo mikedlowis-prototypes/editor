@@ -391,12 +391,6 @@ void win_init(void (*errfn)(char*)) {
     Regions[EDIT].clrcsr = Colors[ClrEditCsr];
 }
 
-void win_load(char* path) {
-    View* view = win_view(EDIT);
-    view_init(view, path, view->buffer.errfn);
-    path = view->buffer.path;
-}
-
 void win_save(char* path) {
     View* view = win_view(EDIT);
     if (!path) path = view->buffer.path;
@@ -408,14 +402,7 @@ void win_save(char* path) {
 }
 
 void win_loop(void) {
-    /* simulate an initial resize and map the window */
-    XConfigureEvent ce;
-    ce.type   = ConfigureNotify;
-    ce.width  = X.width;
-    ce.height = X.height;
-    XSendEvent(X.display, X.self, False, StructureNotifyMask, (XEvent *)&ce);
     XMapWindow(X.display, X.self);
-
     while (Running) {
         bool pending = job_poll(ConnectionNumber(X.display), Timeout);
         int nevents = XEventsQueued(X.display, QueuedAfterFlush);
@@ -643,7 +630,7 @@ static void onmousedrag(int state, int x, int y) {
     size_t row = (y-Regions[Focused].y) / x11_font_height(CurrFont);
     size_t col = (x-Regions[Focused].x) / x11_font_width(CurrFont);
     if (win_btnpressed(MouseLeft))
-        view_selext(win_view(Focused), row, col);
+        view_setcursor(win_view(Focused), row, col, true);
 }
 
 static void onmousebtn(int btn, bool pressed, int x, int y) {
