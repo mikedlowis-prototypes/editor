@@ -634,6 +634,7 @@ void onlayout(void) {
 
 void onshutdown(void) {
     quit();
+    exit(0);
 }
 
 static void oninput(Rune rune) {
@@ -688,6 +689,7 @@ void edit_relative(char* path) {
     free(relpath);
     free(origdir);
 }
+
 
 #ifndef TEST
 int main(int argc, char** argv) {

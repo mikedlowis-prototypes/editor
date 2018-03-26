@@ -48,18 +48,20 @@ bool job_poll(int fd, int ms) {
     return (ret > 0);
 }
 
+void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data) {
+    Job *job = calloc(1, sizeof(job));
+    job->fd = fd;
+    job->readfn = readfn;
+    job->writefn = writefn;
+    job->data = data;
+    job->next = JobList;
+    JobList = job;
+}
+
 void job_create(char** cmd, jobfn_t readfn, jobfn_t writefn, void* data) {
     int fd = -1, pid = -1;
-    if (job_execute(cmd, &fd, &pid) > 0) {
-        Job *job = calloc(1, sizeof(job));
-        job->fd = fd;
-        job->pid = pid;
-        job->readfn = readfn;
-        job->writefn = writefn;
-        job->data = data;
-        job->next = JobList;
-        JobList = job;
-    }
+    if (job_execute(cmd, &fd, &pid) > 0)
+        job_spawn(fd, readfn, writefn, data);
 }
 
 void job_start(char** cmd, char* data, size_t ndata, View* dest) {

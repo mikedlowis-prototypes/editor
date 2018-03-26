@@ -211,6 +211,7 @@ struct Job {
 };
 
 bool job_poll(int fd, int ms);
+void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data);
 void job_create(char** cmd, jobfn_t readfn, jobfn_t writefn, void* data);
 void job_start(char** cmd, char* data, size_t ndata, View* dest);
 

@@ -401,7 +401,27 @@ void win_save(char* path) {
     buf_save(&(view->buffer));
 }
 
+static void xupdate(Job* job) {
+    bool pending = job_poll(ConnectionNumber(X.display), Timeout);
+    int nevents = XEventsQueued(X.display, QueuedAfterFlush);
+    if (pending || nevents) {
+        for (XEvent e; XPending(X.display);) {
+            XNextEvent(X.display, &e);
+            if (!XFilterEvent(&e, None) && EventHandlers[e.type])
+                (EventHandlers[e.type])(&e);
+        }
+	    onredraw(X.width, X.height);
+	    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
+    }
+	XFlush(X.display);
+}
+
 void win_loop(void) {
+#if 0
+    XMapWindow(X.display, X.self);
+    job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
+    while (1) job_poll(-1, Timeout);
+#else
     XMapWindow(X.display, X.self);
     while (Running) {
         bool pending = job_poll(ConnectionNumber(X.display), Timeout);
@@ -426,7 +446,10 @@ void win_loop(void) {
         job_start((char*[]){ "xcpd", NULL }, text, len, NULL);
         while (job_poll(-1, 100));
     }
+#endif
 }
+
+
 
 void win_settext(WinRegion id, char* text) {
     View* view = win_view(id);
@@ -545,6 +568,16 @@ static void onredraw(int width, int height) {
             Row* row = view_getrow(view, y);
             draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
         }
+
+        /* place the cursor on screen */
+        if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
+            x11_draw_rect(
+                Regions[i].clrcsr.fg,
+                Regions[i].x + (Regions[i].csrx * fwidth),
+                Regions[i].y + (Regions[i].csry * fheight),
+                1, fheight);
+        }
+
     }
 
     /* draw the scroll region */
@@ -556,14 +589,6 @@ static void onredraw(int width, int height) {
     x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
     x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
 
-    /* place the cursor on screen */
-    if (Regions[Focused].csrx != SIZE_MAX && Regions[Focused].csry != SIZE_MAX) {
-        x11_draw_rect(
-            Regions[Focused].clrcsr.fg,
-            Regions[Focused].x + (Regions[Focused].csrx * fwidth),
-            Regions[Focused].y + (Regions[Focused].csry * fheight),
-            1, fheight);
-    }
 }
 
 static void oninput(int mods, Rune key) {
