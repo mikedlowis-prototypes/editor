@@ -30,7 +30,8 @@ int /* Integer config options */
     Syntax = ON,
     CopyIndent = ON,
     TrimOnSave = ON,
-    ExpandTabs = ON;
+    ExpandTabs = ON,
+    DosLineFeed = OFF;
 
 int Palette[16] = {
     0xFF1d2021,

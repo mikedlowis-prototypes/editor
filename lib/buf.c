@@ -27,13 +27,8 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
         buf->bufstart = NULL;
         buf_logclear(buf);
     }
-
     /* reset the state to defaults */
     buf->modified    = false;
-    buf->expand_tabs = ExpandTabs;
-    buf->copy_indent = CopyIndent;
-    buf->charset     = BINARY;
-    buf->crlf        = 0;
     buf->bufsize     = 8192;
     buf->bufstart    = (char*)malloc(buf->bufsize);
     buf->bufend      = buf->bufstart + buf->bufsize;
@@ -122,7 +117,7 @@ size_t buf_end(Buf* buf) {
 size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
     bool is_eol = (rune == '\n');
     buf->modified = true;
-    if (fmt && buf->expand_tabs && rune == '\t') {
+    if (fmt && ExpandTabs && rune == '\t') {
         size_t tabwidth = TabWidth;
         size_t n = (tabwidth - ((off - buf_bol(buf, off)) % tabwidth));
         log_insert(buf, &(buf->undo), off, off+n);
@@ -134,7 +129,7 @@ size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
             off += n;
         }
     }
-    if (fmt && buf->copy_indent && is_eol) {
+    if (fmt && CopyIndent && is_eol) {
         size_t beg = buf_bol(buf, off-1), end = beg;
         for (; end < buf_end(buf) && (' ' == buf_get(buf, end) || '\t' == buf_get(buf, end)); end++);
         for (; beg < end; beg++)

@@ -354,7 +354,7 @@ void view_scrollpage(View* view, int move) {
 
 void view_indent(View* view, int dir) {
     Buf* buf = &(view->buffer);
-    unsigned indoff = (buf->expand_tabs ? TabWidth : 1);
+    unsigned indoff = (ExpandTabs ? TabWidth : 1);
     selswap(&(view->selection));
     view->selection.beg = buf_bol(buf, view->selection.beg);
     view->selection.end = buf_eol(buf, view->selection.end);

@@ -46,8 +46,6 @@ typedef struct Log {
 typedef struct {
     char* path;           /* the path to the open file */
     uint64_t modtime;     /* modification time of the opened file */
-    int charset;          /* the character set of the buffer */
-    int crlf;             /* tracks whether the file uses dos style line endings */
     size_t bufsize;       /* size of the buffer in runes */
     char* bufstart;       /* start of the data buffer */
     char* bufend;         /* end of the data buffer */
@@ -56,8 +54,6 @@ typedef struct {
     Log* undo;            /* undo list */
     Log* redo;            /* redo list */
     bool modified;        /* tracks whether the buffer has been modified */
-    bool expand_tabs;     /* tracks current mode */
-    bool copy_indent;     /* copy the indent level from the previous line on new lines */
     uint transid;         /* tracks the last used transaction id for log entries */
     void (*errfn)(char*); /* callback for error messages */
 } Buf;
@@ -222,7 +218,7 @@ typedef struct { int fg, bg; } CPair;
 extern char TagString[], FontString[];
 extern int Palette[16];
 extern int WinWidth, WinHeight, LineSpacing, RulerPos, Timeout, TabWidth, ScrollBy,
-    ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs;
+    ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs, DosLineFeed;
 extern CPair Colors[28];
 
 enum { /* Color Variables */

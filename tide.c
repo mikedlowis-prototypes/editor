@@ -479,15 +479,11 @@ static void goto_ctag(void) {
 }
 
 static void tabs(void) {
-    bool enabled = !(win_buf(EDIT)->expand_tabs);
-    win_buf(EDIT)->expand_tabs = enabled;
-    win_buf(TAGS)->expand_tabs = enabled;
+    ExpandTabs = !ExpandTabs;
 }
 
 static void indent(void) {
-    bool enabled = !(win_buf(EDIT)->copy_indent);
-    win_buf(EDIT)->copy_indent = enabled;
-    win_buf(TAGS)->copy_indent = enabled;
+    CopyIndent = !CopyIndent;
 }
 
 static void del_indent(void) {
@@ -499,10 +495,8 @@ static void add_indent(void) {
 }
 
 static void eol_mode(void) {
-    int crlf = win_buf(EDIT)->crlf;
-    win_buf(EDIT)->crlf = !crlf;
-    win_buf(TAGS)->crlf = !crlf;
-    cmd_exec(crlf ? CMD_TO_UNIX : CMD_TO_DOS);
+    DosLineFeed = !DosLineFeed;
+    cmd_exec(DosLineFeed ? CMD_TO_DOS : CMD_TO_UNIX);
 }
 
 static void new_win(void) {
