@@ -121,20 +121,6 @@ void utf8save(Buf* buf, FILE* file);
 void binload(Buf* buf, FMap file);
 void binsave(Buf* buf, FILE* file);
 
-/* Syntax Highlighting
- *****************************************************************************/
-typedef struct SyntaxSpan {
-    size_t beg;
-    size_t end;
-    size_t color;
-    struct SyntaxSpan* prev;
-    struct SyntaxSpan* next;
-} SyntaxSpan;
-
-void colors_init(char* path);
-SyntaxSpan* colors_scan(SyntaxSpan* spans, Buf* buf, size_t beg, size_t end);
-SyntaxSpan* colors_rewind(SyntaxSpan* spans, size_t first);
-
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
@@ -156,7 +142,6 @@ typedef struct {
     size_t nrows;       /* number of rows in the view */
     size_t ncols;       /* number of columns in the view */
     Row** rows;         /* array of row data structures */
-    SyntaxSpan* spans;  /* list of colored regions */
     int clrnor, clrsel; /* text color pairs for normal and selected text */
     bool sync_needed;   /* whether the view needs to be synced with cursor */
     bool sync_center;   /* cursor should be centered on screen if possible */
