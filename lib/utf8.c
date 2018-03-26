@@ -122,7 +122,7 @@ bool riscmd(Rune r) {
 }
 
 bool risblank(Rune r) {
-    return (r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == RUNE_CRLF);
+    return (r == ' ' || r == '\t' || r == '\n' || r == '\r');
 }
 
 bool risbigword(Rune r) {

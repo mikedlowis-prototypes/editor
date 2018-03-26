@@ -90,17 +90,8 @@ void buf_save(Buf* buf) {
     if (buf->path) {
         FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
         if (file.buf) {
-            for (size_t i = 0, end = buf_end(buf); i < end; i++) {
-                Rune r = buf_get(buf, i);
-                if (r == RUNE_CRLF) {
-                    file.buf[wrlen++] = '\r';
-                    file.buf[wrlen++] = '\n';
-                } else if (buf->charset == BINARY) {
-                    file.buf[wrlen++] = (char)r;
-                } else {
-                    wrlen += utf8encode((char*)&(file.buf[wrlen]), r);
-                }
-            }
+            for (size_t i = 0, end = buf_end(buf); i < end; i++)
+                file.buf[wrlen++] = buf_get(buf, i);
             mmap_close(file);
             truncate(buf->path, wrlen);
             buf->modified = false;
@@ -129,7 +120,7 @@ size_t buf_end(Buf* buf) {
 }
 
 size_t buf_insert(Buf* buf, bool fmt, size_t off, Rune rune) {
-    bool is_eol = (rune == '\n' || rune == RUNE_CRLF);
+    bool is_eol = (rune == '\n');
     buf->modified = true;
     if (fmt && buf->expand_tabs && rune == '\t') {
         size_t tabwidth = TabWidth;
@@ -185,7 +176,7 @@ void buf_chomp(Buf* buf) {
     size_t end = buf_end(buf);
     if (!end) return;
     Rune r = buf_get(buf, end-1);
-    if (r == RUNE_CRLF || r == '\n') {
+    if (r == '\n') {
         delete(buf, end-1);
         if (buf->undo->insert && buf->undo->data.ins.end == end)
             buf->undo->data.ins.end--;
@@ -219,7 +210,7 @@ void buf_logclear(Buf* buf) {
 
 bool buf_iseol(Buf* buf, size_t off) {
     Rune r = buf_get(buf, off);
-    return (r == '\n' || r == RUNE_CRLF);
+    return (r == '\n');
 }
 
 size_t buf_bol(Buf* buf, size_t off) {
@@ -532,17 +523,9 @@ static void delete(Buf* buf, size_t off) {
 }
 
 static size_t insert(Buf* buf, size_t off, Rune rune) {
-    size_t rcount = 1;
     syncgap(buf, off);
-    if (buf->crlf && rune == '\n' && buf_get(buf, off-1) == '\r') {
-        rcount = 0;
-        *(buf->gapstart-1) = RUNE_CRLF;
-    } else if (buf->crlf && rune == '\n') {
-        *(buf->gapstart++) = RUNE_CRLF;
-    } else {
-        *(buf->gapstart++) = rune;
-    }
-    return rcount;
+    *(buf->gapstart++) = rune;
+    return 1;
 }
 
 static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes) {

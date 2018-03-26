@@ -4,7 +4,6 @@ enum {
     RUNE_ERR  = 0xFFFD,   /* rune value representing an error */
     RUNE_MAX  = 0x10FFFF, /* Maximum decodable rune value */
     RUNE_EOF  = -1,       /* rune value representing end of file */
-    RUNE_CRLF = -2,       /* rune value representing a \r\n sequence */
 };
 
 /* Represents a unicode code point */

@@ -57,7 +57,7 @@ static void join_lines(void) {
     Rune r = view_getrune(view);
     for (; r == '\t' || r == ' '; r = view_getrune(view))
         view_byrune(view, RIGHT, true);
-    if (r != '\n' && r != RUNE_CRLF)
+    if (r != '\n')
         view_insert(view, false, ' ');
 }
 

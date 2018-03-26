@@ -60,7 +60,7 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
     while (nrows < maxrows && pos < buf_end(&(view->buffer))) {
         Rune r = buf_get(&(view->buffer), pos++);
         col += runewidth(col, r);
-        if (col >= ncols || r == RUNE_CRLF || r == '\n')
+        if (col >= ncols || r == '\n')
             col = 0, nrows++;
     }
     return nrows;
@@ -296,17 +296,10 @@ char* view_getstr(View* view, Sel* range) {
     char*  str = NULL;
     for (; sel.beg < sel.end; sel.beg++) {
         Rune rune = buf_get(buf, sel.beg);
-        if (rune == RUNE_CRLF) {
-            str = realloc(str, len + 2);
-            str[len + 0] = '\r';
-            str[len + 1] = '\n';
-            len += 2;
-        } else {
-            size_t n = utf8encode(utf, rune);
-            str = realloc(str, len + n);
-            memcpy(str+len, utf, n);
-            len += n;
-        }
+        size_t n = utf8encode(utf, rune);
+        str = realloc(str, len + n);
+        memcpy(str+len, utf, n);
+        len += n;
     }
     if (str) {
         str = realloc(str, len+1);
@@ -449,7 +442,7 @@ static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
         buf_getblock(buf, '[', ']', sel);
     } else if (r == '{' || r == '}') {
         buf_getblock(buf, '{', '}', sel);
-    } else if (sel->end == bol || r == '\n' || r == RUNE_CRLF) {
+    } else if (sel->end == bol || r == '\n') {
         sel->beg = bol;
         sel->end = buf_eol(buf, sel->end);
     } else if (risword(r)) {
@@ -522,9 +515,7 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     int ncols = runewidth(col, r);
     /* write the rune to the screen buf */
     scrrow->cols[col].attr = attr;
-    if (r == RUNE_CRLF)
-        scrrow->cols[col].rune = '\n';
-    else if (r == '\t')
+    if (r == '\t')
         scrrow->cols[col].rune = ' ';
     else
         scrrow->cols[col].rune = r;
