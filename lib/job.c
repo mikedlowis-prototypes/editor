@@ -40,7 +40,7 @@ bool job_poll(int fd, int ms) {
     printf("poll(..., %d, %d)", njobs, ms);
     long ret = poll(JobFds, njobs, ms);
     printf(" => %ld\n", ret);
-    for (int i = 1; i < njobs; i++)
+    for (int i = 0; i < njobs; i++)
         job_process(JobFds[i].fd, JobFds[i].revents);
     /* reap zombie processes */
     for (int status; waitpid(-1, &status, WNOHANG) > 0;);
@@ -69,19 +69,19 @@ void job_start(char** cmd, char* data, size_t ndata, View* dest) {
 }
 
 static void job_process(int fd, int events) {
-#if 0
     Job* job = JobList; // Get job by fd
+    while (job && job->fd != fd)
+        job = job->next;
     if (job->readfn && (events & POLLIN))
         job->readfn(job);
     if (job->writefn && (events & POLLOUT))
         job->writefn(job);
     if (!job->readfn && !job->writefn)
         job_finish(job);
-#endif
 }
 
 static void job_finish(Job* job) {
-    close(job->fd);
+    //close(job->fd);
     // delete job
     // free(job);
 }

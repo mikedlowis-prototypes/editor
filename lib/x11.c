@@ -402,54 +402,22 @@ void win_save(char* path) {
 }
 
 static void xupdate(Job* job) {
-    bool pending = job_poll(ConnectionNumber(X.display), Timeout);
-    int nevents = XEventsQueued(X.display, QueuedAfterFlush);
-    if (pending || nevents) {
-        for (XEvent e; XPending(X.display);) {
-            XNextEvent(X.display, &e);
-            if (!XFilterEvent(&e, None) && EventHandlers[e.type])
-                (EventHandlers[e.type])(&e);
-        }
-	    onredraw(X.width, X.height);
-	    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
+    for (XEvent e; XPending(X.display);) {
+        XNextEvent(X.display, &e);
+        if (!XFilterEvent(&e, None) && EventHandlers[e.type])
+            (EventHandlers[e.type])(&e);
     }
+    onredraw(X.width, X.height);
+    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
 	XFlush(X.display);
 }
 
 void win_loop(void) {
-#if 0
     XMapWindow(X.display, X.self);
+    XFlush(X.display);
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
     while (1) job_poll(-1, Timeout);
-#else
-    XMapWindow(X.display, X.self);
-    while (Running) {
-        bool pending = job_poll(ConnectionNumber(X.display), Timeout);
-        int nevents = XEventsQueued(X.display, QueuedAfterFlush);
-        if (pending || nevents) {
-            for (XEvent e; XPending(X.display);) {
-                XNextEvent(X.display, &e);
-                if (!XFilterEvent(&e, None) && EventHandlers[e.type])
-                    (EventHandlers[e.type])(&e);
-            }
-		    onredraw(X.width, X.height);
-		    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
-        }
-    	XFlush(X.display);
-    }
-    XCloseDisplay(X.display);
-
-    /* we're exiting now. If we own the clipboard, make sure it persists */
-    if (Selections[CLIPBOARD].text) {
-        char* text = Selections[CLIPBOARD].text;
-        size_t len = strlen(text);
-        job_start((char*[]){ "xcpd", NULL }, text, len, NULL);
-        while (job_poll(-1, 100));
-    }
-#endif
 }
-
-
 
 void win_settext(WinRegion id, char* text) {
     View* view = win_view(id);
