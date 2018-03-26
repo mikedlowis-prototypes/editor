@@ -37,7 +37,7 @@ typedef struct Log {
         struct {
             size_t off;  /* offset in the file where the deletion occurred */
             size_t len;  /* number of runes deleted */
-            Rune* runes; /* array of runes containing deleted content */
+            char* runes; /* array of runes containing deleted content */
         } del;
     } data;
 } Log;
@@ -49,10 +49,10 @@ typedef struct {
     int charset;          /* the character set of the buffer */
     int crlf;             /* tracks whether the file uses dos style line endings */
     size_t bufsize;       /* size of the buffer in runes */
-    Rune* bufstart;       /* start of the data buffer */
-    Rune* bufend;         /* end of the data buffer */
-    Rune* gapstart;       /* start of the gap */
-    Rune* gapend;         /* end of the gap */
+    char* bufstart;       /* start of the data buffer */
+    char* bufend;         /* end of the data buffer */
+    char* gapstart;       /* start of the gap */
+    char* gapend;         /* end of the gap */
     Log* undo;            /* undo list */
     Log* redo;            /* redo list */
     bool modified;        /* tracks whether the buffer has been modified */
