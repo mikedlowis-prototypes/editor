@@ -148,7 +148,6 @@ char* view_getcmd(View* view);
 char* view_getctx(View* view);
 void view_selctx(View* view);
 void view_scroll(View* view, int move);
-void view_csrsummon(View* view);
 void view_scrollpage(View* view, int move);
 void view_setln(View* view, size_t line);
 void view_indent(View* view, int dir);

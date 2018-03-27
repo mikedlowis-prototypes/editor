@@ -336,20 +336,9 @@ void view_scroll(View* view, int move) {
     }
 }
 
-void view_csrsummon(View* view) {
-    Row* midrow = view->rows[view->nrows/2];
-    size_t col = SIZE_MAX, row = SIZE_MAX, off = midrow->off;
-    find_cursor(view, &col, &row);
-    if (row != SIZE_MAX && col != SIZE_MAX)
-        off += (col >= midrow->rlen ? (midrow->rlen - 1) : col);
-    view_jumpto(view, false, off);
-    view->sync_needed = false;
-}
-
 void view_scrollpage(View* view, int move) {
     move = (move < 0 ? -1 : 1) * view->nrows;
     view_scroll(view, move);
-    view_csrsummon(view);
 }
 
 void view_indent(View* view, int dir) {

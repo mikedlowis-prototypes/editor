@@ -191,10 +191,6 @@ static void cursor_right(char* arg) {
         view_byrune(win_view(FOCUSED), RIGHT, extsel);
 }
 
-static void cursor_warp(char* arg) {
-    view_csrsummon(win_view(FOCUSED));
-}
-
 static void page_up(char* arg) {
     view_scrollpage(win_view(FOCUSED), UP);
 }
@@ -539,7 +535,6 @@ static KeyBinding Bindings[] = {
     { ModAny,  KEY_DOWN,  cursor_dn    },
     { ModAny,  KEY_LEFT,  cursor_left  },
     { ModAny,  KEY_RIGHT, cursor_right },
-    { ModCtrl, ';',       cursor_warp  },
 
     /* Standard Unix Shortcuts */
     { ModCtrl, 'u', del_to_bol  },
@@ -613,7 +608,6 @@ void onlayout(void) {
 
 void onshutdown(void) {
     quit(0);
-    exit(0);
 }
 
 static void oninput(Rune rune) {
