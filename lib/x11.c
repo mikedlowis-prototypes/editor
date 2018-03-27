@@ -722,15 +722,14 @@ static uint32_t special_keys(uint32_t key) {
 }
 
 static uint32_t getkey(XEvent* e) {
-    size_t i = 0, len = 0;
     char buf[8];
     KeySym key;
     Status status;
     /* Read the key string */
     if (X.xic)
-        len = Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
+        Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
     else
-        len = XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
+        XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
     /* if it's ascii, just return it */
     if (key >= 0x20 && key <= 0x7F)
         return (uint32_t)key;

@@ -512,7 +512,6 @@ static void buf_resize(Buf* buf, size_t sz) {
 }
 
 static void delete(Buf* buf, size_t off) {
-    Rune rune = buf_get(buf, off);
     syncgap(buf, off);
     buf->gapend++;
 }

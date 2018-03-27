@@ -41,7 +41,7 @@ bool job_poll(int ms) {
 }
 
 void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data) {
-    Job *job = calloc(1, sizeof(job));
+    Job *job = calloc(1, sizeof(Job));
     job->fd = fd;
     job->readfn = readfn;
     job->writefn = writefn;
