@@ -325,11 +325,7 @@ static void quit(void) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
     if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime) {
-        #ifndef TEST
-        x11_deinit();
-        #else
         exit(0);
-        #endif
     } else {
         ondiagmsg("File is modified. Repeat action twice quickly to quit.");
     }

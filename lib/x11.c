@@ -59,7 +59,6 @@ static void onmousedrag(int state, int x, int y);
 static void onmousebtn(int btn, bool pressed, int x, int y);
 static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col);
 static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col);
-static void oncommand(char* cmd);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
 
@@ -85,7 +84,6 @@ struct XFont {
     int ncached;
 };
 
-static bool Running = true;
 static struct {
     Window root;
     Display* display;
@@ -123,10 +121,6 @@ static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
 static void (*InputFunc)(Rune);
-
-void x11_deinit(void) {
-    Running = false;
-}
 
 void x11_init(XConfig* cfg) {
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
@@ -650,17 +644,6 @@ static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col) {
 static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
     if (!pressed) return;
     view_scroll(win_view(id), +ScrollBy);
-}
-
-static void oncommand(char* cmd) {
-    size_t line = strtoul(cmd, NULL, 0);
-    if (line) {
-        View* view = win_view(EDIT);
-        win_setregion(EDIT);
-        view_setln(view, line);
-        view_eol(view, false);
-        view_selctx(view);
-    }
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
