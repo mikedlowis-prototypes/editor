@@ -5,6 +5,16 @@ Up Next:
 * B2+B1 click executes command with selection as argument
 * add command line flags to toggle options (Tabs, Indent, etc..)
 
+Tags:
+
+* Clear - Clear the current window's edit buffer
+* Line - Get the current line number(s) containing the selection
+* Kill - Kill a background command
+* Font - Toggle font between monospace and proportional or set the font
+* ID - Get window id of the X window
+* Zerox - Create a copy of the window
+* Lang - Set the language for syntax highlighting
+
 The Future:
 
 * Wily-like rc file for registering builtins

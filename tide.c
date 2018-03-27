@@ -519,6 +519,7 @@ static Tag Builtins[] = {
     { .tag = "GoTo",   .action = jump_to   },
     { .tag = "Get",    .action = get       },
     { .tag = "Indent", .action = indent    },
+    { .tag = "New",    .action = new_win   },
     { .tag = "Paste",  .action = paste     },
     { .tag = "Put",    .action = put       },
     { .tag = "Redo",   .action = tag_redo  },
