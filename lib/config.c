@@ -14,7 +14,7 @@ enum { OFF = 0, ON = 1 };
     #define LNSPACE 1
 #endif
 
-char TagString[] = "Quit Save Undo Redo Cut Copy Paste | Find ";
+char TagString[] = "Del Put Undo Redo Find ";
 char FontString[] = FONT;
 
 int /* Integer config options */

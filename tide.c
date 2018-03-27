@@ -340,18 +340,20 @@ static bool changed_externally(Buf* buf) {
     return modified;
 }
 
-static void overwrite(void) {
+static void put(char* arg) {
     trim_whitespace();
-    win_save(NULL);
+    win_save(arg);
 }
 
 static void save(void) {
-    if (!changed_externally(win_buf(EDIT)))
-        overwrite();
+    put(NULL);
 }
 
-static void reload(void) {
-    view_reload(win_view(EDIT));
+static void get(char* arg) {
+    if (arg)
+        view_init(win_view(EDIT), arg, ondiagmsg);
+    else
+        view_reload(win_view(EDIT));
 }
 
 /* Mouse Handling
@@ -397,10 +399,6 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
 
 /* Keyboard Handling
  ******************************************************************************/
-static void saveas(char* arg) {
-    win_save(arg);
-}
-
 static void tag_undo(void) {
     view_undo(win_view(EDIT));
 }
@@ -522,17 +520,15 @@ static void highlight(void) {
 static Tag Builtins[] = {
     { .tag = "Cut",       .action.noarg = cut       },
     { .tag = "Copy",      .action.noarg = copy      },
+    { .tag = "Del",       .action.noarg = quit      },
     { .tag = "Eol",       .action.noarg = eol_mode  },
     { .tag = "Find",      .action.arg   = find      },
     { .tag = "GoTo",      .action.arg   = jump_to   },
+    { .tag = "Get",       .action.arg   = get       },
     { .tag = "Indent",    .action.noarg = indent    },
-    { .tag = "Overwrite", .action.noarg = overwrite },
     { .tag = "Paste",     .action.noarg = paste     },
-    { .tag = "Quit",      .action.noarg = quit      },
+    { .tag = "Put",       .action.arg   = put       },
     { .tag = "Redo",      .action.noarg = tag_redo  },
-    { .tag = "Reload",    .action.noarg = reload    },
-    { .tag = "Save",      .action.noarg = save      },
-    { .tag = "SaveAs",    .action.arg   = saveas    },
     { .tag = "Tabs",      .action.noarg = tabs      },
     { .tag = "Undo",      .action.noarg = tag_undo  },
     { .tag = NULL,        .action.noarg = NULL      }

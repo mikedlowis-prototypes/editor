@@ -30,9 +30,9 @@ bool job_poll(int ms) {
         if (JobFds[njobs].events) njobs++;
     }
     /* Poll until a job is ready, call the functions based on events */
-    printf("poll(..., %d, %d)", njobs, ms);
+    //printf("poll(..., %d, %d)", njobs, ms);
     long ret = poll(JobFds, njobs, ms);
-    printf(" => %ld\n", ret);
+    //printf(" => %ld\n", ret);
     for (int i = 0; i < njobs; i++)
         job_process(JobFds[i].fd, JobFds[i].revents);
     /* reap zombie processes */
