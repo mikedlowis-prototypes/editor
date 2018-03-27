@@ -51,49 +51,6 @@ uint64_t modtime(char* path) {
     return (uint64_t)status.st_mtime;
 }
 
-char* getcurrdir(void) {
-    size_t size = 4096;
-    char *buf = NULL, *ptr = NULL;
-    for (; ptr == NULL; size *= 2) {
-        buf = realloc(buf, size);
-        ptr = getcwd(buf, size);
-        if (ptr == NULL && errno != ERANGE)
-            die("Failed to retrieve current directory");
-    }
-    return buf;
-}
-
-char* dirname(char* path) {
-    path = stringdup(path);
-    char* end = strrchr(path, '/');
-    if (!end) return (free(path), NULL);
-    *end = '\0';
-    return path;
-}
-
-bool try_chdir(char* fpath) {
-    char* dir = dirname(fpath);
-    bool success = (dir && *dir && chdir(dir) >= 0);
-    free(dir);
-    return success;
-}
-
-char* strconcat(char* dest, ...) {
-    va_list args;
-    char* curr = dest;
-    va_start(args, dest);
-    for (char* s = NULL; (s = va_arg(args, char*));)
-        while (s && *s) *(curr++) = *(s++);
-    va_end(args);
-    *curr = '\0';
-    return dest;
-}
-
-bool file_exists(char* path) {
-    struct stat st;
-    return (stat(path, &st) < 0);
-}
-
 char* strmcat(char* first, ...) {
     va_list args;
     /* calculate the length of the final string */
@@ -102,7 +59,6 @@ char* strmcat(char* first, ...) {
     for (char* s = NULL; (s = va_arg(args, char*));)
         len += strlen(s);
     va_end(args);
-
     /* allocate the final string and copy the args into it */
     char *str  = malloc(len+1), *curr = str;
     while (first && *first) *(curr++) = *(first++);
@@ -113,18 +69,4 @@ char* strmcat(char* first, ...) {
     /* null terminate and return */
     *curr = '\0';
     return str;
-}
-
-int daemonize(void) {
-    pid_t pid;
-    if (chdir("/") < 0) return -1;
-    close(0), close(1), close(2);
-    pid = fork();
-    if (pid < 0) return -1;
-    if (pid > 0) _exit(0);
-    if (setsid() < 0) return -1;
-    pid = fork();
-    if (pid < 0) return -1;
-    if (pid > 0) _exit(0);
-    return 0;
 }

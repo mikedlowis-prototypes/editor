@@ -635,56 +635,6 @@ static void oninput(Rune rune) {
     view_insert(win_view(FOCUSED), true, rune);
 }
 
-void edit_relative(char* path) {
-    char *currdir = NULL, *currpath = NULL, *relpath = NULL;
-    char* origdir = getcurrdir();
-
-    /* search for a ctags index file indicating the project root */
-    if (try_chdir(path)) {
-        currdir   = getcurrdir();
-        size_t sz = strlen(currdir) + strlen(path) + strlen("/tags") + 1;
-        currpath  = calloc(sz, 1);
-        relpath   = calloc(sz, 1);
-        while (true) {
-            /* figure out the current path to check */
-            strconcat(currpath, currdir, "/tags", 0);
-            if (file_exists(currpath)) {
-                /* move up a dir */
-                char* end = strrchr(currdir,'/');
-                if (!end) break;
-                char* temp = stringdup(relpath);
-                strconcat(relpath, end, temp, 0);
-                free(temp);
-                *end = '\0';
-            } else {
-                break;
-            }
-        }
-    }
-
-    /* cd to the project directory or the original working directory and open
-       the file relative to the new working directory */
-    if (currdir && *currdir) {
-        char* fname = strrchr(path, '/')+1;
-        if (*relpath)
-            strconcat(currpath, (*relpath == '/' ? relpath+1 : relpath), "/", fname, 0);
-        else
-            strconcat(currpath, fname, 0);
-        chdir(currdir);
-        view_init(win_view(EDIT), currpath, ondiagmsg);
-    } else {
-        chdir(origdir);
-        view_init(win_view(EDIT), path, ondiagmsg);
-    }
-
-    /* cleanup */
-    free(currdir);
-    free(currpath);
-    free(relpath);
-    free(origdir);
-}
-
-
 #ifndef TEST
 int main(int argc, char** argv) {
     /* setup the shell */
@@ -700,7 +650,7 @@ int main(int argc, char** argv) {
         cmd_execwitharg(CMD_TIDE, *argv);
 
     /* if we still have args left we're going to open it in this instance */
-    if (*argv) edit_relative(*argv);
+    if (*argv) view_init(win_view(EDIT), *argv, ondiagmsg);
 
     /* now create the window and start the event loop */
     win_settext(TAGS, TagString);
