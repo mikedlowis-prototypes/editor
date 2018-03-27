@@ -17,7 +17,7 @@ typedef enum {
 typedef struct {
     int mods;
     Rune key;
-    void (*action)(void);
+    void (*action)(char*);
 } KeyBinding;
 
 typedef struct {

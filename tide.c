@@ -8,10 +8,7 @@
 
 typedef struct {
     char* tag;
-    union {
-        void (*noarg)(void);
-        void (*arg)(char* arg);
-    } action;
+    void (*action)(char*);
 } Tag;
 
 static Tag Builtins[];
@@ -38,19 +35,19 @@ char* FetchCmd[] = { "tfetch", NULL, NULL };
 
 /*
  ******************************************************************************/
-static void select_line(void) {
+static void select_line(char* arg) {
     View* view = win_view(FOCUSED);
     view_eol(view, false);
     view_selctx(view);
 }
 
-static void select_all(void) {
+static void select_all(char* arg) {
     View* view = win_view(FOCUSED);
     view_jumpto(view, false, buf_end(&(view->buffer)));
     view->selection.beg = 0;
 }
 
-static void join_lines(void) {
+static void join_lines(char* arg) {
     View* view = win_view(FOCUSED);
     view_eol(view, false);
     view_delete(view, RIGHT, false);
@@ -61,7 +58,7 @@ static void join_lines(void) {
         view_insert(view, false, ' ');
 }
 
-static void delete(void) {
+static void delete(char* arg) {
     bool byword = x11_keymodsset(ModCtrl);
     view_delete(win_view(FOCUSED), RIGHT, byword);
 }
@@ -70,29 +67,29 @@ static void onpaste(char* text) {
     view_putstr(win_view(FOCUSED), text);
 }
 
-static void cut(void) {
+static void cut(char* arg) {
     View* view = win_view(FOCUSED);
     /* select the current line if no selection */
     if (!view_selsize(view))
-        select_line();
+        select_line(arg);
     /* now perform the cut */
     char* str = view_getstr(view, NULL);
     x11_sel_set(CLIPBOARD, str);
     if (str && *str) {
-        delete();
+        delete(arg);
         if (view->selection.end == buf_end(&(view->buffer)))
             view_delete(view, LEFT, false);
     }
 }
 
-static void paste(void) {
+static void paste(char* arg) {
     assert(x11_sel_get(CLIPBOARD, onpaste));
 }
 
-static void copy(void) {
+static void copy(char* arg) {
     /* select the current line if no selection */
     if (!view_selsize(win_view(FOCUSED)))
-        select_line();
+        select_line(arg);
     char* str = view_getstr(win_view(FOCUSED), NULL);
     x11_sel_set(CLIPBOARD, str);
 }
@@ -100,53 +97,53 @@ static void copy(void) {
 static void del_to(void (*tofn)(View*, bool)) {
     tofn(win_view(FOCUSED), true);
     if (view_selsize(win_view(FOCUSED)) > 0)
-        delete();
+        delete(NULL);
 }
 
-static void del_to_bol(void) {
+static void del_to_bol(char* arg) {
     del_to(view_bol);
 }
 
-static void del_to_eol(void) {
+static void del_to_eol(char* arg) {
     del_to(view_eol);
 }
 
-static void del_to_bow(void) {
+static void del_to_bow(char* arg) {
     view_byword(win_view(FOCUSED), LEFT, true);
     if (view_selsize(win_view(FOCUSED)) > 0)
-        delete();
+        delete(arg);
 }
 
-static void backspace(void) {
+static void backspace(char* arg) {
     view_delete(win_view(FOCUSED), LEFT, x11_keymodsset(ModCtrl));
 }
 
-static void cursor_bol(void) {
+static void cursor_bol(char* arg) {
     view_bol(win_view(FOCUSED), false);
 }
 
-static void cursor_eol(void) {
+static void cursor_eol(char* arg) {
     view_eol(win_view(FOCUSED), false);
 }
 
-static void move_line_up(void) {
+static void move_line_up(char* arg) {
     if (!view_selsize(win_view(FOCUSED)))
-        select_line();
-    cut();
+        select_line(arg);
+    cut(arg);
     view_byline(win_view(FOCUSED), UP, false);
-    paste();
+    paste(arg);
 }
 
-static void move_line_dn(void) {
+static void move_line_dn(char* arg) {
     if (!view_selsize(win_view(FOCUSED)))
-        select_line();
-    cut();
-    cursor_eol();
+        select_line(arg);
+    cut(arg);
+    cursor_eol(arg);
     view_byrune(win_view(FOCUSED), RIGHT, false);
-    paste();
+    paste(arg);
 }
 
-static void cursor_home(void) {
+static void cursor_home(char* arg) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
         view_bof(win_view(FOCUSED), extsel);
@@ -154,7 +151,7 @@ static void cursor_home(void) {
         view_bol(win_view(FOCUSED), extsel);
 }
 
-static void cursor_end(void) {
+static void cursor_end(char* arg) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
         view_eof(win_view(FOCUSED), extsel);
@@ -162,23 +159,23 @@ static void cursor_end(void) {
         view_eol(win_view(FOCUSED), extsel);
 }
 
-static void cursor_up(void) {
+static void cursor_up(char* arg) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
-        move_line_up();
+        move_line_up(arg);
     else
         view_byline(win_view(FOCUSED), UP, extsel);
 }
 
-static void cursor_dn(void) {
+static void cursor_dn(char* arg) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
-        move_line_dn();
+        move_line_dn(arg);
     else
         view_byline(win_view(FOCUSED), DOWN, extsel);
 }
 
-static void cursor_left(void) {
+static void cursor_left(char* arg) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
         view_byword(win_view(FOCUSED), LEFT, extsel);
@@ -186,7 +183,7 @@ static void cursor_left(void) {
         view_byrune(win_view(FOCUSED), LEFT, extsel);
 }
 
-static void cursor_right(void) {
+static void cursor_right(char* arg) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
         view_byword(win_view(FOCUSED), RIGHT, extsel);
@@ -194,31 +191,31 @@ static void cursor_right(void) {
         view_byrune(win_view(FOCUSED), RIGHT, extsel);
 }
 
-static void cursor_warp(void) {
+static void cursor_warp(char* arg) {
     view_csrsummon(win_view(FOCUSED));
 }
 
-static void page_up(void) {
+static void page_up(char* arg) {
     view_scrollpage(win_view(FOCUSED), UP);
 }
 
-static void page_dn(void) {
+static void page_dn(char* arg) {
     view_scrollpage(win_view(FOCUSED), DOWN);
 }
 
-static void select_prev(void) {
+static void select_prev(char* arg) {
     view_selprev(win_view(FOCUSED));
 }
 
-static void change_focus(void) {
+static void change_focus(char* arg) {
     win_setregion(win_getregion() == TAGS ? EDIT : TAGS);
 }
 
-static void undo(void) {
+static void undo(char* arg) {
     view_undo(win_view(FOCUSED));
 }
 
-static void redo(void) {
+static void redo(char* arg) {
     view_redo(win_view(FOCUSED));
 }
 
@@ -241,7 +238,7 @@ static void tag_exec(Tag* tag, char* arg) {
     if (!arg) arg = view_getstr(win_view(TAGS), NULL);
     if (!arg) arg = view_getstr(win_view(EDIT), NULL);
     /* execute the tag handler */
-    tag->action.arg(arg);
+    tag->action(arg);
     free(arg);
 }
 
@@ -298,7 +295,7 @@ static void ondiagmsg(char* msg) {
     win_setregion(TAGS);
 }
 
-static void trim_whitespace(void) {
+static void trim_whitespace(char* arg) {
     Buf* buf = win_buf(EDIT);
     if (TrimOnSave && buf_end(buf) > 0) {
         View* view = win_view(EDIT);
@@ -321,7 +318,7 @@ static void trim_whitespace(void) {
     }
 }
 
-static void quit(void) {
+static void quit(char* arg) {
     static uint64_t before = 0;
     uint64_t now = getmillis();
     if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime) {
@@ -341,11 +338,11 @@ static bool changed_externally(Buf* buf) {
 }
 
 static void put(char* arg) {
-    trim_whitespace();
+    trim_whitespace(arg);
     win_save(arg);
 }
 
-static void save(void) {
+static void save(char* arg) {
     put(NULL);
 }
 
@@ -378,7 +375,7 @@ void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
 void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
     if (pressed) return;
     if (win_btnpressed(MouseLeft)) {
-        cut();
+        cut(NULL);
     } else {
         char* str = view_fetch(win_view(id), row, col, riscmd);
         if (str) exec(str);
@@ -389,7 +386,7 @@ void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
 void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
     if (pressed) return;
     if (win_btnpressed(MouseLeft)) {
-        paste();
+        paste(NULL);
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
@@ -399,15 +396,15 @@ void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
 
 /* Keyboard Handling
  ******************************************************************************/
-static void tag_undo(void) {
+static void tag_undo(char* arg) {
     view_undo(win_view(EDIT));
 }
 
-static void tag_redo(void) {
+static void tag_redo(char* arg) {
     view_redo(win_view(EDIT));
 }
 
-static void search(void) {
+static void search(char* arg) {
     char* str;
     SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
     if (x11_keymodsset(ModAlt) && SearchTerm)
@@ -419,7 +416,7 @@ static void search(void) {
     SearchTerm = str;
 }
 
-static void execute(void) {
+static void execute(char* arg) {
     char* str = view_getcmd(win_view(FOCUSED));
     if (str) exec(str);
     free(str);
@@ -430,7 +427,7 @@ static void find(char* arg) {
     view_findstr(win_view(EDIT), SearchDir, arg);
 }
 
-static void open_file(void) {
+static void open_file(char* arg) {
     cmd_exec(CMD_PICKFILE);
 }
 
@@ -438,11 +435,11 @@ static void pick_symbol(char* symbol) {
     cmd_execwitharg(CMD_GOTO_TAG, symbol);
 }
 
-static void pick_ctag(void) {
+static void pick_ctag(char* arg) {
     pick_symbol(NULL);
 }
 
-static void complete(void) {
+static void complete(char* arg) {
     View* view = win_view(FOCUSED);
     buf_getword(&(view->buffer), risword, &(view->selection));
     view->selection.end = buf_byrune(&(view->buffer), view->selection.end, RIGHT);
@@ -461,7 +458,7 @@ static void jump_to(char* arg) {
     }
 }
 
-static void goto_ctag(void) {
+static void goto_ctag(char* arg) {
     if (x11_keymodsset(ModShift)) {
         view_jumpback(win_view(FOCUSED));
     } else {
@@ -471,32 +468,32 @@ static void goto_ctag(void) {
     }
 }
 
-static void tabs(void) {
+static void tabs(char* arg) {
     ExpandTabs = !ExpandTabs;
 }
 
-static void indent(void) {
+static void indent(char* arg) {
     CopyIndent = !CopyIndent;
 }
 
-static void del_indent(void) {
+static void del_indent(char* arg) {
     view_indent(win_view(FOCUSED), LEFT);
 }
 
-static void add_indent(void) {
+static void add_indent(char* arg) {
     view_indent(win_view(FOCUSED), RIGHT);
 }
 
-static void eol_mode(void) {
+static void eol_mode(char* arg) {
     DosLineFeed = !DosLineFeed;
     cmd_exec(DosLineFeed ? CMD_TO_DOS : CMD_TO_UNIX);
 }
 
-static void new_win(void) {
+static void new_win(char* arg) {
     cmd_exec(CMD_TIDE);
 }
 
-static void newline(void) {
+static void newline(char* arg) {
     View* view = win_view(FOCUSED);
     if (x11_keymodsset(ModShift)) {
         view_byline(view, UP, false);
@@ -511,27 +508,27 @@ static void newline(void) {
     view_insert(view, true, '\n');
 }
 
-static void highlight(void) {
+static void highlight(char* arg) {
     view_selctx(win_view(FOCUSED));
 }
 
 /* Main Routine
  ******************************************************************************/
 static Tag Builtins[] = {
-    { .tag = "Cut",       .action.noarg = cut       },
-    { .tag = "Copy",      .action.noarg = copy      },
-    { .tag = "Del",       .action.noarg = quit      },
-    { .tag = "Eol",       .action.noarg = eol_mode  },
-    { .tag = "Find",      .action.arg   = find      },
-    { .tag = "GoTo",      .action.arg   = jump_to   },
-    { .tag = "Get",       .action.arg   = get       },
-    { .tag = "Indent",    .action.noarg = indent    },
-    { .tag = "Paste",     .action.noarg = paste     },
-    { .tag = "Put",       .action.arg   = put       },
-    { .tag = "Redo",      .action.noarg = tag_redo  },
-    { .tag = "Tabs",      .action.noarg = tabs      },
-    { .tag = "Undo",      .action.noarg = tag_undo  },
-    { .tag = NULL,        .action.noarg = NULL      }
+    { .tag = "Cut",    .action = cut       },
+    { .tag = "Copy",   .action = copy      },
+    { .tag = "Del",    .action = quit      },
+    { .tag = "Eol",    .action = eol_mode  },
+    { .tag = "Find",   .action = find      },
+    { .tag = "GoTo",   .action = jump_to   },
+    { .tag = "Get",    .action = get       },
+    { .tag = "Indent", .action = indent    },
+    { .tag = "Paste",  .action = paste     },
+    { .tag = "Put",    .action = put       },
+    { .tag = "Redo",   .action = tag_redo  },
+    { .tag = "Tabs",   .action = tabs      },
+    { .tag = "Undo",   .action = tag_undo  },
+    { .tag = NULL,     .action = NULL      }
 };
 
 static KeyBinding Bindings[] = {
@@ -601,9 +598,6 @@ void onfocus(bool focused) {
         (void)changed_externally(win_buf(EDIT));
 }
 
-void onupdate(void) {
-}
-
 void onlayout(void) {
     /* calculate and update scroll region */
     View* view = win_view(EDIT);
@@ -618,7 +612,7 @@ void onlayout(void) {
 }
 
 void onshutdown(void) {
-    quit();
+    quit(0);
     exit(0);
 }
 

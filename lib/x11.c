@@ -509,7 +509,6 @@ static void onredraw(int width, int height) {
     size_t fwidth  = x11_font_width(CurrFont);
 
     layout(width, height);
-    onupdate(); // Let the user program update the status and other content
     int clrtagnor = (Regions[TAGS].clrnor.bg << 8 | Regions[TAGS].clrnor.fg);
     int clrtagsel = (Regions[TAGS].clrsel.bg << 8 | Regions[TAGS].clrsel.fg);
     view_update(win_view(TAGS), clrtagnor, clrtagsel, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
@@ -567,7 +566,7 @@ static void oninput(int mods, Rune key) {
         bool any     = (bind->mods == ModAny);
         bool oneplus = ((bind->mods == ModOneOrMore) && (mods & ModOneOrMore));
         if (match && (exact || oneplus || any)) {
-            bind->action();
+            bind->action(NULL);
             return;
         }
     }
