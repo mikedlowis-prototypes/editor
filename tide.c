@@ -118,8 +118,7 @@ static void del_to_bow(void) {
 }
 
 static void backspace(void) {
-    bool byword = x11_keymodsset(ModCtrl);
-    view_delete(win_view(FOCUSED), LEFT, byword);
+    view_delete(win_view(FOCUSED), LEFT, x11_keymodsset(ModCtrl));
 }
 
 static void cursor_bol(void) {

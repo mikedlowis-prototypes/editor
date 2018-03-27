@@ -7,21 +7,11 @@ typedef struct {
 } FMap;
 
 size_t pagealign(size_t sz);
-FMap mmap_readonly(char* path);
-FMap mmap_readwrite(char* path, size_t sz);
-void mmap_close(FMap file);
 uint64_t getmillis(void);
 char* stringdup(const char* str);
-char* fdgets(int fd);
 char* chomp(char* in);
 uint64_t modtime(char* path);
-char* getcurrdir(void);
-char* dirname(char* path);
-bool try_chdir(char* fpath);
-char* strconcat(char* dest, ...);
-bool file_exists(char* path);
 char* strmcat(char* first, ...);
-int daemonize(void);
 
 /* Buffer management functions
  *****************************************************************************/
@@ -98,25 +88,6 @@ size_t buf_setln(Buf* buf, size_t line);
 size_t buf_getln(Buf* buf, size_t off);
 size_t buf_getcol(Buf* buf, size_t pos);
 size_t buf_setcol(Buf* buf, size_t pos, size_t col);
-
-/* Charset Handling
- *****************************************************************************/
-enum {
-    BINARY = 0, /* binary encoded file */
-    UTF_8,      /* UTF-8 encoded file */
-
-    /* these arent used but are reserved for later */
-    UTF_16BE,   /* UTF-16 encoding, big-endian */
-    UTF_16LE,   /* UTF-16 encoding, little-endian */
-    UTF_32BE,   /* UTF-32 encoding, big-endian */
-    UTF_32LE,   /* UTF-32 encoding, little-endian */
-};
-
-void filetype(Buf* buf, FMap file);
-void utf8load(Buf* buf, FMap file);
-void utf8save(Buf* buf, FILE* file);
-void binload(Buf* buf, FMap file);
-void binsave(Buf* buf, FILE* file);
 
 /* Screen management functions
  *****************************************************************************/
