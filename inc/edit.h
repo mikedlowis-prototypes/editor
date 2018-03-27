@@ -6,6 +6,7 @@ typedef struct {
     size_t len;   /* length of the buffer */
 } FMap;
 
+size_t pagealign(size_t sz);
 FMap mmap_readonly(char* path);
 FMap mmap_readwrite(char* path, size_t sz);
 void mmap_close(FMap file);

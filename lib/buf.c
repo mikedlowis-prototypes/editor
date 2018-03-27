@@ -4,6 +4,8 @@
 #include <edit.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 size_t buf_setln(Buf* buf, size_t line);
 size_t buf_getcol(Buf* buf, size_t pos);
@@ -49,11 +51,23 @@ size_t buf_load(Buf* buf, char* path) {
     char* addr = strrchr(buf->path, ':');
     if (addr) *addr = '\0', addr++;
 
-    /* load the file and determine the character set */
-    FMap file = mmap_readonly(buf->path);
-    buf_resize(buf, next_size(file.len));
-    for (size_t i = 0; i < file.len;)
-        buf_insert(buf, false, buf_end(buf), file.buf[i++]);
+    /* load the contents from the file */
+    int fd, nread;
+    struct stat sb = {0};
+    if (((fd = open(path, O_RDONLY, 0)) >= 0) && (fstat(fd, &sb) >= 0) && (sb.st_size > 0)) {
+        /* allocate the buffer in advance */
+        free(buf->bufstart);
+        buf->bufsize  = pagealign(sb.st_size);
+        buf->bufstart = malloc(buf->bufsize);
+        buf->bufend   = buf->bufstart + buf->bufsize;
+        buf->gapstart = buf->bufstart;
+        buf->gapend   = buf->bufend;
+        /* Read the file into the buffer */
+        while (sb.st_size && (nread = read(fd, buf->gapstart, sb.st_size)) > 0)
+            buf->gapstart += nread, sb.st_size -= nread;
+        if (nread < 0) buf->errfn("Failed to read file");
+    }
+    if (fd > 0) close(fd);
 
     /* jump to address if we got one */
     if (addr)
@@ -75,25 +89,28 @@ void buf_reload(Buf* buf) {
 
 void buf_save(Buf* buf) {
     if (0 == buf_end(buf)) return;
-
     /* text files should  always end in a new line. If we detected a
        binary file or at least a non-utf8 file, skip this part. */
     if (!buf_iseol(buf, buf_end(buf)-1))
         buf_insert(buf, false, buf_end(buf), '\n');
 
-    size_t wrlen = 0;
-    if (buf->path) {
-        FMap file = mmap_readwrite(buf->path, buf_end(buf) * UTF_MAX);
-        if (file.buf) {
-            for (size_t i = 0, end = buf_end(buf); i < end; i++)
-                file.buf[wrlen++] = buf_get(buf, i);
-            mmap_close(file);
-            truncate(buf->path, wrlen);
+    char* wptr;
+    long fd, nwrite, towrite;
+    if (buf->path && (fd = open(buf->path, O_WRONLY|O_CREAT, 0644)) >= 0) {
+        /* write the chunk before the gap */
+        wptr = buf->bufstart, towrite = (buf->gapstart - buf->bufstart);
+        while (towrite && ((nwrite = write(fd, wptr, towrite)) > 0))
+            wptr += nwrite, towrite -= nwrite;
+        /* write the chunk after the gap */
+        wptr = buf->gapend, towrite = (buf->bufend - buf->gapend);
+        while (towrite && ((nwrite = write(fd, wptr, towrite)) > 0))
+            wptr += nwrite, towrite -= nwrite;
+        close(fd);
+        /* report success or failure */
+        if (nwrite >= 0)
             buf->modified = false;
-            buf->modtime  = modtime(buf->path);
-        } else {
-            buf->errfn("Failed to open file for writing");
-        }
+        else
+            buf->errfn("Failed to write file");
     } else {
         buf->errfn("Need a filename: SaveAs ");
     }
