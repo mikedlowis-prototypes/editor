@@ -4,8 +4,6 @@
 #include <utf.h>
 #include <edit.h>
 
-enum { OFF = 0, ON = 1 };
-
 #ifdef __MACH__
     #define FONT "Monaco:size=10"
     #define LNSPACE 0
@@ -14,14 +12,13 @@ enum { OFF = 0, ON = 1 };
     #define LNSPACE 1
 #endif
 
-char TagString[] = "Del Put Undo Redo Find ";
-char FontString[] = FONT;
+char* TagString = "Del Put Undo Redo Find ";
+char* FontString = FONT;
 
 int /* Integer config options */
     WinWidth = 640,
     WinHeight = 480,
     LineSpacing = LNSPACE,
-    RulerPos = 80,
     Timeout = 50,
     TabWidth = 4,
     ScrollBy = 4,

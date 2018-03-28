@@ -615,8 +615,38 @@ static void oninput(Rune rune) {
     view_insert(win_view(FOCUSED), true, rune);
 }
 
+
+char* ARGV0;
+static void usage(void) {
+    printf(
+        "Usage: %s [FLAGS] [FILE]\n"
+        "\n    -S 0,1  Enable/disable syntax highlighting"
+        "\n    -I 0,1  Enable/disable automatic indenting"
+        "\n    -W 0,1  Enable/disable trimming whitespace on save"
+        "\n    -E 0,1  Enable/disable expanding tabs to spaces"
+        "\n    -N 0,1  Enable/disable dos line ending style"
+        "\n    -F str  Set the font to use"
+        "\n    -T str  String to use for the tags region"
+        "\n    -C str  Set the shell to use for command execution\n",
+        ARGV0);
+    exit(1);
+}
+
 #ifndef TEST
 int main(int argc, char** argv) {
+    #define BOOLARG() (EOPTARG(usage()), optarg_[0] == '0' ? 0 : 1)
+    #define STRARG()  (EOPTARG(usage()))
+    OPTBEGIN {
+        case 'S': Syntax      = BOOLARG(); break;
+        case 'I': CopyIndent  = BOOLARG(); break;
+        case 'W': TrimOnSave  = BOOLARG(); break;
+        case 'E': ExpandTabs  = BOOLARG(); break;
+        case 'N': DosLineFeed = BOOLARG(); break;
+        case 'F': FontString  = STRARG();  break;
+        case 'T': TagString   = STRARG();  break;
+        case 'C': ShellCmd[0] = STRARG();  break;
+    } OPTEND;
+
     /* setup the shell */
     if (!ShellCmd[0]) ShellCmd[0] = getenv("SHELL");
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
@@ -624,10 +654,6 @@ int main(int argc, char** argv) {
     /* create the window */
     win_init(ondiagmsg);
     x11_window("tide", WinWidth, WinHeight);
-
-    /* open all but the last file in new instances */
-    for (argc--, argv++; argc > 1; argc--, argv++)
-        cmd_execwitharg(CMD_TIDE, *argv);
 
     /* if we still have args left we're going to open it in this instance */
     if (*argv) view_init(win_view(EDIT), *argv, ondiagmsg);

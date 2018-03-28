@@ -184,14 +184,15 @@ void job_start(char** cmd, char* data, size_t ndata, View* dest);
 
 /* Configuration Data
  *****************************************************************************/
+enum { OFF = 0, ON = 1 };
+
 typedef struct { int fg, bg; } CPair;
 
-extern char TagString[], FontString[];
-extern int Palette[16];
-extern int WinWidth, WinHeight, LineSpacing, RulerPos, Timeout, TabWidth, ScrollBy,
-    ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs, DosLineFeed;
+extern char *TagString, *FontString;
 extern CPair Colors[28];
-
+extern int Palette[16];
+extern int WinWidth, WinHeight, LineSpacing, Timeout, TabWidth, ScrollBy,
+    ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs, DosLineFeed;
 enum { /* Color Variables */
     ClrScrollNor = 0, ClrGutterNor, ClrGutterSel, ClrStatusNor, ClrTagsNor,
     ClrTagsSel, ClrTagsCsr, ClrEditNor, ClrEditSel, ClrEditCsr, ClrEditRul,
