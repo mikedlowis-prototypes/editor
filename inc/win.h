@@ -28,14 +28,6 @@ typedef struct {
     View view;
 } Region;
 
-typedef void (*MouseFunc)(WinRegion id, size_t count, size_t row, size_t col);
-
-typedef struct {
-    MouseFunc left;
-    MouseFunc middle;
-    MouseFunc right;
-} MouseConfig;
-
 void win_init(KeyBinding* bindings, void (*errfn)(char*));
 void win_save(char* path);
 void win_loop(void);
@@ -53,3 +45,10 @@ void onupdate(void);
 void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col);
 void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col);
 void onmouseright(WinRegion id, bool pressed, size_t row, size_t col);
+
+/* move these to x11.c when possible */
+extern int SearchDir;
+extern char* SearchTerm;
+void exec(char* cmd);
+void cut(char* arg);
+void paste(char* arg);

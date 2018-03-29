@@ -12,8 +12,6 @@ typedef struct {
 } Tag;
 
 static Tag Builtins[];
-static int SearchDir = DOWN;
-static char* SearchTerm = NULL;
 static size_t Marks[10] = {0};
 
 /* The shell: Filled in with $SHELL. Used to execute commands */
@@ -67,7 +65,7 @@ static void onpaste(char* text) {
     view_putstr(win_view(FOCUSED), text);
 }
 
-static void cut(char* arg) {
+void cut(char* arg) {
     View* view = win_view(FOCUSED);
     /* select the current line if no selection */
     if (!view_selsize(view))
@@ -82,7 +80,7 @@ static void cut(char* arg) {
     }
 }
 
-static void paste(char* arg) {
+void paste(char* arg) {
     assert(x11_sel_get(CLIPBOARD, onpaste));
 }
 
@@ -270,7 +268,7 @@ static void cmd_execwitharg(char* cmd, char* arg) {
     free(cmd);
 }
 
-static void exec(char* cmd) {
+void exec(char* cmd) {
     /* skip leading space */
     for (; *cmd && isspace(*cmd); cmd++);
     if (!*cmd) return;
@@ -339,47 +337,6 @@ static void get(char* arg) {
         view_init(win_view(EDIT), arg, ondiagmsg);
     else
         view_reload(win_view(EDIT));
-}
-
-/* Mouse Handling
- ******************************************************************************/
-void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col) {
-    static int count = 0;
-    static uint64_t before = 0;
-    if (!pressed) return;
-    uint64_t now = getmillis();
-    count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
-    before = now;
-
-    if (count == 1) {
-        view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
-    } else if (count == 2) {
-        view_select(win_view(id), row, col);
-    } else if (count == 3) {
-        view_selword(win_view(id), row, col);
-    }
-}
-
-void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col) {
-    if (pressed) return;
-    if (win_btnpressed(MouseLeft)) {
-        cut(NULL);
-    } else {
-        char* str = view_fetch(win_view(id), row, col, riscmd);
-        if (str) exec(str);
-        free(str);
-    }
-}
-
-void onmouseright(WinRegion id, bool pressed, size_t row, size_t col) {
-    if (pressed) return;
-    if (win_btnpressed(MouseLeft)) {
-        paste(NULL);
-    } else {
-        SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
-        free(SearchTerm);
-        SearchTerm = view_fetch(win_view(id), row, col, risfile);
-    }
 }
 
 /* Keyboard Handling

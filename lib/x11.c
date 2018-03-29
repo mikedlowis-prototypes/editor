@@ -23,6 +23,9 @@
 static uint32_t special_keys(uint32_t key);
 static uint32_t getkey(XEvent* e);
 static void mouse_click(int btn, bool pressed, int x, int y);
+static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col);
+static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col);
+static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col);
 
 static void xupdate(Job* job);
 static void xfocus(XEvent* e);
@@ -119,6 +122,9 @@ static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
+
+int SearchDir = DOWN;
+char* SearchTerm = NULL;
 
 void x11_init(XConfig* cfg) {
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
@@ -778,10 +784,49 @@ static void mouse_click(int btn, bool pressed, int x, int y) {
     size_t row = (y-Regions[id].y) / x11_font_height(CurrFont);
     size_t col = (x-Regions[id].x) / x11_font_width(CurrFont);
     switch(btn) {
-        case MouseLeft:    onmouseleft(id, pressed, row, col);   break;
-        case MouseMiddle:  onmousemiddle(id, pressed, row, col); break;
-        case MouseRight:   onmouseright(id, pressed, row, col);  break;
+        case MouseLeft:    mouse_left(id, pressed, row, col);    break;
+        case MouseMiddle:  mouse_middle(id, pressed, row, col);  break;
+        case MouseRight:   mouse_right(id, pressed, row, col);   break;
         case MouseWheelUp: view_scroll(win_view(id), -ScrollBy); break;
         case MouseWheelDn: view_scroll(win_view(id), +ScrollBy); break;
+    }
+}
+
+static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
+    static int count = 0;
+    static uint64_t before = 0;
+    if (!pressed) return;
+    uint64_t now = getmillis();
+    count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
+    before = now;
+
+    if (count == 1) {
+        view_setcursor(win_view(id)i, row, col, x11_keymodsset(ModShift));
+    } else if (count == 2) {
+        view_select(win_view(id), row, col);
+    } else if (count == 3) {
+        view_selword(win_view(id), row, col);
+    }
+}
+
+static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (pressed) return;
+    if (win_btnpressed(MouseLeft)) {
+        cut(NULL);
+    } else {
+        char* str = view_fetch(win_view(id), row, col, riscmd);
+        if (str) exec(str);
+        free(str);
+    }
+}
+
+static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
+    if (pressed) return;
+    if (win_btnpressed(MouseLeft)) {
+        paste(NULL);
+    } else {
+        SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
+        free(SearchTerm);
+        SearchTerm = view_fetch(win_view(id), row, col, risfile);
     }
 }
