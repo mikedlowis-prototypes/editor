@@ -33,8 +33,8 @@ char* FetchCmd[] = { "tfetch", NULL, NULL };
 #define CMD_GOTO_TAG "!picktag fetch tags"
 #define CMD_FETCH    "tfetch"
 
-/*
- ******************************************************************************/
+/******************************************************************************/
+
 static void select_line(char* arg) {
     View* view = win_view(FOCUSED);
     view_eol(view, false);
@@ -611,11 +611,6 @@ void onshutdown(void) {
     quit(0);
 }
 
-static void oninput(Rune rune) {
-    view_insert(win_view(FOCUSED), true, rune);
-}
-
-
 char* ARGV0;
 static void usage(void) {
     printf(
@@ -652,15 +647,13 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
 
     /* create the window */
-    win_init(ondiagmsg);
+    win_init(Bindings, ondiagmsg);
     x11_window("tide", WinWidth, WinHeight);
 
     /* if we still have args left we're going to open it in this instance */
     if (*argv) view_init(win_view(EDIT), *argv, ondiagmsg);
 
     /* now create the window and start the event loop */
-    win_settext(TAGS, TagString);
-    win_setkeys(Bindings, oninput);
     win_loop();
     return 0;
 }

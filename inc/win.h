@@ -36,20 +36,11 @@ typedef struct {
     MouseFunc right;
 } MouseConfig;
 
-void win_init(void (*errfn)(char*));
-void win_window(char* name, bool isdialog, void (*errfn)(char*));
-void win_load(char* path);
+void win_init(KeyBinding* bindings, void (*errfn)(char*));
 void win_save(char* path);
 void win_loop(void);
-void win_settext(WinRegion id, char* text);
-void win_setruler(size_t ruler);
-Rune win_getkey(void);
-void win_setkeys(KeyBinding* bindings, void (*inputfn)(Rune));
-void win_setmouse(MouseConfig* mconfig);
-void win_warpptr(WinRegion id);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
-Sel* win_sel(WinRegion id);
 bool win_btnpressed(int btn);
 WinRegion win_getregion(void);
 bool win_setregion(WinRegion id);

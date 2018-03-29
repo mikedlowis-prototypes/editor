@@ -20,6 +20,11 @@
 
 /******************************************************************************/
 
+static uint32_t special_keys(uint32_t key);
+static uint32_t getkey(XEvent* e);
+static void mouse_click(int btn, bool pressed, int x, int y);
+
+static void xupdate(Job* job);
 static void xfocus(XEvent* e);
 static void xkeypress(XEvent* e);
 static void xbtnpress(XEvent* e);
@@ -55,16 +60,10 @@ enum { FontCacheSize = 16 };
 
 static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
-static void onmousedrag(int state, int x, int y);
-static void onmousebtn(int btn, bool pressed, int x, int y);
-static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col);
-static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
 
 static struct XSel* selfetch(Atom atom);
-static uint32_t special_keys(uint32_t key);
-static uint32_t getkey(XEvent* e);
 static void xftcolor(XftColor* xc, int id);
 
 struct XFont {
@@ -120,7 +119,6 @@ static WinRegion Focused = EDIT;
 static Region Regions[NREGIONS] = {0};
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
-static void (*InputFunc)(Rune);
 
 void x11_init(XConfig* cfg) {
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
@@ -143,10 +141,6 @@ void x11_init(XConfig* cfg) {
     SelTarget = XInternAtom(X.display, "UTF8_STRING", 0);
     if (SelTarget == None)
         SelTarget = XInternAtom(X.display, "STRING", 0);
-}
-
-int x11_keybtnstate(void) {
-    return KeyBtnState;
 }
 
 bool x11_keymodsset(int mask) {
@@ -369,9 +363,7 @@ bool x11_sel_set(int selid, char* str) {
     }
 }
 
-/******************************************************************************/
-
-void win_init(void (*errfn)(char*)) {
+void win_init(KeyBinding* bindings, void (*errfn)(char*)) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL, errfn);
     x11_init(0);
@@ -383,6 +375,16 @@ void win_init(void (*errfn)(char*)) {
     Regions[EDIT].clrnor = Colors[ClrEditNor];
     Regions[EDIT].clrsel = Colors[ClrEditSel];
     Regions[EDIT].clrcsr = Colors[ClrEditCsr];
+
+    View* view = win_view(TAGS);
+    view->buffer.gapstart = view->buffer.bufstart;
+    view->buffer.gapend   = view->buffer.bufend;
+    view->selection = (Sel){0,0,0};
+    view_putstr(view, TagString);
+    view_selprev(view); // clear the selection
+    buf_logclear(&(view->buffer));
+
+    Keys = bindings;
 }
 
 void win_save(char* path) {
@@ -395,17 +397,6 @@ void win_save(char* path) {
     buf_save(&(view->buffer));
 }
 
-static void xupdate(Job* job) {
-    for (XEvent e; XPending(X.display);) {
-        XNextEvent(X.display, &e);
-        if (!XFilterEvent(&e, None) && EventHandlers[e.type])
-            (EventHandlers[e.type])(&e);
-    }
-    onredraw(X.width, X.height);
-    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
-	XFlush(X.display);
-}
-
 void win_loop(void) {
     XMapWindow(X.display, X.self);
     XFlush(X.display);
@@ -413,28 +404,9 @@ void win_loop(void) {
     while (1) job_poll(Timeout);
 }
 
-void win_settext(WinRegion id, char* text) {
-    View* view = win_view(id);
-    view->buffer.gapstart = view->buffer.bufstart;
-    view->buffer.gapend   = view->buffer.bufend;
-    view->selection = (Sel){0,0,0};
-    view_putstr(view, text);
-    view_selprev(view); // clear the selection
-    buf_logclear(&(view->buffer));
-}
-
-Rune win_getkey(void) {
-    return LastKey;
-}
-
-void win_setkeys(KeyBinding* bindings, void (*inputfn)(Rune)) {
-    Keys = bindings;
-    InputFunc = inputfn;
-}
-
 bool win_btnpressed(int btn) {
     int btnmask = (1 << (btn + 7));
-    return ((x11_keybtnstate() & btnmask) == btnmask);
+    return ((KeyBtnState & btnmask) == btnmask);
 }
 
 WinRegion win_getregion(void) {
@@ -454,10 +426,6 @@ View* win_view(WinRegion id) {
 
 Buf* win_buf(WinRegion id) {
     return &(Regions[id == FOCUSED ? Focused : id].view.buffer);
-}
-
-Sel* win_sel(WinRegion id) {
-    return &(Regions[id == FOCUSED ? Focused : id].view.selection);
 }
 
 void win_setscroll(double offset, double visible) {
@@ -552,35 +520,6 @@ static void onredraw(int width, int height) {
 
 }
 
-static void oninput(int mods, Rune key) {
-    LastKey = key;
-    /* mask of modifiers we don't care about */
-    mods = mods & (ModCtrl|ModShift|ModAlt);
-    /* handle the proper line endings */
-    if (key == '\r') key = '\n';
-    /* search for a key binding entry */
-    uint32_t mkey = tolower(key);
-    for (KeyBinding* bind = Keys; bind && bind->key; bind++) {
-        bool match   = (mkey == bind->key);
-        bool exact   = (bind->mods == mods);
-        bool any     = (bind->mods == ModAny);
-        bool oneplus = ((bind->mods == ModOneOrMore) && (mods & ModOneOrMore));
-        if (match && (exact || oneplus || any)) {
-            bind->action(NULL);
-            return;
-        }
-    }
-
-    /* fallback to just inserting the rune if it doesn't fall in the private use area.
-     * the private use area is used to encode special keys */
-    if (key < 0xE000 || key > 0xF8FF) {
-        if (InputFunc)
-            InputFunc(key);
-        else
-            view_insert(win_view(FOCUSED), true, key);
-    }
-}
-
 static void scroll_actions(int btn, bool pressed, int x, int y) {
     size_t row = (y-Regions[SCROLL].y) / x11_font_height(CurrFont);
     switch (btn) {
@@ -604,45 +543,6 @@ static void scroll_actions(int btn, bool pressed, int x, int y) {
             view_scroll(win_view(EDIT), +ScrollBy);
             break;
     }
-}
-
-static void onmousedrag(int state, int x, int y) {
-    if (x < Regions[Focused].x) x = Regions[Focused].x;
-    if (y < Regions[Focused].y) y = Regions[Focused].y;
-    size_t row = (y-Regions[Focused].y) / x11_font_height(CurrFont);
-    size_t col = (x-Regions[Focused].x) / x11_font_width(CurrFont);
-    if (win_btnpressed(MouseLeft))
-        view_setcursor(win_view(Focused), row, col, true);
-}
-
-static void onmousebtn(int btn, bool pressed, int x, int y) {
-    WinRegion id = getregion(x, y);
-    if (id == FOCUSED && x < Regions[Focused].x)
-        x = Regions[Focused].x, id = getregion(x, y);
-    size_t row = (y-Regions[id].y) / x11_font_height(CurrFont);
-    size_t col = (x-Regions[id].x) / x11_font_width(CurrFont);
-
-    if (id == SCROLL) {
-        scroll_actions(btn, pressed, x, y);
-    } else {
-        switch(btn) {
-            case MouseLeft:    onmouseleft(id, pressed, row, col);   break;
-            case MouseMiddle:  onmousemiddle(id, pressed, row, col); break;
-            case MouseRight:   onmouseright(id, pressed, row, col);  break;
-            case MouseWheelUp: onwheelup(id, pressed, row, col);     break;
-            case MouseWheelDn: onwheeldn(id, pressed, row, col);     break;
-        }
-    }
-}
-
-static void onwheelup(WinRegion id, bool pressed, size_t row, size_t col) {
-    if (!pressed) return;
-    view_scroll(win_view(id), -ScrollBy);
-}
-
-static void onwheeldn(WinRegion id, bool pressed, size_t row, size_t col) {
-    if (!pressed) return;
-    view_scroll(win_view(id), +ScrollBy);
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
@@ -683,42 +583,6 @@ static WinRegion getregion(size_t x, size_t y) {
     return NREGIONS;
 }
 
-static uint32_t special_keys(uint32_t key) {
-	static uint32_t keymap[256] = {
-		/* Function keys */
-        [0xBE] = KEY_F1, [0xBF] = KEY_F2,  [0xC0] = KEY_F3,  [0xC1] = KEY_F4,
-        [0xC2] = KEY_F5, [0xC3] = KEY_F6,  [0xC4] = KEY_F7,  [0xC5] = KEY_F8,
-        [0xC6] = KEY_F9, [0xC7] = KEY_F10, [0xC8] = KEY_F11, [0xC9] = KEY_F12,
-        /* Navigation keys */
-        [0x50] = KEY_HOME,  [0x51] = KEY_LEFT, [0x52] = KEY_UP,
-        [0x53] = KEY_RIGHT, [0x54] = KEY_DOWN, [0x55] = KEY_PGUP,
-        [0x56] = KEY_PGDN,  [0x57] = KEY_END,
-		/* Control keys */
-        [0x08] = '\b', [0x09] = '\t', [0x0d] = '\r', [0x0a] = '\n',
-        /* Miscellaneous */
-        [0x63] = KEY_INSERT, [0x1B] = KEY_ESCAPE, [0xFF] = KEY_DELETE,
-	};
-	/* lookup the key by keysym */
-	key = ((key & 0xFF00) == 0xFF00 ? keymap[key & 0xFF] : key);
-	return (!key ? RUNE_ERR : key);
-}
-
-static uint32_t getkey(XEvent* e) {
-    char buf[8];
-    KeySym key;
-    Status status;
-    /* Read the key string */
-    if (X.xic)
-        Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
-    else
-        XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
-    /* if it's ascii, just return it */
-    if (key >= 0x20 && key <= 0x7F)
-        return (uint32_t)key;
-    /* translate special key codes into unicode codepoints */
-    return special_keys(key);
-}
-
 static void xftcolor(XftColor* xc, int id) {
     #define COLOR(c) ((c) | ((c) >> 8))
     uint32_t c = Palette[id];
@@ -738,6 +602,24 @@ static struct XSel* selfetch(Atom atom) {
 
 /******************************************************************************/
 
+static void xupdate(Job* job) {
+    /* process events */
+    for (XEvent e; XPending(X.display);) {
+        XNextEvent(X.display, &e);
+        if (!XFilterEvent(&e, None) && EventHandlers[e.type])
+            (EventHandlers[e.type])(&e);
+    }
+    /* redraw */
+    onredraw(X.width, X.height);
+    //draw_view(tags_view);
+    //draw_hrule();
+    //draw_view(edit_view);
+    //draw_scroll();
+    /* flush to the server */
+    XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
+	XFlush(X.display);
+}
+
 static void xfocus(XEvent* e) {
     if (X.xic)
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
@@ -746,26 +628,45 @@ static void xfocus(XEvent* e) {
 
 static void xkeypress(XEvent* e) {
     uint32_t key = getkey(e);
-    KeyBtnState = e->xkey.state;
     if (key == RUNE_ERR) return;
-    oninput(KeyBtnState, key);
+    KeyBtnState = e->xkey.state, LastKey = key;
+    int mods = KeyBtnState & (ModCtrl|ModShift|ModAlt);
+    uint32_t mkey = tolower(key);
+    for (KeyBinding* bind = Keys; bind && bind->key; bind++) {
+        bool match   = (mkey == bind->key);
+        bool exact   = (bind->mods == mods);
+        bool any     = (bind->mods == ModAny);
+        bool oneplus = ((bind->mods == ModOneOrMore) && (mods & ModOneOrMore));
+        if (match && (exact || oneplus || any)) {
+            bind->action(NULL);
+            return;
+        }
+    }
+    /* fallback to just inserting the rune if it doesn't fall in the private use area.
+     * the private use area is used to encode special keys */
+    if (key < 0xE000 || key > 0xF8FF)
+        view_insert(win_view(FOCUSED), true, key);
 }
 
 static void xbtnpress(XEvent* e) {
-    KeyBtnState = e->xbutton.state;
-    KeyBtnState |= (1 << (e->xbutton.button + 7));
-    onmousebtn(e->xbutton.button, true, e->xbutton.x,  e->xbutton.y);
+    KeyBtnState = (e->xbutton.state | (1 << (e->xbutton.button + 7)));
+    mouse_click(e->xbutton.button, true, e->xbutton.x,  e->xbutton.y);
 }
 
 static void xbtnrelease(XEvent* e) {
-    KeyBtnState = e->xbutton.state;
-    KeyBtnState &= ~(1 << (e->xbutton.button + 7));
-    onmousebtn(e->xbutton.button, false, e->xbutton.x,  e->xbutton.y);
+    KeyBtnState = (e->xbutton.state & ~(1 << (e->xbutton.button + 7)));
+    mouse_click(e->xbutton.button, false, e->xbutton.x,  e->xbutton.y);
 }
 
 static void xbtnmotion(XEvent* e) {
     KeyBtnState = e->xbutton.state;
-    onmousedrag(KeyBtnState, e->xbutton.x, e->xbutton.y);
+    int x = e->xbutton.x, y = e->xbutton.y;
+    if (x < Regions[Focused].x) x = Regions[Focused].x;
+    if (y < Regions[Focused].y) y = Regions[Focused].y;
+    size_t row = (y-Regions[Focused].y) / x11_font_height(CurrFont);
+    size_t col = (x-Regions[Focused].x) / x11_font_width(CurrFont);
+    if (win_btnpressed(MouseLeft))
+        view_setcursor(win_view(Focused), row, col, true);
 }
 
 static void xselclear(XEvent* e) {
@@ -844,4 +745,57 @@ static void xresize(XEvent* e) {
 }
 
 static void xexpose(XEvent* e) {
+}
+
+/******************************************************************************/
+
+static uint32_t special_keys(uint32_t key) {
+    static uint32_t keymap[256] = {
+        /* Function keys */
+        [0xBE] = KEY_F1, [0xBF] = KEY_F2,  [0xC0] = KEY_F3,  [0xC1] = KEY_F4,
+        [0xC2] = KEY_F5, [0xC3] = KEY_F6,  [0xC4] = KEY_F7,  [0xC5] = KEY_F8,
+        [0xC6] = KEY_F9, [0xC7] = KEY_F10, [0xC8] = KEY_F11, [0xC9] = KEY_F12,
+        /* Navigation keys */
+        [0x50] = KEY_HOME,  [0x51] = KEY_LEFT, [0x52] = KEY_UP,
+        [0x53] = KEY_RIGHT, [0x54] = KEY_DOWN, [0x55] = KEY_PGUP,
+        [0x56] = KEY_PGDN,  [0x57] = KEY_END,
+        /* Control keys */
+        [0x08] = '\b', [0x09] = '\t', [0x0d] = '\n', [0x0a] = '\n',
+        /* Miscellaneous */
+        [0x63] = KEY_INSERT, [0x1B] = KEY_ESCAPE, [0xFF] = KEY_DELETE,
+    };
+    /* lookup the key by keysym */
+    key = ((key & 0xFF00) == 0xFF00 ? keymap[key & 0xFF] : key);
+    return (!key ? RUNE_ERR : key);
+}
+
+static uint32_t getkey(XEvent* e) {
+    char buf[8];
+    KeySym key;
+    Status status;
+    /* Read the key string */
+    if (X.xic)
+        Xutf8LookupString(X.xic, &(e->xkey), buf, sizeof(buf), &key, &status);
+    else
+        XLookupString(&(e->xkey), buf, sizeof(buf), &key, 0);
+    /* if it's ascii, just return it */
+    if (key >= 0x20 && key <= 0x7F)
+        return (uint32_t)key;
+    /* translate special key codes into unicode codepoints */
+    return special_keys(key);
+}
+
+static void mouse_click(int btn, bool pressed, int x, int y) {
+    WinRegion id = getregion(x, y);
+    if (id == FOCUSED && x < Regions[Focused].x)
+        x = Regions[Focused].x, id = getregion(x, y);
+    size_t row = (y-Regions[id].y) / x11_font_height(CurrFont);
+    size_t col = (x-Regions[id].x) / x11_font_width(CurrFont);
+    switch(btn) {
+        case MouseLeft:    onmouseleft(id, pressed, row, col);   break;
+        case MouseMiddle:  onmousemiddle(id, pressed, row, col); break;
+        case MouseRight:   onmouseright(id, pressed, row, col);  break;
+        case MouseWheelUp: view_scroll(win_view(id), -ScrollBy); break;
+        case MouseWheelDn: view_scroll(win_view(id), +ScrollBy); break;
+    }
 }
