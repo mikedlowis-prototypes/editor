@@ -483,12 +483,21 @@ static void onredraw(int width, int height) {
     int clreditnor = (Regions[EDIT].clrnor.bg << 8 | Regions[EDIT].clrnor.fg);
     int clreditsel = (Regions[EDIT].clrsel.bg << 8 | Regions[EDIT].clrsel.fg);
     view_update(win_view(EDIT), clreditnor, clreditsel, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
-    onlayout(); // Let the user program update the scroll bar
+
+    /* calculate and update scroll region */
+    View* view = win_view(EDIT);
+    size_t bend = buf_end(win_buf(EDIT));
+    if (bend == 0) bend = 1;
+    if (!view->rows) return;
+    size_t vbeg = view->rows[0]->off;
+    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    double scroll_vis = (double)(vend - vbeg) / (double)bend;
+    double scroll_off = ((double)vbeg / (double)bend);
+    win_setscroll(scroll_off, scroll_vis);
 
     int clr_hbor = Colors[ClrBorders].bg;
     int clr_vbor = Colors[ClrBorders].bg;
     CPair clr_scroll = Colors[ClrScrollNor];
-
     for (int i = 0; i < SCROLL; i++) {
         View* view = win_view(i);
         x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
@@ -518,31 +527,6 @@ static void onredraw(int width, int height) {
     x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
     x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
 
-}
-
-static void scroll_actions(int btn, bool pressed, int x, int y) {
-    size_t row = (y-Regions[SCROLL].y) / x11_font_height(CurrFont);
-    switch (btn) {
-        case MouseLeft:
-            if (pressed)
-                view_scroll(win_view(EDIT), -row);
-            break;
-        case MouseMiddle:
-            if (pressed)
-                onscroll((double)(y - Regions[SCROLL].y) /
-                         (double)(Regions[SCROLL].height - Regions[SCROLL].y));
-            break;
-        case MouseRight:
-            if (pressed)
-                view_scroll(win_view(EDIT), +row);
-            break;
-        case MouseWheelUp:
-            view_scroll(win_view(EDIT), -ScrollBy);
-            break;
-        case MouseWheelDn:
-            view_scroll(win_view(EDIT), +ScrollBy);
-            break;
-    }
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
@@ -623,7 +607,9 @@ static void xupdate(Job* job) {
 static void xfocus(XEvent* e) {
     if (X.xic)
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
-    onfocus(e->type == FocusIn);
+    Buf* buf = win_buf(EDIT);
+    if (buf->path && buf->modtime != modtime(buf->path))
+        buf->errfn("File modified externally: {SaveAs } Overwrite Reload");
 }
 
 static void xkeypress(XEvent* e) {

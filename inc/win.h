@@ -49,10 +49,7 @@ void win_setscroll(double offset, double visible);
 /* These functions must be implemented by any appliation that wishes
    to use this module */
 void onshutdown(void);
-void onfocus(bool focused);
 void onupdate(void);
-void onlayout(void);
-void onscroll(double percent);
 void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col);
 void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col);
 void onmouseright(WinRegion id, bool pressed, size_t row, size_t col);

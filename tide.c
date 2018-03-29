@@ -325,14 +325,6 @@ static void quit(char* arg) {
     before = now;
 }
 
-static bool changed_externally(Buf* buf) {
-    if (!buf->path) return false;
-    bool modified = (buf->modtime != modtime(buf->path));
-    if (modified)
-        ondiagmsg("File modified externally: {SaveAs } Overwrite Reload");
-    return modified;
-}
-
 static void put(char* arg) {
     trim_whitespace(arg);
     win_save(arg);
@@ -581,31 +573,6 @@ static KeyBinding Bindings[] = {
 
     { 0, 0, 0 }
 };
-
-void onscroll(double percent) {
-    size_t bend = buf_end(win_buf(EDIT));
-    size_t off  = (size_t)((double)bend * percent);
-    view_scrollto(win_view(EDIT), (off >= bend ? bend : off));
-}
-
-void onfocus(bool focused) {
-    /* notify the user if the file has changed externally */
-    if (focused)
-        (void)changed_externally(win_buf(EDIT));
-}
-
-void onlayout(void) {
-    /* calculate and update scroll region */
-    View* view = win_view(EDIT);
-    size_t bend = buf_end(win_buf(EDIT));
-    if (bend == 0) bend = 1;
-    if (!view->rows) return;
-    size_t vbeg = view->rows[0]->off;
-    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
-    double scroll_vis = (double)(vend - vbeg) / (double)bend;
-    double scroll_off = ((double)vbeg / (double)bend);
-    win_setscroll(scroll_off, scroll_vis);
-}
 
 void onshutdown(void) {
     quit(0);
