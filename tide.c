@@ -124,69 +124,64 @@ static void cursor_eol(char* arg) {
     view_eol(win_view(FOCUSED), false);
 }
 
-static void move_line_up(char* arg) {
-    if (!view_selsize(win_view(FOCUSED)))
-        select_line(arg);
-    cut(arg);
-    view_byline(win_view(FOCUSED), UP, false);
-    paste(arg);
-}
+/******************************************************************************/
 
-static void move_line_dn(char* arg) {
-    if (!view_selsize(win_view(FOCUSED)))
-        select_line(arg);
-    cut(arg);
-    cursor_eol(arg);
-    view_byrune(win_view(FOCUSED), RIGHT, false);
-    paste(arg);
-}
-
-static void cursor_home(char* arg) {
+static void cursor_mvlr(int dir) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
-        view_bof(win_view(FOCUSED), extsel);
+        view_byword(win_view(FOCUSED), dir, extsel);
     else
-        view_bol(win_view(FOCUSED), extsel);
+        view_byrune(win_view(FOCUSED), dir, extsel);
+}
+
+static void cursor_mvupdn(int dir) {
+    bool extsel = x11_keymodsset(ModShift);
+    if (x11_keymodsset(ModCtrl)) {
+        if (!view_selsize(win_view(FOCUSED)))
+            select_line(0);
+        cut(0);
+        view_byline(win_view(FOCUSED), dir, false);
+        paste(0);
+    } else {
+        view_byline(win_view(FOCUSED), dir, extsel);
+    }
+}
+
+static void cursor_home_end(
+    void (*docfn)(View*, bool),
+    void (*linefn)(View*, bool)
+) {
+    bool extsel = x11_keymodsset(ModShift);
+    if (x11_keymodsset(ModCtrl))
+        docfn(win_view(FOCUSED), extsel);
+    else
+        linefn(win_view(FOCUSED), extsel);
+}
+
+/******************************************************************************/
+
+static void cursor_home(char* arg) {
+    cursor_home_end(view_bof, view_bol);
 }
 
 static void cursor_end(char* arg) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
-        view_eof(win_view(FOCUSED), extsel);
-    else
-        view_eol(win_view(FOCUSED), extsel);
+    cursor_home_end(view_eof, view_eol);
 }
 
 static void cursor_up(char* arg) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
-        move_line_up(arg);
-    else
-        view_byline(win_view(FOCUSED), UP, extsel);
+    cursor_mvupdn(UP);
 }
 
 static void cursor_dn(char* arg) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
-        move_line_dn(arg);
-    else
-        view_byline(win_view(FOCUSED), DOWN, extsel);
+    cursor_mvupdn(DOWN);
 }
 
 static void cursor_left(char* arg) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
-        view_byword(win_view(FOCUSED), LEFT, extsel);
-    else
-        view_byrune(win_view(FOCUSED), LEFT, extsel);
+    cursor_mvlr(LEFT);
 }
 
 static void cursor_right(char* arg) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
-        view_byword(win_view(FOCUSED), RIGHT, extsel);
-    else
-        view_byrune(win_view(FOCUSED), RIGHT, extsel);
+    cursor_mvlr(RIGHT);
 }
 
 static void page_up(char* arg) {

@@ -107,17 +107,13 @@ enum {
 void x11_init(void);
 bool x11_keymodsset(int mask);
 void x11_window(char* name);
-
 XFont x11_font_load(char* name);
 size_t x11_font_height(XFont fnt);
 size_t x11_font_width(XFont fnt);
 size_t x11_font_descent(XFont fnt);
 void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
 size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
-
 void x11_draw_rect(int color, int x, int y, int width, int height);
 void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol);
-
 bool x11_sel_get(int selid, void(*cbfn)(char*));
 bool x11_sel_set(int selid, char* str);
-

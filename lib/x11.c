@@ -417,8 +417,6 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-/******************************************************************************/
-
 void x11_draw_rect(int color, int x, int y, int width, int height) {
     XftColor clr;
     xftcolor(&clr, color);
