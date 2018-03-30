@@ -2,6 +2,7 @@
 
 Up Next:
 
+* Add matching logic for "", '', ``, and <>
 * B2+B1 click executes command with selection as argument
 * add command line flags to toggle options (Tabs, Indent, etc..)
 

@@ -27,6 +27,9 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col);
 static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col);
 static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col);
 
+static void layout(int height, int width);
+static void redraw(int height, int width);
+
 static void xupdate(Job* job);
 static void xfocus(XEvent* e);
 static void xkeypress(XEvent* e);
@@ -61,7 +64,6 @@ static void (*EventHandlers[LASTEvent])(XEvent *) = {
 
 enum { FontCacheSize = 16 };
 
-static void onredraw(int height, int width);
 static void oninput(int mods, Rune key);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
@@ -441,127 +443,6 @@ void win_setscroll(double offset, double visible) {
 
 /******************************************************************************/
 
-static void layout(int width, int height) {
-    size_t fheight = x11_font_height(CurrFont);
-    size_t fwidth  = x11_font_width(CurrFont);
-    View* tagview  = win_view(TAGS);
-    View* editview = win_view(EDIT);
-
-    /* update the text views and region positions and sizes */
-    for (int i = 0; i < SCROLL; i++) {
-        Regions[i].x      = 2;
-        Regions[i].y      = 2;
-        Regions[i].csrx   = SIZE_MAX;
-        Regions[i].csry   = SIZE_MAX;
-        Regions[i].width  = (width - 4);
-        Regions[i].height = fheight;
-    }
-
-    /* Place the tag region relative to status */
-    size_t maxtagrows = ((height - Regions[TAGS].y - 5) / 4) / fheight;
-    size_t tagcols    = Regions[TAGS].width / fwidth;
-    size_t tagrows    = view_limitrows(tagview, maxtagrows, tagcols);
-    Regions[TAGS].height = tagrows * fheight;
-    view_resize(tagview, tagrows, tagcols);
-
-    /* Place the scroll region relative to tags */
-    Regions[SCROLL].x      = 0;
-    Regions[SCROLL].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
-    Regions[SCROLL].height = (height - Regions[EDIT].y - 5);
-    Regions[SCROLL].width  = 5 + fwidth;
-
-    /* Place the edit region relative to tags */
-    Regions[EDIT].x      = 3 + Regions[SCROLL].width;
-    Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
-    Regions[EDIT].height = (height - Regions[EDIT].y - 5);
-    Regions[EDIT].width  = width - Regions[SCROLL].width - 5;
-    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
-}
-
-static void onredraw(int width, int height) {
-    size_t fheight = x11_font_height(CurrFont);
-    size_t fwidth  = x11_font_width(CurrFont);
-
-    layout(width, height);
-    int clrtagnor = (Regions[TAGS].clrnor.bg << 8 | Regions[TAGS].clrnor.fg);
-    int clrtagsel = (Regions[TAGS].clrsel.bg << 8 | Regions[TAGS].clrsel.fg);
-    view_update(win_view(TAGS), clrtagnor, clrtagsel, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
-    int clreditnor = (Regions[EDIT].clrnor.bg << 8 | Regions[EDIT].clrnor.fg);
-    int clreditsel = (Regions[EDIT].clrsel.bg << 8 | Regions[EDIT].clrsel.fg);
-    view_update(win_view(EDIT), clreditnor, clreditsel, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
-
-    /* calculate and update scroll region */
-    View* view = win_view(EDIT);
-    size_t bend = buf_end(win_buf(EDIT));
-    if (bend == 0) bend = 1;
-    if (!view->rows) return;
-    size_t vbeg = view->rows[0]->off;
-    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
-    double scroll_vis = (double)(vend - vbeg) / (double)bend;
-    double scroll_off = ((double)vbeg / (double)bend);
-    win_setscroll(scroll_off, scroll_vis);
-
-    int clr_hbor = Colors[ClrBorders].bg;
-    int clr_vbor = Colors[ClrBorders].bg;
-    CPair clr_scroll = Colors[ClrScrollNor];
-    for (int i = 0; i < SCROLL; i++) {
-        View* view = win_view(i);
-        x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
-        x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
-        for (size_t line = 0, y = 0; y < view->nrows; y++) {
-            Row* row = view_getrow(view, y);
-            draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
-        }
-
-        /* place the cursor on screen */
-        if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
-            x11_draw_rect(
-                Regions[i].clrcsr.fg,
-                Regions[i].x + (Regions[i].csrx * fwidth),
-                Regions[i].y + (Regions[i].csry * fheight),
-                1, fheight);
-        }
-
-    }
-
-    /* draw the scroll region */
-    size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
-    size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
-    size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
-    if (thumbsz < 5) thumbsz = 5;
-    x11_draw_rect(clr_vbor, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
-    x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
-    x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
-
-}
-
-static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
-    XGlyphSpec specs[rlen];
-    size_t i = 0;
-    bool eol = false;
-    while (rlen && i < ncols) {
-        int numspecs = 0;
-        uint32_t attr = glyphs[i].attr;
-        while (i < ncols && glyphs[i].attr == attr) {
-            if (glyphs[i].rune == '\n')
-                glyphs[i].rune = ' ', eol = true;
-            x11_font_getglyph(CurrFont, &(specs[numspecs]), glyphs[i].rune);
-            specs[numspecs].x = x;
-            specs[numspecs].y = y - x11_font_descent(CurrFont);
-            x += x11_font_width(CurrFont);
-            numspecs++;
-            i++;
-            /* skip over null chars which mark multi column runes */
-            for (; i < ncols && !glyphs[i].rune; i++)
-                x += x11_font_width(CurrFont);
-        }
-        /* Draw the glyphs with the proper colors */
-        uint8_t bg = attr >> 8;
-        uint8_t fg = attr & 0xFF;
-        x11_draw_glyphs(fg, bg, specs, numspecs, eol);
-        eol = false, rlen -= numspecs;
-    }
-}
 
 static WinRegion getregion(size_t x, size_t y) {
     for (int i = 0; i < NREGIONS; i++) {
@@ -600,7 +481,7 @@ static void xupdate(Job* job) {
             (EventHandlers[e.type])(&e);
     }
     /* redraw */
-    onredraw(X.width, X.height);
+    redraw(X.width, X.height);
     //draw_view(tags_view);
     //draw_hrule();
     //draw_view(edit_view);
@@ -615,7 +496,7 @@ static void xfocus(XEvent* e) {
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
     Buf* buf = win_buf(EDIT);
     if (buf->path && buf->modtime != modtime(buf->path))
-        buf->errfn("File modified externally: {SaveAs } Overwrite Reload");
+        buf->errfn("File modified externally: Get {Put }");
 }
 
 static void xkeypress(XEvent* e) {
@@ -801,7 +682,7 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     before = now;
 
     if (count == 1) {
-        view_setcursor(win_view(id)i, row, col, x11_keymodsset(ModShift));
+        view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
     } else if (count == 2) {
         view_select(win_view(id), row, col);
     } else if (count == 3) {
@@ -828,5 +709,129 @@ static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
         SearchTerm = view_fetch(win_view(id), row, col, risfile);
+    }
+}
+
+/******************************************************************************/
+
+static void layout(int width, int height) {
+    size_t fheight = x11_font_height(CurrFont);
+    size_t fwidth  = x11_font_width(CurrFont);
+    View* tagview  = win_view(TAGS);
+    View* editview = win_view(EDIT);
+
+    /* update the text views and region positions and sizes */
+    for (int i = 0; i < SCROLL; i++) {
+        Regions[i].x      = 2;
+        Regions[i].y      = 2;
+        Regions[i].csrx   = SIZE_MAX;
+        Regions[i].csry   = SIZE_MAX;
+        Regions[i].width  = (width - 4);
+        Regions[i].height = fheight;
+    }
+
+    /* Place the tag region relative to status */
+    size_t maxtagrows = ((height - Regions[TAGS].y - 5) / 4) / fheight;
+    size_t tagcols    = Regions[TAGS].width / fwidth;
+    size_t tagrows    = view_limitrows(tagview, maxtagrows, tagcols);
+    Regions[TAGS].height = tagrows * fheight;
+    view_resize(tagview, tagrows, tagcols);
+
+    /* Place the scroll region relative to tags */
+    Regions[SCROLL].x      = 0;
+    Regions[SCROLL].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
+    Regions[SCROLL].height = (height - Regions[EDIT].y - 5);
+    Regions[SCROLL].width  = 5 + fwidth;
+
+    /* Place the edit region relative to tags */
+    Regions[EDIT].x      = 3 + Regions[SCROLL].width;
+    Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
+    Regions[EDIT].height = (height - Regions[EDIT].y - 5);
+    Regions[EDIT].width  = width - Regions[SCROLL].width - 5;
+    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
+}
+
+static void redraw(int width, int height) {
+    size_t fheight = x11_font_height(CurrFont);
+    size_t fwidth  = x11_font_width(CurrFont);
+
+    layout(width, height);
+    int clrtagnor = (Regions[TAGS].clrnor.bg << 8 | Regions[TAGS].clrnor.fg);
+    int clrtagsel = (Regions[TAGS].clrsel.bg << 8 | Regions[TAGS].clrsel.fg);
+    view_update(win_view(TAGS), clrtagnor, clrtagsel, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
+    int clreditnor = (Regions[EDIT].clrnor.bg << 8 | Regions[EDIT].clrnor.fg);
+    int clreditsel = (Regions[EDIT].clrsel.bg << 8 | Regions[EDIT].clrsel.fg);
+    view_update(win_view(EDIT), clreditnor, clreditsel, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
+
+    /* calculate and update scroll region */
+    View* view = win_view(EDIT);
+    size_t bend = buf_end(win_buf(EDIT));
+    if (bend == 0) bend = 1;
+    if (!view->rows) return;
+    size_t vbeg = view->rows[0]->off;
+    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    double scroll_vis = (double)(vend - vbeg) / (double)bend;
+    double scroll_off = ((double)vbeg / (double)bend);
+    win_setscroll(scroll_off, scroll_vis);
+
+    int clr_hbor = Colors[ClrBorders].bg;
+    int clr_vbor = Colors[ClrBorders].bg;
+    CPair clr_scroll = Colors[ClrScrollNor];
+    for (int i = 0; i < SCROLL; i++) {
+        View* view = win_view(i);
+        x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
+        x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
+        for (size_t line = 0, y = 0; y < view->nrows; y++) {
+            Row* row = view_getrow(view, y);
+            draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
+        }
+
+        /* place the cursor on screen */
+        if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
+            x11_draw_rect(
+                Regions[i].clrcsr.fg,
+                Regions[i].x + (Regions[i].csrx * fwidth),
+                Regions[i].y + (Regions[i].csry * fheight),
+                1, fheight);
+        }
+
+    }
+
+    /* draw the scroll region */
+    size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
+    size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
+    size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
+    if (thumbsz < 5) thumbsz = 5;
+    x11_draw_rect(clr_vbor, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
+    x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
+    x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
+
+}
+
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
+    XGlyphSpec specs[rlen];
+    size_t i = 0;
+    bool eol = false;
+    while (rlen && i < ncols) {
+        int numspecs = 0;
+        uint32_t attr = glyphs[i].attr;
+        while (i < ncols && glyphs[i].attr == attr) {
+            if (glyphs[i].rune == '\n')
+                glyphs[i].rune = ' ', eol = true;
+            x11_font_getglyph(CurrFont, &(specs[numspecs]), glyphs[i].rune);
+            specs[numspecs].x = x;
+            specs[numspecs].y = y - x11_font_descent(CurrFont);
+            x += x11_font_width(CurrFont);
+            numspecs++;
+            i++;
+            /* skip over null chars which mark multi column runes */
+            for (; i < ncols && !glyphs[i].rune; i++)
+                x += x11_font_width(CurrFont);
+        }
+        /* Draw the glyphs with the proper colors */
+        uint8_t bg = attr >> 8;
+        uint8_t fg = attr & 0xFF;
+        x11_draw_glyphs(fg, bg, specs, numspecs, eol);
+        eol = false, rlen -= numspecs;
     }
 }
