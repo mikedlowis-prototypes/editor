@@ -128,7 +128,86 @@ static KeyBinding* Keys = NULL;
 int SearchDir = DOWN;
 char* SearchTerm = NULL;
 
-void x11_init(XConfig* cfg) {
+/******************************************************************************/
+
+void win_init(KeyBinding* bindings, void (*errfn)(char*)) {
+    for (int i = 0; i < SCROLL; i++)
+        view_init(&(Regions[i].view), NULL, errfn);
+    x11_init();
+    CurrFont = x11_font_load(FontString);
+    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
+    Regions[TAGS].clrnor = Colors[ClrTagsNor];
+    Regions[TAGS].clrsel = Colors[ClrTagsSel];
+    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
+    Regions[EDIT].clrnor = Colors[ClrEditNor];
+    Regions[EDIT].clrsel = Colors[ClrEditSel];
+    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
+
+    View* view = win_view(TAGS);
+    view->buffer.gapstart = view->buffer.bufstart;
+    view->buffer.gapend   = view->buffer.bufend;
+    view->selection = (Sel){0,0,0};
+    view_putstr(view, TagString);
+    view_selprev(view); // clear the selection
+    buf_logclear(&(view->buffer));
+
+    Keys = bindings;
+}
+
+void win_save(char* path) {
+    View* view = win_view(EDIT);
+    if (!path) path = view->buffer.path;
+    if (!path) return;
+    path = stringdup(path);
+    free(view->buffer.path);
+    view->buffer.path = path;
+    buf_save(&(view->buffer));
+}
+
+void win_loop(void) {
+    XMapWindow(X.display, X.self);
+    XFlush(X.display);
+    job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
+    while (1) job_poll(Timeout);
+}
+
+bool win_btnpressed(int btn) {
+    int btnmask = (1 << (btn + 7));
+    return ((KeyBtnState & btnmask) == btnmask);
+}
+
+WinRegion win_getregion(void) {
+    return Focused;
+}
+
+bool win_setregion(WinRegion id) {
+    bool changed = true;
+    if (Focused != id && (id == TAGS || id == EDIT))
+        changed = true, Focused = id;
+    return changed;
+}
+
+View* win_view(WinRegion id) {
+    return &(Regions[id == FOCUSED ? Focused : id].view);
+}
+
+Buf* win_buf(WinRegion id) {
+    return &(Regions[id == FOCUSED ? Focused : id].view.buffer);
+}
+
+void win_quit(void) {
+    static uint64_t before = 0;
+    uint64_t now = getmillis();
+    if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime)
+        exit(0);
+    else
+        win_buf(EDIT)->errfn("File is modified.");
+    before = now;
+}
+
+/******************************************************************************/
+
+void x11_init(void) {
     signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
     setlocale(LC_CTYPE, "");
     XSetLocaleModifiers("");
@@ -155,10 +234,9 @@ bool x11_keymodsset(int mask) {
     return ((KeyBtnState & mask) == mask);
 }
 
-void x11_window(char* name, int width, int height) {
+void x11_window(char* name) {
     /* create the main window */
-    X.width  = width ;
-    X.height = height;
+    X.width = WinWidth, X.height = WinHeight;
     XWindowAttributes wa;
     XGetWindowAttributes(X.display, X.root, &wa);
     X.self = XCreateSimpleWindow(X.display, X.root,
@@ -196,7 +274,7 @@ void x11_window(char* name, int width, int height) {
         X.xic = XCreateIC(X.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing, XNClientWindow, X.self, XNFocusWindow, X.self, NULL);
 
     /* initialize pixmap and drawing context */
-    X.pixmap = XCreatePixmap(X.display, X.self, width, height, X.depth);
+    X.pixmap = XCreatePixmap(X.display, X.self, X.width, X.height, X.depth);
     X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
 
     /* initialize the graphics context */
@@ -253,13 +331,6 @@ size_t x11_font_width(XFont fnt) {
 size_t x11_font_descent(XFont fnt) {
     struct XFont* font = fnt;
     return font->base.descent;
-}
-
-void x11_draw_rect(int color, int x, int y, int width, int height) {
-    XftColor clr;
-    xftcolor(&clr, color);
-    XftDrawRect(X.xft, &clr, x, y, width, height);
-    XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
 
 void x11_font_getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
@@ -346,6 +417,17 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
+/******************************************************************************/
+
+void x11_draw_rect(int color, int x, int y, int width, int height) {
+    XftColor clr;
+    xftcolor(&clr, color);
+    XftDrawRect(X.xft, &clr, x, y, width, height);
+    XftColorFree(X.display, X.visual, X.colormap, &clr);
+}
+
+/******************************************************************************/
+
 bool x11_sel_get(int selid, void(*cbfn)(char*)) {
     struct XSel* sel = &(Selections[selid]);
     if (sel->callback) return false;
@@ -371,78 +453,7 @@ bool x11_sel_set(int selid, char* str) {
     }
 }
 
-void win_init(KeyBinding* bindings, void (*errfn)(char*)) {
-    for (int i = 0; i < SCROLL; i++)
-        view_init(&(Regions[i].view), NULL, errfn);
-    x11_init(0);
-    CurrFont = x11_font_load(FontString);
-    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
-    Regions[TAGS].clrnor = Colors[ClrTagsNor];
-    Regions[TAGS].clrsel = Colors[ClrTagsSel];
-    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
-    Regions[EDIT].clrnor = Colors[ClrEditNor];
-    Regions[EDIT].clrsel = Colors[ClrEditSel];
-    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
-
-    View* view = win_view(TAGS);
-    view->buffer.gapstart = view->buffer.bufstart;
-    view->buffer.gapend   = view->buffer.bufend;
-    view->selection = (Sel){0,0,0};
-    view_putstr(view, TagString);
-    view_selprev(view); // clear the selection
-    buf_logclear(&(view->buffer));
-
-    Keys = bindings;
-}
-
-void win_save(char* path) {
-    View* view = win_view(EDIT);
-    if (!path) path = view->buffer.path;
-    if (!path) return;
-    path = stringdup(path);
-    free(view->buffer.path);
-    view->buffer.path = path;
-    buf_save(&(view->buffer));
-}
-
-void win_loop(void) {
-    XMapWindow(X.display, X.self);
-    XFlush(X.display);
-    job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
-    while (1) job_poll(Timeout);
-}
-
-bool win_btnpressed(int btn) {
-    int btnmask = (1 << (btn + 7));
-    return ((KeyBtnState & btnmask) == btnmask);
-}
-
-WinRegion win_getregion(void) {
-    return Focused;
-}
-
-bool win_setregion(WinRegion id) {
-    bool changed = true;
-    if (Focused != id && (id == TAGS || id == EDIT))
-        changed = true, Focused = id;
-    return changed;
-}
-
-View* win_view(WinRegion id) {
-    return &(Regions[id == FOCUSED ? Focused : id].view);
-}
-
-Buf* win_buf(WinRegion id) {
-    return &(Regions[id == FOCUSED ? Focused : id].view.buffer);
-}
-
-void win_setscroll(double offset, double visible) {
-    ScrollOffset  = offset;
-    ScrollVisible = visible;
-}
-
 /******************************************************************************/
-
 
 static WinRegion getregion(size_t x, size_t y) {
     for (int i = 0; i < NREGIONS; i++) {
@@ -605,7 +616,7 @@ static void xpropnotify(XEvent* e) {
 
 static void xclientmsg(XEvent* e) {
     if (e->xclient.data.l[0] == XInternAtom(X.display, "WM_DELETE_WINDOW", False))
-        onshutdown();
+        win_quit();
 }
 
 static void xresize(XEvent* e) {
@@ -751,6 +762,28 @@ static void layout(int width, int height) {
     view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
+static void draw_view(int i, int width, int height) {
+    int clr_hbor = Colors[ClrBorders].bg;
+    int clr_vbor = Colors[ClrBorders].bg;
+    size_t fheight = x11_font_height(CurrFont);
+    size_t fwidth  = x11_font_width(CurrFont);
+    View* view = win_view(i);
+    x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
+    x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
+    for (size_t line = 0, y = 0; y < view->nrows; y++) {
+        Row* row = view_getrow(view, y);
+        draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
+    }
+    /* place the cursor on screen */
+    if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
+        x11_draw_rect(
+            Regions[i].clrcsr.fg,
+            Regions[i].x + (Regions[i].csrx * fwidth),
+            Regions[i].y + (Regions[i].csry * fheight),
+            1, fheight);
+    }
+}
+
 static void redraw(int width, int height) {
     size_t fheight = x11_font_height(CurrFont);
     size_t fwidth  = x11_font_width(CurrFont);
@@ -772,40 +805,20 @@ static void redraw(int width, int height) {
     size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     double scroll_vis = (double)(vend - vbeg) / (double)bend;
     double scroll_off = ((double)vbeg / (double)bend);
-    win_setscroll(scroll_off, scroll_vis);
+    ScrollOffset = scroll_off, ScrollVisible = scroll_vis;
 
-    int clr_hbor = Colors[ClrBorders].bg;
-    int clr_vbor = Colors[ClrBorders].bg;
-    CPair clr_scroll = Colors[ClrScrollNor];
-    for (int i = 0; i < SCROLL; i++) {
-        View* view = win_view(i);
-        x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
-        x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
-        for (size_t line = 0, y = 0; y < view->nrows; y++) {
-            Row* row = view_getrow(view, y);
-            draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
-        }
-
-        /* place the cursor on screen */
-        if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
-            x11_draw_rect(
-                Regions[i].clrcsr.fg,
-                Regions[i].x + (Regions[i].csrx * fwidth),
-                Regions[i].y + (Regions[i].csry * fheight),
-                1, fheight);
-        }
-
-    }
+    draw_view(TAGS, width, height);
+    draw_view(EDIT, width, height);
 
     /* draw the scroll region */
     size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
     size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
     size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
     if (thumbsz < 5) thumbsz = 5;
-    x11_draw_rect(clr_vbor, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
+    CPair clr_scroll = Colors[ClrScrollNor];
+    x11_draw_rect(Colors[ClrBorders].bg, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
     x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
     x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
-
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {

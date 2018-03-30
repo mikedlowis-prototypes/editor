@@ -11,8 +11,8 @@ typedef struct {
     void (*action)(char*);
 } Tag;
 
+char* ARGV0;
 static Tag Builtins[];
-static size_t Marks[10] = {0};
 
 /* The shell: Filled in with $SHELL. Used to execute commands */
 char* ShellCmd[] = { NULL, "-c", NULL, NULL };
@@ -313,14 +313,7 @@ static void trim_whitespace(char* arg) {
 }
 
 static void quit(char* arg) {
-    static uint64_t before = 0;
-    uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime) {
-        exit(0);
-    } else {
-        ondiagmsg("File is modified. Repeat action twice quickly to quit.");
-    }
-    before = now;
+    win_quit();
 }
 
 static void put(char* arg) {
@@ -531,11 +524,6 @@ static KeyBinding Bindings[] = {
     { 0, 0, 0 }
 };
 
-void onshutdown(void) {
-    quit(0);
-}
-
-char* ARGV0;
 static void usage(void) {
     printf(
         "Usage: %s [FLAGS] [FILE]\n"
@@ -572,7 +560,7 @@ int main(int argc, char** argv) {
 
     /* create the window */
     win_init(Bindings, ondiagmsg);
-    x11_window("tide", WinWidth, WinHeight);
+    x11_window("tide");
 
     /* if we still have args left we're going to open it in this instance */
     if (*argv) view_init(win_view(EDIT), *argv, ondiagmsg);

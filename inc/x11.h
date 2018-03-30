@@ -1,17 +1,7 @@
-typedef struct {
-    void (*redraw)(int width, int height);
-    void (*handle_key)(int mods, int32_t rune);
-    void (*shutdown)(void);
-    void (*set_focus)(bool focus);
-    void (*mouse_drag)(int state, int x, int y);
-    void (*mouse_btn)(int state, bool pressed, int x, int y);
-    void (*cmd_received)(char* cmd);
-} XConfig;
-
 typedef void* XFont;
 
 typedef struct {
-    uint32_t attr; /* attributes  applied to this cell */
+    uint32_t attr; /* attributes applied to this cell */
     uint32_t rune; /* rune value for the cell */
 } XGlyph;
 
@@ -114,25 +104,9 @@ enum {
     CLIPBOARD = 1
 };
 
-void x11_init(XConfig* cfg);
-void x11_deinit(void);
-int x11_connfd(void);
-char* x11_cfg_get(char* opt);
-int x11_keybtnstate(void);
+void x11_init(void);
 bool x11_keymodsset(int mask);
-void x11_window(char* name, int width, int height);
-void x11_dialog(char* name, int height, int width);
-void x11_show(void);
-bool x11_running(void);
-void x11_flip(void);
-void x11_flush(void);
-void x11_finish(void);
-
-int x11_events_queued(void);
-void x11_events_take(void);
-
-void x11_mouse_get(int* x, int* y);
-void x11_mouse_set(int x, int y);
+void x11_window(char* name);
 
 XFont x11_font_load(char* name);
 size_t x11_font_height(XFont fnt);
@@ -142,12 +116,8 @@ void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
 size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
 
 void x11_draw_rect(int color, int x, int y, int width, int height);
-void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol);
-void x11_draw_utf8(XFont font, int fg, int bg, int x, int y, char* str);
 
 bool x11_sel_get(int selid, void(*cbfn)(char*));
 bool x11_sel_set(int selid, char* str);
 
-void x11_prop_set(char* name, char* val);
-char* x11_prop_get(char* name);

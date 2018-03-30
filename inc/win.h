@@ -31,20 +31,13 @@ typedef struct {
 void win_init(KeyBinding* bindings, void (*errfn)(char*));
 void win_save(char* path);
 void win_loop(void);
+void win_quit(void);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
 bool win_btnpressed(int btn);
 WinRegion win_getregion(void);
 bool win_setregion(WinRegion id);
 void win_setscroll(double offset, double visible);
-
-/* These functions must be implemented by any appliation that wishes
-   to use this module */
-void onshutdown(void);
-void onupdate(void);
-void onmouseleft(WinRegion id, bool pressed, size_t row, size_t col);
-void onmousemiddle(WinRegion id, bool pressed, size_t row, size_t col);
-void onmouseright(WinRegion id, bool pressed, size_t row, size_t col);
 
 /* move these to x11.c when possible */
 extern int SearchDir;
