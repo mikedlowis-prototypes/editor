@@ -77,3 +77,4 @@ tests/pick: tests/pick.o libedit.a
 # load generate dependencies
 -include *.d lib/*.d tests/*.d tests/lib/*.d
 
+

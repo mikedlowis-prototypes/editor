@@ -22,7 +22,7 @@ static unsigned scroll_dn(View* view);
 static void sync_center(View* view, size_t csr);
 static size_t getoffset(View* view, size_t row, size_t col);
 
-void view_init(View* view, char* file, void (*errfn)(char*)) {
+void view_init(View* view, char* file) {
     if (view->nrows) {
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
@@ -35,7 +35,7 @@ void view_init(View* view, char* file, void (*errfn)(char*)) {
     view->sync_center = true;
     view->prev_csr    = 0;
     /* load the file and jump to the address returned from the load function */
-    buf_init(&(view->buffer), errfn);
+    buf_init(&(view->buffer));
     if (file) {
         size_t pos = buf_load(&(view->buffer), file);
         if (pos > 0) {

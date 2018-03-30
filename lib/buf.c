@@ -22,7 +22,7 @@ static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel);
 static size_t next_size(size_t curr);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
 
-void buf_init(Buf* buf, void (*errfn)(char*)) {
+void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
     if (buf->bufstart) {
         free(buf->bufstart);
@@ -38,7 +38,6 @@ void buf_init(Buf* buf, void (*errfn)(char*)) {
     buf->gapend      = buf->bufend;
     buf->undo        = NULL;
     buf->redo        = NULL;
-    buf->errfn       = errfn;
     assert(buf->bufstart);
 }
 
@@ -65,7 +64,6 @@ size_t buf_load(Buf* buf, char* path) {
         /* Read the file into the buffer */
         while (sb.st_size && (nread = read(fd, buf->gapstart, sb.st_size)) > 0)
             buf->gapstart += nread, sb.st_size -= nread;
-        if (nread < 0) buf->errfn("Failed to read file");
     }
     if (fd > 0) close(fd);
 
@@ -81,9 +79,8 @@ size_t buf_load(Buf* buf, char* path) {
 }
 
 void buf_reload(Buf* buf) {
-    void (*errfn)(char*) = buf->errfn;
     char* path = buf->path;
-    buf_init(buf, errfn);
+    buf_init(buf);
     buf_load(buf, path);
 }
 
@@ -109,10 +106,10 @@ void buf_save(Buf* buf) {
         /* report success or failure */
         if (nwrite >= 0)
             buf->modified = false;
-        else
-            buf->errfn("Failed to write file");
+        //else
+        //    buf->errfn("Failed to write file");
     } else {
-        buf->errfn("Need a filename: SaveAs ");
+        //buf->errfn("Need a filename: SaveAs ");
     }
 }
 

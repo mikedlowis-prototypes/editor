@@ -46,7 +46,6 @@ typedef struct {
     Log* redo;            /* redo list */
     bool modified;        /* tracks whether the buffer has been modified */
     uint transid;         /* tracks the last used transaction id for log entries */
-    void (*errfn)(char*); /* callback for error messages */
 } Buf;
 
 /* cursor/selection representation */
@@ -56,7 +55,7 @@ typedef struct {
     size_t col;
 } Sel;
 
-void buf_init(Buf* buf, void (*errfn)(char*));
+void buf_init(Buf* buf);
 size_t buf_load(Buf* buf, char* path);
 void buf_reload(Buf* buf);
 void buf_save(Buf* buf);
@@ -122,7 +121,7 @@ enum {
     DOWN  = +1
 };
 
-void view_init(View* view, char* file, void (*errfn)(char*));
+void view_init(View* view, char* file);
 void view_reload(View* view);
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
 void view_resize(View* view, size_t nrows, size_t ncols);

@@ -28,7 +28,7 @@ typedef struct {
     View view;
 } Region;
 
-void win_init(KeyBinding* bindings, void (*errfn)(char*));
+void win_init(KeyBinding* bindings);
 void win_save(char* path);
 void win_loop(void);
 void win_quit(void);

@@ -130,9 +130,9 @@ char* SearchTerm = NULL;
 
 /******************************************************************************/
 
-void win_init(KeyBinding* bindings, void (*errfn)(char*)) {
+void win_init(KeyBinding* bindings) {
     for (int i = 0; i < SCROLL; i++)
-        view_init(&(Regions[i].view), NULL, errfn);
+        view_init(&(Regions[i].view), NULL);
     x11_init();
     CurrFont = x11_font_load(FontString);
     Regions[SCROLL].clrnor = Colors[ClrScrollNor];
@@ -201,7 +201,7 @@ void win_quit(void) {
     if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime)
         exit(0);
     else
-        win_buf(EDIT)->errfn("File is modified.");
+        view_append(win_view(TAGS), "File is modified.");
     before = now;
 }
 
@@ -505,7 +505,7 @@ static void xfocus(XEvent* e) {
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
     Buf* buf = win_buf(EDIT);
     if (buf->path && buf->modtime != modtime(buf->path))
-        buf->errfn("File modified externally: Get {Put }");
+        view_append(win_view(TAGS), "File modified externally: Get {Put }");
 }
 
 static void xkeypress(XEvent* e) {
