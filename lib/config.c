@@ -30,54 +30,26 @@ int /* Integer config options */
     ExpandTabs = ON,
     DosLineFeed = OFF;
 
-int Palette[16] = {
-    0xFF1d2021,
-    0xFF3c3836,
-    0xFF504945,
-    0xFF665c54,
-    0xFFbdae93,
-    0xFFd5c4a1,
-    0xFFebdbb2,
-    0xFFfbf1c7,
-    0xFFfb4934,
-    0xFFfe8019,
-    0xFFfabd2f,
-    0xFFb8bb26,
-    0xFF8ec07c,
-    0xFF83a598,
-    0xFFd3869b,
-    0xFFd65d0e
+int Palette[ClrCount] = {
+    [Red]      = 0xFFfb4934, // Red
+    [Green]    = 0xFFb8bb26, // Green
+    [Yellow]   = 0xFFfabd2f, // Yellow
+    [Blue]     = 0xFF83a598, // Blue
+    [Purple]   = 0xFF93869b, // Purple
+    [Aqua]     = 0xFF8ec07c, // Aqua
+    [Orange]   = 0xFFfe8019, // Orange
+    [EditBg]   = 0xFF1d2021, // Edit region background
+    [EditFg]   = 0xFFd5c4a1, // Edit region text
+    [EditSel]  = 0xFF504945, // Edit region selection
+    [EditCsr]  = 0xFFfbf1c7, // Edit region cursor
+    [TagsBg]   = 0xFF3c3836, // Tags region background
+    [TagsFg]   = 0xFFd5c4a1, // Tags region text
+    [TagsSel]  = 0xFF504945, // Tags region selection
+    [TagsCsr]  = 0xFFfbf1c7, // Tags region cursor
+    [ScrollBg] = 0xFF665c54, // Scroll region background
+    [ScrollFg] = 0xFF1d2021, // Scroll region foreground
+    [VerBdr]   = 0xFF665c54, // Vertical border
+    [HorBdr]   = 0xFF665c54, // Horizontal border
 };
 
-CPair Colors[28] = {
-    /* UI Colors */
-    [ClrScrollNor] = { .bg = 3, .fg = 0 },
-    [ClrGutterNor] = { .bg = 1, .fg = 4 },
-    [ClrGutterSel] = { .bg = 2, .fg = 7 },
-    [ClrStatusNor] = { .bg = 0, .fg = 5 },
-    [ClrTagsNor]   = { .bg = 1, .fg = 5 },
-    [ClrTagsSel]   = { .bg = 2, .fg = 5 },
-    [ClrTagsCsr]   = { .bg = 0, .fg = 7 },
-    [ClrEditNor]   = { .bg = 0, .fg = 5 },
-    [ClrEditSel]   = { .bg = 2, .fg = 5 },
-    [ClrEditCsr]   = { .bg = 0, .fg = 7 },
-    [ClrEditRul]   = { .bg = 0, .fg = 1 },
-    [ClrBorders]   = { .bg = 3, .fg = 3 },
-    /* Syntax Colors */
-    [SynNormal]    = { .fg = 5  },
-    [SynComment]   = { .fg = 3  },
-    [SynConstant]  = { .fg = 14 },
-    [SynNumber]    = { .fg = 14 },
-    [SynBoolean]   = { .fg = 14 },
-    [SynFloat]     = { .fg = 14 },
-    [SynString]    = { .fg = 10 },
-    [SynChar]      = { .fg = 10 },
-    [SynPreProc]   = { .fg = 8  },
-    [SynType]      = { .fg = 13 },
-    [SynKeyword]   = { .fg = 8  },
-    [SynStatement] = { .fg = 15 },
-    [SynFunction]  = { .fg = 13 },
-    [SynVariable]  = { .fg = 8  },
-    [SynSpecial]   = { .fg = 15 },
-    [SynOperator]  = { .fg = 12 },
-};
+

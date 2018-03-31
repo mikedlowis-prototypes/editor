@@ -185,18 +185,16 @@ void job_start(char** cmd, char* data, size_t ndata, View* dest);
  *****************************************************************************/
 enum { OFF = 0, ON = 1 };
 
-typedef struct { int fg, bg; } CPair;
+enum { /* Color Names */
+    Red, Green, Yellow, Blue, Purple, Aqua, Orange,
+    EditBg, EditFg, EditSel, EditCsr,
+    TagsBg, TagsFg, TagsSel, TagsCsr,
+    ScrollBg, ScrollFg,
+    VerBdr, HorBdr,
+    ClrCount
+};
 
 extern char *TagString, *FontString;
-extern CPair Colors[28];
-extern int Palette[16];
+extern int Palette[ClrCount];
 extern int WinWidth, WinHeight, LineSpacing, Timeout, TabWidth, ScrollBy,
     ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs, DosLineFeed;
-enum { /* Color Variables */
-    ClrScrollNor = 0, ClrGutterNor, ClrGutterSel, ClrStatusNor, ClrTagsNor,
-    ClrTagsSel, ClrTagsCsr, ClrEditNor, ClrEditSel, ClrEditCsr, ClrEditRul,
-    ClrBorders,
-    SynNormal, SynComment, SynConstant, SynString, SynChar, SynNumber,
-    SynBoolean, SynFloat, SynVariable, SynFunction, SynKeyword, SynOperator,
-    SynPreProc, SynType, SynStatement, SynSpecial
-};

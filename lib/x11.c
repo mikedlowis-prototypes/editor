@@ -134,15 +134,8 @@ void win_init(KeyBinding* bindings) {
     for (int i = 0; i < SCROLL; i++)
         view_init(&(Regions[i].view), NULL);
     x11_init();
+    Keys = bindings;
     CurrFont = x11_font_load(FontString);
-    Regions[SCROLL].clrnor = Colors[ClrScrollNor];
-    Regions[TAGS].clrnor = Colors[ClrTagsNor];
-    Regions[TAGS].clrsel = Colors[ClrTagsSel];
-    Regions[TAGS].clrcsr = Colors[ClrTagsCsr];
-    Regions[EDIT].clrnor = Colors[ClrEditNor];
-    Regions[EDIT].clrsel = Colors[ClrEditSel];
-    Regions[EDIT].clrcsr = Colors[ClrEditCsr];
-
     View* view = win_view(TAGS);
     view->buffer.gapstart = view->buffer.bufstart;
     view->buffer.gapend   = view->buffer.bufend;
@@ -150,8 +143,6 @@ void win_init(KeyBinding* bindings) {
     view_putstr(view, TagString);
     view_selprev(view); // clear the selection
     buf_logclear(&(view->buffer));
-
-    Keys = bindings;
 }
 
 void win_save(char* path) {
@@ -760,22 +751,19 @@ static void layout(int width, int height) {
     view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
 }
 
-static void draw_view(int i, int width, int height) {
-    int clr_hbor = Colors[ClrBorders].bg;
-    int clr_vbor = Colors[ClrBorders].bg;
+static void draw_view(int i, int width, int height, int bg, int fg, int csr, int sel) {
     size_t fheight = x11_font_height(CurrFont);
     size_t fwidth  = x11_font_width(CurrFont);
     View* view = win_view(i);
-    x11_draw_rect(Regions[i].clrnor.bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
-    x11_draw_rect(clr_hbor, 0, Regions[i].y - 3, width, 1);
+    x11_draw_rect(bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
+    x11_draw_rect(HorBdr, 0, Regions[i].y - 3, width, 1);
     for (size_t line = 0, y = 0; y < view->nrows; y++) {
         Row* row = view_getrow(view, y);
         draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* place the cursor on screen */
     if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
-        x11_draw_rect(
-            Regions[i].clrcsr.fg,
+        x11_draw_rect(csr,
             Regions[i].x + (Regions[i].csrx * fwidth),
             Regions[i].y + (Regions[i].csry * fheight),
             1, fheight);
@@ -787,11 +775,11 @@ static void redraw(int width, int height) {
     size_t fwidth  = x11_font_width(CurrFont);
 
     layout(width, height);
-    int clrtagnor = (Regions[TAGS].clrnor.bg << 8 | Regions[TAGS].clrnor.fg);
-    int clrtagsel = (Regions[TAGS].clrsel.bg << 8 | Regions[TAGS].clrsel.fg);
+    int clrtagnor = (TagsBg  << 8 | TagsFg);
+    int clrtagsel = (TagsSel << 8 | TagsFg);
     view_update(win_view(TAGS), clrtagnor, clrtagsel, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
-    int clreditnor = (Regions[EDIT].clrnor.bg << 8 | Regions[EDIT].clrnor.fg);
-    int clreditsel = (Regions[EDIT].clrsel.bg << 8 | Regions[EDIT].clrsel.fg);
+    int clreditnor = (EditBg  << 8 | EditFg);
+    int clreditsel = (EditSel << 8 | EditFg);
     view_update(win_view(EDIT), clreditnor, clreditsel, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
 
     /* calculate and update scroll region */
@@ -805,18 +793,17 @@ static void redraw(int width, int height) {
     double scroll_off = ((double)vbeg / (double)bend);
     ScrollOffset = scroll_off, ScrollVisible = scroll_vis;
 
-    draw_view(TAGS, width, height);
-    draw_view(EDIT, width, height);
+    draw_view(TAGS, width, height, TagsBg, TagsFg, TagsCsr, TagsSel);
+    draw_view(EDIT, width, height, EditBg, EditFg, EditCsr, EditSel);
 
     /* draw the scroll region */
     size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
     size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
     size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
     if (thumbsz < 5) thumbsz = 5;
-    CPair clr_scroll = Colors[ClrScrollNor];
-    x11_draw_rect(Colors[ClrBorders].bg, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
-    x11_draw_rect(clr_scroll.bg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
-    x11_draw_rect(clr_scroll.fg, 0, thumboff, Regions[SCROLL].width, thumbsz);
+    x11_draw_rect(VerBdr, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
+    x11_draw_rect(ScrollBg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
+    x11_draw_rect(ScrollFg, 0, thumboff, Regions[SCROLL].width, thumbsz);
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {

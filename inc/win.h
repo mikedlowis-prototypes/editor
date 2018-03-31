@@ -24,7 +24,6 @@ typedef struct {
     size_t x, y;
     size_t height, width;
     size_t csrx, csry;
-    CPair clrnor, clrsel, clrcsr;
     View view;
 } Region;
 
