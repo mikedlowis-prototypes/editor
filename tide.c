@@ -279,35 +279,11 @@ void exec(char* cmd) {
 
 /* Action Callbacks
  ******************************************************************************/
-static void trim_whitespace(char* arg) {
-    Buf* buf = win_buf(EDIT);
-    if (TrimOnSave && buf_end(buf) > 0) {
-        View* view = win_view(EDIT);
-        unsigned off = 0, prev = 1;
-        /* loop through the buffer till we hit the end or we stop advancing */
-        while (off < buf_end(buf) && prev != off) {
-            off = buf_eol(buf, off);
-            Rune r = buf_get(buf, off-1);
-            for (; (r == ' ' || r == '\t'); r = buf_get(buf, off-1)) {
-                if (off <= view->selection.beg) {
-                    view->selection.end--;
-                    view->selection.beg--;
-                }
-                off = buf_delete(buf, off-1, off);
-            }
-            /* make sure we keep advancing */
-            prev = off;
-            off  = buf_byline(buf, off, +1);
-        }
-    }
-}
-
 static void quit(char* arg) {
     win_quit();
 }
 
 static void put(char* arg) {
-    trim_whitespace(arg);
     win_save(arg);
 }
 
@@ -387,13 +363,9 @@ static void jump_to(char* arg) {
 }
 
 static void goto_ctag(char* arg) {
-    if (x11_keymodsset(ModShift)) {
-        view_jumpback(win_view(FOCUSED));
-    } else {
-        char* str = view_getctx(win_view(FOCUSED));
-        jump_to(str);
-        free(str);
-    }
+    char* str = view_getctx(win_view(FOCUSED));
+    jump_to(str);
+    free(str);
 }
 
 static void tabs(char* arg) {
@@ -402,14 +374,6 @@ static void tabs(char* arg) {
 
 static void indent(char* arg) {
     CopyIndent = !CopyIndent;
-}
-
-static void del_indent(char* arg) {
-    view_indent(win_view(FOCUSED), LEFT);
-}
-
-static void add_indent(char* arg) {
-    view_indent(win_view(FOCUSED), RIGHT);
 }
 
 static void eol_mode(char* arg) {
@@ -486,10 +450,6 @@ static KeyBinding Bindings[] = {
     { ModCtrl,          'j', join_lines  },
     { ModCtrl,          'l', select_line },
     { ModCtrl|ModShift, 'a', select_all  },
-
-    /* Block Indent */
-    { ModCtrl, '[', del_indent },
-    { ModCtrl, ']', add_indent },
 
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up   },
