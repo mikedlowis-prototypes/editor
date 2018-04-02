@@ -191,6 +191,8 @@ void buf_del(Buf* buf, Sel* p_sel) {
         //char* str = buf_gets(buf, &sel);
         syncgap(buf, sel.beg);
         buf->gapend += nbytes;
+        sel.end = sel.beg;
+        setsel(buf, p_sel, &sel);
         // update log here
         // free(str);
     }
