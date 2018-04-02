@@ -141,6 +141,7 @@ static void putb(Buf* buf, char b, Sel* p_sel) {
 }
 
 static char getb(Buf* buf, size_t off) {
+    if (off >= buf_end(buf)) return '\n'; // TODO: get rid of this hack
     size_t bsz = (buf->gapstart - buf->bufstart);
     if (off < bsz)
         return *(buf->bufstart + off);
