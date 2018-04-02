@@ -30,14 +30,15 @@ void buf_init(Buf* buf) {
         buf_logclear(buf);
     }
     /* reset the state to defaults */
-    buf->modified    = false;
-    buf->bufsize     = 8192;
-    buf->bufstart    = (char*)malloc(buf->bufsize);
-    buf->bufend      = buf->bufstart + buf->bufsize;
-    buf->gapstart    = buf->bufstart;
-    buf->gapend      = buf->bufend;
-    buf->undo        = NULL;
-    buf->redo        = NULL;
+    buf->modified  = false;
+    buf->bufsize   = 8192;
+    buf->bufstart  = (char*)malloc(buf->bufsize);
+    buf->bufend    = buf->bufstart + buf->bufsize;
+    buf->gapstart  = buf->bufstart;
+    buf->gapend    = buf->bufend;
+    buf->undo      = NULL;
+    buf->redo      = NULL;
+    buf->selection = (Sel){0,0,0};
     assert(buf->bufstart);
 }
 

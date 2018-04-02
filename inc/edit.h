@@ -1,15 +1,8 @@
 /* Utility Functions
  *****************************************************************************/
-/* Memory-mapped file representation */
-typedef struct {
-    uint8_t* buf; /* memory mapped byte buffer */
-    size_t len;   /* length of the buffer */
-} FMap;
-
 size_t pagealign(size_t sz);
 uint64_t getmillis(void);
 char* stringdup(const char* str);
-char* chomp(char* in);
 uint64_t modtime(char* path);
 char* strmcat(char* first, ...);
 
@@ -33,27 +26,28 @@ typedef struct Log {
     } data;
 } Log;
 
-/* gap buffer main data structure */
-typedef struct {
-    char* path;           /* the path to the open file */
-    uint64_t modtime;     /* modification time of the opened file */
-    size_t bufsize;       /* size of the buffer in runes */
-    char* bufstart;       /* start of the data buffer */
-    char* bufend;         /* end of the data buffer */
-    char* gapstart;       /* start of the gap */
-    char* gapend;         /* end of the gap */
-    Log* undo;            /* undo list */
-    Log* redo;            /* redo list */
-    bool modified;        /* tracks whether the buffer has been modified */
-    uint transid;         /* tracks the last used transaction id for log entries */
-} Buf;
-
 /* cursor/selection representation */
 typedef struct {
     size_t beg;
     size_t end;
     size_t col;
 } Sel;
+
+/* gap buffer main data structure */
+typedef struct {
+    char* path;       /* the path to the open file */
+    uint64_t modtime; /* modification time of the opened file */
+    size_t bufsize;   /* size of the buffer in runes */
+    char* bufstart;   /* start of the data buffer */
+    char* bufend;     /* end of the data buffer */
+    char* gapstart;   /* start of the gap */
+    char* gapend;     /* end of the gap */
+    Log* undo;        /* undo list */
+    Log* redo;        /* redo list */
+    bool modified;    /* tracks whether the buffer has been modified */
+    uint transid;     /* tracks the last used transaction id for log entries */
+    Sel selection;    /* the currently selected text */
+} Buf;
 
 void buf_init(Buf* buf);
 size_t buf_load(Buf* buf, char* path);
@@ -103,14 +97,13 @@ typedef struct {
 } Row;
 
 typedef struct {
-    Buf buffer;         /* the buffer used to populate the view */
-    Sel selection;      /* range of currently selected text */
-    size_t nrows;       /* number of rows in the view */
-    size_t ncols;       /* number of columns in the view */
-    Row** rows;         /* array of row data structures */
-    int clrnor, clrsel; /* text color pairs for normal and selected text */
-    bool sync_needed;   /* whether the view needs to be synced with cursor */
-    bool sync_center;   /* cursor should be centered on screen if possible */
+    Buf buffer;          /* the buffer used to populate the view */
+    Sel selection;       /* range of currently selected text */
+    int clrnor, clrsel;  /* text color pairs for normal and selected text */
+    size_t nrows, ncols; /* number of rows and columns in the view */
+    Row** rows;          /* array of row data structures */
+    bool sync_needed;    /* whether the view needs to be synced with cursor */
+    bool sync_center;    /* cursor should be centered on screen if possible */
 } View;
 
 enum {
