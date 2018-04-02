@@ -82,6 +82,12 @@ size_t buf_getln(Buf* buf, size_t off);
 size_t buf_getcol(Buf* buf, size_t pos);
 size_t buf_setcol(Buf* buf, size_t pos, size_t col);
 
+void buf_putc(Buf* buf, int c, Sel* sel);
+void buf_puts(Buf* buf, char* s, Sel* sel);
+int buf_getc(Buf* buf, Sel* sel);
+char* buf_gets(Buf* buf, Sel* sel);
+void buf_del(Buf* buf, Sel* sel);
+
 /* Screen management functions
  *****************************************************************************/
 typedef struct {

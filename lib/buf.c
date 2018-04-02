@@ -7,9 +7,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-size_t buf_setln(Buf* buf, size_t line);
-size_t buf_getcol(Buf* buf, size_t pos);
-size_t buf_setcol(Buf* buf, size_t pos, size_t col);
 static void buf_resize(Buf* buf, size_t sz);
 static void log_clear(Log** list);
 static void log_insert(Buf* buf, Log** list, size_t beg, size_t end);
@@ -19,7 +16,6 @@ static void delete(Buf* buf, size_t off);
 static size_t insert(Buf* buf, size_t off, Rune rune);
 static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes);
 static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel);
-static size_t next_size(size_t curr);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
 
 void buf_init(Buf* buf) {
@@ -499,13 +495,12 @@ static void syncgap(Buf* buf, size_t off) {
         buf_resize(buf, buf->bufsize << 1);
     /* Move the gap to the desired offset */
     char* newpos = (buf->bufstart + off);
-    if (newpos < buf->gapstart) {
+    if (newpos < buf->gapstart)
         while (newpos < buf->gapstart)
             *(--buf->gapend) = *(--buf->gapstart);
-    } else {
+    else
         while (newpos > buf->gapstart)
             *(buf->gapstart++) = *(buf->gapend++);
-    }
 }
 
 static void buf_resize(Buf* buf, size_t sz) {
@@ -577,13 +572,6 @@ static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
     *to = newlog;
 }
 
-static size_t next_size(size_t curr) {
-    int size = 1;
-    while(size < curr)
-        size = (size << 1);
-    return size;
-}
-
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {
     bool ret = false;
     size_t end = buf_end(buf);
@@ -592,4 +580,79 @@ static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {
     else if (move > 0 && off < end)
         ret = testfn(buf_get(buf, off+1));
     return ret;
+}
+
+/******************************************************************************/
+
+static Sel getsel(Buf* buf, Sel* p_sel) {
+    size_t temp;
+    Sel sel = (p_sel ? *p_sel : buf->selection);
+    if (sel.end < sel.beg)
+        temp = sel.beg, sel.beg = sel.end, sel.end = temp;
+    return sel;
+}
+
+static void setsel(Buf* buf, Sel* p_sel, Sel* p_newsel) {
+    if (p_sel)
+        *p_sel = *p_newsel;
+    else
+        buf->selection = *p_newsel;
+}
+
+static void putb(Buf* buf, char b, Sel* p_sel) {
+    syncgap(buf, p_sel->end);
+    *(buf->gapstart++) = b;
+    p_sel->end = p_sel->end + 1u;
+    p_sel->beg = p_sel->end;
+}
+
+static char getb(Buf* buf, size_t off) {
+    size_t bsz = (buf->gapstart - buf->bufstart);
+    if (off < bsz)
+        return *(buf->bufstart + off);
+    else
+        return *(buf->gapend + (off - bsz));
+}
+
+void buf_putc(Buf* buf, int c, Sel* p_sel) {
+    char utf8buf[UTF_MAX+1] = {0};
+    (void)utf8encode(utf8buf, c);
+    buf_puts(buf, utf8buf, p_sel);
+}
+
+void buf_puts(Buf* buf, char* s, Sel* p_sel) {
+    buf_del(buf, p_sel);
+    Sel sel = getsel(buf, p_sel);
+    while (s && *s) putb(buf, *(s++), &sel);
+    setsel(buf, p_sel, &sel);
+}
+
+int buf_getc(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    size_t rlen = 0;
+    Rune rune = 0;
+    while (!utf8decode(&rune, &rlen, getb(buf, sel.end++)));
+    return rune;
+}
+
+char* buf_gets(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    size_t nbytes = sel.end - sel.beg;
+    char* str = malloc(nbytes+1);
+    for (size_t i = 0; i < nbytes; i++)
+        str[i] = getb(buf, sel.beg + i);
+    str[nbytes] = '\0';
+    return str;
+}
+
+void buf_del(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    size_t nbytes = sel.end - sel.beg;
+    if (nbytes > 0) {
+        //char* str = buf_gets(buf, &sel);
+        syncgap(buf, sel.beg);
+        buf->gapend += nbytes;
+        // update log here
+        // free(str);
+    }
 }
