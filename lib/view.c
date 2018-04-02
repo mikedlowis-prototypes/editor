@@ -57,7 +57,7 @@ void view_reload(View* view) {
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
     size_t nrows = 1, pos = 0, col = 0;
     while (nrows < maxrows && pos < buf_end(&(view->buffer))) {
-        Rune r = buf_get(&(view->buffer), pos++);
+        Rune r = buf_getrat(&(view->buffer), pos++);
         col += runewidth(col, r);
         if (col >= ncols || r == '\n')
             col = 0, nrows++;
@@ -186,14 +186,8 @@ void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && (rune >= 0 && rune < 0x20))
         return;
-    if (num_selected(view->selection)) {
-        Sel sel = view->selection;
-        selswap(&sel);
-        sel.beg = sel.end = buf_change(&(view->buffer), sel.beg, sel.end);
-        view->selection = sel;
-    }
-    unsigned newpos = buf_insert(&(view->buffer), indent, view->selection.end, rune);
-    move_to(view, false, newpos);
+    buf_putc(&(view->buffer), rune, &(view->selection));
+    move_to(view, false, view->selection.end);
 }
 
 void view_delete(View* view, int dir, bool byword) {
@@ -201,8 +195,8 @@ void view_delete(View* view, int dir, bool byword) {
     if (sel->beg == sel->end)
         (byword ? view_byword : view_byrune)(view, dir, true);
     selswap(sel);
-    unsigned newpos = buf_delete(&(view->buffer), sel->beg, sel->end);
-    move_to(view, false, newpos);
+    buf_del(&(view->buffer), sel);
+    move_to(view, false, sel->beg);
 }
 
 void view_jumpto(View* view, bool extsel, size_t off) {
@@ -214,7 +208,7 @@ void view_bol(View* view, bool extsel) {
     Buf* buf = &(view->buffer);
     unsigned bol = buf_bol(buf, view->selection.end);
     unsigned boi = bol;
-    for (; ' ' == buf_get(buf, boi) || '\t' == buf_get(buf, boi); boi++);
+    for (; ' '  == buf_getrat(buf, boi) || '\t' == buf_getrat(buf, boi); boi++);
     unsigned pos = view->selection.end;
     pos = (pos == bol || pos > boi ? boi : bol);
     move_to(view, extsel, pos);
@@ -269,7 +263,7 @@ void view_append(View* view, char* str) {
     if (view->selection.end != end)
         view->selection = (Sel){ .beg = end, .end = end };
     if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
-        buf_insert(&(view->buffer), false, view->selection.end++, '\n');
+        buf_putc(&(view->buffer), '\n', &(view->selection));
         view->selection.beg++;
     }
     unsigned beg = view->selection.beg;
@@ -278,24 +272,7 @@ void view_append(View* view, char* str) {
 }
 
 char* view_getstr(View* view, Sel* range) {
-    Buf* buf = &(view->buffer);
-    Sel sel = (range ? *range : view->selection);
-    selswap(&sel);
-    char utf[UTF_MAX] = {0};
-    size_t len = 0;
-    char*  str = NULL;
-    for (; sel.beg < sel.end; sel.beg++) {
-        Rune rune = buf_get(buf, sel.beg);
-        size_t n = utf8encode(utf, rune);
-        str = realloc(str, len + n);
-        memcpy(str+len, utf, n);
-        len += n;
-    }
-    if (str) {
-        str = realloc(str, len+1);
-        str[len] = '\0';
-    }
-    return str;
+    return buf_gets(&(view->buffer), &(view->selection));
 }
 
 char* view_getcmd(View* view) {
@@ -331,41 +308,8 @@ void view_scrollpage(View* view, int move) {
     view_scroll(view, move);
 }
 
-void view_indent(View* view, int dir) {
-    Buf* buf = &(view->buffer);
-    unsigned indoff = (ExpandTabs ? TabWidth : 1);
-    selswap(&(view->selection));
-    view->selection.beg = buf_bol(buf, view->selection.beg);
-    view->selection.end = buf_eol(buf, view->selection.end);
-    unsigned off = buf_bol(buf, view->selection.end);
-    if (num_selected(view->selection) == 0) return;
-
-    do {
-        if (dir == RIGHT) {
-            buf_insert(buf, true, off, '\t');
-            view->selection.end += indoff;
-        } else if (dir == LEFT) {
-            unsigned i = 4;
-            for (; i > 0; i--) {
-                if (' ' == buf_get(buf, off)) {
-                    buf_delete(buf, off, off+1);
-                    view->selection.end--;
-                } else {
-                    break;
-                }
-            }
-            if (i && '\t' == buf_get(buf, off)) {
-                buf_delete(buf, off, off+1);
-                view->selection.end--;
-            }
-        }
-        off = buf_byline(buf, off, UP);
-
-   } while (off && off >= view->selection.beg);
-}
-
 Rune view_getrune(View* view) {
-    return buf_get(&(view->buffer), view->selection.end);
+    return buf_getc(&(view->buffer), &(view->selection));
 }
 
 void view_scrollto(View* view, size_t csr) {
@@ -414,7 +358,7 @@ static void move_to(View* view, bool extsel, size_t off) {
 static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
-    Rune r = buf_get(buf, sel->end);
+    Rune r = buf_getc(buf, sel);
     if (r == '(' || r == ')') {
         buf_getblock(buf, '(', ')', sel);
     } else if (r == '[' || r == ']') {
@@ -472,7 +416,7 @@ static void find_cursor(View* view, size_t* csrx, size_t* csry) {
                     *csry = y, *csrx = x;
                     break;
                 }
-                x += runewidth(x, buf_get(&(view->buffer),pos++));
+                x += runewidth(x, buf_getrat(&(view->buffer), pos++));
             }
             break;
         }
@@ -514,7 +458,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
         uint32_t attr = (in_selection(view->selection, pos) ? view->clrsel : view->clrnor);
-        Rune r = buf_get(&(view->buffer), pos++);
+        Rune r = buf_getrat(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {
             break;
@@ -528,7 +472,7 @@ static unsigned prev_screen_line(View* view, unsigned bol, unsigned off) {
     while (true) {
         unsigned x;
         for (x = 0; x < view->ncols && (pos + x) < off; x++)
-            x += runewidth(x, buf_get(&(view->buffer), pos+x));
+            x += runewidth(x, buf_getrat(&(view->buffer), pos+x));
         if ((pos + x) >= off) break;
         pos += x;
     }

@@ -53,11 +53,8 @@ void buf_init(Buf* buf);
 size_t buf_load(Buf* buf, char* path);
 void buf_reload(Buf* buf);
 void buf_save(Buf* buf);
-Rune buf_get(Buf* buf, size_t pos);
 size_t buf_end(Buf* buf);
-size_t buf_insert(Buf* buf, bool indent, size_t off, Rune rune);
-size_t buf_delete(Buf* buf, size_t beg, size_t end);
-size_t buf_change(Buf* buf, size_t beg, size_t end);
+
 void buf_chomp(Buf* buf);
 void buf_undo(Buf* buf, Sel* sel);
 void buf_redo(Buf* buf, Sel* sel);
@@ -82,6 +79,7 @@ size_t buf_getln(Buf* buf, size_t off);
 size_t buf_getcol(Buf* buf, size_t pos);
 size_t buf_setcol(Buf* buf, size_t pos, size_t col);
 
+int buf_getrat(Buf* buf, size_t off);
 void buf_putc(Buf* buf, int c, Sel* sel);
 void buf_puts(Buf* buf, char* s, Sel* sel);
 int buf_getc(Buf* buf, Sel* sel);
@@ -147,7 +145,6 @@ void view_selctx(View* view);
 void view_scroll(View* view, int move);
 void view_scrollpage(View* view, int move);
 void view_setln(View* view, size_t line);
-void view_indent(View* view, int dir);
 size_t view_selsize(View* view);
 void view_selprev(View* view);
 void view_setcursor(View* view, size_t row, size_t col, bool extsel);
