@@ -387,13 +387,9 @@ static void jump_to(char* arg) {
 }
 
 static void goto_ctag(char* arg) {
-    if (x11_keymodsset(ModShift)) {
-        view_jumpback(win_view(FOCUSED));
-    } else {
-        char* str = view_getctx(win_view(FOCUSED));
-        jump_to(str);
-        free(str);
-    }
+    char* str = view_getctx(win_view(FOCUSED));
+    jump_to(str);
+    free(str);
 }
 
 static void tabs(char* arg) {

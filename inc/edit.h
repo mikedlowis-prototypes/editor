@@ -105,7 +105,6 @@ typedef struct {
 typedef struct {
     Buf buffer;         /* the buffer used to populate the view */
     Sel selection;      /* range of currently selected text */
-    size_t prev_csr;    /* previous cursor location */
     size_t nrows;       /* number of rows in the view */
     size_t ncols;       /* number of columns in the view */
     Row** rows;         /* array of row data structures */
@@ -157,7 +156,6 @@ void view_selextend(View* view, size_t row, size_t col);
 void view_selword(View* view, size_t row, size_t col);
 void view_select(View* view, size_t row, size_t col);
 void view_jumpto(View* view, bool extsel, size_t off);
-void view_jumpback(View* view);
 void view_scrollto(View* view, size_t csr);
 Rune view_getrune(View* view);
 

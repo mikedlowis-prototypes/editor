@@ -33,7 +33,6 @@ void view_init(View* view, char* file) {
     view->selection   = (Sel){ 0 };
     view->sync_needed = true;
     view->sync_center = true;
-    view->prev_csr    = 0;
     /* load the file and jump to the address returned from the load function */
     buf_init(&(view->buffer));
     if (file) {
@@ -180,7 +179,6 @@ bool view_findstr(View* view, int dir, char* str) {
     view->selection   = sel;
     view->sync_needed = true;
     view->sync_center = true;
-    if (found) view->prev_csr = prev;
     return found;
 }
 
@@ -208,13 +206,7 @@ void view_delete(View* view, int dir, bool byword) {
 }
 
 void view_jumpto(View* view, bool extsel, size_t off) {
-    view->prev_csr = view->selection.end;
     move_to(view, extsel, off);
-}
-
-void view_jumpback(View* view) {
-    view_jumpto(view, false, view->prev_csr);
-    view->sync_center = true;
 }
 
 void view_bol(View* view, bool extsel) {
@@ -247,14 +239,12 @@ void view_setln(View* view, size_t line) {
 }
 
 void view_undo(View* view) {
-    view->prev_csr = view->selection.end;
     buf_undo(&(view->buffer), &(view->selection));
     view->sync_needed = true;
     view->sync_center = !selection_visible(view);
 }
 
 void view_redo(View* view) {
-    view->prev_csr = view->selection.end;
     buf_redo(&(view->buffer), &(view->selection));
     view->sync_needed = true;
     view->sync_center = !selection_visible(view);
