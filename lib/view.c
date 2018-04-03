@@ -5,7 +5,7 @@
 
 typedef size_t (*movefn_t)(Buf* buf, size_t pos, int count);
 
-static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything);
+static void move_selection(View* view, bool extsel, int move, movefn_t bything);
 static void move_to(View* view, bool extsel, size_t off);
 static void select_context(View* view, bool (*isword)(Rune), Sel* sel);
 static bool selection_visible(View* view);
@@ -97,15 +97,15 @@ Row* view_getrow(View* view, size_t row) {
 }
 
 void view_byrune(View* view, int move, bool extsel) {
-    move_selection(view, extsel, getsel(view), move, buf_byrune);
+    move_selection(view, extsel, move, buf_byrune);
 }
 
 void view_byword(View* view, int move, bool extsel) {
-    move_selection(view, extsel, getsel(view), move, buf_byword);
+    move_selection(view, extsel, move, buf_byword);
 }
 
 void view_byline(View* view, int move, bool extsel) {
-    move_selection(view, extsel, getsel(view), move, buf_byline);
+    move_selection(view, extsel, move, buf_byline);
 }
 
 void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
@@ -289,19 +289,20 @@ void view_selectobj(View* view, bool (*istype)(Rune)) {
     view->sync_needed = true;
 }
 
-static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything) {
+static void move_selection(View* view, bool extsel, int move, movefn_t bything) {
     view->sync_needed = true;
-    if (buf_selsz(&(view->buffer), sel) && !extsel) {
-        buf_selclr(&(view->buffer), sel, move);
+    if (buf_selsz(&(view->buffer), NULL) && !extsel) {
+        buf_selclr(&(view->buffer), NULL, move);
     } else {
+        Sel* sel = getsel(view);
         sel->end = bything(&(view->buffer), sel->end, move);
         if (bything == buf_byline)
             buf_setcol(&(view->buffer), getsel(view));
-        if (!extsel) buf_selclr(&(view->buffer), sel, RIGHT);
+        if (!extsel) buf_selclr(&(view->buffer), sel, move);
     }
     /* only update column if not moving vertically */
     if (bything != buf_byline)
-        buf_getcol(&(view->buffer), getsel(view));
+        buf_getcol(&(view->buffer), NULL);
 }
 
 static void move_to(View* view, bool extsel, size_t off) {

@@ -410,12 +410,14 @@ void buf_setln(Buf* buf, Sel* sel, size_t line) {
 }
 
 void buf_getcol(Buf* buf, Sel* sel) {
+    if (!sel) sel = &(buf->selection);
     size_t pos = sel->end, curr = buf_bol(buf, pos);
     for (sel->col = 0; curr < pos; curr = buf_byrune(buf, curr, 1))
         sel->col += runewidth(sel->col, buf_getrat(buf, curr));
 }
 
 void buf_setcol(Buf* buf, Sel* sel) {
+    if (!sel) sel = &(buf->selection);
     size_t bol = buf_bol(buf, sel->end);
     size_t curr = bol, len = 0, i = 0;
     /* determine the length of the line in columns */
