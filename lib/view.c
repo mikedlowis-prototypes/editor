@@ -335,7 +335,7 @@ static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t
     }
     /* only update column if not moving vertically */
     if (bything != buf_byline)
-        sel->col = buf_getcol(&(view->buffer), sel->end);
+        buf_getcol(&(view->buffer), &(view->selection));
 }
 
 static void move_to(View* view, bool extsel, size_t off) {
@@ -343,7 +343,7 @@ static void move_to(View* view, bool extsel, size_t off) {
     view->selection.end = (off > buf_end(buf) ? buf_end(buf) : off);
     if (!extsel)
         view->selection.beg = view->selection.end;
-    view->selection.col = buf_getcol(&(view->buffer), view->selection.end);
+    buf_getcol(&(view->buffer), &(view->selection));
     view->sync_needed = true;
 }
 
@@ -366,7 +366,7 @@ static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
         buf_getword(buf, risbigword, sel);
     }
     sel->end = buf_byrune(&(view->buffer), sel->end, RIGHT);
-    sel->col = buf_getcol(&(view->buffer), sel->end);
+    buf_getcol(&(view->buffer), &(view->selection));
 }
 
 static void selswap(Sel* sel) {

@@ -430,11 +430,10 @@ size_t buf_getln(Buf* buf, size_t off) {
     return line;
 }
 
-size_t buf_getcol(Buf* buf, size_t pos) {
-    size_t col = 0, curr = buf_bol(buf, pos);
-    for (; curr < pos; curr = buf_byrune(buf, curr, 1))
-        col += runewidth(col, buf_getrat(buf, curr));
-    return col;
+void buf_getcol(Buf* buf, Sel* sel) {
+    size_t pos = sel->end, curr = buf_bol(buf, pos);
+    for (sel->col = 0; curr < pos; curr = buf_byrune(buf, curr, 1))
+        sel->col += runewidth(sel->col, buf_getrat(buf, curr));
 }
 
 size_t buf_setcol(Buf* buf, size_t pos, size_t col) {
