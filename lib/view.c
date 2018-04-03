@@ -8,9 +8,6 @@ typedef size_t (*movefn_t)(Buf* buf, size_t pos, int count);
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything);
 static void move_to(View* view, bool extsel, size_t off);
 static void select_context(View* view, bool (*isword)(Rune), Sel* sel);
-static void selswap(Sel* sel);
-static size_t num_selected(Sel sel);
-static bool in_selection(Sel sel, size_t off);
 static bool selection_visible(View* view);
 static void find_cursor(View* view, size_t* csrx, size_t* csry);
 static void clearrow(View* view, size_t row);
@@ -125,10 +122,10 @@ void view_selword(View* view, size_t row, size_t col) {
 }
 
 void view_selprev(View* view) {
-    if (!num_selected( *(getsel(view)) ))
+    if (!view_selsize(view))
         buf_lastins(&(view->buffer), getsel(view));
     else
-        getsel(view)->beg = getsel(view)->end;
+        buf_selclr(&(view->buffer), NULL, RIGHT);
 }
 
 void view_select(View* view, size_t row, size_t col) {
@@ -137,7 +134,7 @@ void view_select(View* view, size_t row, size_t col) {
 }
 
 size_t view_selsize(View* view) {
-    return num_selected( *(getsel(view)) );
+    return buf_selsz(&(view->buffer), NULL);
 }
 
 char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
@@ -145,7 +142,7 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
         Sel sel = { .beg = off, .end = off };
-        if (in_selection( *(getsel(view)), off)) {
+        if (buf_insel(&(view->buffer), NULL, off)) {
             sel = *(getsel(view));
         } else {
             buf_getword(&(view->buffer), isword, &sel);
@@ -172,7 +169,7 @@ void view_insert(View* view, bool indent, Rune rune) {
 }
 
 void view_delete(View* view, int dir, bool byword) {
-    if (getsel(view)->beg == getsel(view)->end)
+    if (!view_selsize(view))
         (byword ? view_byword : view_byrune)(view, dir, true);
     buf_del(&(view->buffer), getsel(view));
     move_to(view, false, getsel(view)->end);
@@ -232,13 +229,13 @@ char* view_getstr(View* view, Sel* range) {
 }
 
 char* view_getcmd(View* view) {
-    if (!num_selected( *(getsel(view)) ))
+    if (!view_selsize(view))
         select_context(view, riscmd, getsel(view));
     return view_getstr(view, NULL);
 }
 
 void view_selctx(View* view) {
-    if (!num_selected( *(getsel(view)) ))
+    if (!view_selsize(view))
         select_context(view, risword, getsel(view));
 }
 
@@ -294,17 +291,13 @@ void view_selectobj(View* view, bool (*istype)(Rune)) {
 
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything) {
     view->sync_needed = true;
-    if (num_selected(*sel) && !extsel) {
-        selswap(sel);
-        if (move == RIGHT || move == DOWN)
-            sel->beg = sel->end;
-        else
-            sel->end = sel->beg;
+    if (buf_selsz(&(view->buffer), sel) && !extsel) {
+        buf_selclr(&(view->buffer), sel, move);
     } else {
         sel->end = bything(&(view->buffer), sel->end, move);
         if (bything == buf_byline)
             buf_setcol(&(view->buffer), getsel(view));
-        if (!extsel) sel->beg = sel->end;
+        if (!extsel) buf_selclr(&(view->buffer), sel, RIGHT);
     }
     /* only update column if not moving vertically */
     if (bything != buf_byline)
@@ -340,24 +333,6 @@ static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
     }
     sel->end = buf_byrune(&(view->buffer), sel->end, RIGHT);
     buf_getcol(&(view->buffer), getsel(view));
-}
-
-static void selswap(Sel* sel) {
-    if (sel->end < sel->beg) {
-        size_t temp = sel->beg;
-        sel->beg = sel->end;
-        sel->end = temp;
-    }
-}
-
-static size_t num_selected(Sel sel) {
-    selswap(&sel);
-    return (sel.end - sel.beg);
-}
-
-static bool in_selection(Sel sel, size_t off) {
-    selswap(&sel);
-    return (sel.beg <= off && off < sel.end);
 }
 
 static bool selection_visible(View* view) {
@@ -422,7 +397,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
     view_getrow(view, row)->off  = pos;
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (in_selection(*(getsel(view)), pos) ? view->clrsel : view->clrnor);
+        uint32_t attr = (buf_insel(&(view->buffer), NULL, pos) ? view->clrsel : view->clrnor);
         Rune r = buf_getrat(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {

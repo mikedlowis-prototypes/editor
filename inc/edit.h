@@ -75,6 +75,10 @@ void buf_setln(Buf* buf, Sel* sel, size_t line);
 void buf_getcol(Buf* buf, Sel* p_sel);
 void buf_setcol(Buf* buf, Sel* p_sel);
 
+size_t buf_selsz(Buf* buf, Sel* p_sel);
+void buf_selclr(Buf* buf, Sel* p_sel, int dir);
+bool buf_insel(Buf* buf, Sel* p_sel, size_t off);
+
 /* Screen management functions
  *****************************************************************************/
 typedef struct {

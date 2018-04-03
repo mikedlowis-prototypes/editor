@@ -9,13 +9,8 @@
 
 static void buf_resize(Buf* buf, size_t sz);
 static void log_clear(Log** list);
-static void log_insert(Buf* buf, Log** list, size_t beg, size_t end);
-static void log_delete(Buf* buf, Log** list, size_t off, char* r, size_t len);
 static void syncgap(Buf* buf, size_t off);
-static void delete(Buf* buf, size_t off);
-static size_t insert(Buf* buf, size_t off, Rune rune);
 static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str);
-static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
 
 void buf_init(Buf* buf) {
@@ -446,3 +441,21 @@ static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {
     return ret;
 }
 
+/******************************************************************************/
+
+size_t buf_selsz(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    return sel.end - sel.beg;
+}
+
+void buf_selclr(Buf* buf, Sel* p_sel, int dir) {
+    Sel sel = getsel(buf, p_sel);
+    if (dir > 0) sel.beg = sel.end;
+    else sel.end = sel.beg;
+    setsel(buf, p_sel, &sel);
+}
+
+bool buf_insel(Buf* buf, Sel* p_sel, size_t off) {
+    Sel sel = getsel(buf, p_sel);
+    return (off >= sel.beg && off < sel.end);
+}
