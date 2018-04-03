@@ -8,7 +8,7 @@
     #define FONT "Monaco:size=10"
     #define LNSPACE 0
 #else
-    #define FONT "Liberation Mono:pixelsize=14"
+    #define FONT "Liberation Mono:size=11"
     #define LNSPACE 1
 #endif
 
@@ -30,6 +30,9 @@ int /* Integer config options */
     ExpandTabs = ON,
     DosLineFeed = OFF;
 
+#define GRUVBOX 1
+
+#if defined(GRUVBOX)
 int Palette[ClrCount] = {
     [Red]      = 0xFFfb4934, // Red
     [Green]    = 0xFFb8bb26, // Green
@@ -51,5 +54,27 @@ int Palette[ClrCount] = {
     [VerBdr]   = 0xFF665c54, // Vertical border
     [HorBdr]   = 0xFF665c54, // Horizontal border
 };
-
+#elif defined(PARCHMENT)
+int Palette[ClrCount] = {
+    [Red]      = 0xFF880000, // Red
+    [Green]    = 0xFF005500, // Green
+    [Yellow]   = 0xFFeeee9e, // Yellow
+    [Blue]     = 0xFF004488, // Blue
+    [Purple]   = 0xFF770077, // Purple
+    [Aqua]     = 0xFF007777, // Aqua
+    [Orange]   = 0xFF000000, // Orange ???
+    [EditBg]   = 0xFFffffea, // Edit region background
+    [EditFg]   = 0xFF000000, // Edit region text
+    [EditSel]  = 0xFFeeee9e, // Edit region selection
+    [EditCsr]  = 0xFF000000, // Edit region cursor
+    [TagsBg]   = 0xFFeaffff, // Tags region background
+    [TagsFg]   = 0xFF000000, // Tags region text
+    [TagsSel]  = 0xFF9eeeee, // Tags region selection
+    [TagsCsr]  = 0xFF000000, // Tags region cursor
+    [ScrollBg] = 0xff99994c, // Scroll region background
+    [ScrollFg] = 0xFFffffea, // Scroll region foreground
+    [VerBdr]   = 0xFF8888cc, // Vertical border
+    [HorBdr]   = 0xFF8888cc, // Horizontal border
+};
+#endif
 
