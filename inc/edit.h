@@ -128,6 +128,7 @@ void view_redo(View* view);
 void view_putstr(View* view, char* str);
 char* view_getstr(View* view, Sel* sel);
 char* view_getcmd(View* view);
+char* view_getword(View* view);
 char* view_getctx(View* view);
 void view_selctx(View* view);
 void view_scroll(View* view, int move);
@@ -142,6 +143,8 @@ void view_select(View* view, size_t row, size_t col);
 void view_jumpto(View* view, bool extsel, size_t off);
 void view_scrollto(View* view, size_t csr);
 Rune view_getrune(View* view);
+void view_selectall(View* view);
+void view_selectobj(View* view, bool (*istype)(Rune));
 
 /* Command Executions
  *****************************************************************************/

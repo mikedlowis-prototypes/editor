@@ -137,9 +137,6 @@ void win_init(KeyBinding* bindings) {
     Keys = bindings;
     CurrFont = x11_font_load(FontString);
     View* view = win_view(TAGS);
-    view->buffer.gapstart = view->buffer.bufstart;
-    view->buffer.gapend   = view->buffer.bufend;
-    view->selection = (Sel){0,0,0};
     view_putstr(view, TagString);
     view_selprev(view); // clear the selection
     buf_logclear(&(view->buffer));
@@ -191,8 +188,6 @@ void win_quit(void) {
     uint64_t now = getmillis();
     if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime)
         exit(0);
-//    else
-//        view_append(win_view(TAGS), "File is modified.");
     before = now;
 }
 

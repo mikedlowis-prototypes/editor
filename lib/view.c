@@ -282,6 +282,16 @@ void view_scrollto(View* view, size_t csr) {
     }
 }
 
+void view_selectall(View* view) {
+    view->selection = (Sel){ .beg = 0, .end = buf_end(&(view->buffer)) };
+    view->sync_needed = true;
+}
+
+void view_selectobj(View* view, bool (*istype)(Rune)) {
+    buf_getword(&(view->buffer), istype, &(view->selection));
+    view->sync_needed = true;
+}
+
 static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t bything) {
     view->sync_needed = true;
     if (num_selected(*sel) && !extsel) {

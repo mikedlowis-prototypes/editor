@@ -40,9 +40,7 @@ static void select_line(char* arg) {
 }
 
 static void select_all(char* arg) {
-    View* view = win_view(FOCUSED);
-    view_jumpto(view, false, buf_end(&(view->buffer)));
-    view->selection.beg = 0;
+    view_selectall(win_view(FOCUSED));
 }
 
 static void join_lines(char* arg) {
@@ -73,11 +71,7 @@ void cut(char* arg) {
     /* now perform the cut */
     char* str = view_getstr(view, NULL);
     x11_sel_set(CLIPBOARD, str);
-    if (str && *str) {
-        delete(arg);
-        if (view->selection.end == buf_end(&(view->buffer)))
-            view_delete(view, LEFT, false);
-    }
+    if (str && *str) delete(arg);
 }
 
 void paste(char* arg) {
@@ -241,7 +235,7 @@ static void cmd_exec(char* cmd) {
 
     /* get the selection that the command will operate on */
     if (op && op != '<' && op != '!' && 0 == view_selsize(win_view(EDIT)))
-        win_view(EDIT)->selection = (Sel){ .beg = 0, .end = buf_end(win_buf(EDIT)) };
+        view_selectall(win_view(EDIT));
     char* input = view_getstr(win_view(EDIT), NULL);
     size_t len  = (input ? strlen(input) : 0);
     View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
@@ -345,8 +339,8 @@ static void pick_ctag(char* arg) {
 
 static void complete(char* arg) {
     View* view = win_view(FOCUSED);
-    buf_getword(&(view->buffer), risword, &(view->selection));
-    view->selection.end = buf_byrune(&(view->buffer), view->selection.end, RIGHT);
+    view_selectobj(view, risword);
+    view_byrune(view, RIGHT, true);
     cmd_execwitharg(CMD_COMPLETE, view_getstr(view, NULL));
 }
 
@@ -390,11 +384,6 @@ static void newline(char* arg) {
     if (x11_keymodsset(ModShift)) {
         view_byline(view, UP, false);
         view_bol(view, false);
-        if (view->selection.end == 0) {
-            view_insert(view, true, '\n');
-            view->selection = (Sel){0,0,0};
-            return;
-        }
     }
     view_eol(view, false);
     view_insert(view, true, '\n');
