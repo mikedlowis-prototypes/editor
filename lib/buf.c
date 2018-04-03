@@ -234,28 +234,23 @@ void buf_del(Buf* buf, Sel* p_sel) {
 /******************************************************************************/
 
 void buf_undo(Buf* buf, Sel* sel) {
-    if (!buf->undo) return;
-    uint transid = buf->undo->transid;
-    while (buf->undo && (buf->undo->transid == transid))
-        swaplog(buf, &(buf->undo), &(buf->redo), sel);
 }
 
 void buf_redo(Buf* buf, Sel* sel) {
-    if (!buf->redo) return;
-    uint transid = buf->redo->transid;
-    while (buf->redo && (buf->redo->transid == transid))
-        swaplog(buf, &(buf->redo), &(buf->undo), sel);
 }
 
 void buf_loglock(Buf* buf) {
-    Log* log = buf->undo;
-    if (log && log->transid == buf->transid)
-        buf->transid++;
 }
 
 void buf_logclear(Buf* buf) {
     log_clear(&(buf->redo));
     log_clear(&(buf->undo));
+}
+
+void buf_lastins(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    // Set selection to last inserted text
+    setsel(buf, p_sel, &sel);
 }
 
 static void log_clear(Log** list) {
@@ -266,97 +261,6 @@ static void log_clear(Log** list) {
             free(deadite->data.del.runes);
         free(deadite);
     }
-}
-
-static void log_insert(Buf* buf, Log** list, size_t beg, size_t end) {
-    Log* log = *list;
-    bool locked = (!log || log->transid != buf->transid);
-    if (locked || !log->insert || (end != log->data.ins.end+1)) {
-        buf_loglock(buf);
-        Log* newlog  = (Log*)calloc(sizeof(Log), 1);
-        newlog->transid = buf->transid;
-        newlog->insert = true;
-        newlog->data.ins.beg = beg;
-        newlog->data.ins.end = end;
-        newlog->next = *list;
-        *list = newlog;
-    } else if (beg < log->data.ins.beg) {
-        log->data.ins.beg--;
-    } else {
-        log->data.ins.end++;
-    }
-}
-
-static void log_delete(Buf* buf, Log** list, size_t off, char* r, size_t len) {
-    Log* log = *list;
-    bool locked = (!log || log->transid != buf->transid);
-    if (locked || log->insert || ((off != log->data.del.off) && (off+1 != log->data.del.off))) {
-        buf_loglock(buf);
-        Log* newlog = (Log*)calloc(sizeof(Log), 1);
-        newlog->transid = buf->transid;
-        newlog->insert = false;
-        newlog->data.del.off = off;
-        newlog->data.del.len = len;
-        newlog->data.del.runes = (char*)malloc(len);
-        for (size_t i = 0; i < len; i++)
-            newlog->data.del.runes[i] = r[i];
-        newlog->next = *list;
-        *list = newlog;
-    } else if (off == log->data.del.off) {
-        log->data.del.len++;
-        log->data.del.runes = (char*)realloc(log->data.del.runes, log->data.del.len);
-        log->data.del.runes[log->data.del.len-1] = *r;
-    } else {
-        size_t bytes = sizeof(Rune) * log->data.del.len;
-        log->data.del.len++;
-        log->data.del.off--;
-        log->data.del.runes = (char*)realloc(log->data.del.runes, bytes);
-        memmove(log->data.del.runes+1, log->data.del.runes, bytes);
-        log->data.del.runes[0] = *r;
-    }
-}
-
-static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel) {
-    /* pop the last action */
-    Log* log = *from;
-    if (!log) return;
-    *from = log->next;
-    /* invert the log type and move it to the destination */
-    Log* newlog = (Log*)calloc(sizeof(Log), 1);
-    newlog->transid = log->transid;
-    if (log->insert) {
-        sel->beg = sel->end = log->data.ins.beg;
-        newlog->insert = false;
-        size_t n = (log->data.ins.end - log->data.ins.beg);
-        newlog->data.del.off   = log->data.ins.beg;
-        newlog->data.del.len   = n;
-        newlog->data.del.runes = (char*)malloc(n);
-        for (size_t i = 0; i < n; i++) {
-            newlog->data.del.runes[i] = buf_getrat(buf, log->data.ins.beg);
-            delete(buf, log->data.ins.beg);
-        }
-    } else {
-        newlog->insert = true;
-        sel->beg = newlog->data.ins.beg = log->data.del.off;
-        newlog->data.ins.end = newlog->data.ins.beg;
-        for (size_t i = log->data.del.len; i > 0; i--) {
-            newlog->data.ins.end += insert(buf, newlog->data.ins.beg, log->data.del.runes[i-1]);
-        }
-        sel->end = newlog->data.ins.end;
-    }
-    newlog->next = *to;
-    *to = newlog;
-}
-
-static void delete(Buf* buf, size_t off) {
-    syncgap(buf, off);
-    buf->gapend++;
-}
-
-static size_t insert(Buf* buf, size_t off, Rune rune) {
-    syncgap(buf, off);
-    *(buf->gapstart++) = rune;
-    return 1;
 }
 
 /******************************************************************************/
@@ -506,29 +410,6 @@ void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end) {
     free(runes);
 }
 
-void buf_lastins(Buf* buf, size_t* beg, size_t* end) {
-    Log* log = buf->undo;
-    size_t opbeg = *end, opend = *end;
-    if (log && log->insert)
-        opbeg = log->data.ins.end, opend = log->data.ins.end;
-
-    size_t delsize = 0;
-    for (; log; log = log->next) {
-        if (log->insert) {
-            size_t ibeg = log->data.ins.beg,
-                     iend = log->data.ins.end - delsize;
-            if (iend < ibeg || ibeg > opbeg || iend < opbeg) break;
-            if (ibeg < opbeg && iend > opend) break;
-            opbeg = ibeg, delsize = 0;
-        } else {
-            /* bail if the delete doesnt overlap */
-            if(log->data.del.off != opbeg) break;
-            delsize = log->data.del.len;
-        }
-    }
-    *beg = opbeg, *end = opend;
-}
-
 size_t buf_setln(Buf* buf, size_t line) {
     size_t curr = 0, end = buf_end(buf);
     while (line > 1 && curr < end) {
@@ -550,18 +431,15 @@ size_t buf_getln(Buf* buf, size_t off) {
 }
 
 size_t buf_getcol(Buf* buf, size_t pos) {
-    size_t curr = buf_bol(buf, pos);
-    size_t col = 0;
+    size_t col = 0, curr = buf_bol(buf, pos);
     for (; curr < pos; curr = buf_byrune(buf, curr, 1))
         col += runewidth(col, buf_getrat(buf, curr));
     return col;
 }
 
 size_t buf_setcol(Buf* buf, size_t pos, size_t col) {
-    size_t bol  = buf_bol(buf, pos);
-    size_t curr = bol;
-    size_t len  = 0;
-    size_t i    = 0;
+    size_t bol = buf_bol(buf, pos);
+    size_t curr = bol, len = 0, i = 0;
     /* determine the length of the line in columns */
     for (; !buf_iseol(buf, curr); curr++)
         len += runewidth(len, buf_getrat(buf, curr));

@@ -55,11 +55,19 @@ void buf_reload(Buf* buf);
 void buf_save(Buf* buf);
 size_t buf_end(Buf* buf);
 
-void buf_chomp(Buf* buf);
+int buf_getrat(Buf* buf, size_t off);
+void buf_putc(Buf* buf, int c, Sel* sel);
+void buf_puts(Buf* buf, char* s, Sel* sel);
+int buf_getc(Buf* buf, Sel* sel);
+char* buf_gets(Buf* buf, Sel* sel);
+void buf_del(Buf* buf, Sel* sel);
+
 void buf_undo(Buf* buf, Sel* sel);
 void buf_redo(Buf* buf, Sel* sel);
 void buf_loglock(Buf* buf);
 void buf_logclear(Buf* buf);
+void buf_lastins(Buf* buf, Sel* p_sel);
+
 bool buf_iseol(Buf* buf, size_t pos);
 size_t buf_bol(Buf* buf, size_t pos);
 size_t buf_eol(Buf* buf, size_t pos);
@@ -73,18 +81,11 @@ size_t buf_byrune(Buf* buf, size_t pos, int count);
 size_t buf_byword(Buf* buf, size_t pos, int count);
 size_t buf_byline(Buf* buf, size_t pos, int count);
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
-void buf_lastins(Buf* buf, size_t* beg, size_t* end);
+
 size_t buf_setln(Buf* buf, size_t line);
 size_t buf_getln(Buf* buf, size_t off);
 size_t buf_getcol(Buf* buf, size_t pos);
 size_t buf_setcol(Buf* buf, size_t pos, size_t col);
-
-int buf_getrat(Buf* buf, size_t off);
-void buf_putc(Buf* buf, int c, Sel* sel);
-void buf_puts(Buf* buf, char* s, Sel* sel);
-int buf_getc(Buf* buf, Sel* sel);
-char* buf_gets(Buf* buf, Sel* sel);
-void buf_del(Buf* buf, Sel* sel);
 
 /* Screen management functions
  *****************************************************************************/
