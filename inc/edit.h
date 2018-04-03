@@ -91,7 +91,6 @@ typedef struct {
 
 typedef struct {
     Buf buffer;          /* the buffer used to populate the view */
-    Sel selection;       /* range of currently selected text */
     int clrnor, clrsel;  /* text color pairs for normal and selected text */
     size_t nrows, ncols; /* number of rows and columns in the view */
     Row** rows;          /* array of row data structures */
