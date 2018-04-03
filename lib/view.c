@@ -35,14 +35,7 @@ void view_init(View* view, char* file) {
     view->sync_center = true;
     /* load the file and jump to the address returned from the load function */
     buf_init(&(view->buffer));
-    if (file) {
-        size_t pos = buf_load(&(view->buffer), file);
-        if (pos > 0) {
-            view_jumpto(view, false, pos);
-            view_eol(view, false);
-            view_selctx(view);
-        }
-    }
+    if (file) buf_load(&(view->buffer), file);
 }
 
 void view_reload(View* view) {
@@ -222,7 +215,7 @@ void view_eof(View* view, bool extsel) {
 }
 
 void view_setln(View* view, size_t line) {
-    view_jumpto(view, false, buf_setln(&(view->buffer), line));
+    buf_setln(&(view->buffer), &(view->selection), line);
     view->sync_center = true;
 }
 

@@ -50,7 +50,7 @@ typedef struct {
 } Buf;
 
 void buf_init(Buf* buf);
-size_t buf_load(Buf* buf, char* path);
+void buf_load(Buf* buf, char* path);
 void buf_reload(Buf* buf);
 void buf_save(Buf* buf);
 size_t buf_end(Buf* buf);
@@ -82,8 +82,7 @@ size_t buf_byword(Buf* buf, size_t pos, int count);
 size_t buf_byline(Buf* buf, size_t pos, int count);
 void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
 
-size_t buf_setln(Buf* buf, size_t line);
-size_t buf_getln(Buf* buf, size_t off);
+void buf_setln(Buf* buf, Sel* sel, size_t line);
 void buf_getcol(Buf* buf, Sel* p_sel);
 void buf_setcol(Buf* buf, Sel* p_sel);
 

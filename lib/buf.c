@@ -38,14 +38,11 @@ void buf_init(Buf* buf) {
     assert(buf->bufstart);
 }
 
-size_t buf_load(Buf* buf, char* path) {
+void buf_load(Buf* buf, char* path) {
     /* process the file path and address */
     if (path && path[0] == '.' && path[1] == '/')
         path += 2;
-    size_t off = 0;
     buf->path = stringdup(path);
-    char* addr = strrchr(buf->path, ':');
-    if (addr) *addr = '\0', addr++;
 
     /* load the contents from the file */
     int fd, nread;
@@ -64,15 +61,10 @@ size_t buf_load(Buf* buf, char* path) {
     }
     if (fd > 0) close(fd);
 
-    /* jump to address if we got one */
-    if (addr)
-        off = buf_setln(buf, strtoul(addr, NULL, 0));
-
     /* reset buffer state */
     buf->modified = false;
     buf->modtime  = modtime(buf->path);
     buf_logclear(buf);
-    return off;
 }
 
 void buf_reload(Buf* buf) {
@@ -410,24 +402,14 @@ void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end) {
     free(runes);
 }
 
-size_t buf_setln(Buf* buf, size_t line) {
+void buf_setln(Buf* buf, Sel* sel, size_t line) {
     size_t curr = 0, end = buf_end(buf);
     while (line > 1 && curr < end) {
         size_t next = buf_byline(buf, curr, DOWN);
         if (curr == next) break;
         line--, curr = next;
     }
-    return curr;
-}
-
-size_t buf_getln(Buf* buf, size_t off) {
-    size_t line = 1, curr = 0, end = buf_end(buf);
-    while (curr < off && curr < end-1) {
-        size_t next = buf_byline(buf, curr, DOWN);
-        if (curr == next) break;
-        line++, curr = next;
-    }
-    return line;
+    sel->beg = sel->end = curr;
 }
 
 void buf_getcol(Buf* buf, Sel* sel) {
