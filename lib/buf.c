@@ -436,22 +436,20 @@ void buf_getcol(Buf* buf, Sel* sel) {
         sel->col += runewidth(sel->col, buf_getrat(buf, curr));
 }
 
-size_t buf_setcol(Buf* buf, size_t pos, size_t col) {
-    size_t bol = buf_bol(buf, pos);
+void buf_setcol(Buf* buf, Sel* sel) {
+    size_t bol = buf_bol(buf, sel->end);
     size_t curr = bol, len = 0, i = 0;
     /* determine the length of the line in columns */
     for (; !buf_iseol(buf, curr); curr++)
         len += runewidth(len, buf_getrat(buf, curr));
     /* iterate over the runes until we reach the target column */
-    curr = bol, i = 0;
-    while (i < col && i < len) {
-        int width = runewidth(i, buf_getrat(buf, curr));
-        curr = buf_byrune(buf, curr, 1);
-        if (col >= i && col < (i+width))
+    for (sel->end = bol, i = 0; i < sel->col && i < len;) {
+        int width = runewidth(i, buf_getrat(buf, sel->end));
+        sel->end = buf_byrune(buf, sel->end, 1);
+        if (sel->col >= i && sel->col < (i + width))
             break;
         i += width;
     }
-    return curr;
 }
 
 static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes) {

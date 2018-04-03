@@ -330,7 +330,7 @@ static void move_selection(View* view, bool extsel, Sel* sel, int move, movefn_t
     } else {
         sel->end = bything(&(view->buffer), sel->end, move);
         if (bything == buf_byline)
-            sel->end = buf_setcol(&(view->buffer), sel->end, sel->col);
+            buf_setcol(&(view->buffer), &(view->selection));
         if (!extsel) sel->beg = sel->end;
     }
     /* only update column if not moving vertically */

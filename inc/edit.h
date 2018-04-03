@@ -85,7 +85,7 @@ void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
 size_t buf_setln(Buf* buf, size_t line);
 size_t buf_getln(Buf* buf, size_t off);
 void buf_getcol(Buf* buf, Sel* p_sel);
-size_t buf_setcol(Buf* buf, size_t pos, size_t col);
+void buf_setcol(Buf* buf, Sel* p_sel);
 
 /* Screen management functions
  *****************************************************************************/
