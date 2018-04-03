@@ -231,9 +231,6 @@ void buf_undo(Buf* buf, Sel* sel) {
 void buf_redo(Buf* buf, Sel* sel) {
 }
 
-void buf_loglock(Buf* buf) {
-}
-
 void buf_logclear(Buf* buf) {
     log_clear(&(buf->redo));
     log_clear(&(buf->undo));
@@ -249,8 +246,8 @@ static void log_clear(Log** list) {
     while (*list) {
         Log* deadite = *list;
         *list = (*list)->next;
-        if (!deadite->insert)
-            free(deadite->data.del.runes);
+        if (deadite->data)
+            free(deadite->data);
         free(deadite);
     }
 }

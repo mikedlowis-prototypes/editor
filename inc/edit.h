@@ -10,20 +10,10 @@ char* strmcat(char* first, ...);
  *****************************************************************************/
 /* undo/redo list item */
 typedef struct Log {
-    struct Log* next;   /* pointer to next operation in the stack */
-    bool insert;        /* whether this operation was an insert or delete */
-    uint transid;       /* transaction id used to group related edits together */
-    union {
-        struct {
-            size_t beg; /* offset in the file where insertion started */
-            size_t end; /* offset in the file where insertion ended */
-        } ins;
-        struct {
-            size_t off;  /* offset in the file where the deletion occurred */
-            size_t len;  /* number of runes deleted */
-            char* runes; /* array of runes containing deleted content */
-        } del;
-    } data;
+    struct Log* next; /* pointer to next operation in the stack */
+    size_t beg;       /* beginning of affected region */
+    size_t end;       /* end of affected region*/
+    char* data;       /* pointer to deleted character data */
 } Log;
 
 /* cursor/selection representation */
@@ -45,7 +35,6 @@ typedef struct {
     Log* undo;        /* undo list */
     Log* redo;        /* redo list */
     bool modified;    /* tracks whether the buffer has been modified */
-    uint transid;     /* tracks the last used transaction id for log entries */
     Sel selection;    /* the currently selected text */
 } Buf;
 
