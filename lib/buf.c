@@ -14,7 +14,7 @@ static void log_delete(Buf* buf, Log** list, size_t off, char* r, size_t len);
 static void syncgap(Buf* buf, size_t off);
 static void delete(Buf* buf, size_t off);
 static size_t insert(Buf* buf, size_t off, Rune rune);
-static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes);
+static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str);
 static void swaplog(Buf* buf, Log** from, Log** to, Sel* sel);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
 
@@ -381,25 +381,30 @@ size_t buf_byline(Buf* buf, size_t pos, int count) {
     return pos;
 }
 
-void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end) {
-    if (!str) return;
-    Rune* runes = charstorunes(str);
-    size_t rlen = rstrlen(runes);
-    size_t start = *beg, mbeg = start+dir, mend = mbeg + rlen;
+bool buf_findstr(Buf* buf, Sel* sel, int dir, char* str) {
+    size_t len = strlen(str);
+    size_t start = sel->beg, mbeg = (start + dir), mend = (mbeg + len);
     while (mbeg != start) {
-        if ((buf_getrat(buf, mbeg) == runes[0]) &&
-            (buf_getrat(buf, mend-1) == runes[rlen-1]) &&
-            (0 == rune_match(buf, mbeg, mend, runes)))
+        if ((getb(buf, mbeg) == str[0]) &&
+            (getb(buf, mend-1) == str[len-1]) &&
+            (0 == bytes_match(buf, mbeg, mend, str)))
         {
-            *beg = mbeg;
-            *end = mend;
-            break;
+            sel->beg = mbeg, sel->end = mend;
+            return true;
         }
         mbeg += dir, mend += dir;
         if (mend > buf_end(buf))
-            mbeg = (dir < 0 ? buf_end(buf)-rlen : 0), mend = mbeg+rlen;
+            mbeg = (dir < 0 ? buf_end(buf)-len : 0), mend = mbeg + len;
     }
-    free(runes);
+    return false;
+}
+
+static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str) {
+    for (; *str; str++, mbeg++) {
+        int cmp = *str - getb(buf, mbeg);
+        if (cmp != 0) return cmp;
+    }
+    return 0;
 }
 
 void buf_setln(Buf* buf, Sel* sel, size_t line) {
@@ -432,14 +437,6 @@ void buf_setcol(Buf* buf, Sel* sel) {
             break;
         i += width;
     }
-}
-
-static int rune_match(Buf* buf, size_t mbeg, size_t mend, Rune* runes) {
-    for (; *runes; runes++, mbeg++) {
-        int cmp = *runes - buf_getrat(buf, mbeg);
-        if (cmp != 0) return cmp;
-    }
-    return 0;
 }
 
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {

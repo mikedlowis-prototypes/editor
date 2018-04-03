@@ -80,7 +80,7 @@ void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
 size_t buf_byrune(Buf* buf, size_t pos, int count);
 size_t buf_byword(Buf* buf, size_t pos, int count);
 size_t buf_byline(Buf* buf, size_t pos, int count);
-void buf_findstr(Buf* buf, int dir, char* str, size_t* beg, size_t* end);
+bool buf_findstr(Buf* buf, Sel* sel, int dir, char* str);
 
 void buf_setln(Buf* buf, Sel* sel, size_t line);
 void buf_getcol(Buf* buf, Sel* p_sel);

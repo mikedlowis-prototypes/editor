@@ -159,11 +159,7 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
 }
 
 bool view_findstr(View* view, int dir, char* str) {
-    Sel sel = view->selection;
-    size_t prev = sel.end;
-    buf_findstr(&(view->buffer), dir, str, &sel.beg, &sel.end);
-    bool found = (0 != memcmp(&sel, &(view->selection), sizeof(Sel)));
-    view->selection   = sel;
+    bool found = buf_findstr(&(view->buffer), &(view->selection), dir, str);
     view->sync_needed = true;
     view->sync_center = true;
     return found;
