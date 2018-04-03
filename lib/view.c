@@ -133,9 +133,7 @@ void view_selprev(View* view) {
 
 void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col, false);
-    Sel sel = view->selection;
-    select_context(view, risword, &sel);
-    view->selection = sel;
+    select_context(view, risword, &(view->selection));
 }
 
 size_t view_selsize(View* view) {
@@ -174,12 +172,10 @@ void view_insert(View* view, bool indent, Rune rune) {
 }
 
 void view_delete(View* view, int dir, bool byword) {
-    Sel* sel = &(view->selection);
-    if (sel->beg == sel->end)
+    if (view->selection.beg == view->selection.end)
         (byword ? view_byword : view_byrune)(view, dir, true);
-    selswap(sel);
-    buf_del(&(view->buffer), sel);
-    move_to(view, false, sel->beg);
+    buf_del(&(view->buffer), &(view->selection));
+    move_to(view, false, view->selection.end);
 }
 
 void view_jumpto(View* view, bool extsel, size_t off) {
@@ -228,39 +224,17 @@ void view_redo(View* view) {
 }
 
 void view_putstr(View* view, char* str) {
-    selswap(&(view->selection));
-    unsigned beg = view->selection.beg;
-    while (*str) {
-        Rune rune = 0;
-        size_t length = 0;
-        while (!utf8decode(&rune, &length, *str++));
-        view_insert(view, false, rune);
-    }
-    view->selection.beg = beg;
-}
-
-void view_append(View* view, char* str) {
-    size_t end = buf_end(&(view->buffer));
-    if (view->selection.end != end)
-        view->selection = (Sel){ .beg = end, .end = end };
-    if (!num_selected(view->selection) && !buf_iseol(&(view->buffer), view->selection.end-1)) {
-        buf_putc(&(view->buffer), '\n', &(view->selection));
-        view->selection.beg++;
-    }
-    unsigned beg = view->selection.beg;
-    view_putstr(view, str);
-    view->selection.beg = beg;
+    buf_puts(&(view->buffer), str, &(view->selection));
 }
 
 char* view_getstr(View* view, Sel* range) {
-    return buf_gets(&(view->buffer), &(view->selection));
+    return buf_gets(&(view->buffer), (range ? range : &(view->selection)));
 }
 
 char* view_getcmd(View* view) {
-    Sel sel = view->selection;
-    if (!num_selected(sel))
-        select_context(view, riscmd, &sel);
-    return view_getstr(view, &sel);
+    if (!num_selected(view->selection))
+        select_context(view, riscmd, &(view->selection));
+    return view_getstr(view, NULL);
 }
 
 void view_selctx(View* view) {

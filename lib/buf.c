@@ -28,7 +28,7 @@ void buf_init(Buf* buf) {
     /* reset the state to defaults */
     buf->modified  = false;
     buf->bufsize   = 8192;
-    buf->bufstart  = (char*)malloc(buf->bufsize);
+    buf->bufstart  = malloc(buf->bufsize);
     buf->bufend    = buf->bufstart + buf->bufsize;
     buf->gapstart  = buf->bufstart;
     buf->gapend    = buf->bufend;

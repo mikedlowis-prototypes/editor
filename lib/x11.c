@@ -191,8 +191,8 @@ void win_quit(void) {
     uint64_t now = getmillis();
     if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime)
         exit(0);
-    else
-        view_append(win_view(TAGS), "File is modified.");
+//    else
+//        view_append(win_view(TAGS), "File is modified.");
     before = now;
 }
 
@@ -495,8 +495,8 @@ static void xfocus(XEvent* e) {
     if (X.xic)
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
     Buf* buf = win_buf(EDIT);
-    if (buf->path && buf->modtime != modtime(buf->path))
-        view_append(win_view(TAGS), "File modified externally: Get {Put }");
+//    if (buf->path && buf->modtime != modtime(buf->path))
+//        view_append(win_view(TAGS), "File modified externally: Get {Put }");
 }
 
 static void xkeypress(XEvent* e) {
