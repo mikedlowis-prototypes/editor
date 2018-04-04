@@ -45,19 +45,19 @@ static void xresize(XEvent* e);
 static void xexpose(XEvent* e);
 
 static void (*EventHandlers[LASTEvent])(XEvent*) = {
-	[FocusIn] = xfocus,
-	[FocusOut] = xfocus,
-	[KeyPress] = xkeypress,
-	[ButtonPress] = xbtnpress,
-	[ButtonRelease] = xbtnrelease,
-	[MotionNotify] = xbtnmotion,
- 	[SelectionClear] = xselclear,
-	[SelectionNotify] = xselnotify,
-	[SelectionRequest] = xselrequest,
-	[PropertyNotify] = xpropnotify,
-	[ClientMessage] = xclientmsg,
-	[ConfigureNotify] = xresize,
-	[Expose] = xexpose,
+    [FocusIn] = xfocus,
+    [FocusOut] = xfocus,
+    [KeyPress] = xkeypress,
+    [ButtonPress] = xbtnpress,
+    [ButtonRelease] = xbtnrelease,
+    [MotionNotify] = xbtnmotion,
+    [SelectionClear] = xselclear,
+    [SelectionNotify] = xselnotify,
+    [SelectionRequest] = xselrequest,
+    [PropertyNotify] = xpropnotify,
+    [ClientMessage] = xclientmsg,
+    [ConfigureNotify] = xresize,
+    [Expose] = xexpose,
 };
 
 /******************************************************************************/
@@ -483,19 +483,19 @@ static void xupdate(Job* job) {
     //draw_scroll();
     /* flush to the server */
     XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
-	XFlush(X.display);
+    XFlush(X.display);
 }
 
 static void xfocus(XEvent* e) {
     if (X.xic)
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
-    Buf* buf = win_buf(EDIT);
+//    Buf* buf = win_buf(EDIT);
 //    if (buf->path && buf->modtime != modtime(buf->path))
 //        view_append(win_view(TAGS), "File modified externally: Get {Put }");
 }
 
 static void xkeypress(XEvent* e) {
-	win_setregion(getregion(e->xkey.x, e->xkey.y));
+    win_setregion(getregion(e->xkey.x, e->xkey.y));
     uint32_t key = getkey(e);
     if (key == RUNE_ERR) return;
     KeyBtnState = e->xkey.state, LastKey = key;
@@ -529,7 +529,7 @@ static void xbtnrelease(XEvent* e) {
 
 static void xbtnmotion(XEvent* e) {
     if ((KeyBtnState & 0x1f00) == 0)
-		win_setregion(getregion(e->xbutton.x, e->xbutton.y));
+        win_setregion(getregion(e->xbutton.x, e->xbutton.y));
     KeyBtnState = e->xbutton.state;
     int x = e->xbutton.x, y = e->xbutton.y;
     if (x < Regions[Focused].x) x = Regions[Focused].x;
@@ -658,7 +658,7 @@ static uint32_t getkey(XEvent* e) {
 
 static void mouse_click(int btn, bool pressed, int x, int y) {
     if ((KeyBtnState & 0x1f00) == 0)
-		win_setregion(getregion(x, y));
+        win_setregion(getregion(x, y));
     WinRegion id = getregion(x, y);
     if (id == FOCUSED && x < Regions[Focused].x)
         x = Regions[Focused].x, id = getregion(x, y);
@@ -770,9 +770,6 @@ static void draw_view(int i, int width, int height, int bg, int fg, int csr, int
 }
 
 static void redraw(int width, int height) {
-    size_t fheight = x11_font_height(CurrFont);
-    size_t fwidth  = x11_font_width(CurrFont);
-
     layout(width, height);
     int clrtagnor = (TagsBg  << 8 | TagsFg);
     int clrtagsel = (TagsSel << 8 | TagsFg);

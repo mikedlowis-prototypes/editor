@@ -34,8 +34,9 @@ void buf_init(Buf* buf) {
 }
 
 void buf_load(Buf* buf, char* path) {
+    if (!path) return;
     /* process the file path and address */
-    if (path && path[0] == '.' && path[1] == '/')
+    if (path[0] == '.' && path[1] == '/')
         path += 2;
     buf->path = stringdup(path);
 
@@ -76,7 +77,7 @@ void buf_save(Buf* buf) {
         buf_putc(buf, '\n', &(Sel){ .end = buf_end(buf)-1 });
 
     char* wptr;
-    long fd, nwrite, towrite;
+    long fd, nwrite = 0, towrite = 0;
     if (buf->path && (fd = open(buf->path, O_WRONLY|O_CREAT, 0644)) >= 0) {
         /* write the chunk before the gap */
         wptr = buf->bufstart, towrite = (buf->gapstart - buf->bufstart);
