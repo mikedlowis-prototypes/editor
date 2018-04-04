@@ -117,8 +117,7 @@ void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
 void view_selword(View* view, size_t row, size_t col) {
     if (row != SIZE_MAX && col != SIZE_MAX)
         view_setcursor(view, row, col, false);
-    buf_getword(&(view->buffer), risbigword, getsel(view));
-    getsel(view)->end++;
+    buf_selword(&(view->buffer), risbigword, getsel(view));
 }
 
 void view_selprev(View* view) {
@@ -142,12 +141,10 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
         Sel sel = { .beg = off, .end = off };
-        if (buf_insel(&(view->buffer), NULL, off)) {
+        if (buf_insel(&(view->buffer), NULL, off))
             sel = *(getsel(view));
-        } else {
-            buf_getword(&(view->buffer), isword, &sel);
-            sel.end++;
-        }
+        else
+            buf_selword(&(view->buffer), isword, &sel);
         str = view_getstr(view, &sel);
     }
     return str;
@@ -280,12 +277,12 @@ void view_scrollto(View* view, size_t csr) {
 }
 
 void view_selectall(View* view) {
-    *(getsel(view)) = (Sel){ .beg = 0, .end = buf_end(&(view->buffer)) };
+    buf_selall(&(view->buffer), getsel(view));
     view->sync_needed = true;
 }
 
 void view_selectobj(View* view, bool (*istype)(Rune)) {
-    buf_getword(&(view->buffer), istype, getsel(view));
+    buf_selword(&(view->buffer), istype, getsel(view));
     view->sync_needed = true;
 }
 
@@ -310,7 +307,7 @@ static void move_to(View* view, bool extsel, size_t off) {
     getsel(view)->end = (off > buf_end(buf) ? buf_end(buf) : off);
     if (!extsel)
         getsel(view)->beg = getsel(view)->end;
-    buf_getcol(&(view->buffer), getsel(view));
+    buf_getcol(buf, getsel(view));
     view->sync_needed = true;
 }
 
@@ -318,21 +315,18 @@ static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
     Buf* buf = &(view->buffer);
     size_t bol = buf_bol(buf, sel->end);
     Rune r = buf_getc(buf, sel);
-    if (r == '(' || r == ')') {
-        buf_getblock(buf, '(', ')', sel);
-    } else if (r == '[' || r == ']') {
-        buf_getblock(buf, '[', ']', sel);
-    } else if (r == '{' || r == '}') {
-        buf_getblock(buf, '{', '}', sel);
-    } else if (sel->end == bol || r == '\n') {
-        sel->beg = bol;
-        sel->end = buf_eol(buf, sel->end);
-    } else if (risword(r)) {
-        buf_getword(buf, isword, sel);
-    } else {
-        buf_getword(buf, risbigword, sel);
-    }
-    sel->end = buf_byrune(&(view->buffer), sel->end, RIGHT);
+    if (r == '(' || r == ')')
+        buf_selblock(buf, '(', ')', sel);
+    else if (r == '[' || r == ']')
+        buf_selblock(buf, '[', ']', sel);
+    else if (r == '{' || r == '}')
+        buf_selblock(buf, '{', '}', sel);
+    else if (sel->end == bol || r == '\n')
+        buf_selline(buf, sel);
+    else if (risword(r))
+        buf_selword(buf, isword, sel);
+    else
+        buf_selword(buf, risbigword, sel);
     buf_getcol(&(view->buffer), getsel(view));
 }
 

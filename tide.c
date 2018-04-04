@@ -340,7 +340,6 @@ static void pick_ctag(char* arg) {
 static void complete(char* arg) {
     View* view = win_view(FOCUSED);
     view_selectobj(view, risword);
-    view_byrune(view, RIGHT, true);
     cmd_execwitharg(CMD_COMPLETE, view_getstr(view, NULL));
 }
 

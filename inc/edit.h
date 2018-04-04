@@ -62,10 +62,12 @@ size_t buf_bol(Buf* buf, size_t pos);
 size_t buf_eol(Buf* buf, size_t pos);
 size_t buf_bow(Buf* buf, size_t pos);
 size_t buf_eow(Buf* buf, size_t pos);
-size_t buf_lscan(Buf* buf, size_t pos, Rune r);
-size_t buf_rscan(Buf* buf, size_t pos, Rune r);
-void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel);
-void buf_getblock(Buf* buf, Rune beg, Rune end, Sel* sel);
+
+void buf_selline(Buf* buf, Sel* sel);
+void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* sel);
+void buf_selblock(Buf* buf, Rune beg, Rune end, Sel* sel);
+void buf_selall(Buf* buf, Sel* sel);
+
 size_t buf_byrune(Buf* buf, size_t pos, int count);
 size_t buf_byword(Buf* buf, size_t pos, int count);
 size_t buf_byline(Buf* buf, size_t pos, int count);

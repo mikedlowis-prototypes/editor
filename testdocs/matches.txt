@@ -1,0 +1,8 @@
+Matching groups:
+    ( ( parentheses ) )
+    [ [ brackets ] ]
+    { { braces } }
+
+What's the word? BIRD! bird is the word.
+
+    /foo/bar/baz/boo

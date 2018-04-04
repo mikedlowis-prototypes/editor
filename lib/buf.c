@@ -271,29 +271,21 @@ size_t buf_bow(Buf* buf, size_t off) {
 
 size_t buf_eow(Buf* buf, size_t off) {
     for (; risword(buf_getrat(buf, off)); off++);
-    return off-1;
+    return off;
 }
 
-size_t buf_lscan(Buf* buf, size_t pos, Rune r) {
-    size_t off = pos;
-    for (; (off > 0) && (r != buf_getrat(buf, off)); off--);
-    return (buf_getrat(buf, off) == r ? off : pos);
+void buf_selline(Buf* buf, Sel* sel) {
+    sel->beg = buf_bol(buf, sel->end);
+    sel->end = buf_eol(buf, sel->end);
+    sel->end = buf_byrune(buf, sel->end, RIGHT);
 }
 
-size_t buf_rscan(Buf* buf, size_t pos, Rune r) {
-    size_t off = pos;
-    size_t end = buf_end(buf);
-    for (; (off < end) && (r != buf_getrat(buf, off)); off++);
-    return (buf_getrat(buf, off) == r ? off : pos);
-}
-
-void buf_getword(Buf* buf, bool (*isword)(Rune), Sel* sel) {
+void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* sel) {
     for (; isword(buf_getrat(buf, sel->beg-1)); sel->beg--);
     for (; isword(buf_getrat(buf, sel->end));   sel->end++);
-    sel->end--;
 }
 
-void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
+void buf_selblock(Buf* buf, Rune first, Rune last, Sel* sel) {
     int balance = 0, dir;
     size_t beg, end = sel->end;
 
@@ -322,9 +314,15 @@ void buf_getblock(Buf* buf, Rune first, Rune last, Sel* sel) {
     if (balance != 0) return;
 
     /* update the passed in selection */
-    if (end > beg) beg++, end--;
+    if (end > beg) beg++; else end++;
     sel->beg = beg, sel->end = end;
 }
+
+void buf_selall(Buf* buf, Sel* sel) {
+    *sel = (Sel){ .beg = 0, .end = buf_end(buf) };
+
+}
+
 
 size_t buf_byrune(Buf* buf, size_t pos, int count) {
     int move = (count < 0 ? -1 : 1);
