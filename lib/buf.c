@@ -71,10 +71,6 @@ void buf_reload(Buf* buf) {
 
 void buf_save(Buf* buf) {
     if (0 == buf_end(buf)) return;
-    /* text files should  always end in a new line. If we detected a
-       binary file or at least a non-utf8 file, skip this part. */
-    if (!buf_iseol(buf, buf_end(buf)-1))
-        buf_putc(buf, '\n', &(Sel){ .end = buf_end(buf)-1 });
 
     char* wptr;
     long fd, nwrite = 0, towrite = 0;
@@ -148,10 +144,7 @@ static Sel getsel(Buf* buf, Sel* p_sel) {
 }
 
 static void setsel(Buf* buf, Sel* p_sel, Sel* p_newsel) {
-    if (p_sel)
-        *p_sel = *p_newsel;
-    else
-        buf->selection = *p_newsel;
+    buf->selection = *p_newsel;
 }
 
 static void putb(Buf* buf, char b, Sel* p_sel) {
@@ -177,26 +170,26 @@ int buf_getrat(Buf* buf, size_t off) {
     return rune;
 }
 
-void buf_putc(Buf* buf, int c, Sel* p_sel) {
+void buf_putc(Buf* buf, int c) {
     char utf8buf[UTF_MAX+1] = {0};
     (void)utf8encode(utf8buf, c);
-    buf_puts(buf, utf8buf, p_sel);
+    buf_puts(buf, utf8buf);
 }
 
-void buf_puts(Buf* buf, char* s, Sel* p_sel) {
-    buf_del(buf, p_sel);
-    Sel sel = getsel(buf, p_sel);
+void buf_puts(Buf* buf, char* s) {
+    buf_del(buf);
+    Sel sel = getsel(buf, NULL);
     while (s && *s) putb(buf, *(s++), &sel);
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-int buf_getc(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+int buf_getc(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     return buf_getrat(buf, sel.end);
 }
 
-char* buf_gets(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+char* buf_gets(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     size_t nbytes = sel.end - sel.beg;
     char* str = malloc(nbytes+1);
     for (size_t i = 0; i < nbytes; i++)
@@ -205,15 +198,15 @@ char* buf_gets(Buf* buf, Sel* p_sel) {
     return str;
 }
 
-void buf_del(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_del(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     size_t nbytes = sel.end - sel.beg;
     if (nbytes > 0) {
         //char* str = buf_gets(buf, &sel);
         syncgap(buf, sel.beg);
         buf->gapend += nbytes;
         sel.end = sel.beg;
-        setsel(buf, p_sel, &sel);
+        setsel(buf, NULL, &sel);
         // update log here
         // free(str);
     }
@@ -221,10 +214,10 @@ void buf_del(Buf* buf, Sel* p_sel) {
 
 /******************************************************************************/
 
-void buf_undo(Buf* buf, Sel* sel) {
+void buf_undo(Buf* buf) {
 }
 
-void buf_redo(Buf* buf, Sel* sel) {
+void buf_redo(Buf* buf) {
 }
 
 void buf_logclear(Buf* buf) {
@@ -232,10 +225,10 @@ void buf_logclear(Buf* buf) {
     log_clear(&(buf->undo));
 }
 
-void buf_lastins(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_lastins(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     // Set selection to last inserted text
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
 static void log_clear(Log** list) {
@@ -275,23 +268,23 @@ size_t buf_eow(Buf* buf, size_t off) {
     return off;
 }
 
-void buf_selline(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_selline(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     sel.beg = buf_bol(buf, sel.end);
     sel.end = buf_eol(buf, sel.end);
     sel.end = buf_byrune(buf, sel.end, RIGHT);
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_selword(Buf* buf, bool (*isword)(Rune)) {
+    Sel sel = getsel(buf, NULL);
     for (; isword(buf_getrat(buf, sel.beg-1)); sel.beg--);
     for (; isword(buf_getrat(buf, sel.end));   sel.end++);
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-void buf_selblock(Buf* buf, Rune first, Rune last, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_selblock(Buf* buf, Rune first, Rune last) {
+    Sel sel = getsel(buf, NULL);
     int balance = 0, dir;
     size_t beg, end = sel.end;
 
@@ -322,35 +315,33 @@ void buf_selblock(Buf* buf, Rune first, Rune last, Sel* p_sel) {
     /* update the passed in selection */
     if (end > beg) beg++; else end++;
     sel.beg = beg, sel.end = end;
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-void buf_selall(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_selall(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     sel = (Sel){ .beg = 0, .end = buf_end(buf) };
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-void buf_selctx(Buf* buf, bool (*isword)(Rune), Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_selctx(Buf* buf, bool (*isword)(Rune)) {
+    Sel sel = getsel(buf, NULL);
     size_t bol = buf_bol(buf, sel.end);
-    Rune r = buf_getc(buf, &sel);
+    Rune r = buf_getc(buf);
     if (r == '(' || r == ')')
-        buf_selblock(buf, '(', ')', &sel);
+        buf_selblock(buf, '(', ')');
     else if (r == '[' || r == ']')
-        buf_selblock(buf, '[', ']', &sel);
+        buf_selblock(buf, '[', ']');
     else if (r == '{' || r == '}')
-        buf_selblock(buf, '{', '}', &sel);
+        buf_selblock(buf, '{', '}');
     else if (sel.end == bol || r == '\n')
-        buf_selline(buf, &sel);
+        buf_selline(buf);
     else if (risword(r))
-        buf_selword(buf, isword, &sel);
+        buf_selword(buf, isword);
     else
-        buf_selword(buf, risbigword, &sel);
-    buf_getcol(buf, &sel);
-    setsel(buf, p_sel, &sel);
+        buf_selword(buf, risbigword);
+    buf_getcol(buf);
 }
-
 
 size_t buf_byrune(Buf* buf, size_t pos, int count) {
     int move = (count < 0 ? -1 : 1);
@@ -399,15 +390,17 @@ size_t buf_byline(Buf* buf, size_t pos, int count) {
     return pos;
 }
 
-bool buf_findstr(Buf* buf, Sel* sel, int dir, char* str) {
+bool buf_findstr(Buf* buf, int dir, char* str) {
     size_t len = strlen(str);
-    size_t start = sel->beg, mbeg = (start + dir), mend = (mbeg + len);
+    size_t start = buf->selection.beg,
+           mbeg = (start + dir),
+           mend = (mbeg + len);
     while (mbeg != start) {
         if ((getb(buf, mbeg) == str[0]) &&
             (getb(buf, mend-1) == str[len-1]) &&
             (0 == bytes_match(buf, mbeg, mend, str)))
         {
-            sel->beg = mbeg, sel->end = mend;
+            buf->selection.beg = mbeg, buf->selection.end = mend;
             return true;
         }
         mbeg += dir, mend += dir;
@@ -425,26 +418,26 @@ static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str) {
     return 0;
 }
 
-void buf_setln(Buf* buf, Sel* sel, size_t line) {
+void buf_setln(Buf* buf, size_t line) {
     size_t curr = 0, end = buf_end(buf);
     while (line > 1 && curr < end) {
         size_t next = buf_byline(buf, curr, DOWN);
         if (curr == next) break;
         line--, curr = next;
     }
-    sel->beg = sel->end = curr;
+    buf->selection.beg = buf->selection.end = curr;
 }
 
-void buf_getcol(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_getcol(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     size_t pos = sel.end, curr = buf_bol(buf, pos);
     for (sel.col = 0; curr < pos; curr = buf_byrune(buf, curr, 1))
         sel.col += runewidth(sel.col, buf_getrat(buf, curr));
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-void buf_setcol(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+void buf_setcol(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     size_t bol = buf_bol(buf, sel.end);
     size_t curr = bol, len = 0, i = 0;
     /* determine the length of the line in columns */
@@ -458,7 +451,7 @@ void buf_setcol(Buf* buf, Sel* p_sel) {
             break;
         i += width;
     }
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {
@@ -473,19 +466,19 @@ static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {
 
 /******************************************************************************/
 
-size_t buf_selsz(Buf* buf, Sel* p_sel) {
-    Sel sel = getsel(buf, p_sel);
+size_t buf_selsz(Buf* buf) {
+    Sel sel = getsel(buf, NULL);
     return sel.end - sel.beg;
 }
 
-void buf_selclr(Buf* buf, Sel* p_sel, int dir) {
-    Sel sel = getsel(buf, p_sel);
+void buf_selclr(Buf* buf, int dir) {
+    Sel sel = getsel(buf, NULL);
     if (dir > 0) sel.beg = sel.end;
     else sel.end = sel.beg;
-    setsel(buf, p_sel, &sel);
+    setsel(buf, NULL, &sel);
 }
 
-bool buf_insel(Buf* buf, Sel* p_sel, size_t off) {
-    Sel sel = getsel(buf, p_sel);
+bool buf_insel(Buf* buf, size_t off) {
+    Sel sel = getsel(buf, NULL);
     return (off >= sel.beg && off < sel.end);
 }

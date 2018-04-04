@@ -45,17 +45,17 @@ void buf_save(Buf* buf);
 size_t buf_end(Buf* buf);
 
 int buf_getrat(Buf* buf, size_t off);
-void buf_putc(Buf* buf, int c, Sel* sel);
-void buf_puts(Buf* buf, char* s, Sel* sel);
-int buf_getc(Buf* buf, Sel* sel);
-char* buf_gets(Buf* buf, Sel* sel);
-void buf_del(Buf* buf, Sel* sel);
+void buf_putc(Buf* buf, int c);
+void buf_puts(Buf* buf, char* s);
+int buf_getc(Buf* buf);
+char* buf_gets(Buf* buf);
+void buf_del(Buf* buf);
 
-void buf_undo(Buf* buf, Sel* sel);
-void buf_redo(Buf* buf, Sel* sel);
+void buf_undo(Buf* buf);
+void buf_redo(Buf* buf);
 void buf_loglock(Buf* buf);
 void buf_logclear(Buf* buf);
-void buf_lastins(Buf* buf, Sel* p_sel);
+void buf_lastins(Buf* buf);
 
 bool buf_iseol(Buf* buf, size_t pos);
 size_t buf_bol(Buf* buf, size_t pos);
@@ -63,24 +63,24 @@ size_t buf_eol(Buf* buf, size_t pos);
 size_t buf_bow(Buf* buf, size_t pos);
 size_t buf_eow(Buf* buf, size_t pos);
 
-void buf_selline(Buf* buf, Sel* sel);
-void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* sel);
-void buf_selblock(Buf* buf, Rune beg, Rune end, Sel* sel);
-void buf_selall(Buf* buf, Sel* sel);
-void buf_selctx(Buf* buf, bool (*isword)(Rune), Sel* p_sel);
+void buf_selline(Buf* buf);
+void buf_selword(Buf* buf, bool (*isword)(Rune));
+void buf_selblock(Buf* buf, Rune beg, Rune end);
+void buf_selall(Buf* buf);
+void buf_selctx(Buf* buf, bool (*isword)(Rune));
 
 size_t buf_byrune(Buf* buf, size_t pos, int count);
 size_t buf_byword(Buf* buf, size_t pos, int count);
 size_t buf_byline(Buf* buf, size_t pos, int count);
-bool buf_findstr(Buf* buf, Sel* sel, int dir, char* str);
+bool buf_findstr(Buf* buf, int dir, char* str);
 
-void buf_setln(Buf* buf, Sel* sel, size_t line);
-void buf_getcol(Buf* buf, Sel* p_sel);
-void buf_setcol(Buf* buf, Sel* p_sel);
+void buf_setln(Buf* buf, size_t line);
+void buf_getcol(Buf* buf);
+void buf_setcol(Buf* buf);
 
-size_t buf_selsz(Buf* buf, Sel* p_sel);
-void buf_selclr(Buf* buf, Sel* p_sel, int dir);
-bool buf_insel(Buf* buf, Sel* p_sel, size_t off);
+size_t buf_selsz(Buf* buf);
+void buf_selclr(Buf* buf, int dir);
+bool buf_insel(Buf* buf, size_t off);
 
 /* Screen management functions
  *****************************************************************************/

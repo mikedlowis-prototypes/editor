@@ -116,23 +116,23 @@ void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
 void view_selword(View* view, size_t row, size_t col) {
     if (row != SIZE_MAX && col != SIZE_MAX)
         view_setcursor(view, row, col, false);
-    buf_selword(&(view->buffer), risbigword, NULL);
+    buf_selword(&(view->buffer), risbigword);
 }
 
 void view_selprev(View* view) {
     if (!view_selsize(view))
-        buf_lastins(&(view->buffer), NULL);
+        buf_lastins(&(view->buffer));
     else
-        buf_selclr(&(view->buffer), NULL, RIGHT);
+        buf_selclr(&(view->buffer), RIGHT);
 }
 
 void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col, false);
-    buf_selctx(&(view->buffer), risword, NULL);
+    buf_selctx(&(view->buffer), risword);
 }
 
 size_t view_selsize(View* view) {
-    return buf_selsz(&(view->buffer), NULL);
+    return buf_selsz(&(view->buffer));
 }
 
 char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
@@ -151,7 +151,7 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
 }
 
 bool view_findstr(View* view, int dir, char* str) {
-    bool found = buf_findstr(&(view->buffer), NULL, dir, str);
+    bool found = buf_findstr(&(view->buffer), dir, str);
     view->sync_needed = true;
     view->sync_center = true;
     return found;
@@ -161,14 +161,14 @@ void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && (rune >= 0 && rune < 0x20))
         return;
-    buf_putc(&(view->buffer), rune, NULL);
+    buf_putc(&(view->buffer), rune);
     move_to(view, false, getsel(view)->end);
 }
 
 void view_delete(View* view, int dir, bool byword) {
     if (!view_selsize(view))
         (byword ? view_byword : view_byrune)(view, dir, true);
-    buf_del(&(view->buffer), NULL);
+    buf_del(&(view->buffer));
     move_to(view, false, getsel(view)->end);
 }
 
@@ -201,39 +201,39 @@ void view_eof(View* view, bool extsel) {
 }
 
 void view_setln(View* view, size_t line) {
-    buf_setln(&(view->buffer), NULL, line);
+    buf_setln(&(view->buffer), line);
     view->sync_center = true;
 }
 
 void view_undo(View* view) {
-    buf_undo(&(view->buffer), NULL);
+    buf_undo(&(view->buffer));
     view->sync_needed = true;
     view->sync_center = !selection_visible(view);
 }
 
 void view_redo(View* view) {
-    buf_redo(&(view->buffer), NULL);
+    buf_redo(&(view->buffer));
     view->sync_needed = true;
     view->sync_center = !selection_visible(view);
 }
 
 void view_putstr(View* view, char* str) {
-    buf_puts(&(view->buffer), str, NULL);
+    buf_puts(&(view->buffer), str);
 }
 
 char* view_getstr(View* view) {
-    return buf_gets(&(view->buffer), NULL);
+    return buf_gets(&(view->buffer));
 }
 
 char* view_getcmd(View* view) {
     if (!view_selsize(view))
-        buf_selctx(&(view->buffer), riscmd, NULL);
+        buf_selctx(&(view->buffer), riscmd);
     return view_getstr(view);
 }
 
 void view_selctx(View* view) {
     if (!view_selsize(view))
-        buf_selctx(&(view->buffer), risword, NULL);
+        buf_selctx(&(view->buffer), risword);
 }
 
 char* view_getctx(View* view) {
@@ -258,7 +258,7 @@ void view_scrollpage(View* view, int move) {
 }
 
 Rune view_getrune(View* view) {
-    return buf_getc(&(view->buffer), NULL);
+    return buf_getc(&(view->buffer));
 }
 
 void view_scrollto(View* view, size_t csr) {
@@ -277,29 +277,29 @@ void view_scrollto(View* view, size_t csr) {
 }
 
 void view_selectall(View* view) {
-    buf_selall(&(view->buffer), NULL);
+    buf_selall(&(view->buffer));
     view->sync_needed = true;
 }
 
 void view_selectobj(View* view, bool (*istype)(Rune)) {
-    buf_selword(&(view->buffer), istype, NULL);
+    buf_selword(&(view->buffer), istype);
     view->sync_needed = true;
 }
 
 static void move_selection(View* view, bool extsel, int move, movefn_t bything) {
     view->sync_needed = true;
-    if (buf_selsz(&(view->buffer), NULL) && !extsel) {
-        buf_selclr(&(view->buffer), NULL, move);
+    if (buf_selsz(&(view->buffer)) && !extsel) {
+        buf_selclr(&(view->buffer), move);
     } else {
         getsel(view)->end = bything(&(view->buffer), getsel(view)->end, move);
         if (bything == buf_byline)
-            buf_setcol(&(view->buffer), NULL);
+            buf_setcol(&(view->buffer));
         if (!extsel)
-            buf_selclr(&(view->buffer), NULL, move);
+            buf_selclr(&(view->buffer), move);
     }
     /* only update column if not moving vertically */
     if (bything != buf_byline)
-        buf_getcol(&(view->buffer), NULL);
+        buf_getcol(&(view->buffer));
 }
 
 static void move_to(View* view, bool extsel, size_t off) {
@@ -307,7 +307,7 @@ static void move_to(View* view, bool extsel, size_t off) {
     getsel(view)->end = (off > buf_end(buf) ? buf_end(buf) : off);
     if (!extsel)
         getsel(view)->beg = getsel(view)->end;
-    buf_getcol(buf, NULL);
+    buf_getcol(buf);
     view->sync_needed = true;
 }
 
@@ -373,7 +373,7 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
     view_getrow(view, row)->off  = pos;
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (buf_insel(&(view->buffer), NULL, pos) ? view->clrsel : view->clrnor);
+        uint32_t attr = (buf_insel(&(view->buffer), pos) ? view->clrsel : view->clrnor);
         Rune r = buf_getrat(&(view->buffer), pos++);
         x += setcell(view, row, x, attr, r);
         if (buf_iseol(&(view->buffer), pos-1)) {
