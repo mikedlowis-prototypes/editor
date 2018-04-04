@@ -44,7 +44,7 @@ static void xclientmsg(XEvent* e);
 static void xresize(XEvent* e);
 static void xexpose(XEvent* e);
 
-static void (*EventHandlers[LASTEvent])(XEvent *) = {
+static void (*EventHandlers[LASTEvent])(XEvent*) = {
 	[FocusIn] = xfocus,
 	[FocusOut] = xfocus,
 	[KeyPress] = xkeypress,
@@ -495,6 +495,7 @@ static void xfocus(XEvent* e) {
 }
 
 static void xkeypress(XEvent* e) {
+	win_setregion(getregion(e->xkey.x, e->xkey.y));
     uint32_t key = getkey(e);
     if (key == RUNE_ERR) return;
     KeyBtnState = e->xkey.state, LastKey = key;
@@ -527,6 +528,8 @@ static void xbtnrelease(XEvent* e) {
 }
 
 static void xbtnmotion(XEvent* e) {
+    if ((KeyBtnState & 0x1f00) == 0)
+		win_setregion(getregion(e->xbutton.x, e->xbutton.y));
     KeyBtnState = e->xbutton.state;
     int x = e->xbutton.x, y = e->xbutton.y;
     if (x < Regions[Focused].x) x = Regions[Focused].x;
@@ -654,6 +657,8 @@ static uint32_t getkey(XEvent* e) {
 }
 
 static void mouse_click(int btn, bool pressed, int x, int y) {
+    if ((KeyBtnState & 0x1f00) == 0)
+		win_setregion(getregion(x, y));
     WinRegion id = getregion(x, y);
     if (id == FOCUSED && x < Regions[Focused].x)
         x = Regions[Focused].x, id = getregion(x, y);
@@ -676,13 +681,12 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
     before = now;
 
-    if (count == 1) {
+    if (count == 1)
         view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
-    } else if (count == 2) {
+    else if (count == 2)
         view_select(win_view(id), row, col);
-    } else if (count == 3) {
+    else if (count == 3)
         view_selword(win_view(id), row, col);
-    }
 }
 
 static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col) {
