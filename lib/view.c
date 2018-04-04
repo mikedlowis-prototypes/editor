@@ -139,12 +139,13 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
    char* str = NULL;
     size_t off = getoffset(view, row, col);
     if (off != SIZE_MAX) {
-        Sel sel = { .beg = off, .end = off };
-        if (buf_insel(&(view->buffer), NULL, off))
-            sel = *(getsel(view));
-        else
-            buf_selword(&(view->buffer), isword, &sel);
-        str = view_getstr(view, &sel);
+        /* str = buf_fetchat(buf, isword, off) */
+//        Sel sel = { .beg = off, .end = off };
+//        if (buf_insel(&(view->buffer), NULL, off))
+//            sel = *(getsel(view));
+//        else
+//            buf_selword(&(view->buffer), isword, &sel);
+//        str = view_getstr(view, &sel);
     }
     return str;
 }
@@ -220,14 +221,14 @@ void view_putstr(View* view, char* str) {
     buf_puts(&(view->buffer), str, NULL);
 }
 
-char* view_getstr(View* view, Sel* range) {
-    return buf_gets(&(view->buffer), (range ? range : getsel(view)));
+char* view_getstr(View* view) {
+    return buf_gets(&(view->buffer), NULL);
 }
 
 char* view_getcmd(View* view) {
     if (!view_selsize(view))
         buf_selctx(&(view->buffer), riscmd, NULL);
-    return view_getstr(view, NULL);
+    return view_getstr(view);
 }
 
 void view_selctx(View* view) {
@@ -237,7 +238,7 @@ void view_selctx(View* view) {
 
 char* view_getctx(View* view) {
     view_selctx(view);
-    return view_getstr(view, NULL);
+    return view_getstr(view);
 }
 
 void view_scroll(View* view, int move) {

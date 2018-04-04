@@ -69,7 +69,7 @@ void cut(char* arg) {
     if (!view_selsize(view))
         select_line(arg);
     /* now perform the cut */
-    char* str = view_getstr(view, NULL);
+    char* str = view_getstr(view);
     x11_sel_set(CLIPBOARD, str);
     if (str && *str) delete(arg);
 }
@@ -82,7 +82,7 @@ static void copy(char* arg) {
     /* select the current line if no selection */
     if (!view_selsize(win_view(FOCUSED)))
         select_line(arg);
-    char* str = view_getstr(win_view(FOCUSED), NULL);
+    char* str = view_getstr(win_view(FOCUSED));
     x11_sel_set(CLIPBOARD, str);
 }
 
@@ -218,8 +218,8 @@ static Tag* tag_lookup(char* cmd) {
 
 static void tag_exec(Tag* tag, char* arg) {
     /* if we didnt get an arg, find one in the selection */
-    if (!arg) arg = view_getstr(win_view(TAGS), NULL);
-    if (!arg) arg = view_getstr(win_view(EDIT), NULL);
+    if (!arg) arg = view_getstr(win_view(TAGS));
+    if (!arg) arg = view_getstr(win_view(EDIT));
     /* execute the tag handler */
     tag->action(arg);
     free(arg);
@@ -236,7 +236,7 @@ static void cmd_exec(char* cmd) {
     /* get the selection that the command will operate on */
     if (op && op != '<' && op != '!' && 0 == view_selsize(win_view(EDIT)))
         view_selectall(win_view(EDIT));
-    char* input = view_getstr(win_view(EDIT), NULL);
+    char* input = view_getstr(win_view(EDIT));
     size_t len  = (input ? strlen(input) : 0);
     View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
 
@@ -340,7 +340,7 @@ static void pick_ctag(char* arg) {
 static void complete(char* arg) {
     View* view = win_view(FOCUSED);
     view_selectobj(view, risword);
-    cmd_execwitharg(CMD_COMPLETE, view_getstr(view, NULL));
+    cmd_execwitharg(CMD_COMPLETE, view_getstr(view));
 }
 
 static void jump_to(char* arg) {

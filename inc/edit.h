@@ -132,7 +132,7 @@ void view_eof(View* view, bool extsel);
 void view_undo(View* view);
 void view_redo(View* view);
 void view_putstr(View* view, char* str);
-char* view_getstr(View* view, Sel* sel);
+char* view_getstr(View* view);
 char* view_getcmd(View* view);
 char* view_getword(View* view);
 char* view_getctx(View* view);
