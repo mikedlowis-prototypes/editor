@@ -291,11 +291,11 @@ static void move_selection(View* view, bool extsel, int move, movefn_t bything) 
     if (buf_selsz(&(view->buffer), NULL) && !extsel) {
         buf_selclr(&(view->buffer), NULL, move);
     } else {
-        Sel* sel = getsel(view);
-        sel->end = bything(&(view->buffer), sel->end, move);
+        getsel(view)->end = bything(&(view->buffer), getsel(view)->end, move);
         if (bything == buf_byline)
             buf_setcol(&(view->buffer), NULL);
-        if (!extsel) buf_selclr(&(view->buffer), sel, move);
+        if (!extsel)
+            buf_selclr(&(view->buffer), NULL, move);
     }
     /* only update column if not moving vertically */
     if (bything != buf_byline)
