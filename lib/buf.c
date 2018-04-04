@@ -274,20 +274,25 @@ size_t buf_eow(Buf* buf, size_t off) {
     return off;
 }
 
-void buf_selline(Buf* buf, Sel* sel) {
-    sel->beg = buf_bol(buf, sel->end);
-    sel->end = buf_eol(buf, sel->end);
-    sel->end = buf_byrune(buf, sel->end, RIGHT);
+void buf_selline(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    sel.beg = buf_bol(buf, sel.end);
+    sel.end = buf_eol(buf, sel.end);
+    sel.end = buf_byrune(buf, sel.end, RIGHT);
+    setsel(buf, p_sel, &sel);
 }
 
-void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* sel) {
-    for (; isword(buf_getrat(buf, sel->beg-1)); sel->beg--);
-    for (; isword(buf_getrat(buf, sel->end));   sel->end++);
+void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    for (; isword(buf_getrat(buf, sel.beg-1)); sel.beg--);
+    for (; isword(buf_getrat(buf, sel.end));   sel.end++);
+    setsel(buf, p_sel, &sel);
 }
 
-void buf_selblock(Buf* buf, Rune first, Rune last, Sel* sel) {
+void buf_selblock(Buf* buf, Rune first, Rune last, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
     int balance = 0, dir;
-    size_t beg, end = sel->end;
+    size_t beg, end = sel.end;
 
     /* figure out which end of the block we're starting at */
     if (buf_getrat(buf, end) == first)
@@ -315,14 +320,15 @@ void buf_selblock(Buf* buf, Rune first, Rune last, Sel* sel) {
 
     /* update the passed in selection */
     if (end > beg) beg++; else end++;
-    sel->beg = beg, sel->end = end;
+    sel.beg = beg, sel.end = end;
+    setsel(buf, p_sel, &sel);
 }
 
-void buf_selall(Buf* buf, Sel* sel) {
-    *sel = (Sel){ .beg = 0, .end = buf_end(buf) };
-
+void buf_selall(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    sel = (Sel){ .beg = 0, .end = buf_end(buf) };
+    setsel(buf, p_sel, &sel);
 }
-
 
 size_t buf_byrune(Buf* buf, size_t pos, int count) {
     int move = (count < 0 ? -1 : 1);
@@ -407,28 +413,30 @@ void buf_setln(Buf* buf, Sel* sel, size_t line) {
     sel->beg = sel->end = curr;
 }
 
-void buf_getcol(Buf* buf, Sel* sel) {
-    if (!sel) sel = &(buf->selection);
-    size_t pos = sel->end, curr = buf_bol(buf, pos);
-    for (sel->col = 0; curr < pos; curr = buf_byrune(buf, curr, 1))
-        sel->col += runewidth(sel->col, buf_getrat(buf, curr));
+void buf_getcol(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    size_t pos = sel.end, curr = buf_bol(buf, pos);
+    for (sel.col = 0; curr < pos; curr = buf_byrune(buf, curr, 1))
+        sel.col += runewidth(sel.col, buf_getrat(buf, curr));
+    setsel(buf, p_sel, &sel);
 }
 
-void buf_setcol(Buf* buf, Sel* sel) {
-    if (!sel) sel = &(buf->selection);
-    size_t bol = buf_bol(buf, sel->end);
+void buf_setcol(Buf* buf, Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    size_t bol = buf_bol(buf, sel.end);
     size_t curr = bol, len = 0, i = 0;
     /* determine the length of the line in columns */
     for (; !buf_iseol(buf, curr); curr++)
         len += runewidth(len, buf_getrat(buf, curr));
     /* iterate over the runes until we reach the target column */
-    for (sel->end = bol, i = 0; i < sel->col && i < len;) {
-        int width = runewidth(i, buf_getrat(buf, sel->end));
-        sel->end = buf_byrune(buf, sel->end, 1);
-        if (sel->col >= i && sel->col < (i + width))
+    for (sel.end = bol, i = 0; i < sel.col && i < len;) {
+        int width = runewidth(i, buf_getrat(buf, sel.end));
+        sel.end = buf_byrune(buf, sel.end, 1);
+        if (sel.col >= i && sel.col < (i + width))
             break;
         i += width;
     }
+    setsel(buf, p_sel, &sel);
 }
 
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune)) {
