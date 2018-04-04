@@ -761,7 +761,7 @@ static void draw_view(int i, int width, int height, int bg, int fg, int csr, int
         draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* place the cursor on screen */
-    if (Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
+    if (!view_selsize(win_view(i)) && Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
         x11_draw_rect(csr,
             Regions[i].x + (Regions[i].csrx * fwidth),
             Regions[i].y + (Regions[i].csry * fheight),

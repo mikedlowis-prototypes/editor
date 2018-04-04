@@ -30,7 +30,7 @@ int /* Integer config options */
     ExpandTabs = ON,
     DosLineFeed = OFF;
 
-#define GRUVBOX 1
+#define PARCHMENT 1
 
 #if defined(GRUVBOX)
 int Palette[ClrCount] = {
