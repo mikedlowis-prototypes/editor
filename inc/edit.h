@@ -67,6 +67,7 @@ void buf_selline(Buf* buf, Sel* sel);
 void buf_selword(Buf* buf, bool (*isword)(Rune), Sel* sel);
 void buf_selblock(Buf* buf, Rune beg, Rune end, Sel* sel);
 void buf_selall(Buf* buf, Sel* sel);
+void buf_selctx(Buf* buf, bool (*isword)(Rune), Sel* p_sel);
 
 size_t buf_byrune(Buf* buf, size_t pos, int count);
 size_t buf_byword(Buf* buf, size_t pos, int count);

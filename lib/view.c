@@ -7,7 +7,6 @@ typedef size_t (*movefn_t)(Buf* buf, size_t pos, int count);
 
 static void move_selection(View* view, bool extsel, int move, movefn_t bything);
 static void move_to(View* view, bool extsel, size_t off);
-static void select_context(View* view, bool (*isword)(Rune), Sel* sel);
 static bool selection_visible(View* view);
 static void find_cursor(View* view, size_t* csrx, size_t* csry);
 static void clearrow(View* view, size_t row);
@@ -117,19 +116,19 @@ void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
 void view_selword(View* view, size_t row, size_t col) {
     if (row != SIZE_MAX && col != SIZE_MAX)
         view_setcursor(view, row, col, false);
-    buf_selword(&(view->buffer), risbigword, getsel(view));
+    buf_selword(&(view->buffer), risbigword, NULL);
 }
 
 void view_selprev(View* view) {
     if (!view_selsize(view))
-        buf_lastins(&(view->buffer), getsel(view));
+        buf_lastins(&(view->buffer), NULL);
     else
         buf_selclr(&(view->buffer), NULL, RIGHT);
 }
 
 void view_select(View* view, size_t row, size_t col) {
     view_setcursor(view, row, col, false);
-    select_context(view, risword, getsel(view));
+    buf_selctx(&(view->buffer), risword, NULL);
 }
 
 size_t view_selsize(View* view) {
@@ -151,7 +150,7 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
 }
 
 bool view_findstr(View* view, int dir, char* str) {
-    bool found = buf_findstr(&(view->buffer), getsel(view), dir, str);
+    bool found = buf_findstr(&(view->buffer), NULL, dir, str);
     view->sync_needed = true;
     view->sync_center = true;
     return found;
@@ -161,14 +160,14 @@ void view_insert(View* view, bool indent, Rune rune) {
     /* ignore non-printable control characters */
     if (!isspace(rune) && (rune >= 0 && rune < 0x20))
         return;
-    buf_putc(&(view->buffer), rune, getsel(view));
+    buf_putc(&(view->buffer), rune, NULL);
     move_to(view, false, getsel(view)->end);
 }
 
 void view_delete(View* view, int dir, bool byword) {
     if (!view_selsize(view))
         (byword ? view_byword : view_byrune)(view, dir, true);
-    buf_del(&(view->buffer), getsel(view));
+    buf_del(&(view->buffer), NULL);
     move_to(view, false, getsel(view)->end);
 }
 
@@ -201,24 +200,24 @@ void view_eof(View* view, bool extsel) {
 }
 
 void view_setln(View* view, size_t line) {
-    buf_setln(&(view->buffer), getsel(view), line);
+    buf_setln(&(view->buffer), NULL, line);
     view->sync_center = true;
 }
 
 void view_undo(View* view) {
-    buf_undo(&(view->buffer), getsel(view));
+    buf_undo(&(view->buffer), NULL);
     view->sync_needed = true;
     view->sync_center = !selection_visible(view);
 }
 
 void view_redo(View* view) {
-    buf_redo(&(view->buffer), getsel(view));
+    buf_redo(&(view->buffer), NULL);
     view->sync_needed = true;
     view->sync_center = !selection_visible(view);
 }
 
 void view_putstr(View* view, char* str) {
-    buf_puts(&(view->buffer), str, getsel(view));
+    buf_puts(&(view->buffer), str, NULL);
 }
 
 char* view_getstr(View* view, Sel* range) {
@@ -227,13 +226,13 @@ char* view_getstr(View* view, Sel* range) {
 
 char* view_getcmd(View* view) {
     if (!view_selsize(view))
-        select_context(view, riscmd, getsel(view));
+        buf_selctx(&(view->buffer), riscmd, NULL);
     return view_getstr(view, NULL);
 }
 
 void view_selctx(View* view) {
     if (!view_selsize(view))
-        select_context(view, risword, getsel(view));
+        buf_selctx(&(view->buffer), risword, NULL);
 }
 
 char* view_getctx(View* view) {
@@ -258,7 +257,7 @@ void view_scrollpage(View* view, int move) {
 }
 
 Rune view_getrune(View* view) {
-    return buf_getc(&(view->buffer), getsel(view));
+    return buf_getc(&(view->buffer), NULL);
 }
 
 void view_scrollto(View* view, size_t csr) {
@@ -277,12 +276,12 @@ void view_scrollto(View* view, size_t csr) {
 }
 
 void view_selectall(View* view) {
-    buf_selall(&(view->buffer), getsel(view));
+    buf_selall(&(view->buffer), NULL);
     view->sync_needed = true;
 }
 
 void view_selectobj(View* view, bool (*istype)(Rune)) {
-    buf_selword(&(view->buffer), istype, getsel(view));
+    buf_selword(&(view->buffer), istype, NULL);
     view->sync_needed = true;
 }
 
@@ -294,7 +293,7 @@ static void move_selection(View* view, bool extsel, int move, movefn_t bything) 
         Sel* sel = getsel(view);
         sel->end = bything(&(view->buffer), sel->end, move);
         if (bything == buf_byline)
-            buf_setcol(&(view->buffer), getsel(view));
+            buf_setcol(&(view->buffer), NULL);
         if (!extsel) buf_selclr(&(view->buffer), sel, move);
     }
     /* only update column if not moving vertically */
@@ -307,27 +306,8 @@ static void move_to(View* view, bool extsel, size_t off) {
     getsel(view)->end = (off > buf_end(buf) ? buf_end(buf) : off);
     if (!extsel)
         getsel(view)->beg = getsel(view)->end;
-    buf_getcol(buf, getsel(view));
+    buf_getcol(buf, NULL);
     view->sync_needed = true;
-}
-
-static void select_context(View* view, bool (*isword)(Rune), Sel* sel) {
-    Buf* buf = &(view->buffer);
-    size_t bol = buf_bol(buf, sel->end);
-    Rune r = buf_getc(buf, sel);
-    if (r == '(' || r == ')')
-        buf_selblock(buf, '(', ')', sel);
-    else if (r == '[' || r == ']')
-        buf_selblock(buf, '[', ']', sel);
-    else if (r == '{' || r == '}')
-        buf_selblock(buf, '{', '}', sel);
-    else if (sel->end == bol || r == '\n')
-        buf_selline(buf, sel);
-    else if (risword(r))
-        buf_selword(buf, isword, sel);
-    else
-        buf_selword(buf, risbigword, sel);
-    buf_getcol(&(view->buffer), getsel(view));
 }
 
 static bool selection_visible(View* view) {

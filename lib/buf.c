@@ -330,6 +330,27 @@ void buf_selall(Buf* buf, Sel* p_sel) {
     setsel(buf, p_sel, &sel);
 }
 
+void buf_selctx(Buf* buf, bool (*isword)(Rune), Sel* p_sel) {
+    Sel sel = getsel(buf, p_sel);
+    size_t bol = buf_bol(buf, sel.end);
+    Rune r = buf_getc(buf, &sel);
+    if (r == '(' || r == ')')
+        buf_selblock(buf, '(', ')', &sel);
+    else if (r == '[' || r == ']')
+        buf_selblock(buf, '[', ']', &sel);
+    else if (r == '{' || r == '}')
+        buf_selblock(buf, '{', '}', &sel);
+    else if (sel.end == bol || r == '\n')
+        buf_selline(buf, &sel);
+    else if (risword(r))
+        buf_selword(buf, isword, &sel);
+    else
+        buf_selword(buf, risbigword, &sel);
+    buf_getcol(buf, &sel);
+    setsel(buf, p_sel, &sel);
+}
+
+
 size_t buf_byrune(Buf* buf, size_t pos, int count) {
     int move = (count < 0 ? -1 : 1);
     count *= move; // remove the sign if there is one
