@@ -29,7 +29,7 @@ docs:
 clean:
 	find . -name '*.[oad]' -delete
 	find . \( -name '*.gcno' -o -name '*.gcda' \) -delete
-	$(RM) $(BINS) $(TEST_BINS)
+	$(RM) $(BINS) $(TEST_BINS) flaws.txt
 
 install:
 	mkdir -p $(PREFIX)/bin
@@ -77,4 +77,9 @@ tests/pick: tests/pick.o libedit.a
 # load generate dependencies
 -include *.d lib/*.d tests/*.d tests/lib/*.d
 
+flaws:
+	-./analyze.sh tide.c lib/*.c
 
+scan-build:
+	make clean
+	scan-build make
