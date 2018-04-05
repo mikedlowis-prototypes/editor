@@ -528,8 +528,6 @@ static void xbtnrelease(XEvent* e) {
 }
 
 static void xbtnmotion(XEvent* e) {
-    if ((KeyBtnState & 0x1f00) == 0)
-        win_setregion(getregion(e->xbutton.x, e->xbutton.y));
     KeyBtnState = e->xbutton.state;
     int x = e->xbutton.x, y = e->xbutton.y;
     if (x < Regions[Focused].x) x = Regions[Focused].x;
@@ -657,8 +655,7 @@ static uint32_t getkey(XEvent* e) {
 }
 
 static void mouse_click(int btn, bool pressed, int x, int y) {
-    if ((KeyBtnState & 0x1f00) == 0)
-        win_setregion(getregion(x, y));
+    win_setregion(getregion(x, y));
     WinRegion id = getregion(x, y);
     if (id == FOCUSED && x < Regions[Focused].x)
         x = Regions[Focused].x, id = getregion(x, y);
