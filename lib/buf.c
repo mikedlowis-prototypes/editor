@@ -12,6 +12,7 @@ static void log_clear(Log** list);
 static void syncgap(Buf* buf, size_t off);
 static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
+static void selblock(Buf* buf, Rune first, Rune last);
 
 void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
@@ -275,40 +276,6 @@ void buf_selword(Buf* buf, bool (*isword)(Rune)) {
     buf->selection = sel;
 }
 
-void buf_selblock(Buf* buf, Rune first, Rune last) {
-    Sel sel = getsel(buf);
-    int balance = 0, dir;
-    size_t beg, end = sel.end;
-
-    /* figure out which end of the block we're starting at */
-    if (buf_getrat(buf, end) == first)
-        dir = +1, balance++, beg = end++;
-    else if (buf_getrat(buf, end) == last)
-        dir = -1, balance--, beg = end--;
-    else
-        return;
-
-    /* scan for a blanced set of braces */
-    while (true) {
-        if (buf_getrat(buf, end) == first)
-            balance++;
-        else if (buf_getrat(buf, end) == last)
-            balance--;
-
-        if (balance == 0 || end >= buf_end(buf) || end == 0)
-            break;
-        else
-            end += dir;
-    }
-
-    /* bail if we failed to find a block */
-    if (balance != 0) return;
-
-    /* update the passed in selection */
-    if (end > beg) beg++; else end++;
-    buf->selection.beg = beg, buf->selection.end = end;
-}
-
 void buf_selall(Buf* buf) {
     buf->selection = (Sel){ .beg = 0, .end = buf_end(buf) };
 }
@@ -317,11 +284,11 @@ void buf_selctx(Buf* buf, bool (*isword)(Rune)) {
     size_t bol = buf_bol(buf, buf->selection.end);
     Rune r = buf_getc(buf);
     if (r == '(' || r == ')')
-        buf_selblock(buf, '(', ')');
+        selblock(buf, '(', ')');
     else if (r == '[' || r == ']')
-        buf_selblock(buf, '[', ']');
+        selblock(buf, '[', ']');
     else if (r == '{' || r == '}')
-        buf_selblock(buf, '{', '}');
+        selblock(buf, '{', '}');
     else if (buf->selection.end == bol || r == '\n')
         buf_selline(buf);
     else if (risword(r))
@@ -466,3 +433,41 @@ bool buf_insel(Buf* buf, size_t off) {
     Sel sel = getsel(buf);
     return (off >= sel.beg && off < sel.end);
 }
+
+/******************************************************************************/
+
+static void selblock(Buf* buf, Rune first, Rune last) {
+    Sel sel = getsel(buf);
+    int balance = 0, dir;
+    size_t beg, end = sel.end;
+
+    /* figure out which end of the block we're starting at */
+    if (buf_getrat(buf, end) == first)
+        dir = +1, balance++, beg = end++;
+    else if (buf_getrat(buf, end) == last)
+        dir = -1, balance--, beg = end--;
+    else
+        return;
+
+    /* scan for a blanced set of braces */
+    while (true) {
+        if (buf_getrat(buf, end) == first)
+            balance++;
+        else if (buf_getrat(buf, end) == last)
+            balance--;
+
+        if (balance == 0 || end >= buf_end(buf) || end == 0)
+            break;
+        else
+            end += dir;
+    }
+
+    /* bail if we failed to find a block */
+    if (balance != 0) return;
+
+    /* update the passed in selection */
+    if (end > beg) beg++; else end++;
+    buf->selection.beg = beg, buf->selection.end = end;
+}
+
+
