@@ -34,47 +34,46 @@ int /* Integer config options */
 
 #if defined(GRUVBOX)
 int Palette[ClrCount] = {
-    [Red]      = 0xFFfb4934, // Red
-    [Green]    = 0xFFb8bb26, // Green
-    [Yellow]   = 0xFFfabd2f, // Yellow
-    [Blue]     = 0xFF83a598, // Blue
-    [Purple]   = 0xFF93869b, // Purple
-    [Aqua]     = 0xFF8ec07c, // Aqua
-    [Orange]   = 0xFFfe8019, // Orange
-    [EditBg]   = 0xFF1d2021, // Edit region background
-    [EditFg]   = 0xFFd5c4a1, // Edit region text
-    [EditSel]  = 0xFF504945, // Edit region selection
-    [EditCsr]  = 0xFFfbf1c7, // Edit region cursor
-    [TagsBg]   = 0xFF3c3836, // Tags region background
-    [TagsFg]   = 0xFFd5c4a1, // Tags region text
-    [TagsSel]  = 0xFF504945, // Tags region selection
-    [TagsCsr]  = 0xFFfbf1c7, // Tags region cursor
-    [ScrollBg] = 0xFF665c54, // Scroll region background
-    [ScrollFg] = 0xFF1d2021, // Scroll region foreground
-    [VerBdr]   = 0xFF665c54, // Vertical border
-    [HorBdr]   = 0xFF665c54, // Horizontal border
+    [Red]      = 0xfb4934, // Red
+    [Green]    = 0xb8bb26, // Green
+    [Yellow]   = 0xfabd2f, // Yellow
+    [Blue]     = 0x83a598, // Blue
+    [Purple]   = 0x93869b, // Purple
+    [Aqua]     = 0x8ec07c, // Aqua
+    [Orange]   = 0xfe8019, // Orange
+    [EditBg]   = 0x1d2021, // Edit region background
+    [EditFg]   = 0xd5c4a1, // Edit region text
+    [EditSel]  = 0x504945, // Edit region selection
+    [EditCsr]  = 0xfbf1c7, // Edit region cursor
+    [TagsBg]   = 0x3c3836, // Tags region background
+    [TagsFg]   = 0xd5c4a1, // Tags region text
+    [TagsSel]  = 0x504945, // Tags region selection
+    [TagsCsr]  = 0xfbf1c7, // Tags region cursor
+    [ScrollBg] = 0x665c54, // Scroll region background
+    [ScrollFg] = 0x1d2021, // Scroll region foreground
+    [VerBdr]   = 0x665c54, // Vertical border
+    [HorBdr]   = 0x665c54, // Horizontal border
 };
 #elif defined(PARCHMENT)
 int Palette[ClrCount] = {
-    [Red]      = 0xFF880000, // Red
-    [Green]    = 0xFF005500, // Green
-    [Yellow]   = 0xFFeeee9e, // Yellow
-    [Blue]     = 0xFF004488, // Blue
-    [Purple]   = 0xFF770077, // Purple
-    [Aqua]     = 0xFF007777, // Aqua
-    [Orange]   = 0xFF000000, // Orange ???
-    [EditBg]   = 0xFFffffea, // Edit region background
-    [EditFg]   = 0xFF000000, // Edit region text
-    [EditSel]  = 0xFFeeee9e, // Edit region selection
-    [EditCsr]  = 0xFF000000, // Edit region cursor
-    [TagsBg]   = 0xFFeaffff, // Tags region background
-    [TagsFg]   = 0xFF000000, // Tags region text
-    [TagsSel]  = 0xFF9eeeee, // Tags region selection
-    [TagsCsr]  = 0xFF000000, // Tags region cursor
-    [ScrollBg] = 0xff99994c, // Scroll region background
-    [ScrollFg] = 0xFFffffea, // Scroll region foreground
-    [VerBdr]   = 0xFF8888cc, // Vertical border
-    [HorBdr]   = 0xFF8888cc, // Horizontal border
+    [Red]      = 0x772222, // Red
+    [Green]    = 0x227722, // Green
+    [Blue]     = 0x222277, // Blue
+    [Yellow]   = 0x000000, // Yellow ???
+    [Purple]   = 0x000000, // Purple ???
+    [Aqua]     = 0x000000, // Aqua   ???
+    [Orange]   = 0x000000, // Orange ???
+    [EditBg]   = 0xefefda, // Edit region background
+    [EditSel]  = 0xdede8e, // Edit region selection
+    [EditFg]   = 0x000000, // Edit region text
+    [EditCsr]  = 0x000000, // Edit region cursor
+    [TagsBg]   = 0xdaefef, // Tags region background
+    [TagsSel]  = 0x8edede, // Tags region selection
+    [TagsFg]   = 0x000000, // Tags region text
+    [TagsCsr]  = 0x000000, // Tags region cursor
+    [ScrollBg] = 0x89893c, // Scroll region background
+    [ScrollFg] = 0xefefda, // Scroll region foreground
+    [VerBdr]   = 0x89893c, // Vertical border
+    [HorBdr]   = 0x000000, // Horizontal border
 };
 #endif
-

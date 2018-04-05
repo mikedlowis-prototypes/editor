@@ -64,10 +64,8 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 
 enum { FontCacheSize = 16 };
 
-static void oninput(int mods, Rune key);
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
-
 static struct XSel* selfetch(Atom atom);
 static void xftcolor(XftColor* xc, int id);
 
@@ -452,7 +450,7 @@ static WinRegion getregion(size_t x, size_t y) {
 static void xftcolor(XftColor* xc, int id) {
     #define COLOR(c) ((c) | ((c) >> 8))
     uint32_t c = Palette[id];
-    xc->color.alpha = COLOR((c & 0xFF000000) >> 16);
+    xc->color.alpha = 0xFFFF;
     xc->color.red   = COLOR((c & 0x00FF0000) >> 8);
     xc->color.green = COLOR((c & 0x0000FF00));
     xc->color.blue  = COLOR((c & 0x000000FF) << 8);
@@ -551,7 +549,7 @@ static void xselnotify(XEvent* e) {
         return;
     struct XSel* sel = selfetch( e->xselection.selection );
     Atom rtype;
-    unsigned long format = 0, nitems = 0, nleft = 0, nread = 0;
+    unsigned long format = 0, nitems = 0, nleft = 0;
     unsigned char* propdata = NULL;
     XGetWindowProperty(X.display, X.self, sel->atom, 0, -1, False, AnyPropertyType, &rtype,
                        (int*)&format, &nitems, &nleft, &propdata);
@@ -753,7 +751,7 @@ static void draw_view(int i, int width, int height, int bg, int fg, int csr, int
     View* view = win_view(i);
     x11_draw_rect(bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
     x11_draw_rect(HorBdr, 0, Regions[i].y - 3, width, 1);
-    for (size_t line = 0, y = 0; y < view->nrows; y++) {
+    for (size_t y = 0; y < view->nrows; y++) {
         Row* row = view_getrow(view, y);
         draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
