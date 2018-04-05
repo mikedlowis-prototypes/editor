@@ -456,10 +456,10 @@ size_t buf_selsz(Buf* buf) {
 }
 
 void buf_selclr(Buf* buf, int dir) {
-    Sel sel = getsel(buf);
-    if (dir > 0) sel.beg = sel.end;
-    else sel.end = sel.beg;
-    buf->selection = sel;
+    if (dir > 0)
+        buf->selection.beg = buf->selection.end;
+    else
+        buf->selection.end = buf->selection.beg;
 }
 
 bool buf_insel(Buf* buf, size_t off) {
