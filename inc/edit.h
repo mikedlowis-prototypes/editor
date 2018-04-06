@@ -53,19 +53,14 @@ void buf_del(Buf* buf);
 
 void buf_undo(Buf* buf);
 void buf_redo(Buf* buf);
-//void buf_loglock(Buf* buf);
 void buf_logclear(Buf* buf);
 void buf_lastins(Buf* buf);
 
 bool buf_iseol(Buf* buf, size_t pos);
 size_t buf_bol(Buf* buf, size_t pos);
 size_t buf_eol(Buf* buf, size_t pos);
-//size_t buf_bow(Buf* buf, size_t pos);
-//size_t buf_eow(Buf* buf, size_t pos);
 
-//void buf_selline(Buf* buf);
 void buf_selword(Buf* buf, bool (*isword)(Rune));
-//void buf_selblock(Buf* buf, Rune beg, Rune end);
 void buf_selall(Buf* buf);
 void buf_selctx(Buf* buf, bool (*isword)(Rune));
 
@@ -154,7 +149,6 @@ void view_selectobj(View* view, bool (*istype)(Rune));
 
 /* Command Executions
  *****************************************************************************/
-
 typedef struct Job Job;
 
 typedef void (*jobfn_t)(Job* job);

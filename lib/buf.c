@@ -12,6 +12,7 @@ static void log_clear(Log** list);
 static void syncgap(Buf* buf, size_t off);
 static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
+static void selline(Buf* buf);
 static void selblock(Buf* buf, Rune first, Rune last);
 
 void buf_init(Buf* buf) {
@@ -251,24 +252,6 @@ size_t buf_eol(Buf* buf, size_t off) {
     return off;
 }
 
-size_t buf_bow(Buf* buf, size_t off) {
-    for (; risword(buf_getrat(buf, off-1)); off--);
-    return off;
-}
-
-size_t buf_eow(Buf* buf, size_t off) {
-    for (; risword(buf_getrat(buf, off)); off++);
-    return off;
-}
-
-void buf_selline(Buf* buf) {
-    Sel sel = getsel(buf);
-    sel.beg = buf_bol(buf, sel.end);
-    sel.end = buf_eol(buf, sel.end);
-    sel.end = buf_byrune(buf, sel.end, RIGHT);
-    buf->selection = sel;
-}
-
 void buf_selword(Buf* buf, bool (*isword)(Rune)) {
     Sel sel = getsel(buf);
     for (; isword(buf_getrat(buf, sel.beg-1)); sel.beg--);
@@ -290,7 +273,7 @@ void buf_selctx(Buf* buf, bool (*isword)(Rune)) {
     else if (r == '{' || r == '}')
         selblock(buf, '{', '}');
     else if (buf->selection.end == bol || r == '\n')
-        buf_selline(buf);
+        selline(buf);
     else if (risword(r))
         buf_selword(buf, isword);
     else
@@ -435,6 +418,14 @@ bool buf_insel(Buf* buf, size_t off) {
 }
 
 /******************************************************************************/
+
+static void selline(Buf* buf) {
+    Sel sel = getsel(buf);
+    sel.beg = buf_bol(buf, sel.end);
+    sel.end = buf_eol(buf, sel.end);
+    sel.end = buf_byrune(buf, sel.end, RIGHT);
+    buf->selection = sel;
+}
 
 static void selblock(Buf* buf, Rune first, Rune last) {
     Sel sel = getsel(buf);
