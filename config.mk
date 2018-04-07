@@ -17,6 +17,7 @@ INCS += -I/usr/include/freetype2
 CC = cc
 CFLAGS = -g --std=c99 -MMD $(INCS)
 CFLAGS += -Wall -Werror
+
 # Linker Setup
 LD = $(CC)
 LDFLAGS = $(LIBS) -lX11 -lXft -lfontconfig -lutil

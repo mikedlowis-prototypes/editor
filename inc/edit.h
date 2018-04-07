@@ -187,5 +187,5 @@ enum { /* Color Names */
 
 extern char *TagString, *FontString;
 extern int Palette[ClrCount];
-extern int WinWidth, WinHeight, LineSpacing, Timeout, TabWidth, ScrollBy,
+extern int WinWidth, WinHeight, ScrollWidth, LineSpacing, Timeout, TabWidth, ScrollBy,
     ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs, DosLineFeed;
