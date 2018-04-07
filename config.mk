@@ -16,7 +16,7 @@ INCS += -I/usr/include/freetype2
 # Compiler Setup
 CC = cc
 CFLAGS = -g --std=c99 -MMD $(INCS)
-CFLAGS += -Wall -Werror
+#CFLAGS += -Wall -Werror
 
 # Linker Setup
 LD = $(CC)

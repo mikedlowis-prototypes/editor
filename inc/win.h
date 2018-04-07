@@ -9,9 +9,8 @@ enum {
 typedef enum {
     TAGS     = 0,
     EDIT     = 1,
-    SCROLL   = 2,
-    NREGIONS = 3,
-    FOCUSED  = 3
+    NREGIONS = 2,
+    FOCUSED  = 2
 } WinRegion;
 
 typedef struct {
