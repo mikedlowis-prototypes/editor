@@ -20,11 +20,9 @@ typedef struct {
 } KeyBinding;
 
 typedef struct {
-    size_t x, y;
-    size_t height, width;
-    size_t csrx, csry;
-    View view;
-} Region;
+    int x, y;
+    int h, w;
+} drawcsr;
 
 void win_init(KeyBinding* bindings);
 void win_save(char* path);
