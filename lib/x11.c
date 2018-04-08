@@ -679,13 +679,16 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     uint64_t now = getmillis();
     count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
     before = now;
-
-    if (count == 1)
-        view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
-    else if (count == 2)
-        view_select(win_view(id), row, col);
-    else if (count == 3)
-        view_selword(win_view(id), row, col);
+    if (win_btnpressed(MouseMiddle)) {
+        puts("exec with arg");
+    } else {
+        if (count == 1)
+            view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
+        else if (count == 2)
+            view_select(win_view(id), row, col);
+        else if (count == 3)
+            view_selword(win_view(id), row, col);
+    }
 }
 
 static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col) {
