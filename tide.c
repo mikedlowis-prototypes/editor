@@ -39,10 +39,6 @@ static void select_line(char* arg) {
     view_selctx(view);
 }
 
-static void select_all(char* arg) {
-    view_selectall(win_view(FOCUSED));
-}
-
 static void join_lines(char* arg) {
     View* view = win_view(FOCUSED);
     view_eol(view, false);
@@ -130,15 +126,7 @@ static void cursor_mvlr(int dir) {
 
 static void cursor_mvupdn(int dir) {
     bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl)) {
-        if (!view_selsize(win_view(FOCUSED)))
-            select_line(0);
-        cut(0);
-        view_byline(win_view(FOCUSED), dir, false);
-        paste(0);
-    } else {
-        view_byline(win_view(FOCUSED), dir, extsel);
-    }
+    view_byline(win_view(FOCUSED), dir, extsel);
 }
 
 static void cursor_home_end(
@@ -429,15 +417,14 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'e', cursor_eol  },
 
     /* Standard Text Editing Shortcuts */
-    { ModCtrl,          's', save        },
-    { ModCtrl,          'z', undo        },
-    { ModCtrl,          'y', redo        },
-    { ModCtrl,          'x', cut         },
-    { ModCtrl,          'c', copy        },
-    { ModCtrl,          'v', paste       },
-    { ModCtrl,          'j', join_lines  },
-    { ModCtrl,          'l', select_line },
-    { ModCtrl|ModShift, 'a', select_all  },
+    { ModCtrl, 's', save        },
+    { ModCtrl, 'z', undo        },
+    { ModCtrl, 'y', redo        },
+    { ModCtrl, 'x', cut         },
+    { ModCtrl, 'c', copy        },
+    { ModCtrl, 'v', paste       },
+    { ModCtrl, 'j', join_lines  },
+    { ModCtrl, 'l', select_line },
 
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up   },
