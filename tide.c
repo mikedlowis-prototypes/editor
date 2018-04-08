@@ -222,7 +222,7 @@ static void cmd_exec(char* cmd) {
     execcmd[2] = cmd;
 
     /* get the selection that the command will operate on */
-    if (op && op != '<' && op != '!' && 0 == view_selsize(win_view(EDIT)))
+    if (op && op != '<' && op != '!' && !view_selsize(win_view(EDIT)))
         view_selectall(win_view(EDIT));
     char* input = view_getstr(win_view(EDIT));
     size_t len  = (input ? strlen(input) : 0);

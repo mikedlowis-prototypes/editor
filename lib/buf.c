@@ -251,16 +251,6 @@ size_t buf_eol(Buf* buf, size_t off) {
     return off;
 }
 
-size_t buf_bow(Buf* buf, size_t off) {
-    for (; risword(buf_getrat(buf, off-1)); off--);
-    return off;
-}
-
-size_t buf_eow(Buf* buf, size_t off) {
-    for (; risword(buf_getrat(buf, off)); off++);
-    return off;
-}
-
 void buf_selline(Buf* buf) {
     Sel sel = getsel(buf);
     sel.beg = buf_bol(buf, sel.end);
@@ -289,6 +279,8 @@ void buf_selctx(Buf* buf, bool (*isword)(Rune)) {
         selblock(buf, '[', ']');
     else if (r == '{' || r == '}')
         selblock(buf, '{', '}');
+    else if (r == '<' || r == '>')
+        selblock(buf, '<', '>');
     else if (buf->selection.end == bol || r == '\n')
         buf_selline(buf);
     else if (risword(r))
