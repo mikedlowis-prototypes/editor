@@ -86,6 +86,7 @@ struct XFont {
 };
 
 static struct {
+    Time now;
     Window root;
     Display* display;
     Visual* visual;
@@ -142,7 +143,7 @@ void win_save(char* path) {
     View* view = win_view(EDIT);
     if (!path) path = view->buffer.path;
     if (!path) return;
-    path = stringdup(path);
+    path = strdup(path);
     free(view->buffer.path);
     view->buffer.path = path;
     buf_save(&(view->buffer));
@@ -178,10 +179,9 @@ Buf* win_buf(WinRegion id) {
 
 void win_quit(void) {
     static uint64_t before = 0;
-    uint64_t now = getmillis();
-    if (!win_buf(EDIT)->modified || (now-before) <= (uint64_t)ClickTime)
+    if (!win_buf(EDIT)->modified || (X.now - before) <= (uint64_t)ClickTime)
         exit(0);
-    before = now;
+    before = X.now;
 }
 
 /******************************************************************************/
@@ -493,6 +493,7 @@ static void xfocus(XEvent* e) {
 }
 
 static void xkeypress(XEvent* e) {
+    X.now = e->xkey.time;
     win_setregion(getregion(e->xkey.x, e->xkey.y));
     uint32_t key = getkey(e);
     if (key == RUNE_ERR) return;
@@ -516,16 +517,19 @@ static void xkeypress(XEvent* e) {
 }
 
 static void xbtnpress(XEvent* e) {
+    X.now = e->xbutton.time;
     KeyBtnState = (e->xbutton.state | (1 << (e->xbutton.button + 7)));
     mouse_click(e->xbutton.button, true, e->xbutton.x,  e->xbutton.y);
 }
 
 static void xbtnrelease(XEvent* e) {
+    X.now = e->xbutton.time;
     KeyBtnState = (e->xbutton.state & ~(1 << (e->xbutton.button + 7)));
     mouse_click(e->xbutton.button, false, e->xbutton.x,  e->xbutton.y);
 }
 
 static void xbtnmotion(XEvent* e) {
+    X.now = e->xbutton.time;
     size_t row, col;
     KeyBtnState = e->xbutton.state;
     int x = e->xbutton.x, y = e->xbutton.y;
@@ -660,11 +664,10 @@ static void mouse_click(int btn, bool pressed, int x, int y) {
 
 static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     static int count = 0;
-    static uint64_t before = 0;
+    static Time before = 0;
     if (!pressed) return;
-    uint64_t now = getmillis();
-    count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
-    before = now;
+    count = ((X.now - before) <= (uint64_t)ClickTime ? count+1 : 1);
+    before = X.now;
     if (win_btnpressed(MouseRight)) {
         puts("fetch tag");
     }  else if (win_btnpressed(MouseMiddle)) {

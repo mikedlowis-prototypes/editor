@@ -11,11 +11,7 @@ typedef int32_t Rune;
 
 size_t utf8encode(char str[UTF_MAX], Rune rune);
 bool utf8decode(Rune* rune, size_t* length, int byte);
-Rune fgetrune(FILE* f);
-void fputrune(Rune rune, FILE* f);
 int runewidth(unsigned col, Rune r);
-size_t rstrlen(Rune* runes);
-Rune* charstorunes(char* str);
 bool risword(Rune r);
 bool rissigil(Rune r);
 bool risfile(Rune r);

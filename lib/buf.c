@@ -14,6 +14,7 @@ static int bytes_match(Buf* buf, size_t mbeg, size_t mend, char* str);
 static Rune nextrune(Buf* buf, size_t off, int move, bool (*testfn)(Rune));
 static void selline(Buf* buf);
 static void selblock(Buf* buf, Rune first, Rune last);
+static size_t pagealign(size_t sz);
 
 void buf_init(Buf* buf) {
     /* cleanup old data if there is any */
@@ -40,7 +41,7 @@ void buf_load(Buf* buf, char* path) {
     /* process the file path and address */
     if (path[0] == '.' && path[1] == '/')
         path += 2;
-    buf->path = stringdup(path);
+    buf->path = strdup(path);
 
     /* load the contents from the file */
     int fd, nread;
@@ -61,7 +62,7 @@ void buf_load(Buf* buf, char* path) {
 
     /* reset buffer state */
     buf->modified = false;
-    buf->modtime  = modtime(buf->path);
+    buf->modtime  = (uint64_t)sb.st_mtime;
     buf_logclear(buf);
 }
 
@@ -478,3 +479,11 @@ static void selblock(Buf* buf, Rune first, Rune last) {
     if (end > beg) beg++; else end++;
     buf->selection.beg = beg, buf->selection.end = end;
 }
+
+static size_t pagealign(size_t sz) {
+    size_t pgsize = sysconf(_SC_PAGE_SIZE), alignmask = pgsize - 1;
+    if (sz & alignmask)
+        sz += pgsize - (sz & alignmask);
+    return sz;
+}
+

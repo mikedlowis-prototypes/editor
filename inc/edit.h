@@ -1,9 +1,6 @@
 /* Utility Functions
  *****************************************************************************/
-size_t pagealign(size_t sz);
-uint64_t getmillis(void);
 char* stringdup(const char* str);
-uint64_t modtime(char* path);
 char* strmcat(char* first, ...);
 
 /* Buffer management functions

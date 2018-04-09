@@ -5,9 +5,9 @@
 #include <wchar.h>
 #include <ctype.h>
 
-const uint8_t UTF8_SeqBits[] = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE };
-const uint8_t UTF8_SeqMask[] = { 0x00, 0xFF, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00 };
-const uint8_t UTF8_SeqLens[] = { 0x01, 0x00, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00 };
+static const uint8_t UTF8_SeqBits[] = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE };
+static const uint8_t UTF8_SeqMask[] = { 0x00, 0xFF, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00 };
+static const uint8_t UTF8_SeqLens[] = { 0x01, 0x00, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00 };
 
 static bool runevalid(Rune val) {
     return (val <= RUNE_MAX)
@@ -80,29 +80,6 @@ int runewidth(unsigned col, Rune r) {
     int width = wcwidth(r);
     if (width < 0) width = 1;
     return width;
-}
-
-size_t rstrlen(Rune* runes) {
-    size_t len = 0;
-    for (; runes[len]; len++);
-    return len;
-}
-
-Rune* charstorunes(char* str) {
-    size_t len = 0;
-    Rune* runes = NULL;
-    while (str && *str) {
-        Rune rune = 0;
-        size_t length = 0;
-        while (!utf8decode(&rune, &length, *str++));
-        runes = realloc(runes, (len + 1) * sizeof(Rune));
-        runes[len++] = rune;
-    }
-    if (runes) {
-        runes = realloc(runes, (len + 1) * sizeof(Rune));
-        runes[len++] = '\0';
-    }
-    return runes;
 }
 
 bool risword(Rune r) {

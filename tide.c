@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include <stdc.h>
 #include <x11.h>
 #include <utf.h>
@@ -93,7 +94,7 @@ void exec(char* cmd) {
     Tag* tag = tag_lookup(cmd);
     if (tag) {
         while (*cmd && !isspace(*cmd++));
-        tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
+        tag_exec(tag, (*cmd ? strdup(cmd) : NULL));
     } else {
         cmd_exec(cmd);
     }
@@ -285,7 +286,7 @@ static void search(char* arg) {
     char* str;
     SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
     if (x11_keymodsset(ModAlt) && SearchTerm)
-        str = stringdup(SearchTerm);
+        str = strdup(SearchTerm);
     else
         str = view_getctx(win_view(FOCUSED));
     view_findstr(win_view(EDIT), SearchDir, str);

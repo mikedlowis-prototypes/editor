@@ -10,21 +10,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-size_t pagealign(size_t sz) {
-    size_t pgsize = sysconf(_SC_PAGE_SIZE), alignmask = pgsize - 1;
-    if (sz & alignmask)
-        sz += pgsize - (sz & alignmask);
-    return sz;
-}
-
-uint64_t getmillis(void) {
-    struct timespec time;
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    uint64_t ms = ((uint64_t)time.tv_sec * (uint64_t)1000);
-    ms += ((uint64_t)time.tv_nsec / (uint64_t)1000000);
-    return ms;
-}
-
 void die(const char* msgfmt, ...) {
     va_list args;
     va_start(args, msgfmt);
@@ -35,20 +20,6 @@ void die(const char* msgfmt, ...) {
         fprintf(stderr, " %s", strerror(errno));
     fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
-}
-
-char* stringdup(const char* s) {
-    char* ns = (char*)malloc(strlen(s) + 1);
-    assert(ns);
-    strcpy(ns,s);
-    return ns;
-}
-
-uint64_t modtime(char* path) {
-    struct stat status;
-    if (stat(path, &status) < 0)
-        return 0u;
-    return (uint64_t)status.st_mtime;
 }
 
 char* strmcat(char* first, ...) {
