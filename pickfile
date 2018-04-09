@@ -1,9 +1,0 @@
-#!/bin/sh
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <dir>"
-    exit 1
-fi
-
-export PICKTITLE="Pick File ($PWD)"
-file="$(find $1 -not -path '*/\.*' -type f | sed 's|^\./||' | pick)"
-tctl "$file"
