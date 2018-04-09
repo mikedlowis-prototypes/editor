@@ -56,10 +56,8 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
     [SelectionClear] = xselclear,
     [SelectionNotify] = xselnotify,
     [SelectionRequest] = xselrequest,
-    [PropertyNotify] = xpropnotify,
     [ClientMessage] = xclientmsg,
     [ConfigureNotify] = xresize,
-    [Expose] = xexpose,
 };
 
 /******************************************************************************/
@@ -432,6 +430,13 @@ bool x11_sel_set(int selid, char* str) {
     }
 }
 
+static struct XSel* selfetch(Atom atom) {
+    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
+        if (atom == Selections[i].atom)
+            return &Selections[i];
+    return NULL;
+}
+
 /******************************************************************************/
 
 static WinRegion getregion(size_t x, size_t y) {
@@ -446,13 +451,6 @@ static void xftcolor(XftColor* xc, int id) {
     xc->color.green = COLOR((c & 0x0000FF00));
     xc->color.blue  = COLOR((c & 0x000000FF) << 8);
     XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
-}
-
-static struct XSel* selfetch(Atom atom) {
-    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
-        if (atom == Selections[i].atom)
-            return &Selections[i];
-    return NULL;
 }
 
 static void get_position(WinRegion id, int x, int y, size_t* row, size_t* col) {
@@ -492,9 +490,6 @@ static void xupdate(Job* job) {
 static void xfocus(XEvent* e) {
     if (X.xic)
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
-//    Buf* buf = win_buf(EDIT);
-//    if (buf->path && buf->modtime != modtime(buf->path))
-//        view_append(win_view(TAGS), "File modified externally: Get {Put }");
 }
 
 static void xkeypress(XEvent* e) {
@@ -597,9 +592,6 @@ static void xselrequest(XEvent* e) {
 0, &s);
 }
 
-static void xpropnotify(XEvent* e) {
-}
-
 static void xclientmsg(XEvent* e) {
     if (e->xclient.data.l[0] == XInternAtom(X.display, "WM_DELETE_WINDOW", False))
         win_quit();
@@ -612,9 +604,6 @@ static void xresize(XEvent* e) {
         X.pixmap = XCreatePixmap(X.display, X.self, X.width, X.height, X.depth);
         X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
     }
-}
-
-static void xexpose(XEvent* e) {
 }
 
 /******************************************************************************/
