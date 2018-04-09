@@ -665,7 +665,9 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     uint64_t now = getmillis();
     count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
     before = now;
-    if (win_btnpressed(MouseMiddle)) {
+    if (win_btnpressed(MouseRight)) {
+        puts("fetch tag");
+    }  else if (win_btnpressed(MouseMiddle)) {
         puts("exec with arg");
     } else {
         if (count == 1)
