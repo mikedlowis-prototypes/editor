@@ -426,6 +426,14 @@ bool buf_insel(Buf* buf, size_t off) {
     return (off >= sel.beg && off < sel.end);
 }
 
+char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off) {
+    if (!buf_insel(buf, off)) {
+        buf->selection = (Sel){ .beg = off, .end = off };
+        buf_selword(buf, isword);
+    }
+    return buf_gets(buf);
+}
+
 /******************************************************************************/
 
 static void selblock(Buf* buf, Rune first, Rune last) {
@@ -461,5 +469,3 @@ static void selblock(Buf* buf, Rune first, Rune last) {
     if (end > beg) beg++; else end++;
     buf->selection.beg = beg, buf->selection.end = end;
 }
-
-

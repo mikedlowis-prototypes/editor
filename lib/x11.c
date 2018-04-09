@@ -30,6 +30,7 @@ static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col);
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel);
 static void draw_hrule(drawcsr* csr);
 static void draw_scroll(drawcsr* csr);
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 
 static void xupdate(Job* job);
 static void xfocus(XEvent* e);
@@ -65,7 +66,6 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 
 enum { FontCacheSize = 16 };
 
-static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
 static struct XSel* selfetch(Atom atom);
 static void xftcolor(XftColor* xc, int id);
@@ -710,6 +710,7 @@ static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
         SearchTerm = view_fetch(win_view(id), row, col, risfile);
+        view_findstr(win_view(id), SearchDir, SearchTerm);
     }
 }
 

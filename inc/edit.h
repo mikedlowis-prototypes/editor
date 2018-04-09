@@ -81,6 +81,7 @@ void buf_setcol(Buf* buf);
 size_t buf_selsz(Buf* buf);
 void buf_selclr(Buf* buf, int dir);
 bool buf_insel(Buf* buf, size_t off);
+char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off);
 
 /* Screen management functions
  *****************************************************************************/

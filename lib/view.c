@@ -141,15 +141,8 @@ size_t view_selsize(View* view) {
 char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
    char* str = NULL;
     size_t off = getoffset(view, row, col);
-    if (off != SIZE_MAX) {
-        /* str = buf_fetchat(buf, isword, off) */
-//        Sel sel = { .beg = off, .end = off };
-//        if (buf_insel(BUF, NULL, off))
-//            sel = *(getsel(view));
-//        else
-//            buf_selword(BUF, isword, &sel);
-//        str = view_getstr(view, &sel);
-    }
+    if (off != SIZE_MAX)
+        str = buf_fetch(BUF, isword, off);
     return str;
 }
 
@@ -298,7 +291,7 @@ static void move_selection(View* view, bool extsel, int move, movefn_t bything) 
         if (bything == buf_byline)
             buf_setcol(BUF);
         if (!extsel)
-            buf_selclr(BUF, move);
+            buf_selclr(BUF, RIGHT);
     }
     /* only update column if not moving vertically */
     if (bything != buf_byline)
