@@ -252,6 +252,14 @@ size_t buf_eol(Buf* buf, size_t off) {
     return off;
 }
 
+void buf_selline(Buf* buf) {
+    Sel sel = getsel(buf);
+    sel.beg = buf_bol(buf, sel.end);
+    sel.end = buf_eol(buf, sel.end);
+    sel.end = buf_byrune(buf, sel.end, RIGHT);
+    buf->selection = sel;
+}
+
 void buf_selword(Buf* buf, bool (*isword)(Rune)) {
     Sel sel = getsel(buf);
     for (; isword(buf_getrat(buf, sel.beg-1)); sel.beg--);
@@ -272,6 +280,8 @@ void buf_selctx(Buf* buf, bool (*isword)(Rune)) {
         selblock(buf, '[', ']');
     else if (r == '{' || r == '}')
         selblock(buf, '{', '}');
+    else if (r == '<' || r == '>')
+        selblock(buf, '<', '>');
     else if (buf->selection.end == bol || r == '\n')
         selline(buf);
     else if (risword(r))
@@ -417,6 +427,14 @@ bool buf_insel(Buf* buf, size_t off) {
     return (off >= sel.beg && off < sel.end);
 }
 
+char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off) {
+    if (!buf_insel(buf, off)) {
+        buf->selection = (Sel){ .beg = off, .end = off };
+        buf_selword(buf, isword);
+    }
+    return buf_gets(buf);
+}
+
 /******************************************************************************/
 
 static void selline(Buf* buf) {
@@ -460,5 +478,3 @@ static void selblock(Buf* buf, Rune first, Rune last) {
     if (end > beg) beg++; else end++;
     buf->selection.beg = beg, buf->selection.end = end;
 }
-
-

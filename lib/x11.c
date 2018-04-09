@@ -27,8 +27,10 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col);
 static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col);
 static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col);
 
-static void layout(int height, int width);
-static void redraw(int height, int width);
+static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel);
+static void draw_hrule(drawcsr* csr);
+static void draw_scroll(drawcsr* csr);
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 
 static void xupdate(Job* job);
 static void xfocus(XEvent* e);
@@ -54,17 +56,14 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
     [SelectionClear] = xselclear,
     [SelectionNotify] = xselnotify,
     [SelectionRequest] = xselrequest,
-    [PropertyNotify] = xpropnotify,
     [ClientMessage] = xclientmsg,
     [ConfigureNotify] = xresize,
-    [Expose] = xexpose,
 };
 
 /******************************************************************************/
 
 enum { FontCacheSize = 16 };
 
-static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols);
 static WinRegion getregion(size_t x, size_t y);
 static struct XSel* selfetch(Atom atom);
 static void xftcolor(XftColor* xc, int id);
@@ -115,13 +114,12 @@ static struct XSel {
     { .name = "CLIPBOARD" },
 };
 
-static double ScrollOffset = 0.0;
-static double ScrollVisible = 1.0;
 static XFont CurrFont;
 static WinRegion Focused = EDIT;
-static Region Regions[NREGIONS] = {0};
+static View Regions[NREGIONS];
 static Rune LastKey;
 static KeyBinding* Keys = NULL;
+static int Divider;
 
 int SearchDir = DOWN;
 char* SearchTerm = NULL;
@@ -129,8 +127,8 @@ char* SearchTerm = NULL;
 /******************************************************************************/
 
 void win_init(KeyBinding* bindings) {
-    for (int i = 0; i < SCROLL; i++)
-        view_init(&(Regions[i].view), NULL);
+    view_init(&Regions[TAGS], NULL);
+    view_init(&Regions[EDIT], NULL);
     x11_init();
     Keys = bindings;
     CurrFont = x11_font_load(FontString);
@@ -166,19 +164,16 @@ WinRegion win_getregion(void) {
     return Focused;
 }
 
-bool win_setregion(WinRegion id) {
-    bool changed = true;
-    if (Focused != id && (id == TAGS || id == EDIT))
-        changed = true, Focused = id;
-    return changed;
+void win_setregion(WinRegion id) {
+    Focused = id;
 }
 
 View* win_view(WinRegion id) {
-    return &(Regions[id == FOCUSED ? Focused : id].view);
+    return &(Regions[id == FOCUSED ? Focused : id]);
 }
 
 Buf* win_buf(WinRegion id) {
-    return &(Regions[id == FOCUSED ? Focused : id].view.buffer);
+    return &(Regions[id == FOCUSED ? Focused : id].buffer);
 }
 
 void win_quit(void) {
@@ -435,16 +430,17 @@ bool x11_sel_set(int selid, char* str) {
     }
 }
 
+static struct XSel* selfetch(Atom atom) {
+    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
+        if (atom == Selections[i].atom)
+            return &Selections[i];
+    return NULL;
+}
+
 /******************************************************************************/
 
 static WinRegion getregion(size_t x, size_t y) {
-    for (int i = 0; i < NREGIONS; i++) {
-        size_t startx = Regions[i].x, endx = startx + Regions[i].width;
-        size_t starty = Regions[i].y, endy = starty + Regions[i].height;
-        if ((startx <= x && x <= endx) && (starty <= y && y <= endy))
-            return (WinRegion)i;
-    }
-    return NREGIONS;
+    return (y <= Divider ? TAGS : EDIT);
 }
 
 static void xftcolor(XftColor* xc, int id) {
@@ -457,28 +453,35 @@ static void xftcolor(XftColor* xc, int id) {
     XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
 }
 
-static struct XSel* selfetch(Atom atom) {
-    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
-        if (atom == Selections[i].atom)
-            return &Selections[i];
-    return NULL;
+static void get_position(WinRegion id, int x, int y, size_t* row, size_t* col) {
+    int starty = (id == EDIT ? Divider+3 : 0);
+    int startx = (id == EDIT ? ScrollWidth+3 : 0);
+    *row = (y - starty) / x11_font_height(CurrFont);
+    *col = (x - startx) / x11_font_width(CurrFont);
 }
 
 /******************************************************************************/
 
 static void xupdate(Job* job) {
-    /* process events */
+    size_t fheight = x11_font_height(CurrFont);
+    size_t fwidth  = x11_font_width(CurrFont);
+    /* process events from the queue */
     for (XEvent e; XPending(X.display);) {
         XNextEvent(X.display, &e);
         if (!XFilterEvent(&e, None) && EventHandlers[e.type])
             (EventHandlers[e.type])(&e);
     }
-    /* redraw */
-    redraw(X.width, X.height);
-    //draw_view(tags_view);
-    //draw_hrule();
-    //draw_view(edit_view);
-    //draw_scroll();
+    /* determine the size of the regions */
+    drawcsr csr = { .w = X.width, .h = X.height };
+    size_t maxtagrows = ((X.height - 2) / 4) / fheight;
+    size_t tagcols    = csr.w / fwidth;
+    size_t tagrows    = view_limitrows(win_view(TAGS), maxtagrows, tagcols);
+    size_t editrows   = ((X.height - 7) / fheight) - tagrows;
+    /* draw the regions to the window */
+    draw_view(TAGS, tagrows, &csr, TagsBg, TagsFg, TagsSel);
+    draw_hrule(&csr);
+    draw_view(EDIT, editrows, &csr, EditBg, EditFg, EditSel);
+    draw_scroll(&csr);
     /* flush to the server */
     XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
     XFlush(X.display);
@@ -487,9 +490,6 @@ static void xupdate(Job* job) {
 static void xfocus(XEvent* e) {
     if (X.xic)
         (e->type == FocusIn ? XSetICFocus : XUnsetICFocus)(X.xic);
-//    Buf* buf = win_buf(EDIT);
-//    if (buf->path && buf->modtime != modtime(buf->path))
-//        view_append(win_view(TAGS), "File modified externally: Get {Put }");
 }
 
 static void xkeypress(XEvent* e) {
@@ -526,12 +526,10 @@ static void xbtnrelease(XEvent* e) {
 }
 
 static void xbtnmotion(XEvent* e) {
+    size_t row, col;
     KeyBtnState = e->xbutton.state;
     int x = e->xbutton.x, y = e->xbutton.y;
-    if (x < Regions[Focused].x) x = Regions[Focused].x;
-    if (y < Regions[Focused].y) y = Regions[Focused].y;
-    size_t row = (y-Regions[Focused].y) / x11_font_height(CurrFont);
-    size_t col = (x-Regions[Focused].x) / x11_font_width(CurrFont);
+    get_position(Focused, x, y, &row, &col);
     if (win_btnpressed(MouseLeft))
         view_setcursor(win_view(Focused), row, col, true);
 }
@@ -594,9 +592,6 @@ static void xselrequest(XEvent* e) {
 0, &s);
 }
 
-static void xpropnotify(XEvent* e) {
-}
-
 static void xclientmsg(XEvent* e) {
     if (e->xclient.data.l[0] == XInternAtom(X.display, "WM_DELETE_WINDOW", False))
         win_quit();
@@ -609,9 +604,6 @@ static void xresize(XEvent* e) {
         X.pixmap = XCreatePixmap(X.display, X.self, X.width, X.height, X.depth);
         X.xft    = XftDrawCreate(X.display, X.pixmap, X.visual, X.colormap);
     }
-}
-
-static void xexpose(XEvent* e) {
 }
 
 /******************************************************************************/
@@ -653,12 +645,10 @@ static uint32_t getkey(XEvent* e) {
 }
 
 static void mouse_click(int btn, bool pressed, int x, int y) {
-    win_setregion(getregion(x, y));
+    size_t row, col;
     WinRegion id = getregion(x, y);
-    if (id == FOCUSED && x < Regions[Focused].x)
-        x = Regions[Focused].x, id = getregion(x, y);
-    size_t row = (y-Regions[id].y) / x11_font_height(CurrFont);
-    size_t col = (x-Regions[id].x) / x11_font_width(CurrFont);
+    win_setregion(id);
+    get_position(id, x, y, &row, &col);
     switch(btn) {
         case MouseLeft:    mouse_left(id, pressed, row, col);    break;
         case MouseMiddle:  mouse_middle(id, pressed, row, col);  break;
@@ -675,13 +665,16 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     uint64_t now = getmillis();
     count = ((now-before) <= (uint64_t)ClickTime ? count+1 : 1);
     before = now;
-
-    if (count == 1)
-        view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
-    else if (count == 2)
-        view_select(win_view(id), row, col);
-    else if (count == 3)
-        view_selword(win_view(id), row, col);
+    if (win_btnpressed(MouseMiddle)) {
+        puts("exec with arg");
+    } else {
+        if (count == 1)
+            view_setcursor(win_view(id), row, col, x11_keymodsset(ModShift));
+        else if (count == 2)
+            view_select(win_view(id), row, col);
+        else if (count == 3)
+            view_selword(win_view(id), row, col);
+    }
 }
 
 static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col) {
@@ -703,77 +696,44 @@ static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);
         free(SearchTerm);
         SearchTerm = view_fetch(win_view(id), row, col, risfile);
+        view_findstr(win_view(id), SearchDir, SearchTerm);
     }
 }
 
 /******************************************************************************/
 
-static void layout(int width, int height) {
+static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
+    size_t fwidth = x11_font_width(CurrFont);
     size_t fheight = x11_font_height(CurrFont);
-    size_t fwidth  = x11_font_width(CurrFont);
-    View* tagview  = win_view(TAGS);
-    View* editview = win_view(EDIT);
-
-    /* update the text views and region positions and sizes */
-    for (int i = 0; i < SCROLL; i++) {
-        Regions[i].x      = 2;
-        Regions[i].y      = 2;
-        Regions[i].csrx   = SIZE_MAX;
-        Regions[i].csry   = SIZE_MAX;
-        Regions[i].width  = (width - 4);
-        Regions[i].height = fheight;
-    }
-
-    /* Place the tag region relative to status */
-    size_t maxtagrows = ((height - Regions[TAGS].y - 5) / 4) / fheight;
-    size_t tagcols    = Regions[TAGS].width / fwidth;
-    size_t tagrows    = view_limitrows(tagview, maxtagrows, tagcols);
-    Regions[TAGS].height = tagrows * fheight;
-    view_resize(tagview, tagrows, tagcols);
-
-    /* Place the scroll region relative to tags */
-    Regions[SCROLL].x      = 0;
-    Regions[SCROLL].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
-    Regions[SCROLL].height = (height - Regions[EDIT].y - 5);
-    Regions[SCROLL].width  = 5 + fwidth;
-
-    /* Place the edit region relative to tags */
-    Regions[EDIT].x      = 3 + Regions[SCROLL].width;
-    Regions[EDIT].y      = 5 + Regions[TAGS].y + Regions[TAGS].height;
-    Regions[EDIT].height = (height - Regions[EDIT].y - 5);
-    Regions[EDIT].width  = width - Regions[SCROLL].width - 5;
-    view_resize(editview, Regions[EDIT].height / fheight, Regions[EDIT].width / fwidth);
-}
-
-static void draw_view(int i, int width, int height, int bg, int fg, int csr, int sel) {
-    size_t fheight = x11_font_height(CurrFont);
-    size_t fwidth  = x11_font_width(CurrFont);
+    size_t csrx = SIZE_MAX, csry = SIZE_MAX;
+    /* draw the view to the window */
     View* view = win_view(i);
-    x11_draw_rect(bg, 0, Regions[i].y - 3, width, Regions[i].height + 8);
-    x11_draw_rect(HorBdr, 0, Regions[i].y - 3, width, 1);
+    view_resize(view, nrows, (csr->w - csr->x) / fwidth);
+    view_update(view, (bg << 8 | fg), (sel << 8 | fg), &csrx, &csry);
+    x11_draw_rect(bg, csr->x, csr->y, csr->w, (nrows * fheight) + 9);
     for (size_t y = 0; y < view->nrows; y++) {
         Row* row = view_getrow(view, y);
-        draw_glyphs(Regions[i].x, Regions[i].y + ((y+1) * fheight), row->cols, row->rlen, row->len);
+        draw_glyphs(csr->x + 2, csr->y + 2 + ((y+1) * fheight), row->cols, row->rlen, row->len);
     }
     /* place the cursor on screen */
-    if (!view_selsize(win_view(i)) && Regions[i].csrx != SIZE_MAX && Regions[i].csry != SIZE_MAX) {
-        x11_draw_rect(csr,
-            Regions[i].x + (Regions[i].csrx * fwidth),
-            Regions[i].y + (Regions[i].csry * fheight),
+    if (!view_selsize(view) && csrx != SIZE_MAX && csry != SIZE_MAX) {
+        x11_draw_rect(
+            (i == TAGS ? TagsCsr : EditCsr),
+            csr->x + 2 + (csrx * fwidth),
+            csr->y + 2 + (csry * fheight),
             1, fheight);
     }
+    csr->y += (nrows * fheight) + 3;
 }
 
-static void redraw(int width, int height) {
-    layout(width, height);
-    int clrtagnor = (TagsBg  << 8 | TagsFg);
-    int clrtagsel = (TagsSel << 8 | TagsFg);
-    view_update(win_view(TAGS), clrtagnor, clrtagsel, &(Regions[TAGS].csrx), &(Regions[TAGS].csry));
-    int clreditnor = (EditBg  << 8 | EditFg);
-    int clreditsel = (EditSel << 8 | EditFg);
-    view_update(win_view(EDIT), clreditnor, clreditsel, &(Regions[EDIT].csrx), &(Regions[EDIT].csry));
+static void draw_hrule(drawcsr* csr) {
+    x11_draw_rect(HorBdr, csr->x, csr->y + 1, csr->w, 1);
+    Divider = csr->y;
+    csr->y += 2;
+    csr->x += ScrollWidth + 1;
+}
 
-    /* calculate and update scroll region */
+static void draw_scroll(drawcsr* csr) {
     View* view = win_view(EDIT);
     size_t bend = buf_end(win_buf(EDIT));
     if (bend == 0) bend = 1;
@@ -782,19 +742,13 @@ static void redraw(int width, int height) {
     size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
     double scroll_vis = (double)(vend - vbeg) / (double)bend;
     double scroll_off = ((double)vbeg / (double)bend);
-    ScrollOffset = scroll_off, ScrollVisible = scroll_vis;
-
-    draw_view(TAGS, width, height, TagsBg, TagsFg, TagsCsr, TagsSel);
-    draw_view(EDIT, width, height, EditBg, EditFg, EditCsr, EditSel);
-
-    /* draw the scroll region */
-    size_t thumbreg = (Regions[SCROLL].height - Regions[SCROLL].y + 9);
-    size_t thumboff = (size_t)((thumbreg * ScrollOffset) + (Regions[SCROLL].y - 2));
-    size_t thumbsz  = (size_t)(thumbreg * ScrollVisible);
+    size_t thumbreg = (csr->y - Divider) + 4;
+    size_t thumboff = (size_t)((thumbreg * scroll_off) + Divider);
+    size_t thumbsz  = (size_t)(thumbreg * scroll_vis);
     if (thumbsz < 5) thumbsz = 5;
-    x11_draw_rect(VerBdr, Regions[SCROLL].width, Regions[SCROLL].y - 2, 1, Regions[SCROLL].height);
-    x11_draw_rect(ScrollBg, 0, Regions[SCROLL].y - 2, Regions[SCROLL].width, thumbreg);
-    x11_draw_rect(ScrollFg, 0, thumboff, Regions[SCROLL].width, thumbsz);
+    x11_draw_rect(VerBdr,   ScrollWidth, Divider + 2,  1,           thumbreg);
+    x11_draw_rect(ScrollBg, 0,           Divider + 2,  ScrollWidth, thumbreg);
+    x11_draw_rect(ScrollFg, 0,           thumboff + 2, ScrollWidth, thumbsz);
 }
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {

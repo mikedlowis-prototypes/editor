@@ -76,6 +76,7 @@ void buf_setcol(Buf* buf);
 size_t buf_selsz(Buf* buf);
 void buf_selclr(Buf* buf, int dir);
 bool buf_insel(Buf* buf, size_t off);
+char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off);
 
 /* Screen management functions
  *****************************************************************************/
@@ -181,5 +182,5 @@ enum { /* Color Names */
 
 extern char *TagString, *FontString;
 extern int Palette[ClrCount];
-extern int WinWidth, WinHeight, LineSpacing, Timeout, TabWidth, ScrollBy,
+extern int WinWidth, WinHeight, ScrollWidth, LineSpacing, Timeout, TabWidth, ScrollBy,
     ClickTime, MaxScanDist, Syntax, CopyIndent, TrimOnSave, ExpandTabs, DosLineFeed;

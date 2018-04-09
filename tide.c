@@ -29,18 +29,82 @@ char* FetchCmd[] = { "tfetch", NULL, NULL };
 #define CMD_TO_UNIX  "|dos2unix"
 #define CMD_COMPLETE "<picktag print tags"
 #define CMD_GOTO_TAG "!picktag fetch tags"
-#define CMD_FETCH    "tfetch"
 
-/******************************************************************************/
+/* Tag/Cmd Execution
+ ******************************************************************************/
+static Tag* tag_lookup(char* cmd) {
+    size_t len = 0;
+    Tag* tags = Builtins;
+    for (char* tag = cmd; *tag && !isspace(*tag); tag++, len++);
+    while (tags->tag) {
+        if (!strncmp(tags->tag, cmd, len))
+            return tags;
+        tags++;
+    }
+    return NULL;
+}
 
+static void tag_exec(Tag* tag, char* arg) {
+    /* if we didnt get an arg, find one in the selection */
+    if (!arg) arg = view_getstr(win_view(TAGS));
+    if (!arg) arg = view_getstr(win_view(EDIT));
+    /* execute the tag handler */
+    tag->action(arg);
+    free(arg);
+}
+
+static void cmd_exec(char* cmd) {
+    /* parse the command sigils */
+    char op = '\0', **execcmd = NULL;
+    if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
+        op = *cmd, cmd++;
+    execcmd = (op == ':' ? SedCmd : ShellCmd);
+    execcmd[2] = cmd;
+
+    /* get the selection that the command will operate on */
+    if (op && op != '<' && op != '!' && !view_selsize(win_view(EDIT)))
+        view_selectall(win_view(EDIT));
+    char* input = view_getstr(win_view(EDIT));
+    size_t len  = (input ? strlen(input) : 0);
+    View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
+
+    /* execute the job */
+    if (op == '!')
+        free(input), job_start(execcmd, NULL, 0, NULL);
+    else if (op == '>')
+        job_start(execcmd, input, len, tags);
+    else if (op == '|' || op == ':')
+        job_start(execcmd, input, len, edit);
+    else
+        job_start(execcmd, input, len, (op != '<' ? curr : edit));
+}
+
+static void cmd_execwitharg(char* cmd, char* arg) {
+    cmd = (arg ? strmcat(cmd, " '", arg, "'", 0) : strmcat(cmd));
+    cmd_exec(cmd);
+    free(cmd);
+}
+
+void exec(char* cmd) {
+    /* skip leading space */
+    for (; *cmd && isspace(*cmd); cmd++);
+    if (!*cmd) return;
+    /* see if it matches a builtin tag */
+    Tag* tag = tag_lookup(cmd);
+    if (tag) {
+        while (*cmd && !isspace(*cmd++));
+        tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
+    } else {
+        cmd_exec(cmd);
+    }
+}
+
+/* Keyboard and Tag Handlers
+ ******************************************************************************/
 static void select_line(char* arg) {
     View* view = win_view(FOCUSED);
     view_eol(view, false);
     view_selctx(view);
-}
-
-static void select_all(char* arg) {
-    view_selectall(win_view(FOCUSED));
 }
 
 static void join_lines(char* arg) {
@@ -118,8 +182,6 @@ static void cursor_eol(char* arg) {
     view_eol(win_view(FOCUSED), false);
 }
 
-/******************************************************************************/
-
 static void cursor_mvlr(int dir) {
     bool extsel = x11_keymodsset(ModShift);
     if (x11_keymodsset(ModCtrl))
@@ -130,15 +192,7 @@ static void cursor_mvlr(int dir) {
 
 static void cursor_mvupdn(int dir) {
     bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl)) {
-        if (!view_selsize(win_view(FOCUSED)))
-            select_line(0);
-        cut(0);
-        view_byline(win_view(FOCUSED), dir, false);
-        paste(0);
-    } else {
-        view_byline(win_view(FOCUSED), dir, extsel);
-    }
+    view_byline(win_view(FOCUSED), dir, extsel);
 }
 
 static void cursor_home_end(
@@ -151,8 +205,6 @@ static void cursor_home_end(
     else
         linefn(win_view(FOCUSED), extsel);
 }
-
-/******************************************************************************/
 
 static void cursor_home(char* arg) {
     cursor_home_end(view_bof, view_bol);
@@ -202,77 +254,6 @@ static void redo(char* arg) {
     view_redo(win_view(FOCUSED));
 }
 
-/* Tag/Cmd Execution
- ******************************************************************************/
-static Tag* tag_lookup(char* cmd) {
-    size_t len = 0;
-    Tag* tags = Builtins;
-    for (char* tag = cmd; *tag && !isspace(*tag); tag++, len++);
-    while (tags->tag) {
-        if (!strncmp(tags->tag, cmd, len))
-            return tags;
-        tags++;
-    }
-    return NULL;
-}
-
-static void tag_exec(Tag* tag, char* arg) {
-    /* if we didnt get an arg, find one in the selection */
-    if (!arg) arg = view_getstr(win_view(TAGS));
-    if (!arg) arg = view_getstr(win_view(EDIT));
-    /* execute the tag handler */
-    tag->action(arg);
-    free(arg);
-}
-
-static void cmd_exec(char* cmd) {
-    /* parse the command sigils */
-    char op = '\0', **execcmd = NULL;
-    if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
-        op = *cmd, cmd++;
-    execcmd = (op == ':' ? SedCmd : ShellCmd);
-    execcmd[2] = cmd;
-
-    /* get the selection that the command will operate on */
-    if (op && op != '<' && op != '!' && 0 == view_selsize(win_view(EDIT)))
-        view_selectall(win_view(EDIT));
-    char* input = view_getstr(win_view(EDIT));
-    size_t len  = (input ? strlen(input) : 0);
-    View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
-
-    /* execute the job */
-    if (op == '!')
-        free(input), job_start(execcmd, NULL, 0, NULL);
-    else if (op == '>')
-        job_start(execcmd, input, len, tags);
-    else if (op == '|' || op == ':')
-        job_start(execcmd, input, len, edit);
-    else
-        job_start(execcmd, input, len, (op != '<' ? curr : edit));
-}
-
-static void cmd_execwitharg(char* cmd, char* arg) {
-    cmd = (arg ? strmcat(cmd, " '", arg, "'", 0) : strmcat(cmd));
-    cmd_exec(cmd);
-    free(cmd);
-}
-
-void exec(char* cmd) {
-    /* skip leading space */
-    for (; *cmd && isspace(*cmd); cmd++);
-    if (!*cmd) return;
-    /* see if it matches a builtin tag */
-    Tag* tag = tag_lookup(cmd);
-    if (tag) {
-        while (*cmd && !isspace(*cmd++));
-        tag_exec(tag, (*cmd ? stringdup(cmd) : NULL));
-    } else {
-        cmd_exec(cmd);
-    }
-}
-
-/* Action Callbacks
- ******************************************************************************/
 static void quit(char* arg) {
     win_quit();
 }
@@ -292,8 +273,6 @@ static void get(char* arg) {
         view_reload(win_view(EDIT));
 }
 
-/* Keyboard Handling
- ******************************************************************************/
 static void tag_undo(char* arg) {
     view_undo(win_view(EDIT));
 }
@@ -429,15 +408,14 @@ static KeyBinding Bindings[] = {
     { ModCtrl, 'e', cursor_eol  },
 
     /* Standard Text Editing Shortcuts */
-    { ModCtrl,          's', save        },
-    { ModCtrl,          'z', undo        },
-    { ModCtrl,          'y', redo        },
-    { ModCtrl,          'x', cut         },
-    { ModCtrl,          'c', copy        },
-    { ModCtrl,          'v', paste       },
-    { ModCtrl,          'j', join_lines  },
-    { ModCtrl,          'l', select_line },
-    { ModCtrl|ModShift, 'a', select_all  },
+    { ModCtrl, 's', save        },
+    { ModCtrl, 'z', undo        },
+    { ModCtrl, 'y', redo        },
+    { ModCtrl, 'x', cut         },
+    { ModCtrl, 'c', copy        },
+    { ModCtrl, 'v', paste       },
+    { ModCtrl, 'j', join_lines  },
+    { ModCtrl, 'l', select_line },
 
     /* Common Special Keys */
     { ModNone, KEY_PGUP,      page_up   },

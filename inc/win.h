@@ -9,9 +9,8 @@ enum {
 typedef enum {
     TAGS     = 0,
     EDIT     = 1,
-    SCROLL   = 2,
-    NREGIONS = 3,
-    FOCUSED  = 3
+    NREGIONS = 2,
+    FOCUSED  = 2
 } WinRegion;
 
 typedef struct {
@@ -21,11 +20,9 @@ typedef struct {
 } KeyBinding;
 
 typedef struct {
-    size_t x, y;
-    size_t height, width;
-    size_t csrx, csry;
-    View view;
-} Region;
+    int x, y;
+    int h, w;
+} drawcsr;
 
 void win_init(KeyBinding* bindings);
 void win_save(char* path);
@@ -35,7 +32,7 @@ View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
 bool win_btnpressed(int btn);
 WinRegion win_getregion(void);
-bool win_setregion(WinRegion id);
+void win_setregion(WinRegion id);
 void win_setscroll(double offset, double visible);
 
 /* move these to x11.c when possible */
