@@ -32,7 +32,7 @@ View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
 bool win_btnpressed(int btn);
 WinRegion win_getregion(void);
-bool win_setregion(WinRegion id);
+void win_setregion(WinRegion id);
 void win_setscroll(double offset, double visible);
 
 /* move these to x11.c when possible */

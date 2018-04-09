@@ -166,11 +166,8 @@ WinRegion win_getregion(void) {
     return Focused;
 }
 
-bool win_setregion(WinRegion id) {
-    bool changed = true;
-    if (Focused != id && (id == TAGS || id == EDIT))
-        changed = true, Focused = id;
-    return changed;
+void win_setregion(WinRegion id) {
+    Focused = id;
 }
 
 View* win_view(WinRegion id) {
