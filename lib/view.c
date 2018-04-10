@@ -33,8 +33,7 @@ void view_init(View* view, char* file) {
         view->nrows = 0;
         view->rows  = NULL;
     }
-    view->sync_needed = true;
-    view->sync_center = true;
+    view->sync_flags |= (CURSOR|CENTER);
     /* load the file and jump to the address returned from the load function */
     buf_init(BUF);
     if (file) buf_load(BUF, file);
@@ -43,8 +42,7 @@ void view_init(View* view, char* file) {
 void view_reload(View* view) {
     if (view->buffer.path) {
         buf_reload(BUF);
-        view->sync_needed = true;
-        view->sync_center = true;
+        view->sync_flags |= (CURSOR|CENTER);
     }
 }
 
@@ -88,7 +86,7 @@ void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry)
     /* fill the view and scroll if needed */
     for (size_t y = 0; y < view->nrows; y++)
         pos = fill_row(view, y, pos);
-    if (view->sync_needed)
+    if (view->sync_flags)
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
@@ -148,8 +146,7 @@ char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
 
 bool view_findstr(View* view, int dir, char* str) {
     bool found = buf_findstr(BUF, dir, str);
-    view->sync_needed = true;
-    view->sync_center = true;
+    view->sync_flags |= (CURSOR|CENTER);
     return found;
 }
 
@@ -198,19 +195,19 @@ void view_eof(View* view, bool extsel) {
 
 void view_setln(View* view, size_t line) {
     buf_setln(BUF, line);
-    view->sync_center = true;
+    view->sync_flags |= CENTER;
 }
 
 void view_undo(View* view) {
     buf_undo(BUF);
-    view->sync_needed = true;
-    view->sync_center = !selection_visible(view);
+    view->sync_flags |= CURSOR;
+    if (!selection_visible(view)) view->sync_flags |= CENTER;
 }
 
 void view_redo(View* view) {
     buf_redo(BUF);
-    view->sync_needed = true;
-    view->sync_center = !selection_visible(view);
+    view->sync_flags |= CURSOR;
+    if (!selection_visible(view)) view->sync_flags |= CENTER;
 }
 
 void view_putstr(View* view, char* str) {
@@ -265,25 +262,23 @@ void view_scrollto(View* view, size_t csr) {
         first = scroll_up(view);
     while (csr > last && last < buf_end(BUF))
         last = scroll_dn(view);
-    view->sync_needed = false;
-    if (view->sync_center) {
+    if (view->sync_flags & CENTER)
         sync_center(view, csr);
-        view->sync_center = false;
-    }
+    view->sync_flags = 0;
 }
 
 void view_selectall(View* view) {
     buf_selall(BUF);
-    view->sync_needed = true;
+    view->sync_flags |= CURSOR;
 }
 
 void view_selectobj(View* view, bool (*istype)(Rune)) {
     buf_selword(BUF, istype);
-    view->sync_needed = true;
+    view->sync_flags |= CURSOR;
 }
 
 static void move_selection(View* view, bool extsel, int move, movefn_t bything) {
-    view->sync_needed = true;
+    view->sync_flags |= CURSOR;
     if (buf_selsz(BUF) && !extsel) {
         buf_selclr(BUF, move);
     } else {
@@ -304,7 +299,7 @@ static void move_to(View* view, bool extsel, size_t off) {
     if (!extsel)
         buf_selclr(BUF, RIGHT);
     buf_getcol(buf);
-    view->sync_needed = true;
+    view->sync_flags |= CURSOR;
 }
 
 static bool selection_visible(View* view) {

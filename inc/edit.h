@@ -85,12 +85,14 @@ typedef struct {
 } Row;
 
 typedef struct {
+    enum {
+        CURSOR = (1 << 0),
+        CENTER = (1 << 1),
+    } sync_flags;
     Buf buffer;          /* the buffer used to populate the view */
     int clrnor, clrsel;  /* text color pairs for normal and selected text */
     size_t nrows, ncols; /* number of rows and columns in the view */
     Row** rows;          /* array of row data structures */
-    bool sync_needed;    /* whether the view needs to be synced with cursor */
-    bool sync_center;    /* cursor should be centered on screen if possible */
 } View;
 
 enum {
