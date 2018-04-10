@@ -42,10 +42,6 @@ typedef int64_t int64;
 typedef uintptr_t uintptr;
 typedef intptr_t  intptr;
 
-/* Generic Death Function
- *****************************************************************************/
-void die(const char* msgfmt, ...) __attribute__((__noreturn__));
-
 /* Option Parsing
  *
  * This following macros implement a simple POSIX-style option parsing strategy.

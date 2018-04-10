@@ -6,7 +6,6 @@ MAN1 = docs/tide.1
 LIBEDIT_OBJS =     \
 	lib/buf.o      \
 	lib/utf8.o     \
-	lib/utils.o    \
 	lib/job.o      \
 	lib/view.o     \
 	lib/x11.o      \

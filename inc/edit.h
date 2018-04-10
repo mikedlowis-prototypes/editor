@@ -1,8 +1,3 @@
-/* Utility Functions
- *****************************************************************************/
-char* stringdup(const char* str);
-char* strmcat(char* first, ...);
-
 /* Buffer management functions
  *****************************************************************************/
 /* undo/redo list item */

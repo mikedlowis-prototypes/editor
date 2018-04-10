@@ -19,6 +19,7 @@
 #undef Region
 
 /******************************************************************************/
+static void die(const char* msg);
 
 static uint32_t special_keys(uint32_t key);
 static uint32_t getkey(XEvent* e);
@@ -272,13 +273,13 @@ XFont x11_font_load(char* name) {
         die("Could not init fontconfig.\n");
     FcPattern* pattern = FcNameParse((FcChar8 *)name);
     if (!pattern)
-        die("can't open font %s\n", name);
+        die("could not parse font name\n");
 
     /* load the base font */
     FcResult result;
     FcPattern* match = XftFontMatch(X.display, X.screen, pattern, &result);
     if (!match || !(font->base.match = XftFontOpenPattern(X.display, match)))
-        die("could not load default font: %s", name);
+        die("could not load base font");
 
     /* get base font extents */
     XGlyphInfo extents;
@@ -782,4 +783,9 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
         x11_draw_glyphs(fg, bg, specs, numspecs, eol);
         eol = false, rlen -= numspecs;
     }
+}
+
+static void die(const char* msg) {
+    perror(msg);
+    exit(EXIT_FAILURE);
 }
