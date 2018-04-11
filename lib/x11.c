@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdc.h>
-#include <x11.h>
 #include <utf.h>
 #include <edit.h>
 #include <win.h>
@@ -20,6 +19,15 @@
 
 /******************************************************************************/
 static void die(const char* msg);
+
+static XFont x11_font_load(char* name);
+static size_t x11_font_height(XFont fnt);
+static size_t x11_font_width(XFont fnt);
+static size_t x11_font_descent(XFont fnt);
+static void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
+static size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
+static void x11_draw_rect(int color, int x, int y, int width, int height);
+static void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol);
 
 static uint32_t special_keys(uint32_t key);
 static uint32_t getkey(XEvent* e);

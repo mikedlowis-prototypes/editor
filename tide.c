@@ -1,6 +1,5 @@
 #define _XOPEN_SOURCE 700
 #include <stdc.h>
-#include <x11.h>
 #include <utf.h>
 #include <edit.h>
 #include <win.h>
