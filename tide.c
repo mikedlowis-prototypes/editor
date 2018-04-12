@@ -495,8 +495,7 @@ int main(int argc, char** argv) {
     if (!ShellCmd[0]) ShellCmd[0] = "/bin/sh";
 
     /* create the window */
-    win_init(Bindings);
-    x11_window("tide");
+    win_init("tide", Bindings);
 
     /* if we still have args left we're going to open it in this instance */
     if (*argv) view_init(win_view(EDIT), *argv);

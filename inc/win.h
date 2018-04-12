@@ -104,12 +104,6 @@ enum {
     CLIPBOARD = 1
 };
 
-void x11_init(void);
-bool x11_keymodsset(int mask);
-void x11_window(char* name);
-bool x11_sel_get(int selid, void(*cbfn)(char*));
-bool x11_sel_set(int selid, char* str);
-
 enum {
     MouseLeft    = 1,
     MouseMiddle  = 2,
@@ -136,7 +130,11 @@ typedef struct {
     int h, w;
 } drawcsr;
 
-void win_init(KeyBinding* bindings);
+bool x11_keymodsset(int mask);
+bool x11_sel_get(int selid, void(*cbfn)(char*));
+bool x11_sel_set(int selid, char* str);
+
+void win_init(char* title, KeyBinding* bindings);
 void win_save(char* path);
 void win_loop(void);
 void win_quit(void);

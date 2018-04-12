@@ -29,6 +29,11 @@ struct XFont {
 
 static void die(const char* msg);
 
+static WinRegion getregion(size_t x, size_t y);
+static struct XSel* selfetch(Atom atom);
+static void xftcolor(XftColor* xc, int id);
+
+static void x11_window(char* name);
 static void x11_font_load(char* name);
 static size_t x11_font_height(void);
 static size_t x11_font_width(void);
@@ -80,10 +85,6 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 
 /******************************************************************************/
 
-static WinRegion getregion(size_t x, size_t y);
-static struct XSel* selfetch(Atom atom);
-static void xftcolor(XftColor* xc, int id);
-
 static struct {
     Time now;
     Window root;
@@ -126,13 +127,32 @@ char* SearchTerm = NULL;
 
 /******************************************************************************/
 
-void win_init(KeyBinding* bindings) {
+void win_init(char* title, KeyBinding* bindings) {
+    Keys = bindings;
     view_init(&Regions[TAGS], NULL);
     view_init(&Regions[EDIT], NULL);
-    x11_init();
-    Keys = bindings;
+    signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
+    setlocale(LC_CTYPE, "");
+    XSetLocaleModifiers("");
+    /* open the X display and get basic attributes */
+    if (!(X.display = XOpenDisplay(0)))
+        die("could not open display");
+    X.root = DefaultRootWindow(X.display);
+    XWindowAttributes wa;
+    XGetWindowAttributes(X.display, X.root, &wa);
+    X.visual   = wa.visual;
+    X.colormap = wa.colormap;
+    X.screen   = DefaultScreen(X.display);
+    X.depth    = DefaultDepth(X.display, X.screen);
     x11_font_load(FontString);
-    x11_font_load(FontString);
+    x11_window("tide");
+    /* initialize selection atoms */
+    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
+        Selections[i].atom = XInternAtom(X.display, Selections[i].name, 0);
+    SelTarget = XInternAtom(X.display, "UTF8_STRING", 0);
+    if (SelTarget == None)
+        SelTarget = XInternAtom(X.display, "STRING", 0);
+    /* Populate the  tags region */
     View* view = win_view(TAGS);
     view_putstr(view, TagString);
     view_selprev(view); // clear the selection
@@ -156,6 +176,13 @@ void win_loop(void) {
     while (1) job_poll(Timeout);
 }
 
+void win_quit(void) {
+    static uint64_t before = 0;
+    if (!win_buf(EDIT)->modified || (X.now - before) <= (uint64_t)ClickTime)
+        exit(0);
+    before = X.now;
+}
+
 View* win_view(WinRegion id) {
     return &(Regions[id == FOCUSED ? Focused : id]);
 }
@@ -164,43 +191,13 @@ Buf* win_buf(WinRegion id) {
     return &(Regions[id == FOCUSED ? Focused : id].buffer);
 }
 
-void win_quit(void) {
-    static uint64_t before = 0;
-    if (!win_buf(EDIT)->modified || (X.now - before) <= (uint64_t)ClickTime)
-        exit(0);
-    before = X.now;
-}
-
 /******************************************************************************/
-
-void x11_init(void) {
-    signal(SIGPIPE, SIG_IGN); // Ignore the SIGPIPE signal
-    setlocale(LC_CTYPE, "");
-    XSetLocaleModifiers("");
-    /* open the X display and get basic attributes */
-    if (!(X.display = XOpenDisplay(0)))
-        die("could not open display");
-    X.root = DefaultRootWindow(X.display);
-    XWindowAttributes wa;
-    XGetWindowAttributes(X.display, X.root, &wa);
-    X.visual   = wa.visual;
-    X.colormap = wa.colormap;
-    X.screen   = DefaultScreen(X.display);
-    X.depth    = DefaultDepth(X.display, X.screen);
-
-    /* initialize selection atoms */
-    for (int i = 0; i < (sizeof(Selections) / sizeof(Selections[0])); i++)
-        Selections[i].atom = XInternAtom(X.display, Selections[i].name, 0);
-    SelTarget = XInternAtom(X.display, "UTF8_STRING", 0);
-    if (SelTarget == None)
-        SelTarget = XInternAtom(X.display, "STRING", 0);
-}
 
 bool x11_keymodsset(int mask) {
     return ((KeyBtnState & mask) == mask);
 }
 
-void x11_window(char* name) {
+static void x11_window(char* name) {
     /* create the main window */
     X.width = WinWidth, X.height = WinHeight;
     XWindowAttributes wa;
@@ -252,7 +249,7 @@ void x11_window(char* name) {
 
 /******************************************************************************/
 
-void x11_font_load(char* name) {
+static void x11_font_load(char* name) {
     /* init the library and the base font pattern */
     if (!FcInit())
         die("Could not init fontconfig.\n");
@@ -269,26 +266,26 @@ void x11_font_load(char* name) {
     FcPatternDestroy(match);
 }
 
-size_t x11_font_height(void) {
+static size_t x11_font_height(void) {
     return CurrFont.match->height;
 }
 
-size_t x11_font_width(void) {
+static size_t x11_font_width(void) {
     XGlyphInfo extents;
     XftTextExtentsUtf8(X.display, CurrFont.match, (const FcChar8*)"0", 1, &extents);
     return extents.xOff;
 }
 
-size_t x11_font_descent(void) {
+static size_t x11_font_descent(void) {
     return CurrFont.match->descent;
 }
 
-void getglyph(XGlyphSpec* spec, uint32_t rune) {
+static void getglyph(XGlyphSpec* spec, uint32_t rune) {
     spec->glyph = XftCharIndex(X.display, CurrFont.match, rune);
     spec->font  = CurrFont.match;
 }
 
-size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, int x, int y) {
+static size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, int x, int y) {
     int winx = x, winy = y;
     size_t numspecs = 0;
     for (int i = 0, xp = winx, yp = winy; i < len;) {
@@ -305,7 +302,7 @@ size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, int x, int y)
     return numspecs;
 }
 
-void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol) {
+static void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol) {
     if (!nspecs) return;
     XftFont* font = specs[0].font;
     XftColor fgc, bgc;
@@ -325,7 +322,7 @@ void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol)
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-void x11_draw_rect(int color, int x, int y, int width, int height) {
+static void x11_draw_rect(int color, int x, int y, int width, int height) {
     XftColor clr;
     xftcolor(&clr, color);
     XftDrawRect(X.xft, &clr, x, y, width, height);
