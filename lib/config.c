@@ -18,7 +18,7 @@ char* FontString = FONT;
 int /* Integer config options */
     WinWidth = 640,
     WinHeight = 480,
-    ScrollWidth = 7,
+    ScrollWidth = 5,
     LineSpacing = LNSPACE,
     Timeout = 50,
     TabWidth = 4,
