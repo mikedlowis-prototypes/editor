@@ -17,6 +17,11 @@
 #include <X11/Xft/Xft.h>
 #undef Region
 
+struct XFont {
+    int height;
+    XftFont* match;
+};
+
 /******************************************************************************/
 static void die(const char* msg);
 
@@ -24,8 +29,8 @@ static XFont x11_font_load(char* name);
 static size_t x11_font_height(XFont fnt);
 static size_t x11_font_width(XFont fnt);
 static size_t x11_font_descent(XFont fnt);
-static void x11_font_getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
-static size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
+static void getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
+static size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
 static void x11_draw_rect(int color, int x, int y, int width, int height);
 static void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol);
 
@@ -76,23 +81,6 @@ enum { FontCacheSize = 16 };
 static WinRegion getregion(size_t x, size_t y);
 static struct XSel* selfetch(Atom atom);
 static void xftcolor(XftColor* xc, int id);
-
-struct XFont {
-    struct {
-        int height;
-        int width;
-        int ascent;
-        int descent;
-        XftFont* match;
-        FcFontSet* set;
-        FcPattern* pattern;
-    } base;
-    struct {
-        XftFont* font;
-        uint32_t unicodep;
-    } cache[FontCacheSize];
-    int ncached;
-};
 
 static struct {
     Time now;
@@ -282,105 +270,47 @@ XFont x11_font_load(char* name) {
     FcPattern* pattern = FcNameParse((FcChar8 *)name);
     if (!pattern)
         die("could not parse font name\n");
-
     /* load the base font */
     FcResult result;
     FcPattern* match = XftFontMatch(X.display, X.screen, pattern, &result);
-    if (!match || !(font->base.match = XftFontOpenPattern(X.display, match)))
+    if (!match || !(font->match = XftFontOpenPattern(X.display, match)))
         die("could not load base font");
-
-    /* get base font extents */
-    XGlyphInfo extents;
-    const FcChar8 ascii[] =
-        " !\"#$%&'()*+,-./0123456789:;<=>?"
-        "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
-        "`abcdefghijklmnopqrstuvwxyz{|}~";
-    XftTextExtentsUtf8(X.display, font->base.match, ascii, sizeof(ascii), &extents);
-    font->base.set     = NULL;
-    font->base.pattern = FcPatternDuplicate(pattern);
-    font->base.ascent  = font->base.match->ascent;
-    font->base.descent = font->base.match->descent;
-    font->base.height  = font->base.ascent + font->base.descent;
-    font->base.width   = ((extents.xOff + (sizeof(ascii) - 1)) / sizeof(ascii));
-    FcPatternDestroy(pattern);
+    font->height = font->match->ascent + font->match->descent;
     return font;
 }
 
 size_t x11_font_height(XFont fnt) {
-    struct XFont* font = fnt;
-    return font->base.height;
+    return fnt->match->height;
 }
 
 size_t x11_font_width(XFont fnt) {
-    struct XFont* font = fnt;
-    return font->base.width;
+    XGlyphInfo extents;
+    XftTextExtentsUtf8(X.display, fnt->match, (const FcChar8*)"0", 1, &extents);
+    return extents.xOff;
 }
 
 size_t x11_font_descent(XFont fnt) {
-    struct XFont* font = fnt;
-    return font->base.descent;
+    return fnt->match->descent;
 }
 
-void x11_font_getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
-    struct XFont* font = fnt;
-    /* if the rune is in the base font, set it and return */
-    FT_UInt glyphidx = XftCharIndex(X.display, font->base.match, rune);
-    if (glyphidx) {
-        spec->font  = font->base.match;
-        spec->glyph = glyphidx;
-        return;
-    }
-    /* Otherwise check the cache */
-    for (int f = 0; f < font->ncached; f++) {
-        glyphidx = XftCharIndex(X.display, font->cache[f].font, rune);
-        /* Found a suitable font or found a default font */
-        if (glyphidx || (!glyphidx && font->cache[f].unicodep == rune)) {
-            spec->font  = font->cache[f].font;
-            spec->glyph = glyphidx;
-            return;
-        }
-    }
-    /* if all other options fail, ask fontconfig for a suitable font */
-    FcResult fcres;
-    if (!font->base.set)
-        font->base.set = FcFontSort(0, font->base.pattern, 1, 0, &fcres);
-    FcFontSet* fcsets[]  = { font->base.set };
-    FcPattern* fcpattern = FcPatternDuplicate(font->base.pattern);
-    FcCharSet* fccharset = FcCharSetCreate();
-    FcCharSetAddChar(fccharset, rune);
-    FcPatternAddCharSet(fcpattern, FC_CHARSET, fccharset);
-    FcPatternAddBool(fcpattern, FC_SCALABLE, 1);
-    FcConfigSubstitute(0, fcpattern, FcMatchPattern);
-    FcDefaultSubstitute(fcpattern);
-    FcPattern* fontmatch = FcFontSetMatch(0, fcsets, 1, fcpattern, &fcres);
-    /* add the font to the cache and use it */
-    if (font->ncached >= FontCacheSize) {
-        font->ncached = FontCacheSize - 1;
-        XftFontClose(X.display, font->cache[font->ncached].font);
-    }
-    font->cache[font->ncached].font = XftFontOpenPattern(X.display, fontmatch);
-    font->cache[font->ncached].unicodep = rune;
-    spec->glyph = XftCharIndex(X.display, font->cache[font->ncached].font, rune);
-    spec->font  = font->cache[font->ncached].font;
-    font->ncached++;
-    FcPatternDestroy(fcpattern);
-    FcCharSetDestroy(fccharset);
+void getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
+    spec->glyph = XftCharIndex(X.display, fnt->match, rune);
+    spec->font  = fnt->match;
 }
 
-size_t x11_font_getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont fnt, int x, int y) {
-    struct XFont* font = fnt;
+size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont fnt, int x, int y) {
     int winx = x, winy = y;
     size_t numspecs = 0;
-    for (int i = 0, xp = winx, yp = winy + font->base.ascent; i < len;) {
-        x11_font_getglyph(font, &(specs[numspecs]), glyphs[i].rune);
+    for (int i = 0, xp = winx, yp = winy; i < len;) {
+        getglyph(fnt, &(specs[numspecs]), glyphs[i].rune);
         specs[numspecs].x = xp;
         specs[numspecs].y = yp;
-        xp += font->base.width;
+        xp += x11_font_width(fnt);
         numspecs++;
         i++;
         /* skip over null chars which mark multi column runes */
         for (; i < len && !glyphs[i].rune; i++)
-            xp += font->base.width;
+            xp += x11_font_width(fnt);
     }
     return numspecs;
 }
@@ -775,7 +705,7 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
         while (i < ncols && glyphs[i].attr == attr) {
             if (glyphs[i].rune == '\n')
                 glyphs[i].rune = ' ', eol = true;
-            x11_font_getglyph(CurrFont, &(specs[numspecs]), glyphs[i].rune);
+            getglyph(CurrFont, &(specs[numspecs]), glyphs[i].rune);
             specs[numspecs].x = x;
             specs[numspecs].y = y - x11_font_descent(CurrFont);
             x += x11_font_width(CurrFont);
