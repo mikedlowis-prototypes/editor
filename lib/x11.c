@@ -22,6 +22,9 @@ struct XFont {
     XftFont* match;
 };
 
+#define PRESSED(btn) \
+    ((KeyBtnState & (1 << (btn + 7))) == (1 << (btn + 7)))
+
 /******************************************************************************/
 static void die(const char* msg);
 
@@ -151,11 +154,6 @@ void win_loop(void) {
     XFlush(X.display);
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
     while (1) job_poll(Timeout);
-}
-
-bool win_btnpressed(int btn) {
-    int btnmask = (1 << (btn + 7));
-    return ((KeyBtnState & btnmask) == btnmask);
 }
 
 WinRegion win_getregion(void) {
@@ -473,7 +471,7 @@ static void xbtnmotion(XEvent* e) {
     KeyBtnState = e->xbutton.state;
     int x = e->xbutton.x, y = e->xbutton.y;
     get_position(Focused, x, y, &row, &col);
-    if (win_btnpressed(MouseLeft))
+    if (PRESSED(MouseLeft))
         view_setcursor(win_view(Focused), row, col, true);
 }
 
@@ -607,9 +605,9 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
     if (!pressed) return;
     count = ((X.now - before) <= (uint64_t)ClickTime ? count+1 : 1);
     before = X.now;
-    if (win_btnpressed(MouseRight)) {
+    if (PRESSED(MouseRight)) {
         puts("fetch tag");
-    }  else if (win_btnpressed(MouseMiddle)) {
+    }  else if (PRESSED(MouseMiddle)) {
         puts("exec with arg");
     } else {
         if (count == 1)
@@ -623,7 +621,7 @@ static void mouse_left(WinRegion id, bool pressed, size_t row, size_t col) {
 
 static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col) {
     if (pressed) return;
-    if (win_btnpressed(MouseLeft)) {
+    if (PRESSED(MouseLeft)) {
         cut(NULL);
     } else {
         char* str = view_fetch(win_view(id), row, col, riscmd);
@@ -634,7 +632,7 @@ static void mouse_middle(WinRegion id, bool pressed, size_t row, size_t col) {
 
 static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
     if (pressed) return;
-    if (win_btnpressed(MouseLeft)) {
+    if (PRESSED(MouseLeft)) {
         paste(NULL);
     } else {
         SearchDir *= (x11_keymodsset(ModShift) ? -1 : +1);

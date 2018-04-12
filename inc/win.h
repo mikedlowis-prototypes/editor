@@ -142,7 +142,6 @@ void win_loop(void);
 void win_quit(void);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
-//bool win_btnpressed(int btn);
 WinRegion win_getregion(void);
 void win_setregion(WinRegion id);
 
