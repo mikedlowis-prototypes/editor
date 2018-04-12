@@ -263,7 +263,7 @@ static void select_prev(char* arg) {
 }
 
 static void change_focus(char* arg) {
-    win_setregion(win_getregion() == TAGS ? EDIT : TAGS);
+    /* move the mouse to the region */
 }
 
 static void undo(char* arg) {
@@ -347,7 +347,7 @@ static void jump_to(char* arg) {
         size_t line = strtoul(arg, NULL, 0);
         if (line) {
             view_setln(win_view(EDIT), line);
-            win_setregion(EDIT);
+            /* move mouse to edit region */
         } else {
             pick_symbol(arg);
         }

@@ -26,6 +26,7 @@ struct XFont {
     ((KeyBtnState & (1 << (btn + 7))) == (1 << (btn + 7)))
 
 /******************************************************************************/
+
 static void die(const char* msg);
 
 static XFont x11_font_load(char* name);
@@ -156,14 +157,6 @@ void win_loop(void) {
     while (1) job_poll(Timeout);
 }
 
-WinRegion win_getregion(void) {
-    return Focused;
-}
-
-void win_setregion(WinRegion id) {
-    Focused = id;
-}
-
 View* win_view(WinRegion id) {
     return &(Regions[id == FOCUSED ? Focused : id]);
 }
@@ -272,7 +265,7 @@ XFont x11_font_load(char* name) {
     FcResult result;
     FcPattern* match = XftFontMatch(X.display, X.screen, pattern, &result);
     if (!match || !(font->match = XftFontOpenPattern(X.display, match)))
-        die("could not load base font");
+        die("could not load base font\n");
     font->height = font->match->ascent + font->match->descent;
     return font;
 }
@@ -431,7 +424,7 @@ static void xfocus(XEvent* e) {
 
 static void xkeypress(XEvent* e) {
     X.now = e->xkey.time;
-    win_setregion(getregion(e->xkey.x, e->xkey.y));
+    Focused = getregion(e->xkey.x, e->xkey.y);
     uint32_t key = getkey(e);
     if (key == RUNE_ERR) return;
     KeyBtnState = e->xkey.state, LastKey = key;
@@ -587,15 +580,14 @@ static uint32_t getkey(XEvent* e) {
 
 static void mouse_click(int btn, bool pressed, int x, int y) {
     size_t row, col;
-    WinRegion id = getregion(x, y);
-    win_setregion(id);
-    get_position(id, x, y, &row, &col);
+    Focused = getregion(x, y);
+    get_position(Focused, x, y, &row, &col);
     switch(btn) {
-        case MouseLeft:    mouse_left(id, pressed, row, col);    break;
-        case MouseMiddle:  mouse_middle(id, pressed, row, col);  break;
-        case MouseRight:   mouse_right(id, pressed, row, col);   break;
-        case MouseWheelUp: view_scroll(win_view(id), -ScrollBy); break;
-        case MouseWheelDn: view_scroll(win_view(id), +ScrollBy); break;
+        case MouseLeft:    mouse_left(Focused, pressed, row, col);    break;
+        case MouseMiddle:  mouse_middle(Focused, pressed, row, col);  break;
+        case MouseRight:   mouse_right(Focused, pressed, row, col);   break;
+        case MouseWheelUp: view_scroll(win_view(Focused), -ScrollBy); break;
+        case MouseWheelDn: view_scroll(win_view(Focused), +ScrollBy); break;
     }
 }
 

@@ -142,8 +142,6 @@ void win_loop(void);
 void win_quit(void);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
-WinRegion win_getregion(void);
-void win_setregion(WinRegion id);
 
 /* move these to x11.c when possible */
 extern int SearchDir;
