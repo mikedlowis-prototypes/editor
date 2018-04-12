@@ -64,17 +64,17 @@ int Palette[ClrCount] = {
     [Purple]   = 0x000000, // Purple ???
     [Aqua]     = 0x000000, // Aqua   ???
     [Orange]   = 0x000000, // Orange ???
-    [EditBg]   = 0xefefda, // Edit region background
-    [EditSel]  = 0xdede8e, // Edit region selection
+    [EditBg]   = 0xF0F0E5, // Edit region background
+    [EditSel]  = 0xDFDF99, // Edit region selection
     [EditFg]   = 0x000000, // Edit region text
     [EditCsr]  = 0x000000, // Edit region cursor
-    [TagsBg]   = 0xdaefef, // Tags region background
-    [TagsSel]  = 0x8edede, // Tags region selection
+    [TagsBg]   = 0xE5F0F0, // Tags region background
+    [TagsSel]  = 0x99DFDF, // Tags region selection
     [TagsFg]   = 0x000000, // Tags region text
     [TagsCsr]  = 0x000000, // Tags region cursor
-    [ScrollBg] = 0x89893c, // Scroll region background
-    [ScrollFg] = 0xefefda, // Scroll region foreground
-    [VerBdr]   = 0x89893c, // Vertical border
+    [ScrollBg] = 0x909047, // Scroll region background
+    [ScrollFg] = 0xF0F0E5, // Scroll region foreground
+    [VerBdr]   = 0x909047, // Vertical border
     [HorBdr]   = 0x000000, // Horizontal border
 };
 #endif

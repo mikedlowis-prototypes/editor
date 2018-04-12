@@ -696,9 +696,11 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
             if (glyphs[i].rune == '\n')
                 glyphs[i].rune = ' ', eol = true;
             getglyph(CurrFont, &(specs[numspecs]), glyphs[i].rune);
+            XGlyphInfo extents;
+            XftTextExtents32(X.display, CurrFont->match, &(const FcChar32){glyphs[i].rune}, 1, &extents);
             specs[numspecs].x = x;
             specs[numspecs].y = y - x11_font_descent(CurrFont);
-            x += x11_font_width(CurrFont);
+            x += extents.xOff;
             numspecs++;
             i++;
             /* skip over null chars which mark multi column runes */
