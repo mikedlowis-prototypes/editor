@@ -29,12 +29,12 @@ struct XFont {
 
 static void die(const char* msg);
 
-static XFont x11_font_load(char* name);
-static size_t x11_font_height(XFont fnt);
-static size_t x11_font_width(XFont fnt);
-static size_t x11_font_descent(XFont fnt);
-static void getglyph(XFont font, XGlyphSpec* spec, uint32_t rune);
-static size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont font, int x, int y);
+static void x11_font_load(char* name);
+static size_t x11_font_height(void);
+static size_t x11_font_width(void);
+static size_t x11_font_descent(void);
+static void getglyph(XGlyphSpec* spec, uint32_t rune);
+static size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, int x, int y);
 static void x11_draw_rect(int color, int x, int y, int width, int height);
 static void x11_draw_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol);
 
@@ -79,8 +79,6 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 };
 
 /******************************************************************************/
-
-enum { FontCacheSize = 16 };
 
 static WinRegion getregion(size_t x, size_t y);
 static struct XSel* selfetch(Atom atom);
@@ -133,7 +131,8 @@ void win_init(KeyBinding* bindings) {
     view_init(&Regions[EDIT], NULL);
     x11_init();
     Keys = bindings;
-    CurrFont = x11_font_load(FontString);
+    x11_font_load(FontString);
+    x11_font_load(FontString);
     View* view = win_view(TAGS);
     view_putstr(view, TagString);
     view_selprev(view); // clear the selection
@@ -253,8 +252,7 @@ void x11_window(char* name) {
 
 /******************************************************************************/
 
-XFont x11_font_load(char* name) {
-    struct XFont* font = calloc(1, sizeof(struct XFont));
+void x11_font_load(char* name) {
     /* init the library and the base font pattern */
     if (!FcInit())
         die("Could not init fontconfig.\n");
@@ -264,44 +262,45 @@ XFont x11_font_load(char* name) {
     /* load the base font */
     FcResult result;
     FcPattern* match = XftFontMatch(X.display, X.screen, pattern, &result);
-    if (!match || !(font->match = XftFontOpenPattern(X.display, match)))
+    if (!match || !(CurrFont.match = XftFontOpenPattern(X.display, match)))
         die("could not load base font\n");
-    font->height = font->match->ascent + font->match->descent;
-    return font;
+    CurrFont.height = CurrFont.match->ascent + CurrFont.match->descent;
+    FcPatternDestroy(pattern);
+    FcPatternDestroy(match);
 }
 
-size_t x11_font_height(XFont fnt) {
-    return fnt->match->height;
+size_t x11_font_height(void) {
+    return CurrFont.match->height;
 }
 
-size_t x11_font_width(XFont fnt) {
+size_t x11_font_width(void) {
     XGlyphInfo extents;
-    XftTextExtentsUtf8(X.display, fnt->match, (const FcChar8*)"0", 1, &extents);
+    XftTextExtentsUtf8(X.display, CurrFont.match, (const FcChar8*)"0", 1, &extents);
     return extents.xOff;
 }
 
-size_t x11_font_descent(XFont fnt) {
-    return fnt->match->descent;
+size_t x11_font_descent(void) {
+    return CurrFont.match->descent;
 }
 
-void getglyph(XFont fnt, XGlyphSpec* spec, uint32_t rune) {
-    spec->glyph = XftCharIndex(X.display, fnt->match, rune);
-    spec->font  = fnt->match;
+void getglyph(XGlyphSpec* spec, uint32_t rune) {
+    spec->glyph = XftCharIndex(X.display, CurrFont.match, rune);
+    spec->font  = CurrFont.match;
 }
 
-size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, XFont fnt, int x, int y) {
+size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, int x, int y) {
     int winx = x, winy = y;
     size_t numspecs = 0;
     for (int i = 0, xp = winx, yp = winy; i < len;) {
-        getglyph(fnt, &(specs[numspecs]), glyphs[i].rune);
+        getglyph(&(specs[numspecs]), glyphs[i].rune);
         specs[numspecs].x = xp;
         specs[numspecs].y = yp;
-        xp += x11_font_width(fnt);
+        xp += x11_font_width();
         numspecs++;
         i++;
         /* skip over null chars which mark multi column runes */
         for (; i < len && !glyphs[i].rune; i++)
-            xp += x11_font_width(fnt);
+            xp += x11_font_width();
     }
     return numspecs;
 }
@@ -386,15 +385,15 @@ static void xftcolor(XftColor* xc, int id) {
 static void get_position(WinRegion id, int x, int y, size_t* row, size_t* col) {
     int starty = (id == EDIT ? Divider+3 : 0);
     int startx = (id == EDIT ? ScrollWidth+3 : 0);
-    *row = (y - starty) / x11_font_height(CurrFont);
-    *col = (x - startx) / x11_font_width(CurrFont);
+    *row = (y - starty) / x11_font_height();
+    *col = (x - startx) / x11_font_width();
 }
 
 /******************************************************************************/
 
 static void xupdate(Job* job) {
-    size_t fheight = x11_font_height(CurrFont);
-    size_t fwidth  = x11_font_width(CurrFont);
+    size_t fheight = x11_font_height();
+    size_t fwidth  = x11_font_width();
     /* process events from the queue */
     for (XEvent e; XPending(X.display);) {
         XNextEvent(X.display, &e);
@@ -637,8 +636,8 @@ static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
 /******************************************************************************/
 
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
-    size_t fwidth = x11_font_width(CurrFont);
-    size_t fheight = x11_font_height(CurrFont);
+    size_t fwidth = x11_font_width();
+    size_t fheight = x11_font_height();
     size_t csrx = SIZE_MAX, csry = SIZE_MAX;
     /* draw the view to the window */
     View* view = win_view(i);
@@ -695,17 +694,17 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
         while (i < ncols && glyphs[i].attr == attr) {
             if (glyphs[i].rune == '\n')
                 glyphs[i].rune = ' ', eol = true;
-            getglyph(CurrFont, &(specs[numspecs]), glyphs[i].rune);
+            getglyph(&(specs[numspecs]), glyphs[i].rune);
             XGlyphInfo extents;
-            XftTextExtents32(X.display, CurrFont->match, &(const FcChar32){glyphs[i].rune}, 1, &extents);
+            XftTextExtents32(X.display, CurrFont.match, &(const FcChar32){glyphs[i].rune}, 1, &extents);
             specs[numspecs].x = x;
-            specs[numspecs].y = y - x11_font_descent(CurrFont);
+            specs[numspecs].y = y - x11_font_descent();
             x += extents.xOff;
             numspecs++;
             i++;
             /* skip over null chars which mark multi column runes */
             for (; i < ncols && !glyphs[i].rune; i++)
-                x += x11_font_width(CurrFont);
+                x += x11_font_width();
         }
         /* Draw the glyphs with the proper colors */
         uint8_t bg = attr >> 8;

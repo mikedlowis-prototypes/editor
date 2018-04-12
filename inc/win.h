@@ -1,4 +1,4 @@
-typedef struct XFont* XFont;
+typedef struct XFont XFont;
 
 typedef struct {
     uint32_t attr; /* attributes applied to this cell */
