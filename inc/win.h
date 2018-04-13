@@ -130,16 +130,15 @@ typedef struct {
     int h, w;
 } drawcsr;
 
-bool x11_keymodsset(int mask);
-bool x11_sel_get(int selid, void(*cbfn)(char*));
-bool x11_sel_set(int selid, char* str);
-
 void win_init(char* title, KeyBinding* bindings);
 void win_save(char* path);
 void win_loop(void);
 void win_quit(void);
 View* win_view(WinRegion id);
 Buf* win_buf(WinRegion id);
+bool win_keymodsset(int mask);
+bool win_sel_get(int selid, void(*cbfn)(char*));
+bool win_sel_set(int selid, char* str);
 
 /* move these to x11.c when possible */
 extern int SearchDir;

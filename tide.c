@@ -139,7 +139,7 @@ static void join_lines(char* arg) {
 }
 
 static void delete(char* arg) {
-    bool byword = x11_keymodsset(ModCtrl);
+    bool byword = win_keymodsset(ModCtrl);
     view_delete(win_view(FOCUSED), RIGHT, byword);
 }
 
@@ -154,12 +154,12 @@ void cut(char* arg) {
         select_line(arg);
     /* now perform the cut */
     char* str = view_getstr(view);
-    x11_sel_set(CLIPBOARD, str);
+    win_sel_set(CLIPBOARD, str);
     if (str && *str) delete(arg);
 }
 
 void paste(char* arg) {
-    assert(x11_sel_get(CLIPBOARD, onpaste));
+    assert(win_sel_get(CLIPBOARD, onpaste));
 }
 
 static void copy(char* arg) {
@@ -167,7 +167,7 @@ static void copy(char* arg) {
     if (!view_selsize(win_view(FOCUSED)))
         select_line(arg);
     char* str = view_getstr(win_view(FOCUSED));
-    x11_sel_set(CLIPBOARD, str);
+    win_sel_set(CLIPBOARD, str);
 }
 
 static void del_to(void (*tofn)(View*, bool)) {
@@ -191,7 +191,7 @@ static void del_to_bow(char* arg) {
 }
 
 static void backspace(char* arg) {
-    view_delete(win_view(FOCUSED), LEFT, x11_keymodsset(ModCtrl));
+    view_delete(win_view(FOCUSED), LEFT, win_keymodsset(ModCtrl));
 }
 
 static void cursor_bol(char* arg) {
@@ -203,15 +203,15 @@ static void cursor_eol(char* arg) {
 }
 
 static void cursor_mvlr(int dir) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
+    bool extsel = win_keymodsset(ModShift);
+    if (win_keymodsset(ModCtrl))
         view_byword(win_view(FOCUSED), dir, extsel);
     else
         view_byrune(win_view(FOCUSED), dir, extsel);
 }
 
 static void cursor_mvupdn(int dir) {
-    bool extsel = x11_keymodsset(ModShift);
+    bool extsel = win_keymodsset(ModShift);
     view_byline(win_view(FOCUSED), dir, extsel);
 }
 
@@ -219,8 +219,8 @@ static void cursor_home_end(
     void (*docfn)(View*, bool),
     void (*linefn)(View*, bool)
 ) {
-    bool extsel = x11_keymodsset(ModShift);
-    if (x11_keymodsset(ModCtrl))
+    bool extsel = win_keymodsset(ModShift);
+    if (win_keymodsset(ModCtrl))
         docfn(win_view(FOCUSED), extsel);
     else
         linefn(win_view(FOCUSED), extsel);
@@ -303,8 +303,8 @@ static void tag_redo(char* arg) {
 
 static void search(char* arg) {
     char* str;
-    SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
-    if (x11_keymodsset(ModAlt) && SearchTerm)
+    SearchDir *= (win_keymodsset(ModShift) ? UP : DOWN);
+    if (win_keymodsset(ModAlt) && SearchTerm)
         str = strdup(SearchTerm);
     else
         str = view_getctx(win_view(FOCUSED));
@@ -320,7 +320,7 @@ static void execute(char* arg) {
 }
 
 static void find(char* arg) {
-    SearchDir *= (x11_keymodsset(ModShift) ? UP : DOWN);
+    SearchDir *= (win_keymodsset(ModShift) ? UP : DOWN);
     view_findstr(win_view(EDIT), SearchDir, arg);
 }
 
@@ -379,7 +379,7 @@ static void new_win(char* arg) {
 
 static void newline(char* arg) {
     View* view = win_view(FOCUSED);
-    if (x11_keymodsset(ModShift)) {
+    if (win_keymodsset(ModShift)) {
         view_byline(view, UP, false);
         view_bol(view, false);
     }
