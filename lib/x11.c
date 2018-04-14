@@ -306,21 +306,10 @@ static void draw_rect(int color, int x, int y, int width, int height) {
     XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
 
-static void place_glyphs(int fg, int bg, XGlyphSpec* specs, size_t nspecs, bool eol) {
+static void place_glyphs(int fg, XGlyphSpec* specs, size_t nspecs, bool eol) {
     if (!nspecs) return;
     XftFont* font = specs[0].font;
-    XftColor fgc, bgc;
-    if (bg > 0) {
-        XGlyphInfo extent;
-        XftTextExtentsUtf8(X.display, font, (const FcChar8*)"0", 1, &extent);
-        int w = extent.xOff;
-        int h = (font->height - font->descent) + LineSpacing;
-        xftcolor(&bgc, bg);
-        size_t width = specs[nspecs-1].x - specs[0].x + w;
-        if (eol) width = X.width - specs[0].x;
-        draw_rect(bg, specs[0].x, specs[0].y - h, width, font->height + LineSpacing);
-        XftColorFree(X.display, X.visual, X.colormap, &bgc);
-    }
+    XftColor fgc;
     xftcolor(&fgc, fg);
     XftDrawGlyphFontSpec(X.xft, &fgc, (XftGlyphFontSpec*)specs, nspecs);
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
@@ -332,8 +321,7 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
     bool eol = false;
     while (rlen && i < ncols) {
         int numspecs = 0;
-        uint32_t attr = glyphs[i].attr;
-        while (i < ncols && glyphs[i].attr == attr) {
+        while (i < ncols) {
             if (glyphs[i].rune == '\n')
                 glyphs[i].rune = ' ', eol = true;
             getglyph(&(specs[numspecs]), glyphs[i].rune);
@@ -349,9 +337,7 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
                 x += font_width();
         }
         /* Draw the glyphs with the proper colors */
-        uint8_t bg = attr >> 8;
-        uint8_t fg = attr & 0xFF;
-        place_glyphs(fg, bg, specs, numspecs, eol);
+        place_glyphs(EditFg, specs, numspecs, eol);
         eol = false, rlen -= numspecs;
     }
 }

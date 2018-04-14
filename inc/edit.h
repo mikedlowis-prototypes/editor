@@ -73,7 +73,6 @@ char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off);
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
-    uint32_t attr; /* attributes  applied to this cell */
     Rune rune;     /* rune value for the cell */
 } UGlyph;
 
@@ -90,7 +89,6 @@ typedef struct {
         CENTER = (1 << 1),
     } sync_flags;
     Buf buffer;          /* the buffer used to populate the view */
-    int clrnor, clrsel;  /* text color pairs for normal and selected text */
     size_t nrows, ncols; /* number of rows and columns in the view */
     Row** rows;          /* array of row data structures */
 } View;

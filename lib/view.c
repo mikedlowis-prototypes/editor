@@ -13,7 +13,7 @@ static void move_to(View* view, bool extsel, size_t off);
 static bool selection_visible(View* view);
 static void find_cursor(View* view, size_t* csrx, size_t* csry);
 static void clearrow(View* view, size_t row);
-static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r);
+static size_t setcell(View* view, size_t row, size_t col, Rune r);
 static size_t fill_row(View* view, unsigned row, size_t pos);
 static unsigned prev_screen_line(View* view, unsigned bol, unsigned off);
 static unsigned scroll_up(View* view);
@@ -58,6 +58,7 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
 }
 
 void view_resize(View* view, size_t nrows, size_t ncols) {
+#if 1
     size_t off = 0;
     if (view->nrows == nrows && view->ncols == ncols) return;
     /* free the old row data */
@@ -75,11 +76,12 @@ void view_resize(View* view, size_t nrows, size_t ncols) {
     view->rows[0]->off = off;
     view->nrows = nrows;
     view->ncols = ncols;
+#endif
 }
 
 void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry) {
+#if 1
     if (!view->nrows) return;
-    view->clrnor = clrnor, view->clrsel = clrsel;
     size_t csr = CSRPOS;
     /* scroll the view and reflow the screen lines */
     size_t pos = view->rows[0]->off;
@@ -90,6 +92,7 @@ void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry)
         view_scrollto(view, csr);
     /* locate the cursor if visible */
     find_cursor(view, csrx, csry);
+#endif
 }
 
 Row* view_getrow(View* view, size_t row) {
@@ -339,12 +342,11 @@ static void clearrow(View* view, size_t row) {
     scrrow->len  = 0;
 }
 
-static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r) {
+static size_t setcell(View* view, size_t row, size_t col, Rune r) {
     if (row >= view->nrows || col >= view->ncols) return 0;
     Row* scrrow = view_getrow(view, row);
     int ncols = runewidth(col, r);
     /* write the rune to the screen buf */
-    scrrow->cols[col].attr = attr;
     if (r == '\t')
         scrrow->cols[col].rune = ' ';
     else
@@ -352,7 +354,6 @@ static size_t setcell(View* view, size_t row, size_t col, uint32_t attr, Rune r)
     /* Update lengths */
     scrrow->rlen += 1;
     for (int i = 1; i < ncols; i++) {
-        scrrow->cols[col].attr = attr;
         scrrow->cols[col+i].rune = '\0';
     }
     if ((col + ncols) > scrrow->len)
@@ -364,9 +365,8 @@ static size_t fill_row(View* view, unsigned row, size_t pos) {
     view_getrow(view, row)->off  = pos;
     clearrow(view, row);
     for (size_t x = 0; x < view->ncols;) {
-        uint32_t attr = (buf_insel(BUF, pos) ? view->clrsel : view->clrnor);
         Rune r = buf_getrat(BUF, pos++);
-        x += setcell(view, row, x, attr, r);
+        x += setcell(view, row, x, r);
         if (buf_iseol(BUF, pos-1)) {
             break;
         }
