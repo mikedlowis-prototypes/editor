@@ -73,13 +73,13 @@ char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off);
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
-    Rune rune;     /* rune value for the cell */
+    size_t width; /* width of the glyph on screen */
+    Rune rune;    /* rune value for the cell */
 } UGlyph;
 
 typedef struct {
     size_t off;    /* offset of the first rune in the row */
-    size_t rlen;   /* number of runes displayed in the row */
-    size_t len;    /* number of screen columns taken up by row */
+    size_t len;    /* number of runes displayed in the row */
     UGlyph cols[]; /* row data */
 } Row;
 
@@ -88,9 +88,9 @@ typedef struct {
         CURSOR = (1 << 0),
         CENTER = (1 << 1),
     } sync_flags;
-    Buf buffer;          /* the buffer used to populate the view */
-    size_t nrows, ncols; /* number of rows and columns in the view */
-    Row** rows;          /* array of row data structures */
+    Buf buffer;   /* the buffer used to populate the view */
+    size_t nrows; /* number of rows and columns in the view */
+    Row** rows;   /* array of row data structures */
 } View;
 
 enum {
@@ -102,9 +102,8 @@ enum {
 
 void view_init(View* view, char* file);
 void view_reload(View* view);
-size_t view_limitrows(View* view, size_t maxrows, size_t ncols);
-void view_resize(View* view, size_t nrows, size_t ncols);
-void view_update(View* view, int clrnor, int clrsel, size_t* csrx, size_t* csry);
+void view_resize(View* view, size_t width, size_t nrows);
+void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);
 void view_byrune(View* view, int move, bool extsel);
 void view_byword(View* view, int move, bool extsel);

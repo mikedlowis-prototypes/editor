@@ -315,7 +315,8 @@ static void place_glyphs(int fg, XGlyphSpec* specs, size_t nspecs, bool eol) {
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
-static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t ncols) {
+static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t len) {
+#if 0
     XGlyphSpec specs[rlen];
     size_t i = 0;
     bool eol = false;
@@ -340,6 +341,7 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t rlen, size_t 
         place_glyphs(EditFg, specs, numspecs, eol);
         eol = false, rlen -= numspecs;
     }
+#endif
 }
 
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
@@ -348,12 +350,12 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
     size_t csrx = SIZE_MAX, csry = SIZE_MAX;
     /* draw the view to the window */
     View* view = win_view(i);
-    view_resize(view, nrows, (csr->w - csr->x) / fwidth);
-    view_update(view, (bg << 8 | fg), (sel << 8 | fg), &csrx, &csry);
+    view_resize(view, (csr->w - csr->x), nrows);
+    view_update(view, &csrx, &csry);
     draw_rect(bg, csr->x, csr->y, csr->w, (nrows * fheight) + 9);
     for (size_t y = 0; y < view->nrows; y++) {
         Row* row = view_getrow(view, y);
-        draw_glyphs(csr->x + 2, csr->y + 2 + ((y+1) * fheight), row->cols, row->rlen, row->len);
+        draw_glyphs(csr->x + 2, csr->y + 2 + ((y+1) * fheight), row->cols, row->len);
     }
     /* place the cursor on screen */
     if (!view_selsize(view) && csrx != SIZE_MAX && csry != SIZE_MAX) {
@@ -379,7 +381,7 @@ static void draw_scroll(drawcsr* csr) {
     if (bend == 0) bend = 1;
     if (!view->rows) return;
     size_t vbeg = view->rows[0]->off;
-    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->rlen;
+    size_t vend = view->rows[view->nrows-1]->off + view->rows[view->nrows-1]->len;
     double scroll_vis = (double)(vend - vbeg) / (double)bend;
     double scroll_off = ((double)vbeg / (double)bend);
     size_t thumbreg = (csr->y - Divider) + 4;
@@ -542,7 +544,7 @@ static void xupdate(Job* job) {
     drawcsr csr = { .w = X.width, .h = X.height };
     size_t maxtagrows = ((X.height - 2) / 4) / fheight;
     size_t tagcols    = csr.w / fwidth;
-    size_t tagrows    = view_limitrows(win_view(TAGS), maxtagrows, tagcols);
+    size_t tagrows    = 1;
     size_t editrows   = ((X.height - 7) / fheight) - tagrows;
     /* draw the regions to the window */
     draw_view(TAGS, tagrows, &csr, TagsBg, TagsFg, TagsSel);
