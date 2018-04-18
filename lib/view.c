@@ -3,6 +3,9 @@
 #include <edit.h>
 #include <ctype.h>
 
+/* Provided by x11.c */
+extern size_t glyph_width(int c);
+
 #define BUF    (&(view->buffer))
 #define CSRPOS (view->buffer.selection.end)
 
@@ -83,16 +86,50 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
     return 1;
 }
 
+size_t rune_width(int c, size_t xpos, size_t width) {
+    if (c == '\r')
+        return 0;
+    else if (c == '\n')
+        return (width-xpos);
+    else if (c == '\t')
+        return (glyph_width(c) - (xpos % glyph_width(c)));
+    else
+        return glyph_width(c);
+}
+
 void view_resize(View* view, size_t width, size_t nrows) {
     /* free up the old data */
     if (view->rows) {
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
+        view->rows = NULL;
         view->nrows = 0;
     }
+    size_t off = 0;
     /* start from beginning of first line and populate row by row */
+    for (size_t i = 0; i < nrows; i++) {
+        view->nrows++;
+        view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
+        view->rows[view->nrows-1] = calloc(1, sizeof(Row));
+        view->rows[view->nrows-1]->off = off;
 
+        size_t xpos = 0;
+        while (xpos < width) {
+            int rune = buf_getrat(&(view->buffer), off);
+            size_t rwidth = rune_width(rune, xpos, width);
+            xpos += rwidth;
+            if (xpos <= width) {
+                size_t len = view->rows[view->nrows-1]->len + 1;
+                view->rows[view->nrows-1] = realloc(
+                    view->rows[view->nrows-1], sizeof(Row) + (len * sizeof(UGlyph)));
+                view->rows[view->nrows-1]->len = len;
+                view->rows[view->nrows-1]->cols[len-1].rune  = rune;
+                view->rows[view->nrows-1]->cols[len-1].width = rwidth;
+                off = buf_byrune(&(view->buffer), off, RIGHT);
+            }
+        }
+    }
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
