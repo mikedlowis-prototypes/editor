@@ -46,6 +46,7 @@ struct XWin {
     XIC xic;
     XIM xim;
     GC gc;
+    XftFont* font;
 };
 
 /******************************************************************************/
@@ -53,7 +54,6 @@ struct XWin {
 static struct XWin X;
 static int KeyBtnState;
 static Atom SelTarget;
-static XFont CurrFont;
 static WinRegion Focused = EDIT;
 static View Regions[NREGIONS];
 static Rune LastKey;
@@ -89,25 +89,16 @@ static void font_load(char* name) {
     /* load the base font */
     FcResult result;
     FcPattern* match = XftFontMatch(X.display, X.screen, pattern, &result);
-    if (!match || !(CurrFont.match = XftFontOpenPattern(X.display, match)))
+    if (!match || !(X.font = XftFontOpenPattern(X.display, match)))
         die("could not load base font\n");
-    CurrFont.height = CurrFont.match->ascent + CurrFont.match->descent;
     FcPatternDestroy(pattern);
     FcPatternDestroy(match);
 }
 
-static size_t font_height(void) {
-    return CurrFont.match->height;
-}
-
 static size_t font_width(void) {
     XGlyphInfo extents;
-    XftTextExtentsUtf8(X.display, CurrFont.match, (const FcChar8*)"0", 1, &extents);
+    XftTextExtentsUtf8(X.display, X.font, (const FcChar8*)"0", 1, &extents);
     return extents.xOff;
-}
-
-static size_t font_descent(void) {
-    return CurrFont.match->descent;
 }
 
 /******************************************************************************/
@@ -115,7 +106,7 @@ static size_t font_descent(void) {
 static void get_position(WinRegion id, int x, int y, size_t* row, size_t* col) {
     int starty = (id == EDIT ? Divider+3 : 0);
     int startx = (id == EDIT ? ScrollWidth+3 : 0);
-    *row = (y - starty) / font_height();
+    *row = (y - starty) / X.font->height;
     *col = (x - startx) / font_width();
 }
 
@@ -280,12 +271,12 @@ static void xftcolor(XftColor* xc, int id) {
 size_t glyph_width(int c) {
     XGlyphInfo extents;
     if (c == '\t') {
-        FcChar32 index = XftCharIndex(X.display, CurrFont.match, '0');
-        XftTextExtents32(X.display, CurrFont.match, &index, 1, &extents);
+        FcChar32 index = XftCharIndex(X.display, X.font, '0');
+        XftTextExtents32(X.display, X.font, &index, 1, &extents);
         return (TabWidth *  extents.xOff);
     } else {
-        FcChar32 index = XftCharIndex(X.display, CurrFont.match, c);
-        XftTextExtents32(X.display, CurrFont.match, &index, 1, &extents);
+        FcChar32 index = XftCharIndex(X.display, X.font, c);
+        XftTextExtents32(X.display, X.font, &index, 1, &extents);
         return extents.xOff;
     }
 }
@@ -304,20 +295,20 @@ static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t len) {
     for (size_t i = 0; i < len; i++) {
         if (glyphs[i].rune == '\r' || glyphs[i].rune == '\n' ||  glyphs[i].rune == '\t')
             glyphs[i].rune = ' ';
-        specs[i].glyph = XftCharIndex(X.display, CurrFont.match, glyphs[i].rune);
+        specs[i].glyph = XftCharIndex(X.display, X.font, glyphs[i].rune);
         specs[i].x = x;
-        specs[i].y = y - CurrFont.match->descent;
+        specs[i].y = y - X.font->descent;
         x += glyphs[i].width;
     }
     XftColor fgc;
     xftcolor(&fgc, EditFg);
-    XftDrawGlyphSpec(X.xft, &fgc, CurrFont.match, specs, len);
+    XftDrawGlyphSpec(X.xft, &fgc, X.font, specs, len);
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
     size_t fwidth = font_width();
-    size_t fheight = font_height();
+    size_t fheight = X.font->height;
     size_t csrx = SIZE_MAX, csry = SIZE_MAX;
     /* draw the view to the window */
     View* view = win_view(i);
@@ -503,7 +494,7 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 };
 
 static void xupdate(Job* job) {
-    size_t fheight = font_height();
+    size_t fheight = X.font->height;
     size_t fwidth  = font_width();
     /* process events from the queue */
     for (XEvent e; XPending(X.display);) {
