@@ -84,6 +84,15 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
 }
 
 void view_resize(View* view, size_t width, size_t nrows) {
+    /* free up the old data */
+    if (view->rows) {
+        for (size_t i = 0; i < view->nrows; i++)
+            free(view->rows[i]);
+        free(view->rows);
+        view->nrows = 0;
+    }
+    /* start from beginning of first line and populate row by row */
+
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
