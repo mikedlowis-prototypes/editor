@@ -277,39 +277,17 @@ static void xftcolor(XftColor* xc, int id) {
     XftColorAllocValue(X.display, X.visual, X.colormap, &(xc->color), xc);
 }
 
-static void getglyph(XGlyphSpec* spec, uint32_t rune) {
-    spec->glyph = XftCharIndex(X.display, CurrFont.match, rune);
-    spec->font  = CurrFont.match;
-}
-
 size_t glyph_width(int c) {
     XGlyphInfo extents;
     if (c == '\t') {
         FcChar32 index = XftCharIndex(X.display, CurrFont.match, '0');
         XftTextExtents32(X.display, CurrFont.match, &index, 1, &extents);
-        return (4 *  extents.xOff);
+        return (TabWidth *  extents.xOff);
     } else {
         FcChar32 index = XftCharIndex(X.display, CurrFont.match, c);
         XftTextExtents32(X.display, CurrFont.match, &index, 1, &extents);
         return extents.xOff;
     }
-}
-
-static size_t getglyphs(XGlyphSpec* specs, const XGlyph* glyphs, int len, int x, int y) {
-    int winx = x, winy = y;
-    size_t numspecs = 0;
-    for (int i = 0, xp = winx, yp = winy; i < len;) {
-        getglyph(&(specs[numspecs]), glyphs[i].rune);
-        specs[numspecs].x = xp;
-        specs[numspecs].y = yp;
-        xp += font_width();
-        numspecs++;
-        i++;
-        /* skip over null chars which mark multi column runes */
-        for (; i < len && !glyphs[i].rune; i++)
-            xp += font_width();
-    }
-    return numspecs;
 }
 
 static void draw_rect(int color, int x, int y, int width, int height) {
@@ -319,30 +297,21 @@ static void draw_rect(int color, int x, int y, int width, int height) {
     XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
 
-static void place_glyphs(int fg, XGlyphSpec* specs, size_t nspecs, bool eol) {
-    if (!nspecs) return;
-    XftFont* font = specs[0].font;
-    XftColor fgc;
-    xftcolor(&fgc, fg);
-    XftDrawGlyphFontSpec(X.xft, &fgc, (XftGlyphFontSpec*)specs, nspecs);
-    XftColorFree(X.display, X.visual, X.colormap, &fgc);
-}
-
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t len) {
-    XGlyphSpec specs[len];
+    XftGlyphSpec specs[len];
     size_t i = 0;
     bool eol = false;
     for (size_t i = 0; i < len; i++) {
         if (glyphs[i].rune == '\r' || glyphs[i].rune == '\n' ||  glyphs[i].rune == '\t')
             glyphs[i].rune = ' ';
-        getglyph(&(specs[i]), glyphs[i].rune);
+        specs[i].glyph = XftCharIndex(X.display, CurrFont.match, glyphs[i].rune);
         specs[i].x = x;
-        specs[i].y = y - font_descent();
+        specs[i].y = y - CurrFont.match->descent;
         x += glyphs[i].width;
     }
     XftColor fgc;
     xftcolor(&fgc, EditFg);
-    XftDrawGlyphFontSpec(X.xft, &fgc, (XftGlyphFontSpec*)specs, len);
+    XftDrawGlyphSpec(X.xft, &fgc, CurrFont.match, specs, len);
     XftColorFree(X.display, X.visual, X.colormap, &fgc);
 }
 
