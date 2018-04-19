@@ -109,6 +109,7 @@ static void resize(View* view, size_t width, size_t nrows, size_t off) {
     view->width = width;
     view->nvisible = nrows;
     off = buf_bol(&(view->buffer), off);
+    bool first_line_done = false;
     for (size_t i = 0; nrows > 0; i++) {
         view->nrows++;
         view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
@@ -120,7 +121,8 @@ static void resize(View* view, size_t width, size_t nrows, size_t off) {
             int rune = buf_getrat(&(view->buffer), off);
             size_t rwidth = rune_width(rune, xpos, width);
             xpos += rwidth;
-            if (rune == '\n') nrows--;
+            if (!first_line_done)
+                first_line_done = (rune == '\n');
             if (xpos <= width) {
                 size_t len = view->rows[view->nrows-1]->len + 1;
                 view->rows[view->nrows-1] = realloc(
@@ -131,6 +133,8 @@ static void resize(View* view, size_t width, size_t nrows, size_t off) {
                 off = buf_byrune(&(view->buffer), off, RIGHT);
             }
         }
+        if (first_line_done)
+            nrows--;
     }
 }
 
