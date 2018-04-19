@@ -17,11 +17,6 @@
 #include <X11/Xft/Xft.h>
 #undef Region
 
-struct XFont {
-    int height;
-    XftFont* match;
-};
-
 struct XSel {
     char* name;
     Atom atom;
@@ -269,16 +264,13 @@ static void xftcolor(XftColor* xc, int id) {
 }
 
 size_t glyph_width(int c) {
+    FcChar32 rune = (FcChar32)c;
     XGlyphInfo extents;
-    if (c == '\t') {
-        FcChar32 index = XftCharIndex(X.display, X.font, '0');
-        XftTextExtents32(X.display, X.font, &index, 1, &extents);
+    XftTextExtents32(X.display, X.font, &rune, 1, &extents);
+    if (c == '\t')
         return (TabWidth *  extents.xOff);
-    } else {
-        FcChar32 index = XftCharIndex(X.display, X.font, c);
-        XftTextExtents32(X.display, X.font, &index, 1, &extents);
+    else
         return extents.xOff;
-    }
 }
 
 static void draw_rect(int color, int x, int y, int width, int height) {
@@ -290,14 +282,13 @@ static void draw_rect(int color, int x, int y, int width, int height) {
 
 static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t len) {
     XftGlyphSpec specs[len];
-    size_t i = 0;
-    bool eol = false;
     for (size_t i = 0; i < len; i++) {
-        if (glyphs[i].rune == '\r' || glyphs[i].rune == '\n' ||  glyphs[i].rune == '\t')
-            glyphs[i].rune = ' ';
-        specs[i].glyph = XftCharIndex(X.display, X.font, glyphs[i].rune);
+        int rune = glyphs[i].rune;
+        if (rune == '\r' || rune == '\n' ||  rune == '\t')
+            rune = ' ';
+        specs[i].glyph = XftCharIndex(X.display, X.font, rune);
         specs[i].x = x;
-        specs[i].y = y - X.font->descent;
+        specs[i].y = y + X.font->ascent;
         x += glyphs[i].width;
     }
     XftColor fgc;
@@ -317,7 +308,7 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
     draw_rect(bg, csr->x, csr->y, csr->w, (nrows * fheight) + 9);
     for (size_t y = 0; y < view->nrows; y++) {
         Row* row = view_getrow(view, y);
-        draw_glyphs(csr->x + 2, csr->y + 2 + ((y+1) * fheight), row->cols, row->len);
+        draw_glyphs(csr->x + 2, csr->y + 2 + (y * fheight), row->cols, row->len);
     }
     /* place the cursor on screen */
     if (!view_selsize(view) && csrx != SIZE_MAX && csry != SIZE_MAX) {

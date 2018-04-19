@@ -5,7 +5,7 @@
 #include <edit.h>
 
 #ifdef __MACH__
-    #define FONT "Monaco:size=10"
+    #define FONT "Verdana:size=10"
     #define LNSPACE 0
 #else
     #define FONT "Liberation Mono:size=11"
