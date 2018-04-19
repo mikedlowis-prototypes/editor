@@ -104,17 +104,12 @@ size_t rune_width(int c, size_t xpos, size_t width) {
         return glyph_width(c);
 }
 
-void view_resize(View* view, size_t width, size_t nrows) {
-    if (view->width == width && view->nvisible == nrows)
-        return;
-    /* start from beginning of first line and populate row by row */
+static void resize(View* view, size_t width, size_t nrows, size_t off) {
     clear_rows(view);
     view->width = width;
     view->nvisible = nrows;
-
-    size_t off = (view->rows ? view->rows[view->index]->off : 0);
     off = buf_bol(&(view->buffer), off);
-    for (size_t i = 0; nrows > 0; nrows--, i++) {
+    for (size_t i = 0; nrows > 0; i++) {
         view->nrows++;
         view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
         view->rows[view->nrows-1] = calloc(1, sizeof(Row));
@@ -125,6 +120,7 @@ void view_resize(View* view, size_t width, size_t nrows) {
             int rune = buf_getrat(&(view->buffer), off);
             size_t rwidth = rune_width(rune, xpos, width);
             xpos += rwidth;
+            if (rune == '\n') nrows--;
             if (xpos <= width) {
                 size_t len = view->rows[view->nrows-1]->len + 1;
                 view->rows[view->nrows-1] = realloc(
@@ -138,7 +134,15 @@ void view_resize(View* view, size_t width, size_t nrows) {
     }
 }
 
+void view_resize(View* view, size_t width, size_t nrows) {
+    if (view->width == width && view->nvisible == nrows)
+        return;
+    size_t off = (view->rows ? view->rows[view->index]->off : 0);
+    resize(view, width, nrows, off);
+}
+
 void view_update(View* view, size_t* csrx, size_t* csry) {
+
 }
 
 Row* view_getrow(View* view, size_t row) {
@@ -280,14 +284,27 @@ char* view_getctx(View* view) {
     return view_getstr(view);
 }
 
+static void scroll_up(View* view) {
+}
+
+static void scroll_dn(View* view) {
+    size_t nleft = (view->nrows - view->index);
+    if (nleft <= view->nvisible) {
+        size_t off = view->rows[view->index+1]->off;
+        resize(view, view->width, view->nrows, off);
+    } else {
+        view->index++;
+    }
+}
+
 void view_scroll(View* view, int move) {
     int dir = (move < 0 ? -1 : 1);
     move *= dir;
     for (int i = 0; i < move; i++) {
-//        if (dir < 0)
-//            scroll_up(view);
-//        else
-//            scroll_dn(view);
+        if (dir < 0)
+            scroll_up(view);
+        else
+            scroll_dn(view);
     }
 }
 
