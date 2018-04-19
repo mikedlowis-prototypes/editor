@@ -8,7 +8,7 @@
     #define FONT "Verdana:size=10"
     #define LNSPACE 0
 #else
-    #define FONT "Liberation Mono:size=11"
+    #define FONT "Verdana:size=11"
     #define LNSPACE 1
 #endif
 
@@ -22,7 +22,7 @@ int /* Integer config options */
     LineSpacing = LNSPACE,
     Timeout = 50,
     TabWidth = 4,
-    ScrollBy = 4,
+    ScrollBy = 1,
     ClickTime = 500,
     MaxScanDist = 0,
     Syntax = ON,

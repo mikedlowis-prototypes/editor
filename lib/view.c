@@ -285,6 +285,10 @@ char* view_getctx(View* view) {
 }
 
 static void scroll_up(View* view) {
+    if (view->index > 0)
+        view->index--;
+    else if (view->rows[0]->off > 0)
+        resize(view, view->width, view->nrows, (view->rows[0]->off - 1));
 }
 
 static void scroll_dn(View* view) {
@@ -295,6 +299,9 @@ static void scroll_dn(View* view) {
     } else {
         view->index++;
     }
+
+    printf("%ld <= %ld\n", view->nvisible, (view->nrows - view->index));
+    assert(view->nvisible <= (view->nrows - view->index));
 }
 
 void view_scroll(View* view, int move) {
