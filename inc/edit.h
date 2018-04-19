@@ -89,6 +89,9 @@ typedef struct {
         CENTER = (1 << 1),
     } sync_flags;
     Buf buffer;   /* the buffer used to populate the view */
+    size_t index;
+    size_t width;
+    size_t nvisible;
     size_t nrows; /* number of rows and columns in the view */
     Row** rows;   /* array of row data structures */
 } View;

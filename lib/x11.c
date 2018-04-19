@@ -306,9 +306,9 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
     view_resize(view, (csr->w - csr->x), nrows);
     view_update(view, &csrx, &csry);
     draw_rect(bg, csr->x, csr->y, csr->w, (nrows * fheight) + 9);
-    for (size_t y = 0; y < view->nrows; y++) {
-        Row* row = view_getrow(view, y);
-        draw_glyphs(csr->x + 2, csr->y + 2 + (y * fheight), row->cols, row->len);
+    for (size_t i = 0; i < nrows; i++) {
+        Row* row = view_getrow(view, i + view->index);
+        draw_glyphs(csr->x + 2, csr->y + 2 + (i * fheight), row->cols, row->len);
     }
     /* place the cursor on screen */
     if (!view_selsize(view) && csrx != SIZE_MAX && csry != SIZE_MAX) {

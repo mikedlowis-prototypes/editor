@@ -61,15 +61,22 @@ static Sel* getsel(View* view) {
     return &(view->buffer.selection);
 }
 
-void view_init(View* view, char* file) {
-    if (view->nrows) {
+static void clear_rows(View* view) {
+    if (view->rows) {
         for (size_t i = 0; i < view->nrows; i++)
             free(view->rows[i]);
         free(view->rows);
+        view->rows = NULL;
         view->nrows = 0;
-        view->rows  = NULL;
     }
+}
+
+void view_init(View* view, char* file) {
+    clear_rows(view);
     view->sync_flags |= (CURSOR|CENTER);
+    view->index = 0;
+    view->width = 0;
+    view->nvisible = 0;
     /* load the file and jump to the address returned from the load function */
     buf_init(BUF);
     if (file) buf_load(BUF, file);
@@ -98,17 +105,16 @@ size_t rune_width(int c, size_t xpos, size_t width) {
 }
 
 void view_resize(View* view, size_t width, size_t nrows) {
-    /* free up the old data */
-    if (view->rows) {
-        for (size_t i = 0; i < view->nrows; i++)
-            free(view->rows[i]);
-        free(view->rows);
-        view->rows = NULL;
-        view->nrows = 0;
-    }
-    size_t off = 0;
+    if (view->width == width && view->nvisible == nrows)
+        return;
     /* start from beginning of first line and populate row by row */
-    for (size_t i = 0; i < nrows; i++) {
+    clear_rows(view);
+    view->width = width;
+    view->nvisible = nrows;
+
+    size_t off = (view->rows ? view->rows[view->index]->off : 0);
+    off = buf_bol(&(view->buffer), off);
+    for (size_t i = 0; nrows > 0; nrows--, i++) {
         view->nrows++;
         view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
         view->rows[view->nrows-1] = calloc(1, sizeof(Row));
