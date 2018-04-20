@@ -108,6 +108,7 @@ static void resize(View* view, size_t width, size_t nrows, size_t off) {
     clear_rows(view);
     view->width = width;
     view->nvisible = nrows;
+    view->index = 0;
     off = buf_bol(&(view->buffer), off);
     bool first_line_done = false;
     for (size_t i = 0; nrows > 0; i++) {
@@ -292,20 +293,17 @@ static void scroll_up(View* view) {
     if (view->index > 0)
         view->index--;
     else if (view->rows[0]->off > 0)
-        resize(view, view->width, view->nrows, (view->rows[0]->off - 1));
+        resize(view, view->width, view->nvisible, (view->rows[0]->off - 1));
 }
 
 static void scroll_dn(View* view) {
     size_t nleft = (view->nrows - view->index);
     if (nleft <= view->nvisible) {
         size_t off = view->rows[view->index+1]->off;
-        resize(view, view->width, view->nrows, off);
+        resize(view, view->width, view->nvisible, off);
     } else {
         view->index++;
     }
-
-    printf("%ld <= %ld\n", view->nvisible, (view->nrows - view->index));
-    assert(view->nvisible <= (view->nrows - view->index));
 }
 
 void view_scroll(View* view, int move) {
