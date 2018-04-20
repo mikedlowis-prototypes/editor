@@ -238,6 +238,11 @@ static void mouse_right(WinRegion id, bool pressed, size_t row, size_t col) {
     }
 }
 
+static void mouse_scroll(WinRegion id, bool pressed, int amount) {
+    if (!pressed)
+        view_scroll(win_view(id), amount);
+}
+
 static void mouse_click(int btn, bool pressed, int x, int y) {
     size_t row, col;
     Focused = (y <= Divider ? TAGS : EDIT);
@@ -246,8 +251,8 @@ static void mouse_click(int btn, bool pressed, int x, int y) {
         case MouseLeft:    mouse_left(Focused, pressed, row, col);    break;
         case MouseMiddle:  mouse_middle(Focused, pressed, row, col);  break;
         case MouseRight:   mouse_right(Focused, pressed, row, col);   break;
-        case MouseWheelUp: view_scroll(win_view(Focused), -ScrollBy); break;
-        case MouseWheelDn: view_scroll(win_view(Focused), +ScrollBy); break;
+        case MouseWheelUp: mouse_scroll(Focused, pressed, -ScrollBy); break;
+        case MouseWheelDn: mouse_scroll(Focused, pressed, +ScrollBy); break;
     }
 }
 

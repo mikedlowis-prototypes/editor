@@ -45,18 +45,6 @@ static bool selection_visible(View* view) {
     return (beg <= csr && csr <= end);
 }
 
-static void find_cursor(View* view, size_t* csrx, size_t* csry) {
-    size_t csr = CSRPOS;
-    for (size_t y = 0; y < view->nrows; y++) {
-        size_t start = view->rows[y]->off;
-        size_t end   = view->rows[y]->off + view->rows[y]->len - 1;
-        if (start <= csr && csr <= end) {
-            size_t pos = start;
-            break;
-        }
-    }
-}
-
 static Sel* getsel(View* view) {
     return &(view->buffer.selection);
 }
