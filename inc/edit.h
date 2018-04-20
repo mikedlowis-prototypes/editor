@@ -73,6 +73,7 @@ char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off);
 /* Screen management functions
  *****************************************************************************/
 typedef struct {
+    size_t off;   /* offset of the rune in the buffer */
     size_t width; /* width of the glyph on screen */
     Rune rune;    /* rune value for the cell */
 } UGlyph;

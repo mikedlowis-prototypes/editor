@@ -124,6 +124,7 @@ static void resize(View* view, size_t width, size_t nrows, size_t off) {
                 view->rows[view->nrows-1]->len = len;
                 view->rows[view->nrows-1]->cols[len-1].rune  = rune;
                 view->rows[view->nrows-1]->cols[len-1].width = rwidth;
+                view->rows[view->nrows-1]->cols[len-1].off   = off;
                 off = buf_byrune(&(view->buffer), off, RIGHT);
             }
         }
@@ -160,6 +161,16 @@ void view_byline(View* view, int move, bool extsel) {
 }
 
 void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
+    size_t i = 0, y = 0, idx = view->index + row;
+    if (idx >= view->nrows) return;
+    printf("row: %ld %ld\n", row, idx);
+    Row* selrow = view->rows[idx];
+    for (; i < selrow->len; i++) {
+        y += selrow->cols[i].width;
+        if (col < y) break;
+    }
+    getsel(view)->end = selrow[i].off;
+    printf("clicked: %ld\n", getsel(view)->end);
 }
 
 void view_selword(View* view, size_t row, size_t col) {

@@ -1,0 +1,60 @@
+# This is a list of sequentially applied rule blocks that attempt to
+# determine what should be done with a piece of text stored in $data
+# Processing starts at the top of the file and proceeds to the bottom
+# or until a block executes the finish command. If any comman in the
+# block is unsuccessful, that block should terminate and the next  block
+# should be evaluated.
+#
+# Builtin Commands:
+#   is_set <var>            Determines if an env var is set
+#   is_dir <path>           Determines if path is a directory
+#   is_file <path>          Determines if path is a file
+#   matches <text> <regex>  Determines if text matches the regex
+#   exec_cmd <cmd>          Executes cmd and fails the rule if unsuccessful
+#   launch_cmd <cmd>        Executes cmd without regard to exit status
+
+{ # Look up .c or .h files in Code/
+    is_set EDITOR
+    matches "$data" "\\.[ch]$"
+    is_dir "Code"
+    exec_cmd "[[ $(find Code -type f -name '*$data') ]]"
+    launch_cmd "find Code -type f -name '*$data' | xargs -r $EDITOR"
+    finish
+}
+
+{ # Match URLS and open them with the browser
+    is_set BROWSER
+    matches "$data" "^(https?|ftp)://.*"
+    launch_cmd "$BROWSER $0"
+    finish
+}
+
+{ # Open files with addresses in the editor
+    is_set EDITOR
+    matches "$data" "^([^:]+):([0-9]+)"
+    is_file "$1"
+    launch_cmd "tctl $0"
+    finish
+}
+
+{ # If it's an existing text file, open it with editor
+    is_set EDITOR
+    is_file "$data"
+    exec_cmd "file --mime '$file' | grep -q 'text/'"
+    launch_cmd "$EDITOR" "$file"
+    finish
+}
+
+{ # Look it up in ctags database
+    is_set EDITOR
+    is_file tags
+    exec_cmd grep -q "^$data\\s\\+" tags
+    launch_cmd picktag fetch tags "$data" | xargs -r tide
+    finish
+}
+
+{ # If it's an existing directory, open it with system default
+    is_dir "$data"
+    launch_cmd "open '$data'"
+    finish
+}
