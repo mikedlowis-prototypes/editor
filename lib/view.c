@@ -110,6 +110,8 @@ static void resize(View* view, size_t width, size_t nrows, size_t off) {
     view->nvisible = nrows;
     view->index = 0;
     off = buf_bol(&(view->buffer), off);
+    if (off > buf_end(&(view->buffer)))
+        off = buf_end(&(view->buffer));
     bool first_line_done = false;
     for (size_t i = 0; nrows > 0; i++) {
         view->nrows++;
