@@ -105,28 +105,31 @@ size_t rune_width(int c, size_t xpos, size_t width) {
 }
 
 static void resize(View* view, size_t width, size_t nrows, size_t off) {
+    bool first_line_done = false;
     clear_rows(view);
     view->width = width;
     view->nvisible = nrows;
     view->index = 0;
+    size_t beg = off;
     off = buf_bol(&(view->buffer), off);
     if (off > buf_end(&(view->buffer)))
         off = buf_end(&(view->buffer));
-    bool first_line_done = false;
     for (size_t i = 0; nrows > 0; i++) {
+        /* allocate a new row */
         view->nrows++;
         view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
         view->rows[view->nrows-1] = calloc(1, sizeof(Row));
         view->rows[view->nrows-1]->off = off;
-
-        size_t xpos = 0;
-        while (xpos < width) {
+        /* populate the row with characters */
+        for (size_t xpos = 0; xpos < width;) {
             int rune = buf_getrat(&(view->buffer), off);
             size_t rwidth = rune_width(rune, xpos, width);
             xpos += rwidth;
             if (!first_line_done)
                 first_line_done = (rune == '\n');
             if (xpos <= width) {
+                if (beg == off && beg < buf_end(&(view->buffer)))
+                    view->index = i;
                 size_t len = view->rows[view->nrows-1]->len + 1;
                 view->rows[view->nrows-1] = realloc(
                     view->rows[view->nrows-1], sizeof(Row) + (len * sizeof(UGlyph)));

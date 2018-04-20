@@ -22,7 +22,7 @@ int /* Integer config options */
     LineSpacing = LNSPACE,
     Timeout = 50,
     TabWidth = 4,
-    ScrollBy = 1,
+    ScrollBy = 2,
     ClickTime = 500,
     MaxScanDist = 0,
     Syntax = ON,

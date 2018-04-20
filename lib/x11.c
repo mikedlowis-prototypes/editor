@@ -246,14 +246,8 @@ static void mouse_click(int btn, bool pressed, int x, int y) {
         case MouseLeft:    mouse_left(Focused, pressed, row, col);    break;
         case MouseMiddle:  mouse_middle(Focused, pressed, row, col);  break;
         case MouseRight:   mouse_right(Focused, pressed, row, col);   break;
-        case MouseWheelUp:
-            if (!pressed) return;
-            view_scroll(win_view(Focused), -ScrollBy);
-            break;
-        case MouseWheelDn:
-            if (!pressed) return;
-            view_scroll(win_view(Focused), +ScrollBy);
-            break;
+        case MouseWheelUp: view_scroll(win_view(Focused), -ScrollBy); break;
+        case MouseWheelDn: view_scroll(win_view(Focused), +ScrollBy); break;
     }
 }
 
