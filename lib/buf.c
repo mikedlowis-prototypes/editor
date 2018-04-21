@@ -295,9 +295,10 @@ void buf_selctx(Buf* buf, bool (*isword)(Rune)) {
 size_t buf_byrune(Buf* buf, size_t pos, int count) {
     int move = (count < 0 ? -1 : 1);
     count *= move; // remove the sign if there is one
-    for (; count > 0; count--)
-        if (pos > 0 || pos < buf_end(buf))
+    for (; count > 0; count--) {
+        if ((pos > 0 && move < 0) || (pos < buf_end(buf) && move > 0))
             pos += move;
+    }
     return pos;
 }
 

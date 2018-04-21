@@ -285,23 +285,6 @@ static void draw_rect(int color, int x, int y, int width, int height) {
     XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
 
-static void draw_glyphs(size_t x, size_t y, UGlyph* glyphs, size_t len) {
-    XftGlyphSpec specs[len];
-    for (size_t i = 0; i < len; i++) {
-        int rune = glyphs[i].rune;
-        if (rune == '\r' || rune == '\n' ||  rune == '\t')
-            rune = ' ';
-        specs[i].glyph = XftCharIndex(X.display, X.font, rune);
-        specs[i].x = x;
-        specs[i].y = y + X.font->ascent;
-        x += glyphs[i].width;
-    }
-    XftColor fgc;
-    xftcolor(&fgc, EditFg);
-    XftDrawGlyphSpec(X.xft, &fgc, X.font, specs, len);
-    XftColorFree(X.display, X.visual, X.colormap, &fgc);
-}
-
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
     size_t fwidth = font_width();
     size_t fheight = X.font->height;
@@ -313,15 +296,24 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
     draw_rect(bg, csr->x, csr->y, csr->w, (nrows * fheight) + 9);
     for (size_t i = 0; i < nrows; i++) {
         Row* row = view_getrow(view, i + view->index);
-        draw_glyphs(csr->x + 2, csr->y + 2 + (i * fheight), row->cols, row->len);
-    }
-    /* place the cursor on screen */
-    if (!view_selsize(view) && csrx != SIZE_MAX && csry != SIZE_MAX) {
-        draw_rect(
-            (i == TAGS ? TagsCsr : EditCsr),
-            csr->x + 2 + (csrx * fwidth),
-            csr->y + 2 + (csry * fheight),
-            1, fheight);
+        size_t x = (csr->x + 2), y = (csr->y + 2 + (i * fheight));
+        XftGlyphSpec specs[row->len];
+        for (size_t i = 0; i < row->len; i++) {
+            int rune = row->cols[i].rune;
+            if (rune == '\r' || rune == '\n' ||  rune == '\t')
+                rune = ' ';
+            if (row->cols[i].off == view->buffer.selection.end)
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x, y, 1, fheight);
+            specs[i].glyph = XftCharIndex(X.display, X.font, rune);
+            specs[i].x = x;
+            specs[i].y = y + X.font->ascent;
+            x += row->cols[i].width;
+        }
+        XftColor fgc;
+        xftcolor(&fgc, EditFg);
+        XftDrawGlyphSpec(X.xft, &fgc, X.font, specs, row->len);
+        XftColorFree(X.display, X.visual, X.colormap, &fgc);
+
     }
     csr->y += (nrows * fheight) + 3;
 }
