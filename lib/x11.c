@@ -302,7 +302,9 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
             int rune = row->cols[i].rune;
             if (rune == '\r' || rune == '\n' ||  rune == '\t')
                 rune = ' ';
-            if (row->cols[i].off == view->buffer.selection.end)
+            if (buf_insel(&(view->buffer), row->cols[i].off))
+                draw_rect(sel, x, y, row->cols[i].width, fheight);
+            if (!view_selsize(view) && row->cols[i].off == view->buffer.selection.end)
                 draw_rect((i == TAGS ? TagsCsr : EditCsr), x, y, 1, fheight);
             specs[i].glyph = XftCharIndex(X.display, X.font, rune);
             specs[i].x = x;

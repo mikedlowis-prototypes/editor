@@ -168,7 +168,10 @@ void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
         y += selrow->cols[i].width;
         if (col < y) break;
     }
+    /* Set cursor/selection */
     getsel(view)->end = selrow->cols[i].off;
+    if (!extsel)
+        getsel(view)->beg = getsel(view)->end;
 }
 
 void view_selword(View* view, size_t row, size_t col) {
