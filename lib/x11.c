@@ -389,6 +389,7 @@ static void xbtnrelease(XEvent* e) {
 }
 
 static void xbtnmotion(XEvent* e) {
+    while (XCheckTypedEvent(X.display, MotionNotify, e));
     X.now = e->xbutton.time;
     size_t row, col;
     KeyBtnState = e->xbutton.state;
