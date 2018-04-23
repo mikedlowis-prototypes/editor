@@ -48,12 +48,11 @@ struct XWin {
 
 static struct XWin X;
 static int KeyBtnState;
-static Atom SelTarget;
 static WinRegion Focused = EDIT;
 static View Regions[NREGIONS];
-static Rune LastKey;
 static KeyBinding* Keys = NULL;
 static int Divider;
+static Atom SelTarget;
 static struct XSel Selections[] = {
     { .name = "PRIMARY" },
     { .name = "CLIPBOARD" },
@@ -286,7 +285,6 @@ static void draw_rect(int color, int x, int y, int width, int height) {
 }
 
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
-    size_t fwidth = font_width();
     size_t fheight = X.font->height;
     size_t csrx = SIZE_MAX, csry = SIZE_MAX;
     /* draw the view to the window */
@@ -357,7 +355,7 @@ static void xkeypress(XEvent* e) {
     Focused = (e->xkey.y <= Divider ? TAGS : EDIT);
     uint32_t key = getkey(e);
     if (key == RUNE_ERR) return;
-    KeyBtnState = e->xkey.state, LastKey = key;
+    KeyBtnState = e->xkey.state;
     int mods = KeyBtnState & (ModCtrl|ModShift|ModAlt);
     uint32_t mkey = tolower(key);
     for (KeyBinding* bind = Keys; bind && bind->key; bind++) {
@@ -496,7 +494,6 @@ static void xupdate(Job* job) {
     /* determine the size of the regions */
     drawcsr csr = { .w = X.width, .h = X.height };
     size_t maxtagrows = ((X.height - 2) / 4) / fheight;
-    size_t tagcols    = csr.w / fwidth;
     size_t tagrows    = 1;
     size_t editrows   = ((X.height - 7) / fheight) - tagrows;
     /* draw the regions to the window */
