@@ -329,7 +329,7 @@ size_t buf_byline(Buf* buf, size_t pos, int count) {
                 pos = buf_bol(buf, (buf_bol(buf, pos) - 1));
         } else {
             size_t next = (buf_eol(buf, pos) + 1);
-            if (next < buf_end(buf))
+            if (next <= buf_end(buf))
                 pos = next;
         }
     }
