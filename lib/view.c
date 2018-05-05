@@ -140,6 +140,7 @@ void view_resize(View* view, size_t width, size_t nrows) {
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
+    /* refill the view contents to make sure updates are visible */
     size_t off = view->rows[view->index]->off;
     clear_rows(view, view->index);
     for (size_t i = 0; i < view->nvisible; i++) {
@@ -164,6 +165,16 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
                 off = buf_byrune(&(view->buffer), off, RIGHT);
             }
         }
+    }
+    /* sync up the view with the cursor */
+    if (view->sync_flags) {
+        if (view->sync_flags & CENTER) {
+            resize(view, view->width, view->nrows, CSRPOS);
+            view_scroll(view, UP * (view->nvisible/2));
+        } else {
+            view_scrollto(view, CSRPOS);
+        }
+        view->sync_flags = 0;
     }
 }
 
@@ -358,6 +369,11 @@ Rune view_getrune(View* view) {
 }
 
 void view_scrollto(View* view, size_t csr) {
+    Row* lastrow = view->rows[view->nrows-1];
+    size_t first = view->rows[view->index]->off;
+    size_t last  = lastrow->cols[lastrow->len-1].off;
+    if (csr < first || csr > last)
+        resize(view, view->width, view->nrows, csr);
 }
 
 void view_selectall(View* view) {
