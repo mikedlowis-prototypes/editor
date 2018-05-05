@@ -183,16 +183,19 @@ void view_byline(View* view, int move, bool extsel) {
     move_selection(view, extsel, move, buf_byline);
 }
 
-void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
+static size_t getoffset(View* view, size_t row, size_t col) {
     size_t i = 0, y = 0, idx = view->index + row;
-    if (idx >= view->nrows) return;
+    if (idx >= view->nrows) return 0;
     Row* selrow = view->rows[idx];
     for (; i < selrow->len; i++) {
         y += selrow->cols[i].width;
         if (col < y) break;
     }
-    /* Set cursor/selection */
-    getsel(view)->end = selrow->cols[i].off;
+    return selrow->cols[i].off;
+}
+
+void view_setcursor(View* view, size_t row, size_t col, bool extsel) {
+    getsel(view)->end = getoffset(view, row, col);
     if (!extsel)
         getsel(view)->beg = getsel(view)->end;
 }
@@ -221,9 +224,9 @@ size_t view_selsize(View* view) {
 
 char* view_fetch(View* view, size_t row, size_t col, bool (*isword)(Rune)) {
     char* str = NULL;
-//    size_t off = getoffset(view, row, col);
-//    if (off != SIZE_MAX)
-//        str = buf_fetch(BUF, isword, off);
+    size_t off = getoffset(view, row, col);
+    if (off != SIZE_MAX)
+        str = buf_fetch(BUF, isword, off);
     return str;
 }
 
@@ -366,5 +369,3 @@ void view_selectobj(View* view, bool (*istype)(Rune)) {
     buf_selword(BUF, istype);
     view->sync_flags |= CURSOR;
 }
-
-
