@@ -49,18 +49,17 @@ static Sel* getsel(View* view) {
     return &(view->buffer.selection);
 }
 
-static void clear_rows(View* view) {
+static void clear_rows(View* view, size_t startidx) {
     if (view->rows) {
-        for (size_t i = 0; i < view->nrows; i++)
+        for (size_t i = startidx; i < view->nrows; i++)
             free(view->rows[i]);
-        free(view->rows);
-        view->rows = NULL;
-        view->nrows = 0;
+        view->rows = realloc(view->rows, startidx);
+        view->nrows = startidx;
     }
 }
 
 void view_init(View* view, char* file) {
-    clear_rows(view);
+    clear_rows(view, 0);
     view->sync_flags |= (CURSOR|CENTER);
     view->index = 0;
     view->width = 0;
@@ -94,7 +93,7 @@ size_t rune_width(int c, size_t xpos, size_t width) {
 
 static void resize(View* view, size_t width, size_t nrows, size_t off) {
     bool first_line_done = false;
-    clear_rows(view);
+    clear_rows(view, 0);
     view->width = width;
     view->nvisible = nrows;
     view->index = 0;
@@ -141,7 +140,31 @@ void view_resize(View* view, size_t width, size_t nrows) {
 }
 
 void view_update(View* view, size_t* csrx, size_t* csry) {
-
+    size_t off = view->rows[view->index]->off;
+    clear_rows(view, view->index);
+    for (size_t i = 0; i < view->nvisible; i++) {
+        /* allocate a new row */
+        view->nrows++;
+        view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
+        view->rows[view->nrows-1] = calloc(1, sizeof(Row));
+        view->rows[view->nrows-1]->off = off;
+        /* populate the row with characters */
+        for (size_t xpos = 0; xpos < view->width;) {
+            int rune = buf_getrat(&(view->buffer), off);
+            size_t rwidth = rune_width(rune, xpos, view->width);
+            xpos += rwidth;
+            if (xpos <= view->width) {
+                size_t len = view->rows[view->nrows-1]->len + 1;
+                view->rows[view->nrows-1] = realloc(
+                    view->rows[view->nrows-1], sizeof(Row) + (len * sizeof(UGlyph)));
+                view->rows[view->nrows-1]->len = len;
+                view->rows[view->nrows-1]->cols[len-1].rune  = rune;
+                view->rows[view->nrows-1]->cols[len-1].width = rwidth;
+                view->rows[view->nrows-1]->cols[len-1].off   = off;
+                off = buf_byrune(&(view->buffer), off, RIGHT);
+            }
+        }
+    }
 }
 
 Row* view_getrow(View* view, size_t row) {
