@@ -56,8 +56,7 @@ static void tag_exec(Tag* tag, char* arg) {
 static void cmd_exec(char* cmd) {
     /* parse the command sigils */
     char op = '\0', **execcmd = NULL;
-    if (*cmd == ':' || *cmd == '!' || *cmd == '<' || *cmd == '|' || *cmd == '>')
-        op = *cmd, cmd++;
+    if (rissigil(*cmd)) op = *(cmd++);
     execcmd = (op == ':' ? SedCmd : ShellCmd);
     execcmd[2] = cmd;
 
@@ -65,7 +64,7 @@ static void cmd_exec(char* cmd) {
     if (op && op != '<' && op != '!' && !view_selsize(win_view(EDIT)))
         view_selectall(win_view(EDIT));
     char* input = view_getstr(win_view(EDIT));
-    size_t len  = (input ? strlen(input) : 0);
+    size_t len = (input ? strlen(input) : 0);
     View *tags = win_view(TAGS), *edit = win_view(EDIT), *curr = win_view(FOCUSED);
 
     /* execute the job */

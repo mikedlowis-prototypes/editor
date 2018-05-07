@@ -9,7 +9,6 @@
 #include <sys/un.h>
 #include <poll.h>
 
-static void job_process(int fd, int events);
 static int job_execute(char** cmd, int *fd, int *pid);
 static void job_finish(Job* job);
 
@@ -17,6 +16,25 @@ static void job_finish(Job* job);
 
 static struct pollfd JobFds[MAX_JOBS];
 static Job* JobList = NULL;
+
+static void job_process(int fd, int events) {
+    Job* job = JobList; // Get job by fd
+    while (job && job->fd != fd)
+        job = job->next;
+    if (!job) return;
+    if (job->readfn && (events & POLLIN))
+        job->readfn(job);
+    if (job->writefn && (events & POLLOUT))
+        job->writefn(job);
+    if (!job->readfn && !job->writefn)
+        job_finish(job);
+}
+
+static void job_finish(Job* job) {
+    //close(job->fd);
+    // delete job
+    // free(job);
+}
 
 bool job_poll(int ms) {
     int njobs = 0;
@@ -48,33 +66,15 @@ void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data) {
     JobList = job;
 }
 
-void job_create(char** cmd, jobfn_t readfn, jobfn_t writefn, void* data) {
-    int fd = -1, pid = -1;
-    if (job_execute(cmd, &fd, &pid) > 0)
-        job_spawn(fd, readfn, writefn, data);
-}
-
 void job_start(char** cmd, char* data, size_t ndata, View* dest) {
 
 }
 
-static void job_process(int fd, int events) {
-    Job* job = JobList; // Get job by fd
-    while (job && job->fd != fd)
-        job = job->next;
-    if (!job) return;
-    if (job->readfn && (events & POLLIN))
-        job->readfn(job);
-    if (job->writefn && (events & POLLOUT))
-        job->writefn(job);
-    if (!job->readfn && !job->writefn)
-        job_finish(job);
-}
-
-static void job_finish(Job* job) {
-    //close(job->fd);
-    // delete job
-    // free(job);
+#if 0
+void job_create(char** cmd, jobfn_t readfn, jobfn_t writefn, void* data) {
+    int fd = -1, pid = -1;
+    if (job_execute(cmd, &fd, &pid) > 0)
+        job_spawn(fd, readfn, writefn, data);
 }
 
 static int job_execute(char** cmd, int *fd, int *pid) {
@@ -99,3 +99,4 @@ static int job_execute(char** cmd, int *fd, int *pid) {
     }
     return *pid;
 }
+#endif
