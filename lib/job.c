@@ -9,13 +9,29 @@
 #include <sys/un.h>
 #include <poll.h>
 
-static int job_execute(char** cmd, int *fd, int *pid);
-static void job_finish(Job* job);
+struct PipeData {
+    char* data;
+    size_t ndata;
+    size_t nwrite;
+    View* dest;
+};
 
 #define MAX_JOBS 256
 
 static struct pollfd JobFds[MAX_JOBS];
 static Job* JobList = NULL;
+
+static void pipe_read(Job* job) {
+}
+
+static void pipe_write(Job* job) {
+}
+
+static void job_finish(Job* job) {
+    //close(job->fd);
+    // delete job
+    // free(job);
+}
 
 static void job_process(int fd, int events) {
     Job* job = JobList; // Get job by fd
@@ -30,10 +46,27 @@ static void job_process(int fd, int events) {
         job_finish(job);
 }
 
-static void job_finish(Job* job) {
-    //close(job->fd);
-    // delete job
-    // free(job);
+static int job_exec(char** cmd) {
+    int pid, fds[2];
+    /* create the sockets */
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) < 0)
+        return -1;
+    /* create the process */
+    if ((pid = fork()) < 0) {
+        close(fds[0]), close(fds[1]), fds[0] = -1;
+    } else if (0 == pid) {
+        /* redirect child process's io to the pipes */
+        if ((dup2(fds[1], 0) < 0) || (dup2(fds[1], 1) < 0) || (dup2(fds[1], 2) < 0)) {
+            perror("failed to pipe");
+            exit(1);
+        }
+        /* execute the process */
+        close(fds[0]);
+        exit(execvp(cmd[0], cmd));
+    } else {
+        close(fds[1]);
+    }
+    return fds[0];
 }
 
 bool job_poll(int ms) {
@@ -67,36 +100,12 @@ void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data) {
 }
 
 void job_start(char** cmd, char* data, size_t ndata, View* dest) {
-
-}
-
-#if 0
-void job_create(char** cmd, jobfn_t readfn, jobfn_t writefn, void* data) {
-    int fd = -1, pid = -1;
-    if (job_execute(cmd, &fd, &pid) > 0)
-        job_spawn(fd, readfn, writefn, data);
-}
-
-static int job_execute(char** cmd, int *fd, int *pid) {
-    int fds[2];
-    /* create the sockets */
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) < 0)
-        return -1;
-    /* create the process */
-    if ((*pid = fork()) < 0) {
-        close(fds[0]), close(fds[1]), *fd = -1;
-    } else if (0 == *pid) {
-        /* redirect child process's io to the pipes */
-        if ((dup2(fds[1], 0) < 0) || (dup2(fds[1], 1) < 0) || (dup2(fds[1], 2) < 0)) {
-            perror("failed to pipe");
-            exit(1);
-        }
-        /* execute the process */
-        close(fds[0]);
-        exit(execvp(cmd[0], cmd));
-    } else {
-        close(fds[1]), *fd = fds[0];
+    int fd = job_exec(cmd);
+    if (fd >= 0) {
+        struct PipeData* pipedata = calloc(1, sizeof(struct PipeData));
+        pipedata->data = data;
+        pipedata->ndata = ndata;
+        pipedata->dest = dest;
+        job_spawn(fd, pipe_read, pipe_write, pipedata);
     }
-    return *pid;
 }
-#endif
