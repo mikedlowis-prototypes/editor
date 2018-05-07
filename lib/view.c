@@ -173,8 +173,9 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
             view_scroll(view, UP * (view->nvisible/2));
         } else {
             Row* lastrow = view->rows[view->nrows-1];
+            size_t last_off = lastrow->cols[lastrow->len-1].off;
             view_scrollto(view, CSRPOS);
-            if (lastrow->cols[lastrow->len-1].off < CSRPOS)
+            if (last_off < CSRPOS)
                 view_scroll(view, UP * (view->nvisible-1));
         }
         view->sync_flags = 0;

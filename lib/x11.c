@@ -122,7 +122,7 @@ static void x11_window(char* name) {
         X.width,
         X.height,
         0, X.depth,
-        Palette[0]);
+        Palette[EditBg]);
     /* register interest in the delete window message */
     Atom wmDeleteMessage = XInternAtom(X.display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(X.display, X.self, &wmDeleteMessage, 1);
