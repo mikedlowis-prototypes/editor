@@ -291,6 +291,8 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
     View* view = win_view(i);
     view_resize(view, (csr->w - csr->x), nrows);
     view_update(view, &csrx, &csry);
+    if (i == TAGS)
+        nrows = view_limitrows(view, nrows);
     draw_rect(bg, csr->x, csr->y, csr->w, (nrows * fheight) + 9);
     for (size_t i = 0; i < nrows; i++) {
         Row* row = view_getrow(view, i + view->index);
@@ -493,12 +495,11 @@ static void xupdate(Job* job) {
     }
     /* determine the size of the regions */
     drawcsr csr = { .w = X.width, .h = X.height };
-    size_t maxtagrows = ((X.height - 2) / 4) / fheight;
-    size_t tagrows    = 1;
-    size_t editrows   = ((X.height - 7) / fheight) - tagrows;
     /* draw the regions to the window */
+    size_t tagrows = ((X.height - 2) / 4) / fheight;
     draw_view(TAGS, tagrows, &csr, TagsBg, TagsFg, TagsSel);
     draw_hrule(&csr);
+    size_t editrows = ((X.height - csr.x) / fheight);
     draw_view(EDIT, editrows, &csr, EditBg, EditFg, EditSel);
     draw_scroll(&csr);
     /* flush to the server */

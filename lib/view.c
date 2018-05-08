@@ -77,7 +77,17 @@ void view_reload(View* view) {
 }
 
 size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
-    return 1;
+    size_t nrows = 0, bend = buf_end(&(view->buffer));
+    for (size_t i = 0; i < view->nrows; nrows++, i++) {
+        Row* crow = view->rows[view->index + i];
+        size_t last = (crow->len ? crow->off : crow->cols[crow->len-1].off);
+        if (last >= bend)
+            break;
+    }
+    printf("%lu %lu\n", nrows, bend);
+    view_resize(view, view->width, nrows);
+    view_update(view, 0, 0);
+    return nrows;
 }
 
 size_t rune_width(int c, size_t xpos, size_t width) {
