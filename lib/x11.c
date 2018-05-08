@@ -554,7 +554,9 @@ void win_loop(void) {
     XMapWindow(X.display, X.self);
     XFlush(X.display);
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
-    while (1) job_poll(Timeout);
+    while (1)
+        if (job_poll(Timeout))
+            xupdate(NULL);
 }
 
 void win_quit(void) {
