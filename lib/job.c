@@ -34,7 +34,19 @@ static void pipe_read(Job* job) {
 }
 
 static void pipe_write(Job* job) {
-    job->writefn = NULL;
+    struct PipeData* pipedata = job->data;
+    char* chunk = pipedata->data + pipedata->nwrite;
+    long nwrite = write(job->fd, chunk, pipedata->ndata);
+    if (nwrite >= 0) {
+        pipedata->ndata  -= nwrite;
+        pipedata->nwrite += nwrite;
+    }
+    if (nwrite < 0 || pipedata->ndata <= 0) {
+        free(pipedata->data);
+        pipedata->data = NULL;
+        job->writefn = NULL;
+        shutdown(job->fd, SHUT_WR);
+    }
 }
 
 static void job_finish(Job* job) {
@@ -57,8 +69,6 @@ static void job_process(int fd, int events) {
     while (job && job->fd != fd)
         job = job->next;
     if (!job) return;
-    //if (fd > 3)
-    //    printf("%d -> %d %d\n", fd, (events & POLLIN) > 0, (events & POLLOUT) > 0);
     if (job->readfn && (events & POLLIN))
         job->readfn(job);
     if (job->writefn && (events & POLLOUT))
