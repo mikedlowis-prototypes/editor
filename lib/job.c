@@ -22,15 +22,34 @@ static struct pollfd JobFds[MAX_JOBS];
 static Job* JobList = NULL;
 
 static void pipe_read(Job* job) {
+    struct PipeData* pipedata = job->data;
+    char buffer[4096];
+    long i = 0, nread = read(job->fd, buffer, sizeof(buffer)-1);
+    if (nread <= 0) {
+        job->readfn = NULL;
+    } else if (nread > 0) {
+        buffer[nread] = '\0';
+        view_putstr(pipedata->dest, buffer);
+    }
 }
 
 static void pipe_write(Job* job) {
+    job->writefn = NULL;
 }
 
 static void job_finish(Job* job) {
-    //close(job->fd);
-    // delete job
-    // free(job);
+    if (job == JobList) {
+        JobList = JobList->next;
+    } else {
+        Job* curr = JobList;
+        while (curr->next && curr->next->fd != job->fd) {
+            curr->next = curr->next->next;
+            curr = curr->next;
+        }
+    }
+    close(job->fd);
+    free(job->data);
+    free(job);
 }
 
 static void job_process(int fd, int events) {
@@ -38,6 +57,8 @@ static void job_process(int fd, int events) {
     while (job && job->fd != fd)
         job = job->next;
     if (!job) return;
+    //if (fd > 3)
+    //    printf("%d -> %d %d\n", fd, (events & POLLIN) > 0, (events & POLLOUT) > 0);
     if (job->readfn && (events & POLLIN))
         job->readfn(job);
     if (job->writefn && (events & POLLOUT))
@@ -102,10 +123,13 @@ void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data) {
 void job_start(char** cmd, char* data, size_t ndata, View* dest) {
     int fd = job_exec(cmd);
     if (fd >= 0) {
-        struct PipeData* pipedata = calloc(1, sizeof(struct PipeData));
-        pipedata->data = data;
-        pipedata->ndata = ndata;
-        pipedata->dest = dest;
+        struct PipeData* pipedata = NULL;
+        if (data) {
+            pipedata = calloc(1, sizeof(struct PipeData));
+            pipedata->data = data;
+            pipedata->ndata = ndata;
+            pipedata->dest = dest;
+        }
         job_spawn(fd, pipe_read, pipe_write, pipedata);
     }
 }
