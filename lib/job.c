@@ -132,7 +132,7 @@ void job_spawn(int fd, jobfn_t readfn, jobfn_t writefn, void* data) {
 
 void job_start(char** cmd, char* data, size_t ndata, View* dest) {
     int fd = job_exec(cmd);
-    if (fd >= 0) {
+    if (fd >= 0 && (data || dest)) {
         struct PipeData* pipedata = NULL;
         if (data) {
             pipedata = calloc(1, sizeof(struct PipeData));
@@ -140,6 +140,8 @@ void job_start(char** cmd, char* data, size_t ndata, View* dest) {
             pipedata->ndata = ndata;
             pipedata->dest = dest;
         }
-        job_spawn(fd, pipe_read, pipe_write, pipedata);
+        job_spawn(fd, (data ? pipe_read : NULL), (dest ? pipe_write : NULL), pipedata);
+    } else {
+        close(fd);
     }
 }
