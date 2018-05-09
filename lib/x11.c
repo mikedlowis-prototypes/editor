@@ -287,6 +287,7 @@ static void draw_rect(int color, int x, int y, int width, int height) {
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
     size_t fheight = X.font->height;
     size_t csrx = SIZE_MAX, csry = SIZE_MAX;
+    bool csr_drawn = false;
     /* draw the view to the window */
     View* view = win_view(i);
     view_resize(view, (csr->w - csr->x), nrows);
@@ -304,8 +305,10 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
                 rune = ' ';
             if (buf_insel(&(view->buffer), row->cols[i].off))
                 draw_rect(sel, x, y, row->cols[i].width, fheight);
-            if (!view_selsize(view) && row->cols[i].off == view->buffer.selection.end)
+            if (!csr_drawn && !view_selsize(view) && row->cols[i].off == view->buffer.selection.end) {
                 draw_rect((i == TAGS ? TagsCsr : EditCsr), x, y, 1, fheight);
+                csr_drawn = true;
+            }
             specs[i].glyph = XftCharIndex(X.display, X.font, rune);
             specs[i].x = x;
             specs[i].y = y + X.font->ascent;

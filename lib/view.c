@@ -84,7 +84,7 @@ size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
         if (last >= bend)
             break;
     }
-    printf("%lu %lu\n", nrows, bend);
+    //printf("%lu %lu\n", nrows, bend);
     view_resize(view, view->width, nrows);
     view_update(view, 0, 0);
     return nrows;
