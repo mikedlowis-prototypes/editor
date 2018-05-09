@@ -76,7 +76,7 @@ void view_reload(View* view) {
     }
 }
 
-size_t view_limitrows(View* view, size_t maxrows, size_t ncols) {
+size_t view_limitrows(View* view, size_t maxrows) {
     size_t nrows = 0, bend = buf_end(&(view->buffer));
     for (size_t i = 0; i < view->nrows; nrows++, i++) {
         Row* crow = view->rows[view->index + i];

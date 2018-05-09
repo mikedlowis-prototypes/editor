@@ -106,6 +106,7 @@ enum {
 
 void view_init(View* view, char* file);
 void view_reload(View* view);
+size_t view_limitrows(View* view, size_t maxrows);
 void view_resize(View* view, size_t width, size_t nrows);
 void view_update(View* view, size_t* csrx, size_t* csry);
 Row* view_getrow(View* view, size_t row);

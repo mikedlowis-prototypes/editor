@@ -71,8 +71,6 @@ static void die(const char* msg) {
     exit(EXIT_FAILURE);
 }
 
-/******************************************************************************/
-
 static void font_load(char* name) {
     /* init the library and the base font pattern */
     if (!FcInit())
@@ -88,14 +86,6 @@ static void font_load(char* name) {
     FcPatternDestroy(pattern);
     FcPatternDestroy(match);
 }
-
-static size_t font_width(void) {
-    XGlyphInfo extents;
-    XftTextExtentsUtf8(X.display, X.font, (const FcChar8*)"0", 1, &extents);
-    return extents.xOff;
-}
-
-/******************************************************************************/
 
 static void get_position(WinRegion id, int x, int y, size_t* row, size_t* col) {
     int starty = (id == EDIT ? Divider+3 : 0);
@@ -491,7 +481,6 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 
 static void xupdate(Job* job) {
     size_t fheight = X.font->height;
-    size_t fwidth  = font_width();
     /* process events from the queue */
     for (XEvent e; XPending(X.display);) {
         XNextEvent(X.display, &e);

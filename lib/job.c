@@ -24,7 +24,7 @@ static Job* JobList = NULL;
 static void pipe_read(Job* job) {
     struct PipeData* pipedata = job->data;
     char buffer[4096];
-    long i = 0, nread = read(job->fd, buffer, sizeof(buffer)-1);
+    long nread = read(job->fd, buffer, sizeof(buffer)-1);
     if (nread <= 0) {
         job->readfn = NULL;
     } else if (nread > 0) {
