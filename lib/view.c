@@ -101,44 +101,48 @@ size_t rune_width(int c, size_t xpos, size_t width) {
         return glyph_width(c);
 }
 
+static size_t add_row(View* view, size_t off) {
+    /* allocate a new row */
+    view->nrows++;
+    view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
+    view->rows[view->nrows-1] = calloc(1, sizeof(Row));
+    view->rows[view->nrows-1]->off = off;
+    /* populate the row with characters */
+    for (size_t xpos = 0; xpos < view->width;) {
+        int rune = buf_getrat(&(view->buffer), off);
+        size_t rwidth = rune_width(rune, xpos, view->width);
+        xpos += rwidth;
+        if (xpos <= view->width) {
+            size_t len = view->rows[view->nrows-1]->len + 1;
+            view->rows[view->nrows-1] = realloc(
+                view->rows[view->nrows-1], sizeof(Row) + (len * sizeof(UGlyph)));
+            view->rows[view->nrows-1]->len = len;
+            view->rows[view->nrows-1]->cols[len-1].rune  = rune;
+            view->rows[view->nrows-1]->cols[len-1].width = rwidth;
+            view->rows[view->nrows-1]->cols[len-1].off   = off;
+            off = buf_byrune(&(view->buffer), off, RIGHT);
+        }
+    }
+    return off;
+}
+
 static void resize(View* view, size_t width, size_t nrows, size_t off) {
     bool first_line_done = false;
     clear_rows(view, 0);
     view->width = width;
     view->nvisible = nrows;
     view->index = 0;
-    size_t beg = off;
+    size_t beg = off, bend = buf_end(&(view->buffer));
     off = buf_bol(&(view->buffer), off);
-    if (off > buf_end(&(view->buffer)))
-        off = buf_end(&(view->buffer));
+    if (off > bend) off = bend;
     for (size_t i = 0; nrows > 0; i++) {
-        /* allocate a new row */
-        view->nrows++;
-        view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
-        view->rows[view->nrows-1] = calloc(1, sizeof(Row));
-        view->rows[view->nrows-1]->off = off;
-        /* populate the row with characters */
-        for (size_t xpos = 0; xpos < width;) {
-            int rune = buf_getrat(&(view->buffer), off);
-            size_t rwidth = rune_width(rune, xpos, width);
-            xpos += rwidth;
-            if (!first_line_done)
-                first_line_done = (rune == '\n');
-            if (xpos <= width) {
-                if (beg == off && beg < buf_end(&(view->buffer)))
-                    view->index = i;
-                size_t len = view->rows[view->nrows-1]->len + 1;
-                view->rows[view->nrows-1] = realloc(
-                    view->rows[view->nrows-1], sizeof(Row) + (len * sizeof(UGlyph)));
-                view->rows[view->nrows-1]->len = len;
-                view->rows[view->nrows-1]->cols[len-1].rune  = rune;
-                view->rows[view->nrows-1]->cols[len-1].width = rwidth;
-                view->rows[view->nrows-1]->cols[len-1].off   = off;
-                off = buf_byrune(&(view->buffer), off, RIGHT);
-            }
-        }
+        off = add_row(view, off);
+        Row* row = view->rows[view->nrows-1];
+        first_line_done = (first_line_done || (row->cols[row->len-1].rune == '\n'));
         if (first_line_done)
             nrows--;
+        if (beg < bend && beg >= row->off && beg <= row->cols[row->len-1].off)
+            view->index = i;
     }
 }
 
@@ -153,29 +157,8 @@ void view_update(View* view, size_t* csrx, size_t* csry) {
     /* refill the view contents to make sure updates are visible */
     size_t off = view->rows[view->index]->off;
     clear_rows(view, view->index);
-    for (size_t i = 0; i < view->nvisible; i++) {
-        /* allocate a new row */
-        view->nrows++;
-        view->rows = realloc(view->rows, sizeof(Row*) * view->nrows);
-        view->rows[view->nrows-1] = calloc(1, sizeof(Row));
-        view->rows[view->nrows-1]->off = off;
-        /* populate the row with characters */
-        for (size_t xpos = 0; xpos < view->width;) {
-            int rune = buf_getrat(&(view->buffer), off);
-            size_t rwidth = rune_width(rune, xpos, view->width);
-            xpos += rwidth;
-            if (xpos <= view->width) {
-                size_t len = view->rows[view->nrows-1]->len + 1;
-                view->rows[view->nrows-1] = realloc(
-                    view->rows[view->nrows-1], sizeof(Row) + (len * sizeof(UGlyph)));
-                view->rows[view->nrows-1]->len = len;
-                view->rows[view->nrows-1]->cols[len-1].rune  = rune;
-                view->rows[view->nrows-1]->cols[len-1].width = rwidth;
-                view->rows[view->nrows-1]->cols[len-1].off   = off;
-                off = buf_byrune(&(view->buffer), off, RIGHT);
-            }
-        }
-    }
+    for (size_t i = 0; i < view->nvisible; i++)
+        off = add_row(view, off);
     /* sync up the view with the cursor */
     if (view->sync_flags) {
         if (view->sync_flags & CENTER) {
