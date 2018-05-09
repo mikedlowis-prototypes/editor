@@ -306,7 +306,9 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
             if (buf_insel(&(view->buffer), row->cols[i].off))
                 draw_rect(sel, x, y, row->cols[i].width, fheight);
             if (!csr_drawn && !view_selsize(view) && row->cols[i].off == view->buffer.selection.end) {
-                draw_rect((i == TAGS ? TagsCsr : EditCsr), x, y, 1, fheight);
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-2, y, 3, 3);
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-1, y, 1, fheight);
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-2, y+fheight-3, 3, 3);
                 csr_drawn = true;
             }
             specs[i].glyph = XftCharIndex(X.display, X.font, rune);
