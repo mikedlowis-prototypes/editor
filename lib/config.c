@@ -32,13 +32,13 @@ int /* Integer config options */
     DosLineFeed = OFF;
 
 int Palette[ClrCount] = {
-    [Red]      = 0x772222, // Red
-    [Green]    = 0x227722, // Green
-    [Blue]     = 0x222277, // Blue
-    [Yellow]   = 0x000000, // Yellow ???
-    [Purple]   = 0x000000, // Purple ???
-    [Aqua]     = 0x000000, // Aqua   ???
-    [Orange]   = 0x000000, // Orange ???
+    [Red]      = 0xd1160b, // Red
+    [Green]    = 0x1e7b3d, // Green
+    [Blue]     = 0x0c6cc0, // Blue
+    [Yellow]   = 0xfed910, // Yellow ???
+    [Purple]   = 0x7878ba, // Purple ???
+    [Aqua]     = 0x00695c, // Aqua   ???
+    [Orange]   = 0xf39812, // Orange ???
     [EditBg]   = 0xF0F0E5, // Edit region background
     [EditSel]  = 0xDFDF99, // Edit region selection
     [EditFg]   = 0x000000, // Edit region text

@@ -274,6 +274,13 @@ static void draw_rect(int color, int x, int y, int width, int height) {
     XftColorFree(X.display, X.visual, X.colormap, &clr);
 }
 
+static void draw_statbox(drawcsr* csr) {
+    View* view = win_view(EDIT);
+    int statclr = Orange; //(view->buffer.modified ? Purple : TagsBg);
+    draw_rect(VerBdr, ScrollWidth, 0, 1, X.height/4);
+    draw_rect(statclr, 0, 0, ScrollWidth, X.height/4);
+}
+
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
     size_t fheight = X.font->height;
     size_t csrx = SIZE_MAX, csry = SIZE_MAX;
@@ -313,10 +320,9 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
 }
 
 static void draw_hrule(drawcsr* csr) {
-    draw_rect(HorBdr, csr->x, csr->y + 1, csr->w, 1);
+    draw_rect(HorBdr, 0, csr->y + 1, X.width, 1);
     Divider = csr->y;
     csr->y += 2;
-    csr->x += ScrollWidth + 1;
 }
 
 static void draw_scroll(drawcsr* csr) {
@@ -490,6 +496,8 @@ static void xupdate(Job* job) {
     size_t editrows = maxrows - tagrows;
     /* draw the regions to the window */
     drawcsr csr = { .w = X.width, .h = X.height };
+    csr.x += ScrollWidth + 1;
+    draw_statbox(&csr);
     draw_view(TAGS, tagrows, &csr, TagsBg, TagsFg, TagsSel);
     draw_hrule(&csr);
     draw_view(EDIT, editrows, &csr, EditBg, EditFg, EditSel);
