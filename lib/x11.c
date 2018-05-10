@@ -294,9 +294,9 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
             if (buf_insel(&(view->buffer), row->cols[i].off))
                 draw_rect(sel, x, y, row->cols[i].width, fheight);
             if (!csr_drawn && !view_selsize(view) && row->cols[i].off == view->buffer.selection.end) {
-                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-2, y, 3, 3);
-                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-1, y, 1, fheight);
-                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-2, y+fheight-3, 3, 3);
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-1, y, 3, 3);
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x, y, 1, fheight);
+                draw_rect((i == TAGS ? TagsCsr : EditCsr), x-1, y+fheight-3, 3, 3);
                 csr_drawn = true;
             }
             specs[i].glyph = XftCharIndex(X.display, X.font, rune);
@@ -308,7 +308,6 @@ static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel
         xftcolor(&fgc, EditFg);
         XftDrawGlyphSpec(X.xft, &fgc, X.font, specs, row->len);
         XftColorFree(X.display, X.visual, X.colormap, &fgc);
-
     }
     csr->y += (nrows * fheight) + 3;
 }
@@ -486,19 +485,16 @@ static void xupdate(Job* job) {
             (EventHandlers[e.type])(&e);
     }
     /* determine the size of the regions */
-    drawcsr csr = { .w = X.width, .h = X.height };
-    /* draw the regions to the window */
     size_t maxrows = ((X.height - 7) / fheight);
-    size_t tagrows = maxrows / 4;
-    tagrows = view_limitrows(win_view(TAGS), tagrows);
+    size_t tagrows = view_limitrows(win_view(TAGS), maxrows / 4);
+    size_t editrows = maxrows - tagrows;
+    /* draw the regions to the window */
+    drawcsr csr = { .w = X.width, .h = X.height };
     draw_view(TAGS, tagrows, &csr, TagsBg, TagsFg, TagsSel);
     draw_hrule(&csr);
-    size_t editrows = maxrows - tagrows;
     draw_view(EDIT, editrows, &csr, EditBg, EditFg, EditSel);
     draw_scroll(&csr);
-    /* flush to the server */
     XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
-    XFlush(X.display);
 }
 
 /******************************************************************************/
@@ -550,7 +546,7 @@ void win_loop(void) {
     XFlush(X.display);
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
     while (1)
-        if (job_poll(Timeout))
+        if (!job_poll(Timeout))
             xupdate(NULL);
 }
 
