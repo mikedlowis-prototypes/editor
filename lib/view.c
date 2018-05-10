@@ -76,21 +76,7 @@ void view_reload(View* view) {
     }
 }
 
-size_t view_limitrows(View* view, size_t maxrows) {
-    size_t nrows = 0, bend = buf_end(&(view->buffer));
-    for (size_t i = 0; i < view->nrows; nrows++, i++) {
-        Row* crow = view->rows[view->index + i];
-        size_t last = (crow->len ? crow->off : crow->cols[crow->len-1].off);
-        if (last >= bend)
-            break;
-    }
-    //printf("%lu %lu\n", nrows, bend);
-    view_resize(view, view->width, nrows);
-    view_update(view, 0, 0);
-    return nrows;
-}
-
-size_t rune_width(int c, size_t xpos, size_t width) {
+static size_t rune_width(int c, size_t xpos, size_t width) {
     if (c == '\r')
         return 0;
     else if (c == '\n')
@@ -99,6 +85,20 @@ size_t rune_width(int c, size_t xpos, size_t width) {
         return (glyph_width(c) - (xpos % glyph_width(c)));
     else
         return glyph_width(c);
+}
+
+size_t view_limitrows(View* view, size_t maxrows) {
+    size_t nrows = 1, off = 0, xpos = 0;
+    while (nrows < maxrows && off < buf_end(&(view->buffer))) {
+        Rune rune = buf_getrat(&(view->buffer), off);
+        xpos += rune_width(rune, xpos, view->width);
+        if (rune == '\n') nrows++;
+        if (xpos <= view->width)
+            off = buf_byrune(&(view->buffer), off, RIGHT);
+        else
+            xpos = 0, nrows++;
+    }
+    return nrows;
 }
 
 static size_t add_row(View* view, size_t off) {
