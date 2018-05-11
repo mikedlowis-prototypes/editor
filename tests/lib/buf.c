@@ -23,7 +23,7 @@ TEST_SUITE(BufferTests) {
      *************************************************************************/
     TEST(buf_init should initialize an empty buffer) {
         buf_init(&TestBuf);
-        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.status      != MODIFIED);
         CHECK(TestBuf.bufsize     == 8192);
         CHECK(TestBuf.bufstart    != NULL);
         CHECK(TestBuf.bufend      == TestBuf.bufstart + TestBuf.bufsize);
@@ -37,7 +37,7 @@ TEST_SUITE(BufferTests) {
         buf_init(&TestBuf);
         buf_putc(&TestBuf, 'a');
         buf_init(&TestBuf);
-        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.status      != MODIFIED);
         CHECK(TestBuf.bufsize     == 8192);
         CHECK(TestBuf.bufstart    != NULL);
         CHECK(TestBuf.bufend      == TestBuf.bufstart + TestBuf.bufsize);
@@ -52,7 +52,7 @@ TEST_SUITE(BufferTests) {
     TEST(buf_load should load a UTF-8 file from disk) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "testdocs/lorem.txt");
-        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.status      != MODIFIED);
         CHECK(TestBuf.bufsize     == 61440);
         CHECK(TestBuf.undo        == NULL);
         CHECK(TestBuf.redo        == NULL);
@@ -62,7 +62,7 @@ TEST_SUITE(BufferTests) {
     TEST(buf_load should load a non UTF-8 file from disk) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "testdocs/waf");
-        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.status      != MODIFIED);
         CHECK(TestBuf.bufsize     == 98304);
         CHECK(TestBuf.undo        == NULL);
         CHECK(TestBuf.redo        == NULL);
@@ -72,7 +72,7 @@ TEST_SUITE(BufferTests) {
     TEST(buf_load should remove ./ from file path) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "./testdocs/lorem.txt");
-        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.status      != MODIFIED);
         CHECK(TestBuf.bufsize     == 61440);
         CHECK(TestBuf.undo        == NULL);
         CHECK(TestBuf.redo        == NULL);
@@ -84,7 +84,7 @@ TEST_SUITE(BufferTests) {
         buf_load(&TestBuf, "testdocs/waf");
         TestBuf.path = "testdocs/lorem.txt";
         buf_reload(&TestBuf);
-        CHECK(TestBuf.modified    == false);
+        CHECK(TestBuf.status      != MODIFIED);
         CHECK(TestBuf.bufsize     == 61440);
         CHECK(TestBuf.undo        == NULL);
         CHECK(TestBuf.redo        == NULL);
@@ -96,33 +96,33 @@ TEST_SUITE(BufferTests) {
     TEST(buf_save should save a UTF-8 file to disk) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "testdocs/lorem.txt");
-        TestBuf.modified = true;
+        TestBuf.status = MODIFIED;
         buf_save(&TestBuf);
-        CHECK(TestBuf.modified == false);
+        CHECK(TestBuf.status != MODIFIED);
     }
 
     TEST(buf_save should save a non UTF-8 file to disk) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "testdocs/waf");
-        TestBuf.modified = true;
+        TestBuf.status = MODIFIED;
         buf_save(&TestBuf);
-        CHECK(TestBuf.modified == false);
+        CHECK(TestBuf.status != MODIFIED);
     }
 
     TEST(buf_save should save a file to disk with unix line endings) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "testdocs/lf.txt");
-        TestBuf.modified = true;
+        TestBuf.status = MODIFIED;
         buf_save(&TestBuf);
-        CHECK(TestBuf.modified == false);
+        CHECK(TestBuf.status != MODIFIED);
     }
 
     TEST(buf_save should save a file to disk with dos line endings) {
         buf_init(&TestBuf);
         buf_load(&TestBuf, "testdocs/crlf.txt");
-        TestBuf.modified = true;
+        TestBuf.status = MODIFIED;
         buf_save(&TestBuf);
-        CHECK(TestBuf.modified == false);
+        CHECK(TestBuf.status != MODIFIED);
     }
 
 #if 0
