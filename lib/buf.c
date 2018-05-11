@@ -24,7 +24,7 @@ void buf_init(Buf* buf) {
         buf_logclear(buf);
     }
     /* reset the state to defaults */
-    buf->modified  = false;
+    buf->status    = NORMAL;
     buf->bufsize   = 8192;
     buf->bufstart  = malloc(buf->bufsize);
     buf->bufend    = buf->bufstart + buf->bufsize;
@@ -61,8 +61,8 @@ void buf_load(Buf* buf, char* path) {
     if (fd > 0) close(fd);
 
     /* reset buffer state */
-    buf->modified = false;
-    buf->modtime  = (uint64_t)sb.st_mtime;
+    buf->status  = NORMAL;
+    buf->modtime = (uint64_t)sb.st_mtime;
     buf_logclear(buf);
 }
 
@@ -87,12 +87,9 @@ void buf_save(Buf* buf) {
             wptr += nwrite, towrite -= nwrite;
         close(fd);
         /* report success or failure */
-        if (nwrite >= 0)
-            buf->modified = false;
-        //else
-        //    buf->errfn("Failed to write file");
+        buf->status = (nwrite >= 0 ? NORMAL : ERRORED);
     } else {
-        //buf->errfn("Need a filename: SaveAs ");
+        buf->status = ERRORED;
     }
 }
 
@@ -150,6 +147,7 @@ static void putb(Buf* buf, char b, Sel* p_sel) {
     *(buf->gapstart++) = b;
     p_sel->end = p_sel->end + 1u;
     p_sel->beg = p_sel->end;
+    buf->status = MODIFIED;
 }
 
 static char getb(Buf* buf, size_t off) {
@@ -197,6 +195,7 @@ void buf_del(Buf* buf) {
     Sel sel = getsel(buf);
     size_t nbytes = sel.end - sel.beg;
     if (nbytes > 0) {
+        buf->status = MODIFIED;
         //char* str = buf_gets(buf, &sel);
         syncgap(buf, sel.beg);
         buf->gapend += nbytes;

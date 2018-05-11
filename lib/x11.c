@@ -275,10 +275,12 @@ static void draw_rect(int color, int x, int y, int width, int height) {
 }
 
 static void draw_statbox(drawcsr* csr) {
-    View* view = win_view(EDIT);
-    int statclr = Orange; //(view->buffer.modified ? Purple : TagsBg);
     draw_rect(VerBdr, ScrollWidth, 0, 1, X.height/4);
-    draw_rect(statclr, 0, 0, ScrollWidth, X.height/4);
+    switch (win_view(EDIT)->buffer.status) {
+        case NORMAL:   draw_rect(TagsBg, 0, 0, ScrollWidth, X.height/4); break;
+        case MODIFIED: draw_rect(Purple, 0, 0, ScrollWidth, X.height/4); break;
+        case ERRORED:  draw_rect(Red, 0, 0, ScrollWidth, X.height/4);    break;
+    }
 }
 
 static void draw_view(int i, size_t nrows, drawcsr* csr, int bg, int fg, int sel) {
@@ -560,7 +562,7 @@ void win_loop(void) {
 
 void win_quit(void) {
     static uint64_t before = 0;
-    if (!win_buf(EDIT)->modified || (X.now - before) <= (uint64_t)ClickTime)
+    if ((win_buf(EDIT)->status != MODIFIED) || (X.now - before) <= (uint64_t)ClickTime)
         exit(0);
     before = X.now;
 }

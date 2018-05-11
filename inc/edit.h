@@ -17,6 +17,9 @@ typedef struct {
 
 /* gap buffer main data structure */
 typedef struct {
+    enum {
+        NORMAL = 0, MODIFIED, OUTDATED, ERRORED
+    } status;
     char* path;       /* the path to the open file */
     uint64_t modtime; /* modification time of the opened file */
     size_t bufsize;   /* size of the buffer in runes */
@@ -26,7 +29,6 @@ typedef struct {
     char* gapend;     /* end of the gap */
     Log* undo;        /* undo list */
     Log* redo;        /* redo list */
-    bool modified;    /* tracks whether the buffer has been modified */
     Sel selection;    /* the currently selected text */
 } Buf;
 
