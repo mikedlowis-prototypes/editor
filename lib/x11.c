@@ -485,8 +485,11 @@ static void (*EventHandlers[LASTEvent])(XEvent*) = {
 };
 
 static void xupdate(Job* job) {
+    int nevents;
     size_t fheight = X.font->height;
     /* process events from the queue */
+    XEventsQueued(X.display, QueuedAfterFlush);
+    XGetMotionEvents(X.display, X.self, CurrentTime, CurrentTime, &nevents);
     for (XEvent e; XPending(X.display);) {
         XNextEvent(X.display, &e);
         if (!XFilterEvent(&e, None) && EventHandlers[e.type])
@@ -505,6 +508,7 @@ static void xupdate(Job* job) {
     draw_view(EDIT, editrows, &csr, EditBg, EditFg, EditSel);
     draw_scroll(&csr);
     XCopyArea(X.display, X.pixmap, X.self, X.gc, 0, 0, X.width, X.height, 0, 0);
+    XFlush(X.display);
 }
 
 /******************************************************************************/
@@ -555,9 +559,10 @@ void win_loop(void) {
     XMapWindow(X.display, X.self);
     XFlush(X.display);
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
-    while (1)
-        if (!job_poll(Timeout))
-            xupdate(NULL);
+    while (1) {
+        job_poll(Timeout);
+        xupdate(NULL);
+    }
 }
 
 void win_quit(void) {
