@@ -429,11 +429,17 @@ bool buf_insel(Buf* buf, size_t off) {
 }
 
 char* buf_fetch(Buf* buf, bool (*isword)(Rune), size_t off) {
+    char* str = NULL;
+    Sel prev = buf->selection;
     if (!buf_insel(buf, off)) {
         buf->selection = (Sel){ .beg = off, .end = off };
         buf_selword(buf, isword);
+        str = buf_gets(buf);
+    } else {
+        str = strdup("");
     }
-    return buf_gets(buf);
+    buf->selection = prev;
+    return str;
 }
 
 /******************************************************************************/
