@@ -45,7 +45,7 @@ struct XWin {
 };
 
 /******************************************************************************/
-
+static Atom XA_REGISTER, XA_DEREGISTER;
 static struct XWin X;
 static int KeyBtnState;
 static WinRegion Focused = EDIT;
@@ -144,6 +144,22 @@ static void x11_window(char* name) {
     gcv.foreground = WhitePixel(X.display, X.screen);
     gcv.graphics_exposures = False;
     X.gc = XCreateGC(X.display, X.self, GCForeground|GCGraphicsExposures, &gcv);
+}
+
+static void tide_send(char* type) {
+    XEvent ev;
+    memset(&ev, 0, sizeof (ev));
+    Atom xa_registrar = XInternAtom(X.display, "TIDE_REGISTRAR", 0);
+    Window regwin = XGetSelectionOwner(X.display, xa_registrar);
+    if (None != regwin) {
+        ev.xclient.type = ClientMessage;
+        ev.xclient.window = X.self;
+        ev.xclient.message_type = xa_registrar;
+        ev.xclient.format = 32;
+        ev.xclient.data.l[0] = XInternAtom(X.display, type, 0);
+        XSendEvent(X.display, regwin, False, NoEventMask, &ev);
+        XFlush(X.display);
+    }
 }
 
 /******************************************************************************/
@@ -557,7 +573,7 @@ void win_save(char* path) {
 
 void win_loop(void) {
     XMapWindow(X.display, X.self);
-    XFlush(X.display);
+    tide_send("ADD");
     job_spawn(ConnectionNumber(X.display), xupdate, 0, 0);
     while (1) {
         job_poll(Timeout);
@@ -567,8 +583,10 @@ void win_loop(void) {
 
 void win_quit(void) {
     static uint64_t before = 0;
-    if ((win_buf(EDIT)->status != MODIFIED) || (X.now - before) <= (uint64_t)ClickTime)
+    if ((win_buf(EDIT)->status != MODIFIED) || (X.now - before) <= (uint64_t)ClickTime) {
+        tide_send("DEL");
         exit(0);
+    }
     before = X.now;
 }
 
