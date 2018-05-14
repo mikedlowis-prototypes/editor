@@ -1,5 +1,9 @@
 # Issue List
 
+BUGS:
+
+* Repeatedly pasting eventually causes an assertion
+
 Up Next:
 
 * Add matching logic for "", '', ``, and <>
