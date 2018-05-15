@@ -572,7 +572,7 @@ void win_save(char* path) {
     View* view = win_view(EDIT);
     if (!path) path = view->buffer.path;
     if (!path) return;
-    path = strdup(path);
+    path = realpath(path, NULL);
     free(view->buffer.path);
     view->buffer.path = path;
     buf_save(&(view->buffer));
