@@ -131,6 +131,7 @@ typedef struct {
 } drawcsr;
 
 void win_init(char* title, KeyBinding* bindings);
+void win_prop_set(char* xname, char* ename, char* value);
 void win_save(char* path);
 void win_loop(void);
 void win_quit(void);

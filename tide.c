@@ -497,7 +497,10 @@ int main(int argc, char** argv) {
     win_init("tide", Bindings);
 
     /* if we still have args left we're going to open it in this instance */
-    if (*argv) view_init(win_view(EDIT), *argv);
+    if (*argv) {
+        view_init(win_view(EDIT), *argv);
+        win_prop_set("TIDE_FILE", "file", *argv);
+    }
 
     /* now create the window and start the event loop */
     win_loop();

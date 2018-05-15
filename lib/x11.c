@@ -561,6 +561,13 @@ void win_init(char* title, KeyBinding* bindings) {
     buf_logclear(&(view->buffer));
 }
 
+void win_prop_set(char* xname, char* ename, char* value) {
+    Atom propname = XInternAtom(X.display, xname, 0);
+    XChangeProperty(X.display, X.self, propname, XA_STRING, 8, PropModeReplace,
+        (const unsigned char *)value, strlen(value));
+    if (ename) setenv(ename, value, 1);
+}
+
 void win_save(char* path) {
     View* view = win_view(EDIT);
     if (!path) path = view->buffer.path;
@@ -569,6 +576,7 @@ void win_save(char* path) {
     free(view->buffer.path);
     view->buffer.path = path;
     buf_save(&(view->buffer));
+    win_prop_set("TIDE_FILE", "file", path);
 }
 
 void win_loop(void) {
