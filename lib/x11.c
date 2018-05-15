@@ -89,7 +89,7 @@ static void font_load(char* name) {
 
 static void get_position(WinRegion id, int x, int y, size_t* row, size_t* col) {
     int starty = (id == EDIT ? Divider+3 : 0);
-    int startx = (id == EDIT ? ScrollWidth+3 : 0);
+    int startx = ScrollWidth+3;
     *row = (y - starty) / X.font->height;
     *col = x - startx;
 }
