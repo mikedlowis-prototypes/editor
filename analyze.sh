@@ -1,5 +1,9 @@
 #!/bin/sh
-(
-    flawfinder -DQSI -m 0 "$@" | tee flaws.txt
-	rats -i -lc -w 3 "$@"| tee -a flaws.txt
-) | grep '.\+:[0-9]\+'
+
+type cppcheck && cppcheck \
+	--enable=all \
+	--std=c99 \
+	--inconclusive \
+	--quiet \
+	-I inc/ \
+	tide.c lib/*.c

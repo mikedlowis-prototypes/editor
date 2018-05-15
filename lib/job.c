@@ -11,7 +11,7 @@
 
 struct PipeData {
     char* data;
-    size_t ndata;
+    ssize_t ndata;
     size_t nwrite;
     View* dest;
 };

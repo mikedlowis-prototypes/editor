@@ -252,14 +252,6 @@ size_t buf_eol(Buf* buf, size_t off) {
     return off;
 }
 
-void buf_selline(Buf* buf) {
-    Sel sel = getsel(buf);
-    sel.beg = buf_bol(buf, sel.end);
-    sel.end = buf_eol(buf, sel.end);
-    sel.end = buf_byrune(buf, sel.end, RIGHT);
-    buf->selection = sel;
-}
-
 void buf_selword(Buf* buf, bool (*isword)(Rune)) {
     Sel sel = getsel(buf);
     for (; isword(buf_getrat(buf, sel.beg-1)); sel.beg--);

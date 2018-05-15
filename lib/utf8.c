@@ -91,7 +91,7 @@ bool rissigil(Rune r) {
 }
 
 bool risfile(Rune r) {
-    return (risword(r) || r == '/' || r == '.' || r == ':' ||  r == '-' || r == '.' || r == '~');
+    return (risword(r) || r == '/' || r == '.' || r == ':' ||  r == '-' || r == '~');
 }
 
 bool riscmd(Rune r) {

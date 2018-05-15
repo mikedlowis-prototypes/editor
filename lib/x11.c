@@ -45,7 +45,6 @@ struct XWin {
 };
 
 /******************************************************************************/
-static Atom XA_REGISTER, XA_DEREGISTER;
 static struct XWin X;
 static int KeyBtnState;
 static WinRegion Focused = EDIT;
@@ -295,6 +294,7 @@ static void draw_statbox(drawcsr* csr) {
     switch (win_view(EDIT)->buffer.status) {
         case NORMAL:   draw_rect(TagsBg, 0, 0, ScrollWidth, X.height/4); break;
         case MODIFIED: draw_rect(Purple, 0, 0, ScrollWidth, X.height/4); break;
+        case OUTDATED: draw_rect(Orange, 0, 0, ScrollWidth, X.height/4); break;
         case ERRORED:  draw_rect(Red, 0, 0, ScrollWidth, X.height/4);    break;
     }
 }

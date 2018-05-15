@@ -3,6 +3,8 @@
 BUGS:
 
 * Repeatedly pasting eventually causes an assertion
+* Segfault while scrolling through testdocs/sherlock.txt
+* Middle click on selected command does not execute
 
 Up Next:
 

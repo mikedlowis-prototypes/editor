@@ -10,6 +10,7 @@ static void set_buffer_text(char* str) {
     buf_puts(&TestBuf, str);
 }
 
+/*
 static bool buf_text_eq(char* str) {
     buf_selall(&TestBuf);
     char* bstr = buf_gets(&TestBuf);
@@ -17,6 +18,7 @@ static bool buf_text_eq(char* str) {
     free(bstr);
     return (ret == 0);
 }
+*/
 
 TEST_SUITE(BufferTests) {
     /* Initializing
